@@ -130,8 +130,8 @@ class SimulationAwareAITriage(BaseTriage):
                 self.config.get('request', {}).get('options', {})
             )
             
-            # Consensus coordinator (will need both assessments, but for precomputation we'll use basic prompt)
-            consensus_prompt = get_consensus_coordinator_prompt()
+            # Consensus coordinator (will need both assessments, but for precomputation we'll use patient data)
+            consensus_prompt = get_consensus_coordinator_prompt(patient_data, "", "")
             cache_keys['consensus'] = self.provider.precompute_response(
                 consensus_prompt,
                 self.config.get('request', {}).get('options', {})

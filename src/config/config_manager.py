@@ -198,7 +198,7 @@ class ConfigManager:
     def get_ollama_config(self) -> Dict[str, Any]:
         """Get Ollama LLM configuration for triage systems"""
         return {
-            'model': 'llama3.2:1b',
+            'model': 'adrienbrault/biomistral-7b:Q2_K',
             'base_url': 'http://ollama:11434',  # Docker service name
             'request': {
                 'timeout_sec': 60,  # Longer timeout for real LLM processing
@@ -331,6 +331,8 @@ class ConfigManager:
         comprehensive_context = self._get_comprehensive_context(patient_data)
         
         return f"""
+**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
+
 Triage Assessment Required - EVIDENCE-BASED PRIORITIZATION:
 
 **MANDATORY PEDIATRIC RULES (NON-NEGOTIABLE):**
@@ -369,6 +371,8 @@ Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationa
         vital_signs_str = self._format_vital_signs(patient_data)
         
         return f"""
+**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
+
 PEDIATRIC-SPECIFIC RISK ASSESSMENT (EVIDENCE-BASED - MANDATORY FIRST LAYER):
 
 Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
@@ -407,6 +411,8 @@ Return JSON: {{"pediatric_risk": "high|medium|low", "mandatory_rules_triggered":
         vital_signs_str = self._format_vital_signs(patient_data)
         
         return f"""
+**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
+
 CLINICAL ASSESSMENT LAYER (EVIDENCE-BASED GENERAL MEDICINE):
 
 Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
@@ -432,14 +438,25 @@ Pediatric Assessment: {pediatric_assessment}
 Return JSON: {{"clinical_priority": number, "confidence": "high|medium|low", "key_findings": ["finding_list"], "rationale": "clinical reasoning", "service_min": number}}
 """
     
-    def get_consensus_coordinator_prompt(self) -> str:
-        """Get consensus coordinator system prompt template"""
-        return """
+    def get_consensus_coordinator_prompt(self, patient_data: Dict[str, Any] = None, pediatric_assessment: str = "", clinical_assessment: str = "") -> str:
+        """Get consensus coordinator system prompt with patient data and assessments"""
+        # Use helper methods to extract patient information
+        patient_info = self._extract_patient_info(patient_data)
+        vital_signs_str = self._format_vital_signs(patient_data)
+        comprehensive_context = self._get_comprehensive_context(patient_data)
+        
+        return f"""
+**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
+
 CONSENSUS COORDINATION (FINAL DECISION LAYER):
 
-Pediatric Assessment: {pediatric_assessment}
-Clinical Assessment: {clinical_assessment}
-Patient Context: {clinical_context}
+Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
+Chief Complaint: {patient_info['chief_complaint']}
+Medical History: {patient_info['medical_history']}
+Vital Signs: {vital_signs_str}{comprehensive_context}
+
+Pediatric Assessment: {pediatric_assessment or 'Not available'}
+Clinical Assessment: {clinical_assessment or 'Not available'}
 
 **Consensus Rules:**
 1. If pediatric mandatory rule triggered → Use pediatric priority
@@ -543,6 +560,6 @@ def get_clinical_assessor_prompt(patient_data: Dict[str, Any] = None, pediatric_
     return config_manager.get_clinical_assessor_prompt(patient_data, pediatric_assessment)
 
 
-def get_consensus_coordinator_prompt() -> str:
-    """Get consensus coordinator system prompt template"""
-    return config_manager.get_consensus_coordinator_prompt()
+def get_consensus_coordinator_prompt(patient_data: Dict[str, Any] = None, pediatric_assessment: str = "", clinical_assessment: str = "") -> str:
+    """Get consensus coordinator system prompt with patient data and assessments"""
+    return config_manager.get_consensus_coordinator_prompt(patient_data, pediatric_assessment, clinical_assessment)
