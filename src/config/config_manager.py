@@ -233,7 +233,35 @@ def get_manchester_triage_config() -> Dict[str, Any]:
     """Get Manchester Triage System configuration"""
     return {
         'enabled': True,
-        'use_ai_enhancement': False
+        'use_ai_enhancement': False,
+        'priority_weights': {
+            1: 1.0,  # Immediate - highest weight
+            2: 0.8,  # Very urgent
+            3: 0.6,  # Urgent
+            4: 0.4,  # Standard
+            5: 0.2   # Non-urgent - lowest weight
+        },
+        'fuzzy_rules': {
+            'severe_symptoms': {
+                'priority_1_threshold': 0.8,
+                'priority_2_threshold': 0.6,
+                'priority_3_threshold': 0.4,
+                'priority_4_threshold': 0.2
+            },
+            'vital_signs_critical': {
+                'systolic_bp_high': 180,
+                'systolic_bp_low': 90,
+                'heart_rate_high': 120,
+                'heart_rate_low': 50,
+                'temperature_high': 38.5,
+                'respiratory_rate_high': 25
+            },
+            'age_factors': {
+                'pediatric_threshold': 16,
+                'elderly_threshold': 65,
+                'age_weight_multiplier': 1.2
+            }
+        }
     }
 
 def get_visualization_config() -> Dict[str, Any]:

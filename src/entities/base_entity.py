@@ -184,6 +184,8 @@ class BaseEntity(ABC):
             csv_name = 'conditions.csv'
         elif class_name == 'Patient':
             csv_name = 'patients.csv'
+        elif class_name == 'Allergy':
+            csv_name = 'allergies.csv'
         else:
             # Convert CamelCase to snake_case and add 's' for plural
             import re
