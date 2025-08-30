@@ -45,6 +45,7 @@ services:
     environment:
       - PYTHONPATH=/app
       - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=adrienbrault/biomistral-7b:Q2_K
     networks:
       - ollama-network
     command: python3 src/main.py

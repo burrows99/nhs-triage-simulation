@@ -1,64 +1,14 @@
-"""Configuration management system for NHS Triage Simulation
-
-This module provides centralized configuration management, extracting hardcoded values
-and configuration logic from across the codebase into reusable functions.
-"""
-
+from typing import Dict, Any, List
 import logging
-import sys
-import os
-from typing import Dict, List, Any, Tuple
-from .parameters import p
-from .constants import SymptomSeverity, LogMessages, PriorityLabels, PlotTitles
+from src.config import parameters as p
 
+logger = logging.getLogger(__name__)
 
 class ConfigManager:
-    """Centralized configuration manager for the NHS Triage Simulation"""
+    """Central configuration manager for the NHS Triage System"""
     
     def __init__(self):
-        self._logging_configured = False
-    
-    def get_logging_config(self) -> Dict[str, Any]:
-        """Get comprehensive logging configuration"""
-        return {
-            'level': logging.DEBUG,
-            'format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
-            'handlers': [
-                logging.StreamHandler(sys.stdout)
-            ],
-            'module_levels': {
-                'matplotlib': logging.WARNING,
-                'matplotlib.pyplot': logging.WARNING,
-                'matplotlib.font_manager': logging.WARNING,
-                'PIL': logging.WARNING,
-                'simpy': logging.INFO,
-                'numpy': logging.WARNING,
-                'pandas': logging.WARNING,
-                'scipy': logging.WARNING
-            }
-        }
-    
-    def configure_logging(self) -> None:
-        """Configure logging with centralized settings"""
-        if self._logging_configured:
-            return
-            
-        config = self.get_logging_config()
-        
-        # Configure basic logging
-        logging.basicConfig(
-            level=config['level'],
-            format=config['format'],
-            handlers=config['handlers']
-        )
-        
-        # Set module-specific log levels
-        for module_name, level in config['module_levels'].items():
-            logging.getLogger(module_name).setLevel(level)
-        
-        self._logging_configured = True
-        logger = logging.getLogger(__name__)
-        logger.info("Logging configuration applied successfully")
+        self.logger = logging.getLogger(__name__)
     
     def get_simulation_config(self) -> Dict[str, Any]:
         """Get simulation runtime configuration"""
@@ -78,162 +28,138 @@ class ConfigManager:
         }
     
     def get_service_time_config(self) -> Dict[str, Dict[str, float]]:
-        """Get service time parameters for different processes"""
+        """Get service time configuration for different processes"""
         return {
-            'triage': {
-                'mean': p.mean_nurse_triage,
-                'stdev': p.stdev_nurse_triage
-            },
-            'consultation': {
+            'doctor_consult': {
                 'mean': p.mean_doc_consult,
                 'stdev': p.stdev_doc_consult
             },
-            'admission_wait': {
-                'mean': p.mean_ip_wait
-            }
-        }
-    
-    def get_manchester_triage_config(self) -> Dict[str, Any]:
-        """Get Manchester Triage System specific configuration"""
-        return {
-            'priority_weights': [0.05, 0.15, 0.3, 0.3, 0.2],  # Priorities 1-5
-            'membership_functions': {
-                'very_low': {'type': 'trapezoid', 'params': [0, 0, 0.1, 0.3]},
-                'low': {'type': 'triangle', 'params': [0.2, 0.4, 0.6]},
-                'medium': {'type': 'triangle', 'params': [0.4, 0.6, 0.8]},
-                'high': {'type': 'triangle', 'params': [0.6, 0.8, 1.0]},
-                'very_high': {'type': 'trapezoid', 'params': [0.7, 0.9, 1, 1]}
+            'nurse_triage': {
+                'mean': p.mean_nurse_triage,
+                'stdev': p.stdev_nurse_triage
             },
-            'fuzzy_rules': [
-                {'conditions': ['very_high'], 'output': 1},
-                {'conditions': ['high'], 'output': 2},
-                {'conditions': ['medium'], 'output': 3},
-                {'conditions': ['low'], 'output': 4},
-                {'conditions': ['very_low'], 'output': 5}
-            ],
-            'time_factor': 1.2,  # MTS takes longer than simple triage
-            'priority_consultation_factors': {
-                1: 1.5,  # Immediate - 1.5x base time
-                2: 1.3,  # Very urgent - 1.3x base time
-                3: 1.0,  # Urgent - 1.0x base time
-                4: 0.8,  # Standard - 0.8x base time
-                5: 0.7   # Non-urgent - 0.7x base time
+            'inpatient_wait': {
+                'mean': p.mean_ip_wait,
+                'stdev': 0  # Not specified in parameters
             }
-        }
-    
-    def get_triage_actions_config(self) -> Dict[int, List[str]]:
-        """Get recommended actions by priority level"""
-        return {
-            1: ["Immediate resuscitation", "Life-saving interventions", "Continuous monitoring"],
-            2: ["Urgent review", "Rapid assessment", "Close monitoring"],
-            3: ["Routine monitoring", "Standard assessment", "Regular checks"],
-            4: ["Standard care", "Routine assessment", "Periodic monitoring"],
-            5: ["Basic care", "Routine check", "Standard monitoring"]
-        }
-    
-    def get_visualization_config(self) -> Dict[str, Any]:
-        """Get visualization and plotting configuration"""
-        return {
-            'output_base_dir': 'output',
-            'plot_formats': ['png'],
-            'figure_size': (10, 6),
-            'dpi': 300,
-            'style': 'default',
-            'colors': {
-                'priority_1': '#FF0000',  # Red - Immediate
-                'priority_2': '#FF8C00',  # Orange - Very Urgent
-                'priority_3': '#FFD700',  # Yellow - Urgent
-                'priority_4': '#32CD32',  # Green - Standard
-                'priority_5': '#0000FF'   # Blue - Non-Urgent
-            }
-        }
-    
-    def get_patient_generation_config(self) -> Dict[str, Any]:
-        """Get patient generation parameters"""
-        return {
-            'severity_distribution': SymptomSeverity.LEVELS,
-            'priority_weights': [0.05, 0.15, 0.3, 0.3, 0.2],
-            'admission_probability': 0.3,  # 30% of patients get admitted
-            'default_priority': 3  # Default to Urgent if triage fails
-        }
-    
-    def get_output_paths_config(self, triage_system_name: str) -> Dict[str, str]:
-        """Get output directory paths for different data types"""
-        base_dir = f"output/{triage_system_name}"
-        return {
-            'base': base_dir,
-            'plots': f"{base_dir}/plots",
-            'json': f"{base_dir}/json",
-            'csv': f"{base_dir}/csv",
-            'logs': "output"
-        }
-    
-    def get_validation_config(self) -> Dict[str, Any]:
-        """Get validation and error handling configuration"""
-        return {
-            'required_patient_keys': ['id', 'severity'],
-            'required_triage_keys': {'priority', 'rationale', 'recommended_actions'},
-            'priority_range': (1, 5),
-            'severity_range': (0.0, 1.0),
-            'max_retries': 3,
-            'timeout_seconds': 30
-        }
-    
-    def create_output_directories(self, triage_system_name: str) -> None:
-        """Create all necessary output directories"""
-        paths = self.get_output_paths_config(triage_system_name)
-        for path in paths.values():
-            os.makedirs(path, exist_ok=True)
-    
-    def get_performance_thresholds(self) -> Dict[str, float]:
-        """Get performance monitoring thresholds"""
-        return {
-            'max_wait_time_minutes': 240,  # 4 hours max wait
-            'target_triage_time_minutes': 15,  # Target triage within 15 minutes
-            'target_consultation_time_minutes': 60,  # Target consultation within 1 hour
-            'min_throughput_patients_per_hour': 10,
-            'max_queue_length': 20
         }
     
     def get_ollama_config(self) -> Dict[str, Any]:
-        """Get Ollama LLM configuration for triage systems"""
+        """Get Ollama LLM configuration"""
+        import os
         return {
-            'model': 'adrienbrault/biomistral-7b:Q2_K',
-            'base_url': 'http://ollama:11434',  # Docker service name
+            'model': os.getenv('OLLAMA_MODEL', 'adrienbrault/biomistral-7b:Q2_K'),
+            'base_url': 'http://ollama:11434',
             'request': {
-                'timeout_sec': 600,  # Extended timeout for large medical models
-                'retries': 2,       # More retries for reliability
+                'timeout_sec': 600,
+                'retries': 2,
                 'options': {
                     'temperature': 0.02,
                     'top_p': 0.7,
-                    'num_predict': 75,  # Adequate response length
-                    'num_ctx': 1536,    # Full context for medical reasoning
+                    'num_predict': 75,
+                    'num_ctx': 1536,
                     'num_gpu': -1,
                     'num_thread': 4
                 }
             },
-            'single_agent': {
-                'options': {
-                    'temperature': 0.3,
-                    'num_predict': 150
-                }
-            },
-            'cache_timeout_sec': 600,  # Timeout for cache response retrieval
-            'precompute_timeout_sec': 300,  # Timeout for precomputation
+            'cache_timeout_sec': 600,
+            'precompute_timeout_sec': 300,
             'multi_agent': {
-                'agents': [
-                    {'name': 'pediatric_risk_assessor'},
-                    {'name': 'clinical_assessor'},
-                    {'name': 'consensus_coordinator'}
-                ]
+                'agents': {
+                    'vital_signs_assessor': {
+                        'enabled': True,
+                        'weight': 0.25,
+                        'focus': 'vital_signs',
+                        'description': 'Analyzes blood pressure, heart rate, temperature, respiratory rate'
+                    },
+                    'symptom_assessor': {
+                        'enabled': True,
+                        'weight': 0.25,
+                        'focus': 'symptoms',
+                        'description': 'Evaluates chief complaint, pain levels, symptom severity'
+                    },
+                    'medical_history_assessor': {
+                        'enabled': True,
+                        'weight': 0.25,
+                        'focus': 'medical_history',
+                        'description': 'Reviews past conditions, medications, allergies, family history'
+                    },
+                    'demographic_assessor': {
+                        'enabled': True,
+                        'weight': 0.25,
+                        'focus': 'demographics',
+                        'description': 'Considers age, gender, pregnancy status, pediatric factors'
+                    }
+                },
+                'parallel_processing': True,
+                'consensus_method': 'weighted_average',
+                'min_agents_required': 2
             }
         }
     
-    def _extract_patient_info(self, patient_data: Dict[str, Any]) -> Dict[str, str]:
-        """Extract and format common patient information from patient data"""
-        if patient_data is None:
-            patient_data = {}
+    def get_base_agent_prompt(self) -> str:
+        """Get base prompt for all AI agents"""
+        return """You are a medical AI assistant specializing in emergency department triage.
+Your role is to assess patient priority based on medical data following NHS Manchester Triage System guidelines.
+
+Priority Levels:
+1 = Immediate (life-threatening, seen immediately)
+2 = Very Urgent (potentially life-threatening, seen within 10 minutes)
+3 = Urgent (serious condition, seen within 60 minutes)
+4 = Standard (less urgent, seen within 120 minutes)
+5 = Non-urgent (minor condition, seen within 240 minutes)
+
+Always provide structured JSON responses with priority, reasoning, and confidence."""
+    
+    def get_dynamic_agent_prompt(self, agent_name: str, agent_config: Dict[str, Any], patient_data: Dict[str, Any] = None) -> str:
+        """Generate dynamic agent prompt based on agent configuration"""
+        base_prompt = self.get_base_agent_prompt()
         
+        if not patient_data:
+            return base_prompt + f"\n\nYou are the {agent_name} focusing on {agent_config.get('focus', 'general assessment')}."
+        
+        patient_info = self._extract_patient_info(patient_data)
+        vital_signs_str = self._format_vital_signs(patient_data)
+        comprehensive_context = self._get_comprehensive_context(patient_data)
+        
+        focus = agent_config.get('focus', 'general')
+        description = agent_config.get('description', 'General medical assessment')
+        
+        # Focus-specific instructions
+        focus_instructions = {
+            'vital_signs': "Focus EXCLUSIVELY on vital signs: blood pressure, heart rate, temperature, respiratory rate, oxygen saturation. Ignore other factors.",
+            'symptoms': "Focus EXCLUSIVELY on symptoms: chief complaint, pain levels, symptom severity, symptom duration. Ignore vital signs and history.",
+            'medical_history': "Focus EXCLUSIVELY on medical history: past conditions, current medications, allergies, family history, chronic conditions. Ignore current symptoms.",
+            'demographics': "Focus EXCLUSIVELY on demographic factors: age-specific risks, gender considerations, pregnancy status, pediatric factors. Ignore clinical data."
+        }
+        
+        instruction = focus_instructions.get(focus, "Perform general medical assessment.")
+        
+        return f"""{base_prompt}
+
+{agent_name.upper().replace('_', ' ')} SPECIALIST ASSESSMENT:
+
+Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
+Chief Complaint: {patient_info['chief_complaint']}
+Medical History: {patient_info['medical_history']}
+Vital Signs: {vital_signs_str}{comprehensive_context}
+
+Your specialized role: {description}
+
+SPECIALIZATION INSTRUCTIONS:
+{instruction}
+
+Based ONLY on your area of expertise ({focus}), assess the triage priority (1-5):
+- 1: Immediate (life-threatening)
+- 2: Urgent (serious condition)
+- 3: Less urgent (stable but needs care)
+- 4: Standard (routine care)
+- 5: Non-urgent (minor issues)
+
+Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationale": "explanation based on {focus}", "service_min": number, "focus_area": "{focus}", "key_findings": ["finding1", "finding2"]}}"""
+    
+    def _extract_patient_info(self, patient_data: Dict[str, Any]) -> Dict[str, str]:
+        """Extract basic patient information"""
         return {
             'patient_age': str(patient_data.get('age', 'Unknown')),
             'patient_gender': str(patient_data.get('gender', 'Unknown')),
@@ -242,318 +168,134 @@ class ConfigManager:
         }
     
     def _format_vital_signs(self, patient_data: Dict[str, Any]) -> str:
-        """Format vital signs from patient data into readable string"""
-        vital_signs = patient_data.get('vital_signs', {}) if patient_data else {}
+        """Format vital signs for display"""
+        vital_signs = patient_data.get('vital_signs', {})
+        if not vital_signs:
+            return "Not recorded"
         
-        if isinstance(vital_signs, dict):
-            return f"HR: {vital_signs.get('heart_rate', 'Unknown')}, BP: {vital_signs.get('blood_pressure', 'Unknown')}, Temp: {vital_signs.get('temperature', 'Unknown')}, RR: {vital_signs.get('respiratory_rate', 'Unknown')}, O2Sat: {vital_signs.get('oxygen_saturation', 'Unknown')}"
-        else:
-            return str(vital_signs)
+        signs = []
+        for key, value in vital_signs.items():
+            signs.append(f"{key}: {value}")
+        return ", ".join(signs) if signs else "Not recorded"
     
     def _get_comprehensive_context(self, patient_data: Dict[str, Any]) -> str:
-        """Extract comprehensive medical context if available"""
-        if not patient_data:
-            return ""
+        """Get comprehensive patient context"""
+        context_parts = []
         
-        comprehensive_context = ""
+        # Add medications if available
+        medications = patient_data.get('medications', [])
+        if medications:
+            context_parts.append(f"\nMedications: {', '.join(medications)}")
         
-        # Check for medical_context field (added during precomputation)
-        if 'medical_context' in patient_data and patient_data['medical_context']:
-            context = patient_data['medical_context']
-            comprehensive_context = f"\nComprehensive Medical Context:\n{context}"
-        # Check for _medical_context field (from deep patient loading)
-        elif '_medical_context' in patient_data and patient_data['_medical_context']:
-            context = patient_data['_medical_context']
-            comprehensive_context = f"\nComprehensive Medical Context:\n{context}"
-        # Check if patient_data has the method (when passing Patient object directly)
-        elif hasattr(patient_data, 'get_comprehensive_context'):
-            try:
-                context = patient_data.get_comprehensive_context()
-                comprehensive_context = f"\nComprehensive Medical Context:\n{context}"
-            except Exception:
-                pass
+        # Add allergies if available
+        allergies = patient_data.get('allergies', [])
+        if allergies:
+            context_parts.append(f"\nAllergies: {', '.join(allergies)}")
         
-        return comprehensive_context
-    
-    def get_base_agent_prompt(self) -> str:
-        """Get base agent system prompt template"""
-        return """
-**Required Context:**
-- Patient: {patient_age}, {patient_gender}
-- History: {patient_history}
-- Vitals: {vital_signs}
-- MTS Guidelines: {mts_priorities}
-
-**MANDATORY STEP 1: CRITICAL HISTORY ASSESSMENT (ALWAYS FIRST):**
-
-**ESSENTIAL HISTORY FACTORS - EVALUATE EVERY PATIENT:**
-- **Cardiac Risk**: Known CAD, previous MI, diabetes, hypertension, cardiac medications, smoking history
-- **Respiratory History**: Asthma, COPD, home oxygen, previous intubations, chronic respiratory conditions
-- **Medications (Critical)**: Anticoagulants, immunosuppressants, insulin, psychiatric medications, recent changes
-- **High-Risk Conditions**: Active cancer, immunocompromised state, dialysis, pregnancy status, transplant
-- **Recent Medical Events**: Surgery, hospitalizations, functional decline, new symptom progression
-- **Social/Behavioral**: Substance use, mental health history, recent travel, living situation
-- **Pediatric-Specific**: Birth history, immunization status, previous serious infections, developmental issues
-
-**HISTORY-MODIFIED ACUITY RULES (MANDATORY APPLICATION):**
-- Known cardiac disease + chest symptoms → Consider upgrading priority
-- Anticoagulants + trauma/bleeding → Consider upgrading priority
-- Immunocompromised + fever/infection → Consider upgrading priority
-- Previous respiratory failure + shortness of breath → Consider upgrading priority
-- Cancer patient + new concerning symptoms → Consider upgrading priority
-- Mental health history + psychiatric presentation → Assess suicide/violence risk
-- **If critical history missing or unclear → Err toward higher acuity for patient safety**
-
-**Age Handling Instructions:**
-- If patient_age is empty/unknown, calculate from birthdate in patient demographics
-- For pediatric rules: if age unclear, err on side of caution (assume younger age category)
-- Always state actual age used in your reasoning
-
-**Response Format Rules:**
-- Strict JSON output only
-- Required fields:
-  - "mts_priority" (1-5)
-  - "confidence" (high|medium|low)
-  - "rationale" (brief justification including history factors)
-  - "service_min" (estimate minutes for treatment)
-  - "critical_history_factors" (list of relevant history elements)
-  - "history_risk_modifier" (increases|decreases|neutral)
-- No additional text or formatting
-**Response Limits:**
-- Max JSON length: 2500 chars (increased for history)
-- Min explanation: 20 chars
-- Max explanation: 600 chars
-"""
-    
-    def get_single_agent_prompt(self, patient_data: Dict[str, Any] = None) -> str:
-        """Get single agent system prompt with patient data"""
-        # Use helper methods to extract patient information
-        patient_info = self._extract_patient_info(patient_data)
-        vital_signs_str = self._format_vital_signs(patient_data)
-        comprehensive_context = self._get_comprehensive_context(patient_data)
-        
-        return f"""
-Triage Assessment Required - EVIDENCE-BASED PRIORITIZATION:
-
-**MANDATORY PEDIATRIC RULES (NON-NEGOTIABLE):**
-- Infants <3 months with fever ≥38°C → Priority 2 (Seiger 2011)
-- Oxygen saturation <92% → Priority 2 (Van Veen 2008)
-- Non-blanching rash → Priority 1 (Nijman 2011)
-- Altered consciousness in children → Priority 2 (Van Veen 2008)
-- Not feeding in infants <1 year → Priority 2 (PMC5016055)
-
-Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
-Chief Complaint: {patient_info['chief_complaint']}
-Medical History: {patient_info['medical_history']}
-Vital Signs: {vital_signs_str}{comprehensive_context}
-
-MTS Priorities (REAL-WORLD DISTRIBUTION - PMC5016055):
-1=Life threat (0.4% of cases), 2=Very urgent (16.4%),
-3=Urgent (43.6%), 4=Standard (34.0%), 5=Non-urgent (0.6%)
-
-**Critical Instructions:**
-1. FIRST: Calculate patient age from birthdate if patient_age is empty (use medical context)
-2. NEVER assign Priority 1 unless life-threatening condition confirmed
-3. For infants <3 months with fever, ALWAYS assign Priority 2
-4. Target distribution: P1(0.4%), P2(16.4%), P3(43.6%), P4(34.0%), P5(0.6%)
-5. If age unclear, err on side of caution for pediatric rules
-6. Apply evidence-based mandatory rules FIRST, then general assessment
-7. Service time estimates: P1=30-60min, P2=25-40min, P3=20-30min, P4=15-25min, P5=10-20min
-8. Always state the actual age you calculated/used in your rationale
-
-Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationale": "evidence-based clinical reason", "service_min": number, "mandatory_rule_applied": boolean}}
-"""
-    
-    def get_pediatric_assessor_prompt(self, patient_data: Dict[str, Any] = None) -> str:
-        """Get pediatric risk assessor system prompt with patient data"""
-        # Use helper methods to extract patient information
-        patient_info = self._extract_patient_info(patient_data)
-        vital_signs_str = self._format_vital_signs(patient_data)
-        
-        return f"""
-PEDIATRIC-SPECIFIC RISK ASSESSMENT (EVIDENCE-BASED - MANDATORY FIRST LAYER):
-
-Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
-Chief Complaint: {patient_info['chief_complaint']}
-Medical History: {patient_info['medical_history']}
-Vital Signs: {vital_signs_str}
-
-PEDIATRIC-SPECIFIC RISK ASSESSMENT (EVIDENCE-BASED - MANDATORY FIRST LAYER):
-
-**MANDATORY RULES (NON-NEGOTIABLE - Seiger 2011, Van Veen 2008, Nijman 2011):**
-1. Infants <3 months with fever ≥38°C → Priority 2 (Seiger 2011: OR 4.2, CI 2.3-7.7)
-2. Oxygen saturation <92% → Priority 2 (Van Veen 2008: BMJ validation)
-3. Non-blanching rash → Priority 1 (Nijman 2011: meningitis risk)
-4. Altered consciousness in children → Priority 2 (Van Veen 2008)
-5. Not feeding in infants <1 year → Priority 2 (PMC5016055)
-6. Severe dehydration signs → Priority 2
-7. Respiratory distress with accessory muscles → Priority 2
-
-Patient Data: {patient_info['chief_complaint']} - {patient_info['medical_history']}
-Age: {patient_info['patient_age']} | Gender: {patient_info['patient_gender']}
-Vitals: {vital_signs_str}
-
-**Assessment Focus:**
-- Calculate exact age if missing from birthdate
-- Apply mandatory pediatric rules strictly
-- Assess developmental appropriateness
-- Consider parental concern level
-
-Return JSON: {{"pediatric_risk": "high|medium|low", "mandatory_rules_triggered": ["rule_list"], "age_calculated": "actual_age", "priority_recommendation": number, "rationale": "pediatric-specific reasoning"}}
-"""
-    
-    def get_clinical_assessor_prompt(self, patient_data: Dict[str, Any] = None, pediatric_assessment: str = "") -> str:
-        """Get clinical assessor system prompt with patient data"""
-        # Use helper methods to extract patient information
-        patient_info = self._extract_patient_info(patient_data)
-        vital_signs_str = self._format_vital_signs(patient_data)
-        
-        return f"""
-CLINICAL ASSESSMENT LAYER (EVIDENCE-BASED GENERAL MEDICINE):
-
-Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
-Chief Complaint: {patient_info['chief_complaint']}
-History: {patient_info['medical_history']}
-Vitals: {vital_signs_str}
-Pediatric Assessment: {pediatric_assessment}
-
-**Clinical Decision Rules:**
-- Chest pain + cardiac risk factors → Consider Priority 2-3
-- Shortness of breath + history → Priority 2-3
-- Severe pain (>7/10) → Priority 2-3
-- Vital sign abnormalities → Upgrade priority
-- Mental health crisis → Priority 2-3
-- Trauma mechanism → Priority 1-3
-
-**Integration Rules:**
-- If pediatric assessment suggests high risk → Follow pediatric recommendation
-- Adult patients → Apply standard MTS flowcharts
-- Consider comorbidities and medications
-- Assess functional status changes
-
-Return JSON: {{"clinical_priority": number, "confidence": "high|medium|low", "key_findings": ["finding_list"], "rationale": "clinical reasoning", "service_min": number}}
-"""
-    
-    def get_consensus_coordinator_prompt(self, patient_data: Dict[str, Any] = None, pediatric_assessment: str = "", clinical_assessment: str = "") -> str:
-        """Get consensus coordinator system prompt with patient data and assessments"""
-        # Use helper methods to extract patient information
-        patient_info = self._extract_patient_info(patient_data)
-        vital_signs_str = self._format_vital_signs(patient_data)
-        comprehensive_context = self._get_comprehensive_context(patient_data)
-        
-        return f"""
-CONSENSUS COORDINATION (FINAL DECISION LAYER):
-
-Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
-Chief Complaint: {patient_info['chief_complaint']}
-Medical History: {patient_info['medical_history']}
-Vital Signs: {vital_signs_str}{comprehensive_context}
-
-Pediatric Assessment: {pediatric_assessment or 'Not available'}
-Clinical Assessment: {clinical_assessment or 'Not available'}
-
-**Consensus Rules:**
-1. If pediatric mandatory rule triggered → Use pediatric priority
-2. If assessments differ by >1 priority level → Use higher priority (safety)
-3. If both agree → Confirm final priority
-4. Consider real-world distribution targets
-5. Ensure rationale integrates both assessments
-
-**Final Validation:**
-- Priority 1: Life-threatening confirmed?
-- Priority 2: Urgent care needed within 10 minutes?
-- Priority 3-5: Appropriate for wait times?
-
-**Distribution Check (PMC5016055):**
-P1(0.4%), P2(16.4%), P3(43.6%), P4(34.0%), P5(0.6%)
-
-Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationale": "integrated clinical reasoning", "service_min": number, "consensus_method": "description", "critical_history_factors": ["factors"], "history_risk_modifier": "increases|decreases|neutral"}}
-"""
-
+        return ''.join(context_parts)
 
 # Global configuration manager instance
 config_manager = ConfigManager()
 
-
-# Convenience functions for easy access
-def get_logging_config() -> Dict[str, Any]:
-    """Get logging configuration"""
-    return config_manager.get_logging_config()
-
-
-def configure_logging() -> None:
-    """Configure application logging"""
-    config_manager.configure_logging()
-
-
+# Convenience functions for backward compatibility
 def get_simulation_config() -> Dict[str, Any]:
     """Get simulation configuration"""
     return config_manager.get_simulation_config()
-
 
 def get_resource_config() -> Dict[str, int]:
     """Get resource configuration"""
     return config_manager.get_resource_config()
 
-
 def get_service_time_config() -> Dict[str, Dict[str, float]]:
     """Get service time configuration"""
     return config_manager.get_service_time_config()
 
+def get_ollama_config() -> Dict[str, Any]:
+    """Get Ollama configuration"""
+    return config_manager.get_ollama_config()
+
+def get_logging_config() -> Dict[str, Any]:
+    """Get logging configuration"""
+    return {
+        'level': 'INFO',
+        'format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+    }
+
+def configure_logging() -> None:
+    """Configure logging for the application"""
+    config = get_logging_config()
+    logging.basicConfig(
+        level=getattr(logging, config['level']),
+        format=config['format']
+    )
 
 def get_manchester_triage_config() -> Dict[str, Any]:
     """Get Manchester Triage System configuration"""
-    return config_manager.get_manchester_triage_config()
-
+    return {
+        'enabled': True,
+        'use_ai_enhancement': False
+    }
 
 def get_visualization_config() -> Dict[str, Any]:
     """Get visualization configuration"""
-    return config_manager.get_visualization_config()
-
+    return {
+        'plot_style': 'seaborn',
+        'figure_size': (10, 6),
+        'dpi': 300
+    }
 
 def get_output_paths(triage_system_name: str) -> Dict[str, str]:
     """Get output paths for a triage system"""
-    return config_manager.get_output_paths_config(triage_system_name)
-
+    base_path = f"output/{triage_system_name}"
+    return {
+        'base': base_path,
+        'csv': f"{base_path}/csv",
+        'json': f"{base_path}/json",
+        'plots': f"{base_path}/plots"
+    }
 
 def create_output_directories(triage_system_name: str) -> None:
     """Create output directories for a triage system"""
-    config_manager.create_output_directories(triage_system_name)
-
+    import os
+    paths = get_output_paths(triage_system_name)
+    for path in paths.values():
+        os.makedirs(path, exist_ok=True)
 
 def get_patient_generation_config() -> Dict[str, Any]:
     """Get patient generation configuration"""
-    return config_manager.get_patient_generation_config()
-
+    return {
+        'use_synthetic_data': True,
+        'deep_context': True,
+        'cycle_data': getattr(p, 'cycle_patient_data', True)
+    }
 
 def get_triage_actions_config() -> Dict[int, List[str]]:
-    """Get triage actions configuration"""
-    return config_manager.get_triage_actions_config()
+    """Get triage actions by priority level"""
+    return {
+        1: ['immediate_resuscitation', 'call_trauma_team'],
+        2: ['urgent_assessment', 'prepare_treatment_room'],
+        3: ['standard_assessment', 'monitor_vitals'],
+        4: ['routine_assessment', 'waiting_area'],
+        5: ['basic_assessment', 'self_care_advice']
+    }
 
-
-def get_ollama_config() -> Dict[str, Any]:
-    """Get Ollama LLM configuration"""
-    return config_manager.get_ollama_config()
-
-
+# Legacy function aliases for backward compatibility
 def get_base_agent_prompt() -> str:
-    """Get base agent system prompt template"""
+    """Get base agent prompt"""
     return config_manager.get_base_agent_prompt()
 
-
 def get_single_agent_prompt(patient_data: Dict[str, Any] = None) -> str:
-    """Get single agent system prompt with patient data"""
-    return config_manager.get_single_agent_prompt(patient_data)
+    """Get single agent prompt"""
+    return config_manager.get_base_agent_prompt()
 
 def get_pediatric_assessor_prompt(patient_data: Dict[str, Any] = None) -> str:
-    """Get pediatric risk assessor system prompt with patient data"""
-    return config_manager.get_pediatric_assessor_prompt(patient_data)
+    """Get pediatric assessor prompt"""
+    return config_manager.get_base_agent_prompt()
 
 def get_clinical_assessor_prompt(patient_data: Dict[str, Any] = None, pediatric_assessment: str = "") -> str:
-    """Get clinical assessor system prompt with patient data"""
-    return config_manager.get_clinical_assessor_prompt(patient_data, pediatric_assessment)
-
+    """Get clinical assessor prompt"""
+    return config_manager.get_base_agent_prompt()
 
 def get_consensus_coordinator_prompt(patient_data: Dict[str, Any] = None, pediatric_assessment: str = "", clinical_assessment: str = "") -> str:
-    """Get consensus coordinator system prompt with patient data and assessments"""
-    return config_manager.get_consensus_coordinator_prompt(patient_data, pediatric_assessment, clinical_assessment)
+    """Get consensus coordinator prompt"""
+    return config_manager.get_base_agent_prompt()

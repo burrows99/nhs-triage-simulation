@@ -111,36 +111,73 @@ class SimulationAwareAITriage(BaseTriage):
             self.response_cache_keys[patient_id] = {'single': cache_key}
     
     def _precompute_multi_agent_responses(self, patient_data, patient_index):
-        """Pre-compute multi-agent LLM responses"""
+        """Pre-compute dynamic multi-agent LLM responses in parallel"""
         patient_id = patient_data.get('id', f'patient_{patient_index}')
         
-        # Pre-compute all three agent responses using new prompt functions
+        # Get multi-agent configuration
+        multi_agent_config = self.config.get('multi_agent', {})
+        agents_config = multi_agent_config.get('agents', {})
+        parallel_processing = multi_agent_config.get('parallel_processing', True)
+        
+        # Filter enabled agents
+        enabled_agents = {name: config for name, config in agents_config.items() 
+                         if config.get('enabled', True)}
+        
+        if not enabled_agents:
+            logger.warning(f"No enabled agents found for patient {patient_id}")
+            return
+        
         cache_keys = {}
         
         try:
-            # Pediatric assessment
-            pediatric_prompt = get_pediatric_assessor_prompt(patient_data)
-            cache_keys['pediatric'] = self.provider.precompute_response(
-                pediatric_prompt,
-                self.config.get('request', {}).get('options', {})
-            )
+            if parallel_processing:
+                # Parallel processing using ThreadPoolExecutor
+                import concurrent.futures
+                
+                def precompute_agent(agent_name, agent_config):
+                    try:
+                        prompt = self.config_manager.get_dynamic_agent_prompt(
+                            agent_name, agent_config, patient_data
+                        )
+                        cache_key = self.provider.precompute_response(
+                            prompt,
+                            self.config.get('request', {}).get('options', {})
+                        )
+                        return agent_name, cache_key
+                    except Exception as e:
+                        logger.error(f"Error precomputing {agent_name} for patient {patient_id}: {e}")
+                        return agent_name, None
+                
+                # Execute agents in parallel
+                with concurrent.futures.ThreadPoolExecutor(max_workers=len(enabled_agents)) as executor:
+                    future_to_agent = {
+                        executor.submit(precompute_agent, name, config): name 
+                        for name, config in enabled_agents.items()
+                    }
+                    
+                    for future in concurrent.futures.as_completed(future_to_agent):
+                        agent_name, cache_key = future.result()
+                        if cache_key:
+                            cache_keys[agent_name] = cache_key
+                            
+            else:
+                # Sequential processing (fallback)
+                for agent_name, agent_config in enabled_agents.items():
+                    try:
+                        prompt = self.config_manager.get_dynamic_agent_prompt(
+                            agent_name, agent_config, patient_data
+                        )
+                        cache_keys[agent_name] = self.provider.precompute_response(
+                            prompt,
+                            self.config.get('request', {}).get('options', {})
+                        )
+                    except Exception as e:
+                        logger.error(f"Error pre-computing {agent_name} for patient {patient_id}: {e}")
             
-            # Clinical assessment (will need pediatric results, but for precomputation we'll use empty)
-            clinical_prompt = get_clinical_assessor_prompt(patient_data, "")
-            cache_keys['clinical'] = self.provider.precompute_response(
-                clinical_prompt,
-                self.config.get('request', {}).get('options', {})
-            )
-            
-            # Consensus coordinator (will need both assessments, but for precomputation we'll use patient data)
-            consensus_prompt = get_consensus_coordinator_prompt(patient_data, "", "")
-            cache_keys['consensus'] = self.provider.precompute_response(
-                consensus_prompt,
-                self.config.get('request', {}).get('options', {})
-            )
+            logger.debug(f"Pre-computed {len(cache_keys)} agents for patient {patient_id} ({'parallel' if parallel_processing else 'sequential'})")
             
         except Exception as e:
-            logger.error(f"Error pre-computing multi-agent responses for patient {patient_id}: {e}")
+            logger.error(f"Error in multi-agent precomputation for patient {patient_id}: {e}")
         
         with self._precompute_lock:
             self.response_cache_keys[patient_id] = cache_keys
@@ -250,44 +287,104 @@ class SimulationAwareAITriage(BaseTriage):
         return priority
     
     def _process_multi_agent_responses(self, patient_id, cache_keys, patient_data):
-        """Process multi-agent cached responses"""
+        """Process dynamic multi-agent cached responses with consensus"""
         agent_responses = {}
         
-        # Collect all agent responses
-        for agent_name in ['pediatric', 'clinical', 'consensus']:
-            cache_key = cache_keys.get(agent_name)
-            if cache_key:
-                # Get timeout from configuration
-                config = self.config_manager.get_ollama_config()
-                cache_timeout = config.get('cache_timeout_sec', 180)
-                response = self.provider.get_cached_response(cache_key, timeout=cache_timeout)
-                if response:
-                    parsed = self._parse_llm_response(response)
-                    if parsed:
-                        agent_responses[agent_name] = parsed
+        # Get multi-agent configuration
+        multi_agent_config = self.config.get('multi_agent', {})
+        agents_config = multi_agent_config.get('agents', {})
+        consensus_method = multi_agent_config.get('consensus_method', 'weighted_average')
+        min_agents_required = multi_agent_config.get('min_agents_required', 2)
+        parallel_processing = multi_agent_config.get('parallel_processing', True)
         
-        if not agent_responses:
-            logger.warning(f"No valid multi-agent responses for patient {patient_id}")
+        # Collect agent responses (parallel or sequential)
+        if parallel_processing:
+            import concurrent.futures
+            
+            def get_agent_response(agent_name, cache_key):
+                try:
+                    config = self.config_manager.get_ollama_config()
+                    cache_timeout = config.get('cache_timeout_sec', 180)
+                    response = self.provider.get_cached_response(cache_key, timeout=cache_timeout)
+                    if response:
+                        parsed = self._parse_llm_response(response)
+                        if parsed:
+                            return agent_name, parsed
+                except Exception as e:
+                    logger.error(f"Error retrieving {agent_name} response for patient {patient_id}: {e}")
+                return agent_name, None
+            
+            # Parallel response retrieval
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(cache_keys)) as executor:
+                future_to_agent = {
+                    executor.submit(get_agent_response, name, key): name 
+                    for name, key in cache_keys.items() if key
+                }
+                
+                for future in concurrent.futures.as_completed(future_to_agent):
+                    agent_name, response = future.result()
+                    if response:
+                        agent_responses[agent_name] = response
+        else:
+            # Sequential response retrieval (fallback)
+            for agent_name, cache_key in cache_keys.items():
+                if cache_key:
+                    try:
+                        config = self.config_manager.get_ollama_config()
+                        cache_timeout = config.get('cache_timeout_sec', 180)
+                        response = self.provider.get_cached_response(cache_key, timeout=cache_timeout)
+                        if response:
+                            parsed = self._parse_llm_response(response)
+                            if parsed:
+                                agent_responses[agent_name] = parsed
+                    except Exception as e:
+                        logger.error(f"Error retrieving {agent_name} response for patient {patient_id}: {e}")
+        
+        # Check minimum agents requirement
+        if len(agent_responses) < min_agents_required:
+            logger.warning(f"Only {len(agent_responses)} agents responded for patient {patient_id}, minimum {min_agents_required} required")
             return self._get_fallback_priority(patient_data)
         
-        # Use consensus coordinator response if available, otherwise aggregate
-        if 'consensus' in agent_responses:
-            priority = self._extract_priority_from_parsed_response(agent_responses['consensus'])
-        else:
-            # Aggregate priorities from available agents
-            priorities = []
-            for agent_name, response in agent_responses.items():
-                agent_priority = self._extract_priority_from_parsed_response(response)
-                priorities.append(agent_priority)
-            
-            if priorities:
-                # Use the most urgent (lowest number) priority
-                priority = min(priorities)
-            else:
-                priority = self._get_fallback_priority(patient_data)
+        # Apply consensus mechanism
+        priority = self._apply_consensus_mechanism(agent_responses, agents_config, consensus_method, patient_id)
         
-        logger.debug(f"Patient {patient_id} assigned priority {priority} from multi-agent ({len(agent_responses)} agents)")
+        logger.debug(f"Patient {patient_id} assigned priority {priority} from {len(agent_responses)} agents using {consensus_method}")
         return priority
+    
+    def _apply_consensus_mechanism(self, agent_responses, agents_config, consensus_method, patient_id):
+        """Apply consensus mechanism to determine final priority"""
+        if consensus_method == 'weighted_average':
+            weighted_sum = 0
+            total_weight = 0
+            
+            for agent_name, response in agent_responses.items():
+                priority = self._extract_priority_from_parsed_response(response)
+                weight = agents_config.get(agent_name, {}).get('weight', 1.0)
+                confidence = response.get('confidence', 0.5)
+                
+                # Adjust weight by confidence
+                if isinstance(confidence, str):
+                    confidence_map = {'high': 1.0, 'medium': 0.7, 'low': 0.4}
+                    confidence = confidence_map.get(confidence.lower(), 0.5)
+                
+                adjusted_weight = weight * confidence
+                weighted_sum += priority * adjusted_weight
+                total_weight += adjusted_weight
+            
+            return round(weighted_sum / total_weight) if total_weight > 0 else 4
+            
+        elif consensus_method == 'majority_vote':
+            priorities = [self._extract_priority_from_parsed_response(resp) for resp in agent_responses.values()]
+            return max(set(priorities), key=priorities.count)
+            
+        elif consensus_method == 'most_urgent':
+            priorities = [self._extract_priority_from_parsed_response(resp) for resp in agent_responses.values()]
+            return min(priorities)  # Lower number = more urgent
+            
+        else:
+            logger.warning(f"Unknown consensus method: {consensus_method}, using most_urgent")
+            priorities = [self._extract_priority_from_parsed_response(resp) for resp in agent_responses.values()]
+            return min(priorities)
     
     def _extract_patient_data(self, patient) -> Dict[str, Any]:
         """Extract patient data dictionary from patient object"""
