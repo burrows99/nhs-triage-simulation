@@ -21,7 +21,7 @@ class Patient:
         'discharge_time', 'total_time', 'admitted'
     ]
     
-    def __init__(self, id: int, arrival_time: float = 0, **kwargs):
+    def __init__(self, id, arrival_time: float = 0, **kwargs):
         # Core identification
         self.id = id
         self.arrival_time = arrival_time
@@ -158,7 +158,7 @@ class Patient:
                 logger.warning(f"Could not parse birthdate: {row['BIRTHDATE']}")
         
         return cls(
-            id=int(row['Id']),
+            id=row['Id'],  # Use UUID string directly instead of converting to int
             arrival_time=arrival_time,
             age=age,
             gender=row.get('GENDER', 'Unknown')
