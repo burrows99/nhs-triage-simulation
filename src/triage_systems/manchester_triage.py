@@ -273,6 +273,15 @@ class ManchesterTriage(BaseTriage):
         try:
             triage_result = self.perform_triage(patient.__dict__)
             priority = triage_result['priority']
+            
+            # Set triage results using the new Patient method
+            patient.set_triage_result(
+                priority=priority,
+                triage_system=self.get_triage_system_name(),
+                rationale=triage_result.get('rationale', 'Manchester Triage System assessment'),
+                recommended_actions=triage_result.get('recommended_actions', [])
+            )
+            
             logger.info(f"Patient {patient.id} assigned priority {priority} (severity: {patient.severity:.3f})")
             return priority
         except Exception as e:

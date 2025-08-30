@@ -14,7 +14,7 @@ logger.info("Starting NHS Emergency Department Simulation with enhanced logging"
 
 
 def run_simulation(triage_system):
-    """Run the NHS triage simulation"""
+    """Run the NHS triage simulation with automatic CSV export"""
     # Initialize simulation environment
     env = simpy.Environment()
     # Initialize triage system and emergency department
@@ -26,14 +26,15 @@ def run_simulation(triage_system):
     
     # Run the simulation using config
     sim_config = get_simulation_config()
+    logger.info(f"Starting simulation with {triage_system.get_triage_system_name()}")
     env.run(until=sim_config['duration'])
     
     # Get metrics summary
     metrics_summary = ed.metrics.get_summary_stats()
     
-    # Print summary statistics using config
-    sim_config = get_simulation_config()
-    print(f"Simulation Results (Duration: {sim_config['duration']} minutes)")
+    # Print summary statistics
+    print(f"\nSimulation Results - {triage_system.get_triage_system_name()}")
+    print(f"Duration: {sim_config['duration']} minutes")
     print(f"Total patients: {metrics_summary['total_patients']}")
     print(f"Admission rate: {metrics_summary['admitted_rate']:.2f}")
     print(f"Average wait for triage: {metrics_summary['avg_wait_for_triage']:.2f} minutes")
@@ -44,6 +45,19 @@ def run_simulation(triage_system):
     print("\nAverage wait times by priority (1-5):")
     for priority, wait_time in metrics_summary['avg_wait_by_priority'].items():
         print(f"  Priority {priority}: {wait_time:.2f} minutes")
+    
+    # Export patient data to CSV
+    try:
+        csv_path = ed.export_patient_data_to_csv()
+        logger.info(f"Patient data exported to CSV: {csv_path}")
+        print(f"\n📋 Patient data exported to: {csv_path}")
+        
+        # Print patient summary
+        ed.print_patient_summary()
+        
+    except Exception as e:
+        logger.error(f"Failed to export CSV data: {e}")
+        print(f"\n❌ Failed to export CSV data: {e}")
     
     return ed.metrics
 

@@ -1,21 +1,32 @@
-# Base stage with common dependencies
-FROM python:3.9-slim as base
+# Use Python 3.11 slim image as base
+FROM python:3.11-slim
 
-ENV PYTHONPATH="/app"
+# Set working directory
 WORKDIR /app
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src ./src
+# Copy source code
+COPY src/ ./src/
+COPY *.py ./
 
-# Production target
-FROM base as main
-CMD ["python", "-m", "src.main"]
+# Create output directory with proper permissions
+RUN mkdir -p output && chmod 777 output
 
-# Debug target with hot reload capabilities
-FROM base as debug
-RUN apt-get update && apt-get install -y entr && rm -rf /var/lib/apt/lists/*
-RUN pip install debugpy
-EXPOSE 5678
-CMD ["sh", "-c", "find /app/src -name '*.py' | entr -rn python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m src.main"]
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Set default environment variables
+ENV OLLAMA_BASE_URL=http://ollama:11434
+
+# Default command (can be overridden in docker-compose)
+CMD ["python3", "test_all_triage_systems.py"]

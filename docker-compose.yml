@@ -1,63 +1,59 @@
+version: '3.8'
+
 services:
-  # Ollama LLM service
   ollama:
     image: ollama/ollama:latest
-    restart: "no"
+    container_name: dissertation-ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - ollama-network
 
-  # Ollama model downloader
   ollama-downloader:
     image: curlimages/curl:latest
-    restart: "no"
+    container_name: dissertation-ollama-downloader
     depends_on:
       - ollama
     command: >
       sh -c "
         echo 'Waiting for Ollama to be ready...'
-        until curl -f http://ollama:11434/api/tags; do
-          echo 'Ollama not ready, waiting...'
+        while ! curl -f http://ollama:11434/api/tags; do
+          echo 'Ollama not ready, waiting 5 seconds...'
           sleep 5
         done
-        echo 'Ollama is ready, pulling llama3.2:1b model...'
+        echo 'Ollama is ready, downloading model...'
         curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:1b\"}'
         echo 'Model download completed'
       "
+    networks:
+      - ollama-network
 
-  # Production service
-  nhs-triage-sim:
+  simulation:
     build:
       context: .
-      target: main
-    environment:
-      - PYTHONPATH=/app
-    volumes:
-      - ./output:/app/output
+      dockerfile: Dockerfile
+    container_name: dissertation-simulation
     depends_on:
       - ollama
       - ollama-downloader
-
-  # Debug service with hot reload
-  nhs-triage-sim-debug:
-    build:
-      context: .
-      target: debug
-    environment:
-      - PYTHONPATH=/app
-    ports:
-      - "5678:5678"  # Expose debugger port
     volumes:
       - ./output:/app/output
-      - ./src:/app/src  # Mount source for hot reload
-    stdin_open: true
-    tty: true
-    depends_on:
-      - ollama
-      - ollama-downloader
+      - ./src:/app/src
+    environment:
+      - PYTHONPATH=/app
+      - OLLAMA_BASE_URL=http://ollama:11434
+    networks:
+      - ollama-network
+    command: python3 test_all_triage_systems.py
 
 volumes:
   ollama_data:
+
+networks:
+  ollama-network:
+    driver: bridge

@@ -1,5 +1,7 @@
 import simpy
 import random
+import os
+from typing import List, Dict, Any
 from src.entities.patient import Patient
 from src.utils.time_utils import (
     estimate_triage_time,
@@ -10,7 +12,13 @@ from src.utils.time_utils import (
 from src.visualization.metrics import EDMetrics
 import logging
 from src.config.constants import LogMessages
-from src.config.config_manager import get_resource_config, get_simulation_config, get_patient_generation_config
+from src.config.config_manager import (
+    get_resource_config, 
+    get_simulation_config, 
+    get_patient_generation_config,
+    get_output_paths,
+    create_output_directories
+)
 
 logger = logging.getLogger(__name__)
 
@@ -108,26 +116,39 @@ class EmergencyDepartment:
         admission_duration = estimate_admission_wait_time()
         yield self.env.timeout(admission_duration)
 
-    def patient_generator(self):
-        """Generate patients arriving at the emergency department following a Poisson process
+    def patient_generator(self, deep_context: bool = False):
+        """Generate patients from CSV data arriving at the emergency department
         
-        In queuing theory, a Poisson arrival process means:
-        - The number of arrivals in any time interval follows a Poisson distribution
-        - Inter-arrival times follow an exponential distribution
-        - Arrivals occur independently of each other
+        Loads actual patient data using Patient.get_all() and simulates their arrival
+        following a Poisson process for realistic ED simulation.
+        
+        Args:
+            deep_context: If True, preload comprehensive medical context for each patient
         """
-        patient_id = 1
-        while True:
-            # Generate patients with exponentially distributed inter-arrival times
-            # This ensures arrivals follow a Poisson process as required by queuing theory
+        # Load all patients using Patient.get_all() method
+        csv_patients = Patient.get_all(deep=deep_context)
+        
+        if not csv_patients:
+            logger.warning("No patients found in CSV file, simulation will have no patients")
+            return
+        
+        logger.info(f"Loaded {len(csv_patients)} patients from CSV for simulation (deep_context={deep_context})")
+        
+        # Process each patient with realistic inter-arrival times
+        for patient in csv_patients:
+            # Generate realistic inter-arrival time
             from src.utils.time_utils import generate_interarrival_time
             yield self.env.timeout(generate_interarrival_time())
             
-            # Create and process the new patient
-            patient = Patient(patient_id, self.env.now)
+            # Update patient arrival time to current simulation time
+            patient.arrival_time = self.env.now
             self.patients.append(patient)
             self.env.process(self.patient_process(patient))
-            patient_id += 1
+            
+            context_info = " (with deep context)" if deep_context else ""
+            logger.debug(f"Patient {patient.id} (Age: {patient.age}, Gender: {patient.gender}) arrived at time {self.env.now}{context_info}")
+    
+
 
     def patient_process(self, patient):
         """Orchestrate patient flow through triage and consultation"""
@@ -232,3 +253,101 @@ class EmergencyDepartment:
         patient.calculate_wait_times()
         self.metrics.add_patient_data(patient)
         logger.info(LogMessages.DISCHARGE.format(patient.id, patient.wait_for_consult, patient.admitted))
+    
+    def export_patient_data_to_csv(self, triage_system_name: str = None) -> str:
+        """Export all patient data to CSV file"""
+        if not triage_system_name:
+            triage_system_name = self.triage_system.get_triage_system_name()
+        
+        # Get output paths and create directories
+        paths = get_output_paths(triage_system_name)
+        create_output_directories(triage_system_name)
+        
+        # Create CSV file path
+        csv_filepath = os.path.join(paths['csv'], 'patient_data.csv')
+        
+        # Export patients to CSV
+        Patient.export_patients_to_csv(self.patients, csv_filepath)
+        
+        logger.info(f"Exported {len(self.patients)} patients to CSV: {csv_filepath}")
+        return csv_filepath
+    
+    def get_patient_summary(self) -> Dict[str, Any]:
+        """Get comprehensive summary of all patients processed"""
+        if not self.patients:
+            return {'total_patients': 0, 'summary': 'No patients processed'}
+        
+        # Calculate summary statistics
+        total_patients = len(self.patients)
+        admitted_count = sum(1 for p in self.patients if p.admitted)
+        
+        # Age statistics
+        ages = [p.age for p in self.patients]
+        avg_age = sum(ages) / len(ages) if ages else 0
+        
+        # Priority distribution
+        priority_dist = {}
+        for p in self.patients:
+            priority_dist[p.priority] = priority_dist.get(p.priority, 0) + 1
+        
+        # Gender distribution
+        gender_dist = {}
+        for p in self.patients:
+            gender_dist[p.gender] = gender_dist.get(p.gender, 0) + 1
+        
+        # Chief complaint distribution
+        complaint_dist = {}
+        for p in self.patients:
+            complaint_dist[p.chief_complaint] = complaint_dist.get(p.chief_complaint, 0) + 1
+        
+        # Timing statistics
+        wait_times = [p.wait_for_triage for p in self.patients if p.wait_for_triage > 0]
+        consult_waits = [p.wait_for_consult for p in self.patients if p.wait_for_consult > 0]
+        total_times = [p.total_time for p in self.patients if p.total_time > 0]
+        
+        return {
+            'total_patients': total_patients,
+            'admitted_count': admitted_count,
+            'admission_rate': admitted_count / total_patients if total_patients > 0 else 0,
+            'average_age': round(avg_age, 1),
+            'age_range': {'min': min(ages) if ages else 0, 'max': max(ages) if ages else 0},
+            'priority_distribution': priority_dist,
+            'gender_distribution': gender_dist,
+            'top_complaints': dict(sorted(complaint_dist.items(), key=lambda x: x[1], reverse=True)[:5]),
+            'timing_stats': {
+                'avg_wait_for_triage': round(sum(wait_times) / len(wait_times), 2) if wait_times else 0,
+                'avg_wait_for_consult': round(sum(consult_waits) / len(consult_waits), 2) if consult_waits else 0,
+                'avg_total_time': round(sum(total_times) / len(total_times), 2) if total_times else 0
+            },
+            'triage_system': self.triage_system.get_triage_system_name()
+        }
+    
+    def print_patient_summary(self) -> None:
+        """Print a comprehensive summary of patient data"""
+        summary = self.get_patient_summary()
+        
+        print(f"\n{'='*60}")
+        print(f"PATIENT DATA SUMMARY - {summary['triage_system']}")
+        print(f"{'='*60}")
+        print(f"Total Patients Processed: {summary['total_patients']}")
+        print(f"Patients Admitted: {summary['admitted_count']} ({summary['admission_rate']:.1%})")
+        print(f"Average Age: {summary['average_age']} years (Range: {summary['age_range']['min']}-{summary['age_range']['max']})")
+        
+        print(f"\nPriority Distribution:")
+        for priority, count in sorted(summary['priority_distribution'].items()):
+            print(f"  Priority {priority}: {count} patients")
+        
+        print(f"\nGender Distribution:")
+        for gender, count in summary['gender_distribution'].items():
+            print(f"  {gender}: {count} patients")
+        
+        print(f"\nTop Chief Complaints:")
+        for complaint, count in list(summary['top_complaints'].items())[:5]:
+            print(f"  {complaint}: {count} patients")
+        
+        timing = summary['timing_stats']
+        print(f"\nTiming Statistics:")
+        print(f"  Average Wait for Triage: {timing['avg_wait_for_triage']:.1f} minutes")
+        print(f"  Average Wait for Consultation: {timing['avg_wait_for_consult']:.1f} minutes")
+        print(f"  Average Total Time in ED: {timing['avg_total_time']:.1f} minutes")
+        print(f"{'='*60}")
