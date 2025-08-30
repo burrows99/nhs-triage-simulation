@@ -305,12 +305,10 @@ class AITriage(BaseTriage):
             triage_result = self.perform_triage(patient.__dict__)
             priority = triage_result['priority']
             
-            # Set triage results using the new Patient method
+            # Set triage results using the Patient method
             patient.set_triage_result(
                 priority=priority,
-                triage_system=self.get_triage_system_name(),
-                rationale=triage_result.get('rationale', 'AI-based triage assessment'),
-                recommended_actions=triage_result.get('recommended_actions', [])
+                triage_system=self.get_triage_system_name()
             )
             
             logger.info(f"Patient {patient.id} assigned priority {priority} by {self.get_triage_system_name()}")
@@ -326,9 +324,7 @@ class AITriage(BaseTriage):
             
             patient.set_triage_result(
                 priority=fallback_priority,
-                triage_system=self.get_triage_system_name(),
-                rationale=fallback_result['rationale'],
-                recommended_actions=fallback_result['recommended_actions']
+                triage_system=self.get_triage_system_name()
             )
             
             return fallback_priority

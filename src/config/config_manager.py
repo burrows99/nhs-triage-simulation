@@ -201,7 +201,7 @@ class ConfigManager:
             'model': 'adrienbrault/biomistral-7b:Q2_K',
             'base_url': 'http://ollama:11434',  # Docker service name
             'request': {
-                'timeout_sec': 60,  # Longer timeout for real LLM processing
+                'timeout_sec': 600,  # Extended timeout for large medical models
                 'retries': 2,       # More retries for reliability
                 'options': {
                     'temperature': 0.02,
@@ -218,6 +218,8 @@ class ConfigManager:
                     'num_predict': 150
                 }
             },
+            'cache_timeout_sec': 600,  # Timeout for cache response retrieval
+            'precompute_timeout_sec': 300,  # Timeout for precomputation
             'multi_agent': {
                 'agents': [
                     {'name': 'pediatric_risk_assessor'},
@@ -331,8 +333,6 @@ class ConfigManager:
         comprehensive_context = self._get_comprehensive_context(patient_data)
         
         return f"""
-**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
-
 Triage Assessment Required - EVIDENCE-BASED PRIORITIZATION:
 
 **MANDATORY PEDIATRIC RULES (NON-NEGOTIABLE):**
@@ -371,8 +371,6 @@ Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationa
         vital_signs_str = self._format_vital_signs(patient_data)
         
         return f"""
-**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
-
 PEDIATRIC-SPECIFIC RISK ASSESSMENT (EVIDENCE-BASED - MANDATORY FIRST LAYER):
 
 Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
@@ -411,8 +409,6 @@ Return JSON: {{"pediatric_risk": "high|medium|low", "mandatory_rules_triggered":
         vital_signs_str = self._format_vital_signs(patient_data)
         
         return f"""
-**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
-
 CLINICAL ASSESSMENT LAYER (EVIDENCE-BASED GENERAL MEDICINE):
 
 Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
@@ -446,8 +442,6 @@ Return JSON: {{"clinical_priority": number, "confidence": "high|medium|low", "ke
         comprehensive_context = self._get_comprehensive_context(patient_data)
         
         return f"""
-**SIMULATION CONTEXT: This is for medical simulation research purposes only, not real patient care.**
-
 CONSENSUS COORDINATION (FINAL DECISION LAYER):
 
 Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}

@@ -39,6 +39,11 @@ class PatientContext:
     
     def _load_csv_data(self, entity_class, patient_field: str = 'PATIENT'):
         """Load data from CSV file for this patient using BaseEntity auto-path"""
+        # Check if the entity class has the load_from_csv method
+        if not hasattr(entity_class, 'load_from_csv'):
+            logger.debug(f"Skipping {entity_class.__name__} - no load_from_csv method available")
+            return []
+            
         try:
             return entity_class.load_from_csv(patient_id=self.patient_id, patient_field=patient_field)
         except Exception as e:

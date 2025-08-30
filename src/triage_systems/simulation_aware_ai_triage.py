@@ -6,7 +6,8 @@ from src.config.config_manager import (
     get_single_agent_prompt, 
     get_pediatric_assessor_prompt,
     get_clinical_assessor_prompt,
-    get_consensus_coordinator_prompt
+    get_consensus_coordinator_prompt,
+    ConfigManager
 )
 from src.utils.telemetry import DecisionStepType
 import time
@@ -42,6 +43,7 @@ class SimulationAwareAITriage(BaseTriage):
         self.strategy = strategy
         self.system_name = system_name or f"{strategy.title()} LLM-Based Triage System"
         self.config = get_ollama_config()
+        self.config_manager = ConfigManager()
         
         # Initialize simulation-aware provider
         if model_provider is None:
@@ -230,7 +232,10 @@ class SimulationAwareAITriage(BaseTriage):
             logger.warning(f"No single agent cache key for patient {patient_id}")
             return self._get_fallback_priority(patient_data)
         
-        cached_response = self.provider.get_cached_response(cache_key, timeout=5.0)
+        # Get timeout from configuration
+        config = self.config_manager.get_ollama_config()
+        cache_timeout = config.get('cache_timeout_sec', 180)
+        cached_response = self.provider.get_cached_response(cache_key, timeout=cache_timeout)
         if cached_response is None:
             logger.warning(f"Failed to retrieve single agent response for patient {patient_id}")
             return self._get_fallback_priority(patient_data)
@@ -252,7 +257,10 @@ class SimulationAwareAITriage(BaseTriage):
         for agent_name in ['pediatric', 'clinical', 'consensus']:
             cache_key = cache_keys.get(agent_name)
             if cache_key:
-                response = self.provider.get_cached_response(cache_key, timeout=5.0)
+                # Get timeout from configuration
+                config = self.config_manager.get_ollama_config()
+                cache_timeout = config.get('cache_timeout_sec', 180)
+                response = self.provider.get_cached_response(cache_key, timeout=cache_timeout)
                 if response:
                     parsed = self._parse_llm_response(response)
                     if parsed:

@@ -385,12 +385,10 @@ class MultiLLMBasedTriage(AITriage):
             triage_result = self.perform_triage(patient.__dict__)
             priority = triage_result['priority']
             
-            # Set triage results using the new Patient method
+            # Set triage results using the Patient method
             patient.set_triage_result(
                 priority=priority,
-                triage_system=self.get_triage_system_name(),
-                rationale=triage_result.get('rationale', 'Multi-Agent LLM-Based Triage assessment'),
-                recommended_actions=triage_result.get('recommended_actions', [])
+                triage_system=self.get_triage_system_name()
             )
             
             logger.info(f"Patient {patient.id} assigned priority {priority} by Multi-Agent LLM Triage")
