@@ -16,7 +16,8 @@ services:
     image: curlimages/curl:latest
     container_name: dissertation-ollama-downloader
     depends_on:
-      - ollama
+      ollama:
+        condition: service_started
     command: >
       sh -c "
         echo 'Waiting for Ollama to be ready...'
@@ -30,6 +31,7 @@ services:
       "
     networks:
       - ollama-network
+    restart: "no"
 
   simulation:
     build:
@@ -37,8 +39,10 @@ services:
       dockerfile: Dockerfile
     container_name: dissertation-simulation
     depends_on:
-      - ollama
-      - ollama-downloader
+      ollama:
+        condition: service_started
+      ollama-downloader:
+        condition: service_completed_successfully
     volumes:
       - ./output:/app/output
       - ./src:/app/src
@@ -48,6 +52,7 @@ services:
       - OLLAMA_MODEL=adrienbrault/biomistral-7b:Q2_K
     networks:
       - ollama-network
+    restart: "no"
     command: python3 src/main.py
 
 volumes:

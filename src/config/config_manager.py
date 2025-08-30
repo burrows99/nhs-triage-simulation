@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 import logging
-from src.config import parameters as p
+from src.config.parameters import p
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,10 @@ class ConfigManager:
         """Get service time configuration for different processes"""
         return {
             'doctor_consult': {
+                'mean': p.mean_doc_consult,
+                'stdev': p.stdev_doc_consult
+            },
+            'consultation': {
                 'mean': p.mean_doc_consult,
                 'stdev': p.stdev_doc_consult
             },
@@ -257,11 +261,29 @@ def get_manchester_triage_config() -> Dict[str, Any]:
                 'respiratory_rate_high': 25
             },
             'age_factors': {
-                'pediatric_threshold': 16,
-                'elderly_threshold': 65,
-                'age_weight_multiplier': 1.2
-            }
-        }
+                 'pediatric_threshold': 16,
+                 'elderly_threshold': 65,
+                 'age_weight_multiplier': 1.2
+             }
+         },
+         'membership_functions': {
+             'low_severity': {
+                 'type': 'trapezoid',
+                 'params': [0, 0, 0.2, 0.4]
+             },
+             'moderate_severity': {
+                 'type': 'triangle',
+                 'params': [0.2, 0.5, 0.8]
+             },
+             'high_severity': {
+                 'type': 'trapezoid',
+                 'params': [0.6, 0.8, 1.0, 1.0]
+             },
+             'critical_vitals': {
+                 'type': 'trapezoid',
+                 'params': [0.7, 0.9, 1.0, 1.0]
+             }
+         }
     }
 
 def get_visualization_config() -> Dict[str, Any]:
