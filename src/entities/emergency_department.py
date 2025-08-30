@@ -116,7 +116,7 @@ class EmergencyDepartment:
         admission_duration = estimate_admission_wait_time()
         yield self.env.timeout(admission_duration)
 
-    def patient_generator(self, deep_context: bool = False):
+    def patient_generator(self, deep_context: bool = True):
         """Generate patients from CSV data arriving at the emergency department
         
         Loads actual patient data using Patient.get_all() and simulates their arrival

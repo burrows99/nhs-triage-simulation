@@ -71,7 +71,7 @@ def run_all_triage_systems():
     logger.info("Loading patient data for precomputation...")
     patient_data_list = []
     try:
-        patients = Patient.get_all(deep=False)  # Load same as simulation
+        patients = Patient.get_all(deep=True)  # Load with comprehensive medical context for LLMs
         for patient in patients:
             patient_data = patient.__dict__.copy()
             # Add any missing fields that might be needed for triage

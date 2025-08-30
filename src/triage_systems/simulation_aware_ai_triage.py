@@ -96,9 +96,8 @@ class SimulationAwareAITriage(BaseTriage):
     
     def _precompute_single_agent_response(self, patient_data, patient_index):
         """Pre-compute single agent LLM response"""
-        context = self._prepare_patient_context(patient_data)
-        template = get_single_agent_prompt()
-        prompt = template.format(**context)
+        # Use the new prompt function that accepts patient data directly
+        prompt = get_single_agent_prompt(patient_data)
         
         cache_key = self.provider.precompute_response(
             prompt, 
@@ -111,27 +110,35 @@ class SimulationAwareAITriage(BaseTriage):
     
     def _precompute_multi_agent_responses(self, patient_data, patient_index):
         """Pre-compute multi-agent LLM responses"""
-        context = self._prepare_patient_context(patient_data)
         patient_id = patient_data.get('id', f'patient_{patient_index}')
         
-        # Pre-compute all three agent responses
-        agents = [
-            ('pediatric', get_pediatric_assessor_prompt()),
-            ('clinical', get_clinical_assessor_prompt()),
-            ('consensus', get_consensus_coordinator_prompt())
-        ]
-        
+        # Pre-compute all three agent responses using new prompt functions
         cache_keys = {}
-        for agent_name, template in agents:
-            try:
-                prompt = template.format(**context)
-                cache_key = self.provider.precompute_response(
-                    prompt,
-                    self.config.get('request', {}).get('options', {})
-                )
-                cache_keys[agent_name] = cache_key
-            except Exception as e:
-                logger.error(f"Error pre-computing {agent_name} agent for patient {patient_id}: {e}")
+        
+        try:
+            # Pediatric assessment
+            pediatric_prompt = get_pediatric_assessor_prompt(patient_data)
+            cache_keys['pediatric'] = self.provider.precompute_response(
+                pediatric_prompt,
+                self.config.get('request', {}).get('options', {})
+            )
+            
+            # Clinical assessment (will need pediatric results, but for precomputation we'll use empty)
+            clinical_prompt = get_clinical_assessor_prompt(patient_data, "")
+            cache_keys['clinical'] = self.provider.precompute_response(
+                clinical_prompt,
+                self.config.get('request', {}).get('options', {})
+            )
+            
+            # Consensus coordinator (will need both assessments, but for precomputation we'll use basic prompt)
+            consensus_prompt = get_consensus_coordinator_prompt()
+            cache_keys['consensus'] = self.provider.precompute_response(
+                consensus_prompt,
+                self.config.get('request', {}).get('options', {})
+            )
+            
+        except Exception as e:
+            logger.error(f"Error pre-computing multi-agent responses for patient {patient_id}: {e}")
         
         with self._precompute_lock:
             self.response_cache_keys[patient_id] = cache_keys

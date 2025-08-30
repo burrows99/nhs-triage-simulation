@@ -21,9 +21,22 @@ def test_cache_generation():
     """Generate and save LLM responses to persistent cache with real-time progress"""
     logger.info("=== Testing Cache Generation with Real-Time Progress ===")
     
-    # Load a small subset of patients for testing
-    patients = Patient.get_all(deep=False)[:10]  # Increased for better progress demo
-    patient_data_list = [p.__dict__ for p in patients]
+    # Load a small subset of patients with deep medical context for LLMs
+    patients = Patient.get_all(deep=True)[:10]  # Deep context for comprehensive LLM analysis
+    patient_data_list = []
+    
+    for patient in patients:
+        # Get comprehensive patient data including medical context
+        patient_dict = patient.__dict__.copy()
+        
+        # Add comprehensive medical context if available
+        try:
+            comprehensive_context = patient.get_comprehensive_context()
+            patient_dict['medical_context'] = comprehensive_context
+        except Exception as e:
+            logger.warning(f"Could not get comprehensive context for patient {patient.id}: {e}")
+        
+        patient_data_list.append(patient_dict)
     
     logger.info(f"Loaded {len(patient_data_list)} patients for cache generation")
     

@@ -227,6 +227,52 @@ class ConfigManager:
             }
         }
     
+    def _extract_patient_info(self, patient_data: Dict[str, Any]) -> Dict[str, str]:
+        """Extract and format common patient information from patient data"""
+        if patient_data is None:
+            patient_data = {}
+        
+        return {
+            'patient_age': str(patient_data.get('age', 'Unknown')),
+            'patient_gender': str(patient_data.get('gender', 'Unknown')),
+            'chief_complaint': str(patient_data.get('chief_complaint', 'Not specified')),
+            'medical_history': str(patient_data.get('medical_history', 'No significant history'))
+        }
+    
+    def _format_vital_signs(self, patient_data: Dict[str, Any]) -> str:
+        """Format vital signs from patient data into readable string"""
+        vital_signs = patient_data.get('vital_signs', {}) if patient_data else {}
+        
+        if isinstance(vital_signs, dict):
+            return f"HR: {vital_signs.get('heart_rate', 'Unknown')}, BP: {vital_signs.get('blood_pressure', 'Unknown')}, Temp: {vital_signs.get('temperature', 'Unknown')}, RR: {vital_signs.get('respiratory_rate', 'Unknown')}, O2Sat: {vital_signs.get('oxygen_saturation', 'Unknown')}"
+        else:
+            return str(vital_signs)
+    
+    def _get_comprehensive_context(self, patient_data: Dict[str, Any]) -> str:
+        """Extract comprehensive medical context if available"""
+        if not patient_data:
+            return ""
+        
+        comprehensive_context = ""
+        
+        # Check for medical_context field (added during precomputation)
+        if 'medical_context' in patient_data and patient_data['medical_context']:
+            context = patient_data['medical_context']
+            comprehensive_context = f"\nComprehensive Medical Context:\n{context}"
+        # Check for _medical_context field (from deep patient loading)
+        elif '_medical_context' in patient_data and patient_data['_medical_context']:
+            context = patient_data['_medical_context']
+            comprehensive_context = f"\nComprehensive Medical Context:\n{context}"
+        # Check if patient_data has the method (when passing Patient object directly)
+        elif hasattr(patient_data, 'get_comprehensive_context'):
+            try:
+                context = patient_data.get_comprehensive_context()
+                comprehensive_context = f"\nComprehensive Medical Context:\n{context}"
+            except Exception:
+                pass
+        
+        return comprehensive_context
+    
     def get_base_agent_prompt(self) -> str:
         """Get base agent system prompt template"""
         return """
@@ -277,9 +323,14 @@ class ConfigManager:
 - Max explanation: 600 chars
 """
     
-    def get_single_agent_prompt(self) -> str:
-        """Get single agent system prompt template"""
-        return """
+    def get_single_agent_prompt(self, patient_data: Dict[str, Any] = None) -> str:
+        """Get single agent system prompt with patient data"""
+        # Use helper methods to extract patient information
+        patient_info = self._extract_patient_info(patient_data)
+        vital_signs_str = self._format_vital_signs(patient_data)
+        comprehensive_context = self._get_comprehensive_context(patient_data)
+        
+        return f"""
 Triage Assessment Required - EVIDENCE-BASED PRIORITIZATION:
 
 **MANDATORY PEDIATRIC RULES (NON-NEGOTIABLE):**
@@ -289,18 +340,17 @@ Triage Assessment Required - EVIDENCE-BASED PRIORITIZATION:
 - Altered consciousness in children → Priority 2 (Van Veen 2008)
 - Not feeding in infants <1 year → Priority 2 (PMC5016055)
 
-Patient: {patient_age}, {patient_gender}
-Chief Complaint: {reason_description}
-Medical History: {patient_history}
-Vital Signs: {vital_signs}
-Full Patient Data: {clinical_context}
+Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
+Chief Complaint: {patient_info['chief_complaint']}
+Medical History: {patient_info['medical_history']}
+Vital Signs: {vital_signs_str}{comprehensive_context}
 
 MTS Priorities (REAL-WORLD DISTRIBUTION - PMC5016055):
 1=Life threat (0.4% of cases), 2=Very urgent (16.4%),
 3=Urgent (43.6%), 4=Standard (34.0%), 5=Non-urgent (0.6%)
 
 **Critical Instructions:**
-1. FIRST: Calculate patient age from birthdate if patient_age is empty (use clinical_context)
+1. FIRST: Calculate patient age from birthdate if patient_age is empty (use medical context)
 2. NEVER assign Priority 1 unless life-threatening condition confirmed
 3. For infants <3 months with fever, ALWAYS assign Priority 2
 4. Target distribution: P1(0.4%), P2(16.4%), P3(43.6%), P4(34.0%), P5(0.6%)
@@ -312,9 +362,20 @@ MTS Priorities (REAL-WORLD DISTRIBUTION - PMC5016055):
 Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationale": "evidence-based clinical reason", "service_min": number, "mandatory_rule_applied": boolean}}
 """
     
-    def get_pediatric_assessor_prompt(self) -> str:
-        """Get pediatric risk assessor system prompt template"""
-        return """
+    def get_pediatric_assessor_prompt(self, patient_data: Dict[str, Any] = None) -> str:
+        """Get pediatric risk assessor system prompt with patient data"""
+        # Use helper methods to extract patient information
+        patient_info = self._extract_patient_info(patient_data)
+        vital_signs_str = self._format_vital_signs(patient_data)
+        
+        return f"""
+PEDIATRIC-SPECIFIC RISK ASSESSMENT (EVIDENCE-BASED - MANDATORY FIRST LAYER):
+
+Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
+Chief Complaint: {patient_info['chief_complaint']}
+Medical History: {patient_info['medical_history']}
+Vital Signs: {vital_signs_str}
+
 PEDIATRIC-SPECIFIC RISK ASSESSMENT (EVIDENCE-BASED - MANDATORY FIRST LAYER):
 
 **MANDATORY RULES (NON-NEGOTIABLE - Seiger 2011, Van Veen 2008, Nijman 2011):**
@@ -326,9 +387,9 @@ PEDIATRIC-SPECIFIC RISK ASSESSMENT (EVIDENCE-BASED - MANDATORY FIRST LAYER):
 6. Severe dehydration signs → Priority 2
 7. Respiratory distress with accessory muscles → Priority 2
 
-Patient Data: {clinical_context}
-Age: {patient_age} | Gender: {patient_gender}
-Vitals: {vital_signs}
+Patient Data: {patient_info['chief_complaint']} - {patient_info['medical_history']}
+Age: {patient_info['patient_age']} | Gender: {patient_info['patient_gender']}
+Vitals: {vital_signs_str}
 
 **Assessment Focus:**
 - Calculate exact age if missing from birthdate
@@ -339,15 +400,19 @@ Vitals: {vital_signs}
 Return JSON: {{"pediatric_risk": "high|medium|low", "mandatory_rules_triggered": ["rule_list"], "age_calculated": "actual_age", "priority_recommendation": number, "rationale": "pediatric-specific reasoning"}}
 """
     
-    def get_clinical_assessor_prompt(self) -> str:
-        """Get clinical assessor system prompt template"""
-        return """
+    def get_clinical_assessor_prompt(self, patient_data: Dict[str, Any] = None, pediatric_assessment: str = "") -> str:
+        """Get clinical assessor system prompt with patient data"""
+        # Use helper methods to extract patient information
+        patient_info = self._extract_patient_info(patient_data)
+        vital_signs_str = self._format_vital_signs(patient_data)
+        
+        return f"""
 CLINICAL ASSESSMENT LAYER (EVIDENCE-BASED GENERAL MEDICINE):
 
-Patient: {patient_age}, {patient_gender}
-Chief Complaint: {reason_description}
-History: {patient_history}
-Vitals: {vital_signs}
+Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
+Chief Complaint: {patient_info['chief_complaint']}
+History: {patient_info['medical_history']}
+Vitals: {vital_signs_str}
 Pediatric Assessment: {pediatric_assessment}
 
 **Clinical Decision Rules:**
@@ -465,19 +530,17 @@ def get_base_agent_prompt() -> str:
     return config_manager.get_base_agent_prompt()
 
 
-def get_single_agent_prompt() -> str:
-    """Get single agent system prompt template"""
-    return config_manager.get_single_agent_prompt()
+def get_single_agent_prompt(patient_data: Dict[str, Any] = None) -> str:
+    """Get single agent system prompt with patient data"""
+    return config_manager.get_single_agent_prompt(patient_data)
 
+def get_pediatric_assessor_prompt(patient_data: Dict[str, Any] = None) -> str:
+    """Get pediatric risk assessor system prompt with patient data"""
+    return config_manager.get_pediatric_assessor_prompt(patient_data)
 
-def get_pediatric_assessor_prompt() -> str:
-    """Get pediatric risk assessor system prompt template"""
-    return config_manager.get_pediatric_assessor_prompt()
-
-
-def get_clinical_assessor_prompt() -> str:
-    """Get clinical assessor system prompt template"""
-    return config_manager.get_clinical_assessor_prompt()
+def get_clinical_assessor_prompt(patient_data: Dict[str, Any] = None, pediatric_assessment: str = "") -> str:
+    """Get clinical assessor system prompt with patient data"""
+    return config_manager.get_clinical_assessor_prompt(patient_data, pediatric_assessment)
 
 
 def get_consensus_coordinator_prompt() -> str:
