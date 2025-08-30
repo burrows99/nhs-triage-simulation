@@ -1,0 +1,9 @@
+services:
+  nhs-triage-sim:
+    build: .
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./output:/app/output   # <-- mount output dir
+    command: ['sh', '-c', 'find /app/src -name "*.py" | entr -n python -m src.main']
