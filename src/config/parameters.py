@@ -21,4 +21,6 @@ class p:
     
     # Simulation control parameters
     warm_up = 0              # Warm-up period (minutes) - disabled for testing
-    sim_duration = 40        # Simulation duration (40 minutes for ~20 patients with 2min intervals)
+    sim_duration = 10        # Simulation duration (10 minutes for faster testing)
+    cycle_patient_data = True # Cycle through patient CSV data repeatedly
+    time_based_simulation = True # Control simulation by time only, not patient count

@@ -120,7 +120,7 @@ class EmergencyDepartment:
         """Generate patients from CSV data arriving at the emergency department
         
         Loads actual patient data using Patient.get_all() and simulates their arrival
-        following a Poisson process for realistic ED simulation.
+        following a Poisson process. Cycles through CSV data repeatedly based on simulation time.
         
         Args:
             deep_context: If True, preload comprehensive medical context for each patient
@@ -133,20 +133,36 @@ class EmergencyDepartment:
             return
         
         logger.info(f"Loaded {len(csv_patients)} patients from CSV for simulation (deep_context={deep_context})")
+        logger.info("Patient generation will cycle through CSV data based on simulation time")
         
-        # Process each patient with realistic inter-arrival times
-        for patient in csv_patients:
+        # Import parameters to check cycling configuration
+        from src.config.parameters import p
+        
+        # Cycle through patients repeatedly until simulation ends
+        patient_index = 0
+        while True:
+            # Get current patient (cycle through the list)
+            patient = csv_patients[patient_index % len(csv_patients)]
+            
             # Generate realistic inter-arrival time
             from src.utils.time_utils import generate_interarrival_time
             yield self.env.timeout(generate_interarrival_time())
             
-            # Update patient arrival time to current simulation time
-            patient.arrival_time = self.env.now
-            self.patients.append(patient)
-            self.env.process(self.patient_process(patient))
+            # Create a copy of the patient with new ID and arrival time
+            import copy
+            import uuid
+            patient_copy = copy.deepcopy(patient)
+            patient_copy.id = str(uuid.uuid4())
+            patient_copy.arrival_time = self.env.now
+            
+            self.patients.append(patient_copy)
+            self.env.process(self.patient_process(patient_copy))
             
             context_info = " (with deep context)" if deep_context else ""
-            logger.debug(f"Patient {patient.id} (Age: {patient.age}, Gender: {patient.gender}) arrived at time {self.env.now}{context_info}")
+            logger.debug(f"Patient {patient_copy.id} (Age: {patient_copy.age}, Gender: {patient_copy.gender}) arrived at time {self.env.now}{context_info}")
+            
+            # Move to next patient in cycle
+            patient_index += 1
     
 
 
