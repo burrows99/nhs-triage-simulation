@@ -88,15 +88,22 @@ class EDMetrics:
         logger.debug(f"Generated DataFrame with {len(df)} patient records")
         return df
 
-    def save_patient_data(self, data, triage_type='single'):
-        base_dir = f'output/manchester_triage/{triage_type}/json'
-        logger.info(f"Saving patient data to {base_dir}/patient_data.json")
+    def save_patient_data(self, data, triage_system_name='Manchester Triage System'):
+        from src.config.config_manager import get_output_paths, create_output_directories
+        
+        # Get configured output paths
+        paths = get_output_paths(triage_system_name)
+        create_output_directories(triage_system_name)
+        
+        json_dir = paths['json']
+        file_path = f'{json_dir}/patient_data.json'
+        
+        logger.info(f"Saving patient data to {file_path}")
         logger.debug(f"Data contains {len(data)} patient records")
         
         try:
-            os.makedirs(base_dir, exist_ok=True)
-            with open(f'{base_dir}/patient_data.json', 'w') as f:
+            with open(file_path, 'w') as f:
                 json.dump(data, f, indent=2)
-            logger.info(f"Successfully saved patient data to {base_dir}/patient_data.json")
+            logger.info(f"Successfully saved patient data to {file_path}")
         except Exception as e:
             logger.error(f"Failed to save patient data: {e}")

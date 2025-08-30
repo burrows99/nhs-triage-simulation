@@ -1,6 +1,5 @@
 import simpy
 import random
-from src.config.parameters import p
 from src.entities.patient import Patient
 from src.utils.time_utils import (
     estimate_triage_time,
@@ -11,6 +10,7 @@ from src.utils.time_utils import (
 from src.visualization.metrics import EDMetrics
 import logging
 from src.config.constants import LogMessages
+from src.config.config_manager import get_resource_config, get_simulation_config, get_patient_generation_config
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,12 @@ class EmergencyDepartment:
     def __init__(self, env, triage_system):
         self.env = env
         self.triage_system = triage_system
-        self.nurses = simpy.Resource(env, p.number_nurses)
-        self.doctors = simpy.PriorityResource(env, p.number_docs)
-        self.cubicles = simpy.Resource(env, p.ae_cubicles)
+        
+        # Initialize resources using centralized configuration
+        resource_config = get_resource_config()
+        self.nurses = simpy.Resource(env, resource_config['nurses'])
+        self.doctors = simpy.PriorityResource(env, resource_config['doctors'])
+        self.cubicles = simpy.Resource(env, resource_config['cubicles'])
         self.patients = []
         self.metrics = EDMetrics()
 
@@ -52,7 +55,9 @@ class EmergencyDepartment:
             logger.error(f"Triage error for Patient {patient.id}: {str(e)}")
             logger.error(f"Patient data causing error: {patient.__dict__}")
             logger.exception("Full traceback:")
-            patient.priority = 3  # Default to Urgent (Yellow)
+            # Use configured default priority
+            patient_config = get_patient_generation_config()
+            patient.priority = patient_config['default_priority']
             patient.calculate_wait_times()
         
     def simulate_triage_assessment(self):

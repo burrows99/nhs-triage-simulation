@@ -4,6 +4,7 @@ from scipy import stats
 import os
 import numpy as np
 import logging
+from src.config.config_manager import get_visualization_config, get_output_paths, create_output_directories
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,18 @@ class EDVisualizer:
     def __init__(self, metrics, triage_type):
         self.metrics = metrics
         self.triage_type = triage_type
-        self.base_dir = f'output/{self.triage_type.get_triage_system_name()}/plots'
-        os.makedirs(self.base_dir, exist_ok=True)
+        
+        # Get configuration and setup paths
+        self.viz_config = get_visualization_config()
+        triage_system_name = self.triage_type.get_triage_system_name()
+        self.paths = get_output_paths(triage_system_name)
+        
+        # Create output directories
+        create_output_directories(triage_system_name)
+        self.base_dir = self.paths['plots']
+        
         self.df = self.metrics.get_dataframe()
-        logger.info(f"EDVisualizer initialized for {self.triage_type.get_triage_system_name()}")
+        logger.info(f"EDVisualizer initialized for {triage_system_name}")
         logger.info(f"Plot output directory: {self.base_dir}")
         logger.debug(f"DataFrame contains {len(self.df)} patient records for visualization")
 

@@ -1,4 +1,33 @@
 services:
+  # Ollama LLM service
+  ollama:
+    image: ollama/ollama:latest
+    restart: "no"
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+
+  # Ollama model downloader
+  ollama-downloader:
+    image: curlimages/curl:latest
+    restart: "no"
+    depends_on:
+      - ollama
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to be ready...'
+        until curl -f http://ollama:11434/api/tags; do
+          echo 'Ollama not ready, waiting...'
+          sleep 5
+        done
+        echo 'Ollama is ready, pulling llama3.2:1b model...'
+        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:1b\"}'
+        echo 'Model download completed'
+      "
+
   # Production service
   nhs-triage-sim:
     build:
@@ -8,6 +37,9 @@ services:
       - PYTHONPATH=/app
     volumes:
       - ./output:/app/output
+    depends_on:
+      - ollama
+      - ollama-downloader
 
   # Debug service with hot reload
   nhs-triage-sim-debug:
@@ -23,3 +55,9 @@ services:
       - ./src:/app/src  # Mount source for hot reload
     stdin_open: true
     tty: true
+    depends_on:
+      - ollama
+      - ollama-downloader
+
+volumes:
+  ollama_data:

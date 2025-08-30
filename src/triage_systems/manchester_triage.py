@@ -1,8 +1,8 @@
 import random
 import numpy as np
-from src.config.parameters import p
 from src.triage_systems.base_triage import BaseTriage
 from src.config.constants import SymptomSeverity, LogMessages
+from src.config.config_manager import get_manchester_triage_config, get_service_time_config, get_triage_actions_config
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,30 +31,33 @@ class ManchesterTriage(BaseTriage):
     """
     
     def __init__(self):
+        # Get configuration from centralized config manager
+        self.config = get_manchester_triage_config()
+        self.actions_config = get_triage_actions_config()
+        
         # Define the fuzzy membership functions for different symptoms
-        # In a full implementation, these would be more complex and based on medical expertise
         self.symptom_severity = SymptomSeverity.LEVELS
         
-        # Probability weights for different priority levels (based on typical ED distributions)
-        self.priority_weights = [0.05, 0.15, 0.3, 0.3, 0.2]  # Priorities 1-5
+        # Use configured priority weights
+        self.priority_weights = self.config['priority_weights']
         
-        # Define membership functions for severity levels
-        self.membership = {
-            'very_low': lambda x: self.trapezoid(x, 0, 0, 0.1, 0.3),
-            'low': lambda x: self.triangle(x, 0.2, 0.4, 0.6),
-            'medium': lambda x: self.triangle(x, 0.4, 0.6, 0.8),
-            'high': lambda x: self.triangle(x, 0.6, 0.8, 1.0),
-            'very_high': lambda x: self.trapezoid(x, 0.7, 0.9, 1, 1)
-        }
+        # Build membership functions from configuration
+        self.membership = self._build_membership_functions()
         
-        # Define simple rules mapping severity to priority
-        self.rules = [
-            {'conditions': ['very_high'], 'output': 1},
-            {'conditions': ['high'], 'output': 2},
-            {'conditions': ['medium'], 'output': 3},
-            {'conditions': ['low'], 'output': 4},
-            {'conditions': ['very_low'], 'output': 5}
-        ]
+        # Use configured fuzzy rules
+        self.rules = self.config['fuzzy_rules']
+    
+    def _build_membership_functions(self):
+        """Build membership functions from configuration"""
+        membership_funcs = {}
+        for name, func_config in self.config['membership_functions'].items():
+            if func_config['type'] == 'triangle':
+                a, b, c = func_config['params']
+                membership_funcs[name] = lambda x, a=a, b=b, c=c: self.triangle(x, a, b, c)
+            elif func_config['type'] == 'trapezoid':
+                a, b, c, d = func_config['params']
+                membership_funcs[name] = lambda x, a=a, b=b, c=c, d=d: self.trapezoid(x, a, b, c, d)
+        return membership_funcs
         
     def _fuzzy_categorize(self, severity):
         """
@@ -128,10 +131,13 @@ class ManchesterTriage(BaseTriage):
         
         priority = self._fuzzy_categorize(severity)
         
+        # Get configured actions for this priority
+        recommended_actions = self.actions_config.get(priority, ["Standard monitoring"])
+        
         result = {
             "priority": priority,
             "rationale": f"Manchester Triage System priority {priority} based on severity {severity:.3f}",
-            "recommended_actions": ["Immediate resuscitation" if priority == 1 else "Urgent review" if priority == 2 else "Routine monitoring"]
+            "recommended_actions": recommended_actions
         }
         
         logger.debug(f"Manchester Triage System result: {result}")
@@ -161,17 +167,18 @@ class ManchesterTriage(BaseTriage):
         Returns:
             float: Estimated time in minutes for the triage process
         """
-        # Base triage time from parameters
-        base_time = p.mean_nurse_triage
+        # Get service time configuration
+        service_config = get_service_time_config()
+        base_time = service_config['triage']['mean']
         
-        # MTS is more structured and may take slightly longer than simple triage
-        # Add a small increase to represent the structured nature of MTS
-        mts_factor = 1.2
+        # Use configured MTS time factor
+        mts_factor = self.config['time_factor']
         
         # Add some random variation with a lognormal distribution
+        stdev = service_config['triage']['stdev']
         return random.lognormvariate(
             np.log(base_time * mts_factor), 
-            p.stdev_nurse_triage / (base_time * mts_factor)
+            stdev / (base_time * mts_factor)
         )
     
     def estimate_consult_time(self, priority):
@@ -187,22 +194,21 @@ class ManchesterTriage(BaseTriage):
         Returns:
             float: Estimated time in minutes for the consultation process
         """
-        # Base consultation time from parameters
-        base_time = p.mean_doc_consult
+        # Get service time configuration
+        service_config = get_service_time_config()
+        base_time = service_config['consultation']['mean']
         
-        # Adjust time based on priority - higher priority (lower number) typically
-        # requires more intensive care
-        # Priority 1 (immediate) might need 1.5x the time of a standard case
-        # Priority 5 (non-urgent) might need only 0.7x the time
-        priority_factor = 1.5 - (priority - 1) * 0.2  # Maps priority 1->1.5, 5->0.7
+        # Use configured priority consultation factors
+        priority_factor = self.config['priority_consultation_factors'].get(priority, 1.0)
         
         # Calculate adjusted mean time
         adjusted_mean = base_time * priority_factor
         
         # Add some random variation with a lognormal distribution
+        stdev = service_config['consultation']['stdev']
         return random.lognormvariate(
             np.log(adjusted_mean), 
-            p.stdev_doc_consult / adjusted_mean
+            stdev / adjusted_mean
         )
 
     def get_triage_system_name(self):
