@@ -5,6 +5,11 @@ from src.config.config_manager import (
     get_clinical_assessor_prompt,
     get_consensus_coordinator_prompt
 )
+from src.utils.json_utils import (
+    parse_json_response,
+    safe_json_dumps,
+    log_json_operation
+)
 import json
 import logging
 from typing import List, Dict, Any
@@ -166,25 +171,16 @@ class MultiLLMBasedTriage(BaseTriage):
         return ', '.join(vitals) if vitals else 'No vital signs recorded'
     
     def _parse_llm_response(self, response):
-        """Parse LLM JSON response"""
-        try:
-            # Try to extract JSON from response
-            response = response.strip()
-            if response.startswith('```json'):
-                response = response[7:]
-            if response.endswith('```'):
-                response = response[:-3]
-            
-            return json.loads(response)
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {e}")
-            return None
+        """Parse LLM JSON response using centralized utilities"""
+        result = parse_json_response(response)
+        log_json_operation("parsing", result is not None, f"Response length: {len(response)}")
+        return result
     
     def _convert_to_standard_format(self, consensus_decision, patient_data):
         """Convert consensus decision to standard triage format"""
-        priority = consensus_decision.get('mts_priority', 3)
-        confidence = consensus_decision.get('confidence', 'medium')
-        rationale = consensus_decision.get('rationale', 'Multi-agent LLM assessment')
+        priority = self.extract_priority_from_response(consensus_decision) or 3
+        confidence = self.extract_confidence_from_response(consensus_decision)
+        rationale = self.extract_rationale_from_response(consensus_decision)
         
         return {
             'priority': priority,

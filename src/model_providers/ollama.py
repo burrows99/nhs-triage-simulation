@@ -112,11 +112,10 @@ class OllamaProvider(ModelProvider):
         return response
     
     def validate_response(self, response: str) -> bool:
-        """Validate if response is a valid JSON with required fields"""
+        """Validate if response is valid JSON (basic structural validation only)"""
         try:
-            data = json.loads(response)
-            required_fields = ['mts_priority', 'confidence', 'rationale']
-            return all(field in data for field in required_fields)
+            json.loads(response)
+            return True
         except (json.JSONDecodeError, TypeError):
             return False
     

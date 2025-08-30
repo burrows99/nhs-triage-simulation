@@ -180,15 +180,27 @@ class EmergencyDepartment:
             # Execute the process with acquired resources
             yield self.env.process(process_func(patient))
             
+        except GeneratorExit:
+            # Handle simulation termination gracefully
+            logger.debug(f"Patient {patient.id} process terminated by simulation end")
+        except Exception as e:
+            logger.error(f"Error in resource chain for Patient {patient.id}: {str(e)}")
+            logger.exception("Full traceback:")
         finally:
             # Release all acquired resources
-            logger.debug(f"Patient {patient.id} releasing {len(acquired_resources)} resources")
-            for i, req in enumerate(acquired_resources):
-                if hasattr(req, 'resource'):
-                    req.resource.release(req)
-                    logger.debug(f"Patient {patient.id} released {resource_names[i] if i < len(resource_names) else 'resource'}")
-            
-            logger.info(f"Patient {patient.id} released all resources: {resource_names}")
+            try:
+                logger.debug(f"Patient {patient.id} releasing {len(acquired_resources)} resources")
+                for i, req in enumerate(acquired_resources):
+                    try:
+                        if hasattr(req, 'resource'):
+                            req.resource.release(req)
+                            logger.debug(f"Patient {patient.id} released {resource_names[i] if i < len(resource_names) else 'resource'}")
+                    except Exception as e:
+                        logger.error(f"Error releasing resource for Patient {patient.id}: {str(e)}")
+                
+                logger.info(f"Patient {patient.id} released all resources: {resource_names}")
+            except Exception as e:
+                logger.error(f"Error in resource cleanup for Patient {patient.id}: {str(e)}")
 
     def _execute_triage(self, patient):
         """Perform actual triage procedure"""

@@ -1,7 +1,13 @@
 from src.triage_systems.base_triage import BaseTriage
 from src.config.config_manager import get_ollama_config, get_single_agent_prompt
+from src.utils.json_utils import (
+    parse_json_response,
+    safe_json_dumps,
+    log_json_operation
+)
 import json
 import logging
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +77,7 @@ class SingleLLMBasedTriage(BaseTriage):
             'reason_description': patient_data.get('chief_complaint', 'Not specified'),
             'patient_history': patient_data.get('medical_history', 'No history available'),
             'vital_signs': self._format_vital_signs(patient_data),
-            'clinical_context': json.dumps(patient_data, indent=2)
+            'clinical_context': safe_json_dumps(patient_data, indent=2)
         }
     
     def _format_vital_signs(self, patient_data):
@@ -91,25 +97,16 @@ class SingleLLMBasedTriage(BaseTriage):
         return ', '.join(vitals) if vitals else 'No vital signs recorded'
     
     def _parse_llm_response(self, response):
-        """Parse LLM JSON response"""
-        try:
-            # Try to extract JSON from response
-            response = response.strip()
-            if response.startswith('```json'):
-                response = response[7:]
-            if response.endswith('```'):
-                response = response[:-3]
-            
-            return json.loads(response)
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {e}")
-            return None
+        """Parse LLM JSON response using centralized utilities"""
+        result = parse_json_response(response)
+        log_json_operation("parsing", result is not None, f"Response length: {len(response)}")
+        return result
     
     def _convert_to_standard_format(self, llm_response, patient_data):
-        """Convert LLM response to standard triage format"""
-        priority = llm_response.get('mts_priority', 3)
-        confidence = llm_response.get('confidence', 'medium')
-        rationale = llm_response.get('rationale', 'LLM-based assessment')
+        """Convert LLM response to standard triage format using centralized utilities"""
+        priority = self.extract_priority_from_response(llm_response) or 3
+        confidence = self.extract_confidence_from_response(llm_response)
+        rationale = self.extract_rationale_from_response(llm_response)
         
         return {
             'priority': priority,

@@ -24,7 +24,6 @@ class ConfigManager:
             'level': logging.DEBUG,
             'format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
             'handlers': [
-                logging.FileHandler('output/simulation.log', mode='a'),
                 logging.StreamHandler(sys.stdout)
             ],
             'module_levels': {
