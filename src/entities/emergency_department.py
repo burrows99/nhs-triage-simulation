@@ -76,6 +76,12 @@ class EmergencyDepartment:
             patient.admitted = True
             yield from self.simulate_admission_process()
             
+        # Complete patient journey - set discharge time and add to metrics
+        patient.discharge_time = self.env.now
+        patient.calculate_wait_times()
+        self.metrics.add_patient_data(patient)
+        logger.info(LogMessages.DISCHARGE.format(patient.id, patient.wait_for_consult, patient.admitted))
+            
     def simulate_doctor_consultation(self, patient):
         """Simulate the time taken for a doctor to examine and treat a patient
         

@@ -7,14 +7,20 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
     handlers=[
-        logging.FileHandler('simulation.log', mode='w'),  # Overwrite log file each run
+        logging.FileHandler('output/simulation.log', mode='a'),  # Append to log file to see complete flow
         logging.StreamHandler(sys.stdout)
     ]
 )
 
-# Set specific log levels for different modules
+# Set specific log levels for different modules to reduce noise
 logging.getLogger('matplotlib').setLevel(logging.WARNING)  # Reduce matplotlib noise
+logging.getLogger('matplotlib.pyplot').setLevel(logging.WARNING)
+logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+logging.getLogger('PIL').setLevel(logging.WARNING)  # Pillow (used by matplotlib)
 logging.getLogger('simpy').setLevel(logging.INFO)
+logging.getLogger('numpy').setLevel(logging.WARNING)
+logging.getLogger('pandas').setLevel(logging.WARNING)
+logging.getLogger('scipy').setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 logger.info("Starting NHS Emergency Department Simulation with enhanced logging")
@@ -66,12 +72,30 @@ def main():
     metrics = run_simulation(triage_system)
     
     # Create and run visualizations
-    visualizer = EDVisualizer(metrics, triage_system)
-    visualizer.create_wait_time_plots()
-    visualizer.create_priority_distribution_plot()
-    visualizer.verify_poisson_arrivals()
+    logger.info("Starting visualization generation...")
+    try:
+        visualizer = EDVisualizer(metrics, triage_system)
+        logger.info("EDVisualizer created successfully")
+        
+        logger.info("Creating wait time plots...")
+        visualizer.create_wait_time_plots()
+        logger.info("Wait time plots completed")
+        
+        logger.info("Creating priority distribution plot...")
+        visualizer.create_priority_distribution_plot()
+        logger.info("Priority distribution plot completed")
+        
+        logger.info("Verifying Poisson arrivals...")
+        visualizer.verify_poisson_arrivals()
+        logger.info("Poisson arrivals verification completed")
+        
+        logger.info("All visualizations completed successfully!")
+    except Exception as e:
+        logger.error(f"Error during visualization: {e}")
+        logger.exception("Full traceback:")
     
     print("\nSimulation completed successfully!")
+    logger.info("Simulation finished")
 
 if __name__ == '__main__':
     main()

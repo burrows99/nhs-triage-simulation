@@ -14,6 +14,7 @@ class EDMetrics:
         self.total_patients = 0
         self.admitted_patients = 0
         self.discharged_patients = 0
+        logger.info("EDMetrics initialized - ready to track patient data")
         
     def add_patient_data(self, patient):
         """Add a patient's data to the metrics tracking"""
@@ -83,10 +84,19 @@ class EDMetrics:
     
     def get_dataframe(self):
         """Return a pandas DataFrame of all patient data"""
-        return pd.DataFrame(self.patients_data)
+        df = pd.DataFrame(self.patients_data)
+        logger.debug(f"Generated DataFrame with {len(df)} patient records")
+        return df
 
     def save_patient_data(self, data, triage_type='single'):
         base_dir = f'output/manchester_triage/{triage_type}/json'
-        os.makedirs(base_dir, exist_ok=True)
-        with open(f'{base_dir}/patient_data.json', 'w') as f:
-            json.dump(data, f)
+        logger.info(f"Saving patient data to {base_dir}/patient_data.json")
+        logger.debug(f"Data contains {len(data)} patient records")
+        
+        try:
+            os.makedirs(base_dir, exist_ok=True)
+            with open(f'{base_dir}/patient_data.json', 'w') as f:
+                json.dump(data, f, indent=2)
+            logger.info(f"Successfully saved patient data to {base_dir}/patient_data.json")
+        except Exception as e:
+            logger.error(f"Failed to save patient data: {e}")
