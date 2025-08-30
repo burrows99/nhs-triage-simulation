@@ -102,51 +102,22 @@ class ManchesterTriage(BaseTriage):
     def triangle(x, a, b, c):
         return max(min((x - a)/(b - a), (c - x)/(c - b)), 0)
             
+
+    def perform_triage(self, patient_data):
+        """
+        Perform MTS assessment and return structured triage results
+        {"priority": int, "rationale": str, "recommended_actions": list}
+        """
+        priority = self._fuzzy_categorize(patient_data['severity'])
+        return {
+            "priority": priority,
+            "rationale": f"Manchester Triage System priority {priority}",
+            "recommended_actions": ["Immediate resuscitation" if priority == 1 else "Urgent review" if priority == 2 else "Routine monitoring"]
+        }
+
     def assign_priority(self, patient):
-        """
-        Assign a priority level to a patient based on their condition using
-        a fuzzy implementation of the Manchester Triage System.
-        
-        In a real implementation, this would use the ~50 flowcharts from the MTS
-        to evaluate specific symptoms. This is a simplified version that simulates
-        the process using random severity values with weighted distributions.
-        
-        Args:
-            patient: The patient object containing relevant medical information
-            
-        Returns:
-            int: Priority level (1-5)
-        """
-        # In a real implementation, we would select the appropriate flowchart based on
-        # the patient's presenting symptoms and follow the decision tree
-        
-        # Simulate symptom severity with a distribution that reflects real-world triage outcomes
-        # This creates a beta distribution that's weighted toward lower severity (more common)
-        severity = np.random.beta(2, 5)  
-        
-        # Add some random variation to simulate the fuzzy nature of symptom assessment
-        severity += np.random.normal(0, 0.1)
-        severity = max(0, min(1, severity))  # Clamp to [0,1]
-        
-        try:
-            # Apply fuzzy categorization
-            priority = self._fuzzy_categorize(severity)
-            logger.info(
-                LogMessages.TRIAGE_DECISION.format(
-                    patient.id,
-                    priority
-                )
-            )
-        except Exception as e:
-            logger.error(LogMessages.TRIAGE_ERROR.format(patient.id, str(e)))
-            priority = 3  # Default to Urgent (Yellow) if categorization fails
-        
-        # In some cases, override with direct priority assignment to match expected distribution
-        if random.random() < 0.2:  # 20% of the time, use direct assignment
-            priority = random.choices([1, 2, 3, 4, 5], weights=self.priority_weights)[0]
-            
-        return priority
-    
+        return self.perform_triage(patient.__dict__)['priority']
+
     def estimate_triage_time(self):
         """
         Estimate the time required to triage a patient using the Manchester system.

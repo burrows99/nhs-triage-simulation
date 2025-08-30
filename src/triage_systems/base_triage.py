@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from typing import Dict, Any
+import json
 
 class BaseTriage(ABC):
     """
@@ -9,24 +11,29 @@ class BaseTriage(ABC):
     and implement their specific triage logic.
     """
     
+    REQUIRED_KEYS = {"priority", "rationale", "recommended_actions"}
+
     @abstractmethod
-    def assign_priority(self, patient):
+    def perform_triage(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Assign a priority level to a patient based on their condition.
+        Perform triage on a patient and return structured triage data.
         
         Args:
-            patient: The patient object containing relevant medical information
+            patient_data: Dictionary containing patient information
             
         Returns:
-            int: Priority level where:
-                1: Immediate (Red) - Immediately life-threatening condition
-                2: Very Urgent (Orange) - Potentially life-threatening condition
-                3: Urgent (Yellow) - Serious condition but not immediately life-threatening
-                4: Standard (Green) - Standard condition that requires treatment
-                5: Non-Urgent (Blue) - Minor condition that can safely wait
+            dict: Triage results including priority, rationale, and recommended actions
         """
         pass
-    
+
+    def _validate_response(self, response: str) -> bool:
+        """Validate JSON structure meets triage requirements"""
+        try:
+            data = json.loads(response)
+            return all(key in data for key in self.REQUIRED_KEYS)
+        except json.JSONDecodeError:
+            return False
+
     @abstractmethod
     def estimate_triage_time(self):
         """

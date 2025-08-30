@@ -104,30 +104,67 @@ class EmergencyDepartment:
             patient_id += 1
 
     def patient_process(self, patient):
-        """Simulate the complete patient journey through the ED"""
+        """Orchestrate patient flow through triage and consultation"""
+        yield self.env.process(self._triage_process(patient))
+        yield self.env.process(self._consultation_process(patient))
+
+    def _triage_process(self, patient):
+        """Handle triage phase resource acquisition and timing"""
         try:
-            # Triage process
-            logger.info(LogMessages.PATIENT_ARRIVAL.format(patient.id, self.env.now))
-            with self.nurses.request() as req:
-                yield req
-                with self.cubicles.request() as cub:
-                    start_triage = self.env.now
-                    logger.debug(f"Starting triage for Patient {patient.id} | Queue time: {start_triage - patient.arrival_time:.1f} min")
-                    yield cub
-                    yield self.env.process(self.triage(patient))
-                    logger.info(LogMessages.TRIAGE_COMPLETE.format(patient.id, patient.priority, self.env.now - start_triage))
+            yield from self._manage_resource_chain(
+                [self.nurses, self.cubicles],
+                self._execute_triage,
+                patient
+            )
         except Exception as e:
-            logger.error(f"Critical error in patient process {patient.id}: {str(e)}")
-            patient.discharge_time = self.env.now
-            patient.calculate_wait_times()
-            self.metrics.add_patient_data(patient)
-        
-        # Consultation process
-        with self.doctors.request(priority=patient.priority) as req:
-            yield req
-            with self.cubicles.request() as cub:
-                yield cub
-                yield self.env.process(self.consult(patient))
+            yield from self._handle_triage_error(patient, e)
+
+    def _manage_resource_chain(self, resources, process, *args):
+        """Unified method for sequential resource acquisition and processing"""
+        requests = []
+        try:
+            # Request all resources
+            for resource in resources:
+                if hasattr(resource, 'request'):
+                    req = resource.request()
+                else:
+                    req = resource  # Already a request object
+                requests.append(req)
+                yield req
+            
+            # Execute the process with all resources acquired
+            yield from process(*args)
+            
+        finally:
+            # Release all acquired resources
+            for req in requests:
+                if hasattr(req, 'release'):
+                    req.release()
+
+    def _execute_triage(self, patient):
+        """Perform actual triage procedure"""
+        start_triage = self.env.now
+        logger.info(LogMessages.PATIENT_ARRIVAL.format(patient.id, start_triage))
+        logger.debug(f"Starting triage for Patient {patient.id} | Queue time: {start_triage - patient.arrival_time:.1f} min")
+        yield self.env.process(self.triage(patient))
+        logger.info(LogMessages.TRIAGE_COMPLETE.format(patient.id, patient.priority, self.env.now - start_triage))
+
+    def _consultation_process(self, patient):
+        """Manage consultation phase resources"""
+        # Create a priority request for doctors
+        doctor_req = self.doctors.request(priority=patient.priority)
+        yield from self._manage_resource_chain(
+            [doctor_req, self.cubicles],
+            self.consult,
+            patient
+        )
+
+    def _handle_triage_error(self, patient, error):
+        """Log and process triage phase errors"""
+        logger.error(f"Critical error in patient process {patient.id}: {str(error)}")
+        patient.discharge_time = self.env.now
+        patient.calculate_wait_times()
+        self.metrics.add_patient_data(patient)
         
         # Record discharge time and add to metrics
         patient.discharge_time = self.env.now
