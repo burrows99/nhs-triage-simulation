@@ -21,4 +21,4 @@ class p:
     
     # Simulation control parameters
     warm_up = 0              # Warm-up period (minutes) - disabled for testing
-    sim_duration = 15        # Simulation duration (short test run for ~5 patients)
+    sim_duration = 120       # Simulation duration (2 hours for proper data collection)

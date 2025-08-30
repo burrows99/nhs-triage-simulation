@@ -10,8 +10,10 @@ from src.utils.json_utils import (
     safe_json_dumps,
     log_json_operation
 )
+from src.utils.telemetry import get_telemetry_collector, DecisionStepType
 import json
 import logging
+import time
 from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -38,21 +40,101 @@ class MultiLLMBasedTriage(BaseTriage):
         """Perform multi-agent LLM triage assessment"""
         logger.debug(f"Multi LLM Triage received patient data: {patient_data}")
         
+        # Start telemetry session
+        telemetry = get_telemetry_collector()
+        session_id = telemetry.start_patient_session(
+            patient_data.get('id', 0), 
+            "Multi-Agent LLM-Based Triage System", 
+            patient_data
+        )
+        
         try:
-            # Step 1: Pediatric Risk Assessment
-            pediatric_assessment = self._run_pediatric_assessment(patient_data)
+            # Step 1: Data preprocessing
+            start_time = time.time()
+            context = self._prepare_patient_context(patient_data)
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.DATA_PREPROCESSING,
+                {'raw_patient_data': patient_data},
+                {'prepared_context': context},
+                (time.time() - start_time) * 1000
+            )
+            
+            # Step 2: Pediatric Risk Assessment
+            start_time = time.time()
+            pediatric_assessment = self._run_pediatric_assessment_with_telemetry(patient_data, session_id)
+            pediatric_time = (time.time() - start_time) * 1000
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_INFERENCE,
+                {'agent': 'pediatric_assessor', 'patient_data': patient_data},
+                {'assessment': pediatric_assessment, 'agent_duration_ms': pediatric_time},
+                pediatric_time,
+                metadata={'agent_type': 'pediatric_risk_assessor'}
+            )
+            
             logger.debug(f"Pediatric assessment: {pediatric_assessment}")
             
-            # Step 2: Clinical Assessment
-            clinical_assessment = self._run_clinical_assessment(patient_data, pediatric_assessment)
+            # Step 3: Clinical Assessment
+            start_time = time.time()
+            clinical_assessment = self._run_clinical_assessment_with_telemetry(
+                patient_data, pediatric_assessment, session_id
+            )
+            clinical_time = (time.time() - start_time) * 1000
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_INFERENCE,
+                {
+                    'agent': 'clinical_assessor', 
+                    'patient_data': patient_data,
+                    'pediatric_input': pediatric_assessment
+                },
+                {'assessment': clinical_assessment, 'agent_duration_ms': clinical_time},
+                clinical_time,
+                metadata={'agent_type': 'clinical_assessor'}
+            )
+            
             logger.debug(f"Clinical assessment: {clinical_assessment}")
             
-            # Step 3: Consensus Coordination
-            final_decision = self._run_consensus_coordination(patient_data, pediatric_assessment, clinical_assessment)
+            # Step 5: Consensus Coordination
+            start_time = time.time()
+            final_decision = self._run_consensus_coordination_with_telemetry(
+                patient_data, pediatric_assessment, clinical_assessment, session_id
+            )
+            consensus_time = (time.time() - start_time) * 1000
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_INFERENCE,
+                {
+                    'agent': 'consensus_coordinator',
+                    'pediatric_input': pediatric_assessment,
+                    'clinical_input': clinical_assessment
+                },
+                {'final_decision': final_decision, 'agent_duration_ms': consensus_time},
+                consensus_time,
+                metadata={'agent_type': 'consensus_coordinator'}
+            )
+            
             logger.debug(f"Final consensus: {final_decision}")
             
-            # Convert to standard format
+            # Step 6: Convert to standard format
+            start_time = time.time()
             result = self._convert_to_standard_format(final_decision, patient_data)
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.FINAL_VALIDATION,
+                {'consensus_decision': final_decision},
+                result,
+                (time.time() - start_time) * 1000
+            )
+            
+            # End telemetry session
+            telemetry.end_patient_session(
+                session_id,
+                result['priority'],
+                result['rationale'],
+                success=True
+            )
             
             logger.debug(f"Multi LLM Triage result: {result}")
             return result
@@ -60,33 +142,102 @@ class MultiLLMBasedTriage(BaseTriage):
         except Exception as e:
             logger.error(f"Error in multi LLM triage: {str(e)}")
             logger.exception("Full traceback:")
-            return self._get_fallback_response(patient_data)
+            
+            fallback_result = self._get_fallback_response(patient_data)
+            
+            telemetry.end_patient_session(
+                session_id,
+                fallback_result['priority'],
+                f"Error in Multi-Agent LLM Triage: {str(e)}",
+                success=False
+            )
+            
+            return fallback_result
     
     def _run_pediatric_assessment(self, patient_data):
         """Run pediatric risk assessment agent"""
+        assessment, _ = self._run_pediatric_assessment_with_telemetry(patient_data, None)
+        return assessment
+    
+    def _run_pediatric_assessment_with_telemetry(self, patient_data, session_id):
+        """Run pediatric risk assessment agent with telemetry"""
         context = self._prepare_patient_context(patient_data)
         template = get_pediatric_assessor_prompt()
         prompt = template.format(**context)
         
         logger.debug(f"Pediatric assessment prompt: {prompt[:200]}...")
         
+        # Log prompt generation if telemetry session exists
+        telemetry = get_telemetry_collector()
+        if session_id:
+            start_time = time.time()
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_PROMPT_GENERATION,
+                {'agent': 'pediatric_assessor', 'context': context},
+                {'prompt_length': len(prompt), 'prompt_preview': prompt[:200]},
+                (time.time() - start_time) * 1000,
+                metadata={'agent_type': 'pediatric_risk_assessor'}
+            )
+        
+        # LLM inference
+        start_time = time.time()
         response = self.provider.generate_triage_decision(prompt)
+        inference_time = (time.time() - start_time) * 1000
+        
+        if session_id:
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_INFERENCE,
+                {'agent': 'pediatric_assessor', 'prompt_length': len(prompt)},
+                {'response_length': len(response), 'response_preview': response[:200]},
+                inference_time,
+                metadata={'agent_type': 'pediatric_risk_assessor', 'inference_time_ms': inference_time}
+            )
+        
+        # Response parsing
+        start_time = time.time()
         parsed_response = self._parse_llm_response(response)
         
         if not parsed_response:
             logger.warning("Failed to parse pediatric assessment, using fallback")
-            return {
+            fallback = {
                 'pediatric_risk': 'medium',
                 'mandatory_rules_triggered': [],
                 'age_calculated': patient_data.get('age', 'Unknown'),
                 'priority_recommendation': 3,
                 'rationale': 'Fallback pediatric assessment'
             }
+            
+            if session_id:
+                telemetry.log_decision_step(
+                    session_id, DecisionStepType.RESPONSE_PARSING,
+                    {'raw_response': response[:500]},
+                    {'parsing_success': False, 'fallback_used': True, 'fallback_result': fallback},
+                    (time.time() - start_time) * 1000,
+                    success=False,
+                    error_message="Failed to parse pediatric assessment response",
+                    metadata={'agent_type': 'pediatric_risk_assessor'}
+                )
+            
+            return fallback, {'parsing_success': False, 'fallback_used': True}
         
-        return parsed_response
+        if session_id:
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.RESPONSE_PARSING,
+                {'raw_response': response[:500]},
+                {'parsing_success': True, 'parsed_result': parsed_response},
+                (time.time() - start_time) * 1000,
+                metadata={'agent_type': 'pediatric_risk_assessor'}
+            )
+        
+        return parsed_response, {'parsing_success': True, 'fallback_used': False}
     
     def _run_clinical_assessment(self, patient_data, pediatric_assessment):
         """Run clinical assessment agent"""
+        assessment, _ = self._run_clinical_assessment_with_telemetry(patient_data, pediatric_assessment, None)
+        return assessment
+    
+    def _run_clinical_assessment_with_telemetry(self, patient_data, pediatric_assessment, session_id):
+        """Run clinical assessment agent with telemetry"""
         context = self._prepare_patient_context(patient_data)
         context['pediatric_assessment'] = json.dumps(pediatric_assessment, indent=2)
         
@@ -95,23 +246,79 @@ class MultiLLMBasedTriage(BaseTriage):
         
         logger.debug(f"Clinical assessment prompt: {prompt[:200]}...")
         
+        # Log prompt generation if telemetry session exists
+        telemetry = get_telemetry_collector()
+        if session_id:
+            start_time = time.time()
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_PROMPT_GENERATION,
+                {'agent': 'clinical_assessor', 'context': context, 'pediatric_input': pediatric_assessment},
+                {'prompt_length': len(prompt), 'prompt_preview': prompt[:200]},
+                (time.time() - start_time) * 1000,
+                metadata={'agent_type': 'clinical_assessor'}
+            )
+        
+        # LLM inference
+        start_time = time.time()
         response = self.provider.generate_triage_decision(prompt)
+        inference_time = (time.time() - start_time) * 1000
+        
+        if session_id:
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_INFERENCE,
+                {'agent': 'clinical_assessor', 'prompt_length': len(prompt)},
+                {'response_length': len(response), 'response_preview': response[:200]},
+                inference_time,
+                metadata={'agent_type': 'clinical_assessor', 'inference_time_ms': inference_time}
+            )
+        
+        # Response parsing
+        start_time = time.time()
         parsed_response = self._parse_llm_response(response)
         
         if not parsed_response:
             logger.warning("Failed to parse clinical assessment, using fallback")
-            return {
+            fallback = {
                 'clinical_priority': 3,
                 'confidence': 'low',
                 'key_findings': ['Assessment failed'],
                 'rationale': 'Fallback clinical assessment',
                 'service_min': 30
             }
+            
+            if session_id:
+                telemetry.log_decision_step(
+                    session_id, DecisionStepType.RESPONSE_PARSING,
+                    {'raw_response': response[:500]},
+                    {'parsing_success': False, 'fallback_used': True, 'fallback_result': fallback},
+                    (time.time() - start_time) * 1000,
+                    success=False,
+                    error_message="Failed to parse clinical assessment response",
+                    metadata={'agent_type': 'clinical_assessor'}
+                )
+            
+            return fallback, {'parsing_success': False, 'fallback_used': True}
         
-        return parsed_response
+        if session_id:
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.RESPONSE_PARSING,
+                {'raw_response': response[:500]},
+                {'parsing_success': True, 'parsed_result': parsed_response},
+                (time.time() - start_time) * 1000,
+                metadata={'agent_type': 'clinical_assessor'}
+            )
+        
+        return parsed_response, {'parsing_success': True, 'fallback_used': False}
     
     def _run_consensus_coordination(self, patient_data, pediatric_assessment, clinical_assessment):
         """Run consensus coordination agent"""
+        decision, _ = self._run_consensus_coordination_with_telemetry(
+            patient_data, pediatric_assessment, clinical_assessment, None
+        )
+        return decision
+    
+    def _run_consensus_coordination_with_telemetry(self, patient_data, pediatric_assessment, clinical_assessment, session_id):
+        """Run consensus coordination agent with telemetry"""
         context = self._prepare_patient_context(patient_data)
         context['pediatric_assessment'] = json.dumps(pediatric_assessment, indent=2)
         context['clinical_assessment'] = json.dumps(clinical_assessment, indent=2)
@@ -121,7 +328,39 @@ class MultiLLMBasedTriage(BaseTriage):
         
         logger.debug(f"Consensus coordination prompt: {prompt[:200]}...")
         
+        # Log prompt generation if telemetry session exists
+        telemetry = get_telemetry_collector()
+        if session_id:
+            start_time = time.time()
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_PROMPT_GENERATION,
+                {
+                    'agent': 'consensus_coordinator', 
+                    'context': context,
+                    'pediatric_input': pediatric_assessment,
+                    'clinical_input': clinical_assessment
+                },
+                {'prompt_length': len(prompt), 'prompt_preview': prompt[:200]},
+                (time.time() - start_time) * 1000,
+                metadata={'agent_type': 'consensus_coordinator'}
+            )
+        
+        # LLM inference
+        start_time = time.time()
         response = self.provider.generate_triage_decision(prompt)
+        inference_time = (time.time() - start_time) * 1000
+        
+        if session_id:
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_INFERENCE,
+                {'agent': 'consensus_coordinator', 'prompt_length': len(prompt)},
+                {'response_length': len(response), 'response_preview': response[:200]},
+                inference_time,
+                metadata={'agent_type': 'consensus_coordinator', 'inference_time_ms': inference_time}
+            )
+        
+        # Response parsing
+        start_time = time.time()
         parsed_response = self._parse_llm_response(response)
         
         if not parsed_response:
@@ -131,7 +370,7 @@ class MultiLLMBasedTriage(BaseTriage):
             clinical_priority = clinical_assessment.get('clinical_priority', 3)
             final_priority = min(pediatric_priority, clinical_priority)  # Lower number = higher priority
             
-            return {
+            fallback = {
                 'mts_priority': final_priority,
                 'confidence': 'low',
                 'rationale': 'Fallback consensus - used higher priority from assessments',
@@ -140,8 +379,30 @@ class MultiLLMBasedTriage(BaseTriage):
                 'critical_history_factors': [],
                 'history_risk_modifier': 'neutral'
             }
+            
+            if session_id:
+                telemetry.log_decision_step(
+                    session_id, DecisionStepType.RESPONSE_PARSING,
+                    {'raw_response': response[:500]},
+                    {'parsing_success': False, 'fallback_used': True, 'fallback_result': fallback},
+                    (time.time() - start_time) * 1000,
+                    success=False,
+                    error_message="Failed to parse consensus coordination response",
+                    metadata={'agent_type': 'consensus_coordinator'}
+                )
+            
+            return fallback, {'parsing_success': False, 'fallback_used': True}
         
-        return parsed_response
+        if session_id:
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.RESPONSE_PARSING,
+                {'raw_response': response[:500]},
+                {'parsing_success': True, 'parsed_result': parsed_response},
+                (time.time() - start_time) * 1000,
+                metadata={'agent_type': 'consensus_coordinator'}
+            )
+        
+        return parsed_response, {'parsing_success': True, 'fallback_used': False}
     
     def _prepare_patient_context(self, patient_data):
         """Prepare patient context for prompt formatting"""

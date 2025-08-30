@@ -19,6 +19,8 @@ from src.triage_systems.manchester_triage import ManchesterTriage
 from src.triage_systems.single_LLM_based_triage import SingleLLMBasedTriage
 from src.triage_systems.multi_LLM_based_triage import MultiLLMBasedTriage
 from src.visualization.plots import EDVisualizer
+from src.visualization.telemetry_plots import TelemetryVisualizer
+from src.utils.telemetry import get_telemetry_collector
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
@@ -294,6 +296,39 @@ def main():
     else:
         print("\nNo systems completed successfully. Please check the logs.")
     
+    # Generate telemetry visualizations
+    print("\n" + "=" * 50)
+    print("GENERATING TELEMETRY VISUALIZATIONS")
+    print("=" * 50)
+    
+    try:
+        telemetry_collector = get_telemetry_collector()
+        if telemetry_collector.completed_sessions:
+            print(f"Processing telemetry data for {len(telemetry_collector.completed_sessions)} sessions...")
+            
+            telemetry_visualizer = TelemetryVisualizer(telemetry_collector)
+            generated_files = telemetry_visualizer.create_all_visualizations('output')
+            
+            print(f"Generated {len(generated_files['plots'])} telemetry plots")
+            print(f"Generated {len(generated_files['reports'])} telemetry reports")
+            print("Telemetry visualizations saved to output/telemetry/")
+            
+            # Print summary of telemetry findings
+            stats = telemetry_collector.get_summary_stats()
+            print("\nTelemetry Summary:")
+            for system_name, system_stats in stats.get('systems', {}).items():
+                print(f"  {system_name}:")
+                print(f"    - Average processing time: {system_stats['avg_duration_ms']:.1f} ms")
+                print(f"    - Success rate: {system_stats['success_rate']:.1%}")
+                print(f"    - Sessions processed: {system_stats['count']}")
+        else:
+            print("No telemetry data collected during simulation.")
+            
+    except Exception as e:
+        logger.error(f"Error generating telemetry visualizations: {e}")
+        logger.exception("Full traceback:")
+        print(f"Failed to generate telemetry visualizations: {e}")
+    
     print("\n" + "=" * 50)
     print("COMPREHENSIVE TEST COMPLETED")
     print("=" * 50)
@@ -301,6 +336,12 @@ def main():
     print("Check the output directories for detailed results and plots.")
     if len(results) > 1:
         print("Comparison plots and report available in output/comparison/")
+    print("Telemetry analysis available in output/telemetry/")
+    print("\nTelemetry Features:")
+    print("  - Decision step timelines for each patient")
+    print("  - System performance comparisons")
+    print("  - Decision step analysis across all systems")
+    print("  - Detailed telemetry reports with error analysis")
 
 if __name__ == "__main__":
     main()

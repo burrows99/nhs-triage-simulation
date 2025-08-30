@@ -5,8 +5,10 @@ from src.utils.json_utils import (
     safe_json_dumps,
     log_json_operation
 )
+from src.utils.telemetry import get_telemetry_collector, DecisionStepType
 import json
 import logging
+import time
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -33,33 +35,115 @@ class SingleLLMBasedTriage(BaseTriage):
         """Perform single-agent LLM triage assessment"""
         logger.debug(f"Single LLM Triage received patient data: {patient_data}")
         
+        # Start telemetry session
+        telemetry = get_telemetry_collector()
+        session_id = telemetry.start_patient_session(
+            patient_data.get('id', 0), 
+            "Single LLM-Based Triage System", 
+            patient_data
+        )
+        
         try:
-            # Prepare context for the prompt
+            # Step 1: Input validation and context preparation
+            start_time = time.time()
             context = self._prepare_patient_context(patient_data)
             
-            # Format the prompt using the dedicated prompt function
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.DATA_PREPROCESSING,
+                {'raw_patient_data': patient_data},
+                {'prepared_context': context},
+                (time.time() - start_time) * 1000
+            )
+            
+            # Step 2: Prompt generation
+            start_time = time.time()
             template = get_single_agent_prompt()
             prompt = template.format(**context)
             
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_PROMPT_GENERATION,
+                {'context': context, 'template_length': len(template)},
+                {'prompt_length': len(prompt), 'prompt_preview': prompt[:200]},
+                (time.time() - start_time) * 1000
+            )
+            
             logger.debug(f"Generated prompt for single LLM triage: {prompt[:200]}...")
             
-            # Get decision from LLM with configured options
+            # Step 3: LLM inference
+            start_time = time.time()
             decision = self.provider.generate_triage_decision(
                 prompt, 
                 options=self.config['single_agent'].get('options', {})
             )
+            inference_time = (time.time() - start_time) * 1000
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.LLM_INFERENCE,
+                {
+                    'prompt_length': len(prompt),
+                    'llm_options': self.config['single_agent'].get('options', {})
+                },
+                {
+                    'response_length': len(decision),
+                    'response_preview': decision[:200],
+                    'inference_time_ms': inference_time
+                },
+                inference_time
+            )
             
             logger.debug(f"Raw LLM response: {decision}")
             
-            # Parse and validate the response
+            # Step 4: Response parsing
+            start_time = time.time()
             parsed_decision = self._parse_llm_response(decision)
             
             if not parsed_decision:
+                telemetry.log_decision_step(
+                    session_id, DecisionStepType.RESPONSE_PARSING,
+                    {'raw_response': decision[:500]},
+                    {'parsing_success': False, 'error': 'Failed to parse JSON'},
+                    (time.time() - start_time) * 1000,
+                    success=False,
+                    error_message="Failed to parse LLM response"
+                )
+                
                 logger.error(f"Failed to parse LLM response: {decision}")
-                return self._get_fallback_response(patient_data)
+                fallback_result = self._get_fallback_response(patient_data)
+                
+                telemetry.end_patient_session(
+                    session_id,
+                    fallback_result['priority'],
+                    fallback_result['rationale'],
+                    success=False
+                )
+                
+                return fallback_result
             
-            # Convert to standard triage format
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.RESPONSE_PARSING,
+                {'raw_response': decision[:500]},
+                {'parsing_success': True, 'parsed_data': parsed_decision},
+                (time.time() - start_time) * 1000
+            )
+            
+            # Step 5: Convert to standard format
+            start_time = time.time()
             result = self._convert_to_standard_format(parsed_decision, patient_data)
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.FINAL_VALIDATION,
+                {'parsed_decision': parsed_decision},
+                result,
+                (time.time() - start_time) * 1000
+            )
+            
+            # End telemetry session
+            telemetry.end_patient_session(
+                session_id,
+                result['priority'],
+                result['rationale'],
+                success=True
+            )
             
             logger.debug(f"Single LLM Triage result: {result}")
             return result
@@ -67,7 +151,17 @@ class SingleLLMBasedTriage(BaseTriage):
         except Exception as e:
             logger.error(f"Error in single LLM triage: {str(e)}")
             logger.exception("Full traceback:")
-            return self._get_fallback_response(patient_data)
+            
+            fallback_result = self._get_fallback_response(patient_data)
+            
+            telemetry.end_patient_session(
+                session_id,
+                fallback_result['priority'],
+                f"Error in Single LLM Triage: {str(e)}",
+                success=False
+            )
+            
+            return fallback_result
     
     def _prepare_patient_context(self, patient_data):
         """Prepare patient context for prompt formatting"""

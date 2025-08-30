@@ -1,8 +1,10 @@
 import random
 import numpy as np
+import time
 from src.triage_systems.base_triage import BaseTriage
 from src.config.constants import SymptomSeverity, LogMessages
 from src.config.config_manager import get_manchester_triage_config, get_service_time_config, get_triage_actions_config
+from src.utils.telemetry import get_telemetry_collector, DecisionStepType
 import logging
 
 logger = logging.getLogger(__name__)
@@ -63,6 +65,13 @@ class ManchesterTriage(BaseTriage):
         """
         Categorize the severity using fuzzy logic.
         """
+        priority, _ = self._fuzzy_categorize_with_telemetry(severity)
+        return priority
+    
+    def _fuzzy_categorize_with_telemetry(self, severity):
+        """
+        Categorize the severity using fuzzy logic with detailed telemetry information.
+        """
         logger.debug(f"Fuzzy categorization for severity: {severity}")
         
         clinical_params = {'severity': severity}
@@ -72,26 +81,60 @@ class ManchesterTriage(BaseTriage):
             'severity': [func(severity) for func in self.membership.values()]
         }
         
-        logger.debug(f"Membership values: {dict(zip(self.membership.keys(), membership_values['severity']))}")
+        membership_dict = dict(zip(self.membership.keys(), membership_values['severity']))
+        logger.debug(f"Membership values: {membership_dict}")
         
         # Rule activation
         activated_rules = []
         for rule in self.rules:
             min_strength = membership_values['severity'][list(self.membership.keys()).index(rule['conditions'][0])]
             if min_strength > 0:
-                activated_rules.append({'strength': min_strength, 'output': rule['output']})
+                activated_rules.append({
+                    'strength': min_strength, 
+                    'output': rule['output'],
+                    'condition': rule['conditions'][0],
+                    'contribution': min_strength * rule['output']
+                })
                 logger.debug(f"Activated rule: {rule['conditions'][0]} -> priority {rule['output']} (strength: {min_strength:.3f})")
         
         # Defuzzification (centroid method)
         if not activated_rules:
             logger.debug("No rules activated, defaulting to priority 5")
-            return 5
+            defuzzification_details = {
+                'numerator': 0,
+                'denominator': 0,
+                'raw_priority': 5,
+                'final_priority': 5,
+                'default_used': True
+            }
+            telemetry_details = {
+                'membership_values': membership_dict,
+                'activated_rules': activated_rules,
+                'defuzzification': defuzzification_details
+            }
+            return 5, telemetry_details
+            
         numerator = sum(r['strength'] * r['output'] for r in activated_rules)
         denominator = sum(r['strength'] for r in activated_rules)
         final_priority = round(numerator / denominator)
         
+        defuzzification_details = {
+            'numerator': numerator,
+            'denominator': denominator,
+            'raw_priority': numerator / denominator,
+            'final_priority': final_priority,
+            'default_used': False
+        }
+        
         logger.debug(f"Defuzzification: numerator={numerator:.3f}, denominator={denominator:.3f}, final_priority={final_priority}")
-        return final_priority
+        
+        telemetry_details = {
+            'membership_values': membership_dict,
+            'activated_rules': activated_rules,
+            'defuzzification': defuzzification_details
+        }
+        
+        return final_priority, telemetry_details
 
     @staticmethod
     def trapezoid(x, a, b, c, d):
@@ -122,26 +165,111 @@ class ManchesterTriage(BaseTriage):
         """
         logger.debug(f"Manchester Triage System received patient data: {patient_data}")
         
-        if 'severity' not in patient_data:
-            logger.error(f"Missing 'severity' key in patient data: {patient_data}")
-            raise KeyError(f"Patient data missing required 'severity' key. Available keys: {list(patient_data.keys())}")
+        # Start telemetry session
+        telemetry = get_telemetry_collector()
+        session_id = telemetry.start_patient_session(
+            patient_data.get('id', 0), 
+            "Manchester Triage System", 
+            patient_data
+        )
         
-        severity = patient_data['severity']
-        logger.debug(f"Processing severity value: {severity}")
-        
-        priority = self._fuzzy_categorize(severity)
-        
-        # Get configured actions for this priority
-        recommended_actions = self.actions_config.get(priority, ["Standard monitoring"])
-        
-        result = {
-            "priority": priority,
-            "rationale": f"Manchester Triage System priority {priority} based on severity {severity:.3f}",
-            "recommended_actions": recommended_actions
-        }
-        
-        logger.debug(f"Manchester Triage System result: {result}")
-        return result
+        try:
+            # Step 1: Input validation
+            start_time = time.time()
+            if 'severity' not in patient_data:
+                error_msg = f"Patient data missing required 'severity' key. Available keys: {list(patient_data.keys())}"
+                telemetry.log_decision_step(
+                    session_id, DecisionStepType.INPUT_VALIDATION,
+                    {'patient_data_keys': list(patient_data.keys())},
+                    {'error': error_msg},
+                    (time.time() - start_time) * 1000,
+                    success=False,
+                    error_message=error_msg
+                )
+                logger.error(f"Missing 'severity' key in patient data: {patient_data}")
+                raise KeyError(error_msg)
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.INPUT_VALIDATION,
+                {'patient_data_keys': list(patient_data.keys())},
+                {'validation_passed': True, 'severity_present': True},
+                (time.time() - start_time) * 1000
+            )
+            
+            # Step 2: Data preprocessing
+            start_time = time.time()
+            severity = patient_data['severity']
+            logger.debug(f"Processing severity value: {severity}")
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.DATA_PREPROCESSING,
+                {'raw_severity': severity},
+                {'processed_severity': severity, 'severity_type': type(severity).__name__},
+                (time.time() - start_time) * 1000
+            )
+            
+            # Step 3: Fuzzy logic categorization
+            start_time = time.time()
+            priority, fuzzy_details = self._fuzzy_categorize_with_telemetry(severity)
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.FUZZY_LOGIC,
+                {'severity': severity},
+                {
+                    'calculated_priority': priority,
+                    'membership_values': fuzzy_details['membership_values'],
+                    'activated_rules': fuzzy_details['activated_rules'],
+                    'defuzzification_details': fuzzy_details['defuzzification']
+                },
+                (time.time() - start_time) * 1000
+            )
+            
+            # Step 4: Priority assignment and action lookup
+            start_time = time.time()
+            recommended_actions = self.actions_config.get(priority, ["Standard monitoring"])
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.PRIORITY_ASSIGNMENT,
+                {'calculated_priority': priority},
+                {'final_priority': priority, 'recommended_actions': recommended_actions},
+                (time.time() - start_time) * 1000
+            )
+            
+            # Step 5: Final result assembly
+            start_time = time.time()
+            result = {
+                "priority": priority,
+                "rationale": f"Manchester Triage System priority {priority} based on severity {severity:.3f}",
+                "recommended_actions": recommended_actions
+            }
+            
+            telemetry.log_decision_step(
+                session_id, DecisionStepType.FINAL_VALIDATION,
+                {'priority': priority, 'severity': severity},
+                result,
+                (time.time() - start_time) * 1000
+            )
+            
+            # End telemetry session
+            telemetry.end_patient_session(
+                session_id, 
+                priority, 
+                result['rationale'],
+                success=True
+            )
+            
+            logger.debug(f"Manchester Triage System result: {result}")
+            return result
+            
+        except Exception as e:
+            # Log error and end session
+            telemetry.end_patient_session(
+                session_id, 
+                3,  # fallback priority
+                f"Error in Manchester Triage: {str(e)}",
+                success=False
+            )
+            raise
 
     def assign_priority(self, patient):
         logger.debug(f"assign_priority called for Patient {patient.id}")
