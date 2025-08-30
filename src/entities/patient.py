@@ -16,7 +16,8 @@ class Patient:
     
     # CSV field definitions for data export (simulation-specific fields)
     CSV_FIELDS = [
-        'id', 'arrival_time', 'age', 'gender', 'priority', 'triage_time', 
+        'id', 'arrival_time', 'age', 'gender', 'severity', 'chief_complaint',
+        'vital_signs', 'medical_history', 'priority', 'triage_time', 
         'wait_for_triage', 'triage_system', 'consult_time', 'wait_for_consult', 
         'discharge_time', 'total_time', 'admitted'
     ]
@@ -32,6 +33,23 @@ class Patient:
         # Patient demographics from CSV (matching patients.csv structure)
         self.age = kwargs.get('age', patient_data.get('age', 30))
         self.gender = kwargs.get('gender', patient_data.get('gender', 'Unknown'))
+        
+        # Clinical data required for triage
+        self.severity = kwargs.get('severity', patient_data.get('severity', 0.5))  # Default severity
+        self.chief_complaint = kwargs.get('chief_complaint', patient_data.get('chief_complaint', 'General medical complaint'))
+        
+        # Vital signs (required for LLM triage)
+        default_vitals = {
+            'heart_rate': 80,
+            'blood_pressure': '120/80',
+            'temperature': 98.6,
+            'respiratory_rate': 16,
+            'oxygen_saturation': 98
+        }
+        self.vital_signs = kwargs.get('vital_signs', patient_data.get('vital_signs', default_vitals))
+        
+        # Medical history
+        self.medical_history = kwargs.get('medical_history', patient_data.get('medical_history', 'None reported'))
         
         # Simulation-specific data
         self.priority = kwargs.get('priority', 0)  # Assigned during triage

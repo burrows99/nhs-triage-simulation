@@ -27,6 +27,3 @@ ENV PYTHONPATH=/app
 
 # Set default environment variables
 ENV OLLAMA_BASE_URL=http://ollama:11434
-
-# Default command (can be overridden in docker-compose)
-CMD ["python3", "test_all_triage_systems.py"]

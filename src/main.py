@@ -62,16 +62,63 @@ def run_simulation(triage_system):
     return ed.metrics
 
 def run_all_triage_systems():
-    """Run simulations for all three triage systems"""
-    from src.triage_systems.single_LLM_based_triage import SingleLLMBasedTriage
-    from src.triage_systems.multi_LLM_based_triage import MultiLLMBasedTriage
+    """Run simulations for all three triage systems with precomputation for AI systems"""
+    from src.triage_systems.simulation_aware_ai_triage import create_single_llm_triage, create_multi_agent_triage
+    from src.entities.patient import Patient
     import time
+    
+    # Load patient data once for precomputation
+    logger.info("Loading patient data for precomputation...")
+    patient_data_list = []
+    try:
+        patients = Patient.get_all(deep=False)  # Load same as simulation
+        for patient in patients:
+            patient_data = patient.__dict__.copy()
+            # Add any missing fields that might be needed for triage
+            if 'chief_complaint' not in patient_data:
+                patient_data['chief_complaint'] = 'General medical complaint'
+            if 'severity' not in patient_data:
+                patient_data['severity'] = 0.5  # Default severity
+            if 'vital_signs' not in patient_data:
+                patient_data['vital_signs'] = {
+                    'heart_rate': 80,
+                    'blood_pressure': '120/80',
+                    'temperature': 98.6,
+                    'respiratory_rate': 16,
+                    'oxygen_saturation': 98
+                }
+            patient_data_list.append(patient_data)
+        
+        logger.info(f"Loaded {len(patient_data_list)} patients for precomputation")
+    except Exception as e:
+        logger.error(f"Error loading patient data: {e}")
+        logger.info("Proceeding without precomputation - AI systems will use fallback priorities")
+        patient_data_list = []
+    
+    # Create triage systems
+    single_llm_system = create_single_llm_triage()
+    multi_agent_system = create_multi_agent_triage()
+    
+    # Pre-compute AI responses if patient data is available
+    if patient_data_list:
+        logger.info("Starting precomputation phase for AI triage systems...")
+        try:
+            logger.info("Pre-computing Single LLM responses...")
+            single_llm_system.precompute_patient_responses(patient_data_list)
+            
+            logger.info("Pre-computing Multi-Agent LLM responses...")
+            multi_agent_system.precompute_patient_responses(patient_data_list)
+            
+            logger.info("Precomputation phase completed successfully")
+        except Exception as e:
+            logger.error(f"Error during precomputation: {e}")
+            logger.info("Proceeding with simulation - AI systems will use fallback priorities")
     
     # Define all triage systems to test
     triage_systems = [
         ("Manchester Triage System", ManchesterTriage()),
-        ("Single LLM-based Triage", SingleLLMBasedTriage()),
-        ("Multi-Agent LLM-based Triage", MultiLLMBasedTriage())
+        ("Single LLM-Based Triage System", single_llm_system),
+        ("Multi-Agent LLM-Based Triage System", multi_agent_system)
     ]
     
     results = {}
@@ -144,6 +191,15 @@ def run_all_triage_systems():
             if "ollama" in str(e).lower() or "connection" in str(e).lower():
                 print(f"Note: {system_name} requires Ollama service to be running.")
                 print("Start Ollama with: docker-compose up ollama ollama-downloader -d")
+    
+    # Cleanup AI systems
+    try:
+        logger.info("Cleaning up AI triage systems...")
+        single_llm_system.shutdown()
+        multi_agent_system.shutdown()
+        logger.info("AI systems cleanup completed")
+    except Exception as e:
+        logger.error(f"Error during AI systems cleanup: {e}")
     
     # Print comparison summary
     if len(results) > 1:
