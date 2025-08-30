@@ -55,6 +55,12 @@ class AITriage(BaseTriage):
         # Configure the model provider with Ollama settings
         if hasattr(self.provider, 'configure'):
             self.provider.configure(self.config['request'])
+        
+        # Set up system prompt for triage context
+        # This will be overridden by specific triage systems with their specialized prompts
+        from src.config.config_manager import get_base_agent_prompt
+        if hasattr(self.provider, 'setup'):
+            self.provider.setup(get_base_agent_prompt())
     
     def _prepare_patient_context(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare patient data for LLM prompt generation

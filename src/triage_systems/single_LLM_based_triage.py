@@ -11,6 +11,11 @@ logger = logging.getLogger(__name__)
 class SingleLLMBasedTriage(AITriage):
     def __init__(self, model_provider=None):
         super().__init__(model_provider)
+        
+        # Set up specialized single agent system prompt
+        from src.config.config_manager import get_single_agent_prompt
+        if hasattr(self.provider, 'setup'):
+            self.provider.setup(get_single_agent_prompt())
     
     def perform_triage(self, patient_data):
         """Perform single-agent LLM triage assessment"""

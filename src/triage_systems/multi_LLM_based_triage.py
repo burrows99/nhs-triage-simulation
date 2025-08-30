@@ -15,6 +15,46 @@ logger = logging.getLogger(__name__)
 class MultiLLMBasedTriage(AITriage):
     def __init__(self, model_provider=None):
         super().__init__(model_provider)
+        
+        # Create specialized providers for each agent with their specific system prompts
+        from src.config.config_manager import (
+            get_pediatric_assessor_prompt,
+            get_clinical_assessor_prompt, 
+            get_consensus_coordinator_prompt
+        )
+        
+        # Create separate provider instances for each specialized agent
+        if model_provider is None:
+            from src.model_providers.ollama import OllamaProvider
+            
+            # Pediatric assessor provider
+            self.pediatric_provider = OllamaProvider(
+                base_url=self.config['base_url'],
+                model=self.config['model']
+            )
+            self.pediatric_provider.configure(self.config['request'])
+            self.pediatric_provider.setup(get_pediatric_assessor_prompt())
+            
+            # Clinical assessor provider  
+            self.clinical_provider = OllamaProvider(
+                base_url=self.config['base_url'],
+                model=self.config['model']
+            )
+            self.clinical_provider.configure(self.config['request'])
+            self.clinical_provider.setup(get_clinical_assessor_prompt())
+            
+            # Consensus coordinator provider
+            self.consensus_provider = OllamaProvider(
+                base_url=self.config['base_url'],
+                model=self.config['model']
+            )
+            self.consensus_provider.configure(self.config['request'])
+            self.consensus_provider.setup(get_consensus_coordinator_prompt())
+        else:
+            # Use the same provider for all agents if one is provided
+            self.pediatric_provider = model_provider
+            self.clinical_provider = model_provider
+            self.consensus_provider = model_provider
     
     def perform_triage(self, patient_data):
         """Perform multi-agent LLM triage assessment"""
@@ -145,9 +185,9 @@ class MultiLLMBasedTriage(AITriage):
                 metadata={'agent_type': 'clinical_assessor'}
             )
         
-        # LLM inference
+        # LLM inference with specialized clinical provider
         start_time = time.time()
-        response = self.provider.generate_triage_decision(prompt)
+        response = self.clinical_provider.generate_triage_decision(prompt)
         inference_time = (time.time() - start_time) * 1000
         
         if session_id:
@@ -232,9 +272,9 @@ class MultiLLMBasedTriage(AITriage):
                 metadata={'agent_type': 'consensus_coordinator'}
             )
         
-        # LLM inference
+        # LLM inference with specialized consensus provider
         start_time = time.time()
-        response = self.provider.generate_triage_decision(prompt)
+        response = self.consensus_provider.generate_triage_decision(prompt)
         inference_time = (time.time() - start_time) * 1000
         
         if session_id:

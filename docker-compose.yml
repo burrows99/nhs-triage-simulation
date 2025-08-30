@@ -26,7 +26,7 @@ services:
           sleep 5
         done
         echo 'Ollama is ready, downloading model...'
-        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"adrienbrault/biomistral-7b:Q2_K\"}' --max-time 1800
+        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:1b\"}' --max-time 1800
         echo 'Model download completed'
       "
     networks:
@@ -49,7 +49,7 @@ services:
     environment:
       - PYTHONPATH=/app
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=adrienbrault/biomistral-7b:Q2_K
+      - OLLAMA_MODEL=llama3.2:1b
     networks:
       - ollama-network
     restart: "no"

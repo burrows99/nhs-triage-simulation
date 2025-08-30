@@ -62,6 +62,16 @@ class SimulationAwareAITriage(BaseTriage):
         # Configure the provider
         self.provider.configure(self.config['request'])
         
+        # Set up system prompt for triage context based on strategy
+        if hasattr(self.provider, 'setup'):
+            if self.strategy == "single":
+                from src.config.config_manager import get_single_agent_prompt
+                self.provider.setup(get_single_agent_prompt())
+            else:
+                # For multi-agent strategy, use base prompt as it will be overridden by specific agents
+                from src.config.config_manager import get_base_agent_prompt
+                self.provider.setup(get_base_agent_prompt())
+        
         # Cache for precomputed responses
         self.response_cache_keys = {}
         self._precompute_lock = threading.Lock()

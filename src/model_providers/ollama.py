@@ -14,17 +14,13 @@ class OllamaProvider(ModelProvider):
         self.system_prompt = ""
         self.config = None
         
-        # Default configuration
-        self.timeout_sec = 45
-        self.retries = 2
-        self.options = {
-            'temperature': 0.02,
-            'top_p': 0.7,
-            'num_predict': 75,
-            'num_ctx': 1536,
-            'num_gpu': -1,
-            'num_thread': 4
-        }
+        # Load default configuration from config manager
+        from src.config.config_manager import get_ollama_config
+        ollama_config = get_ollama_config()
+        
+        self.timeout_sec = ollama_config['request']['timeout_sec']
+        self.retries = ollama_config['request']['retries']
+        self.options = ollama_config['request']['options'].copy()
     
     def configure(self, config: Dict[str, Any]) -> None:
         """Configure the provider with Ollama settings"""
