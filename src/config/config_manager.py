@@ -42,6 +42,10 @@ class ConfigManager:
                 'mean': p.mean_nurse_triage,
                 'stdev': p.stdev_nurse_triage
             },
+            'triage': {
+                'mean': p.mean_nurse_triage,
+                'stdev': p.stdev_nurse_triage
+            },
             'inpatient_wait': {
                 'mean': p.mean_ip_wait,
                 'stdev': 0  # Not specified in parameters
@@ -266,6 +270,14 @@ def get_manchester_triage_config() -> Dict[str, Any]:
                  'age_weight_multiplier': 1.2
              }
          },
+         'time_factor': 1.0,  # Base time multiplier for Manchester Triage
+         'priority_consultation_factors': {
+             1: 1.5,  # Immediate - longer consultation
+             2: 1.3,  # Very urgent
+             3: 1.0,  # Urgent - standard time
+             4: 0.8,  # Standard - shorter
+             5: 0.7   # Non-urgent - shortest
+         },
          'membership_functions': {
              'low_severity': {
                  'type': 'trapezoid',
@@ -316,7 +328,8 @@ def get_patient_generation_config() -> Dict[str, Any]:
     return {
         'use_synthetic_data': True,
         'deep_context': True,
-        'cycle_data': getattr(p, 'cycle_patient_data', True)
+        'cycle_data': getattr(p, 'cycle_patient_data', True),
+        'default_priority': 4  # Standard priority for triage failures
     }
 
 def get_triage_actions_config() -> Dict[int, List[str]]:
