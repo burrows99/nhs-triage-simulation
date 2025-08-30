@@ -311,7 +311,7 @@ def main():
             
             print(f"Generated {len(generated_files['plots'])} telemetry plots")
             print(f"Generated {len(generated_files['reports'])} telemetry reports")
-            print("Telemetry visualizations saved to output/telemetry/")
+            print("Telemetry visualizations saved to system-specific directories:")
             
             # Print summary of telemetry findings
             stats = telemetry_collector.get_summary_stats()
@@ -321,6 +321,7 @@ def main():
                 print(f"    - Average processing time: {system_stats['avg_duration_ms']:.1f} ms")
                 print(f"    - Success rate: {system_stats['success_rate']:.1%}")
                 print(f"    - Sessions processed: {system_stats['count']}")
+                print(f"    - Telemetry saved to: output/{system_name}/telemetry/")
         else:
             print("No telemetry data collected during simulation.")
             
@@ -336,10 +337,12 @@ def main():
     print("Check the output directories for detailed results and plots.")
     if len(results) > 1:
         print("Comparison plots and report available in output/comparison/")
-    print("Telemetry analysis available in output/telemetry/")
+    print("Telemetry analysis available in system-specific directories:")
+    print("  - Individual system telemetry: output/[System Name]/telemetry/")
+    print("  - Cross-system comparisons: output/comparison/")
     print("\nTelemetry Features:")
-    print("  - Decision step timelines for each patient")
-    print("  - System performance comparisons")
+    print("  - Decision step timelines for each patient (per system)")
+    print("  - System performance comparisons (in comparison folder)")
     print("  - Decision step analysis across all systems")
     print("  - Detailed telemetry reports with error analysis")
 

@@ -6,8 +6,12 @@ during triage decision-making processes across all triage systems.
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 import numpy as np
+try:
+    import seaborn as sns
+    HAS_SEABORN = True
+except ImportError:
+    HAS_SEABORN = False
 from typing import List, Dict, Any, Optional
 import json
 from datetime import datetime
@@ -27,7 +31,8 @@ class TelemetryVisualizer:
         
         # Set up plotting style
         plt.style.use('default')
-        sns.set_palette("husl")
+        if HAS_SEABORN:
+            sns.set_palette("husl")
         
     def create_decision_timeline_plot(self, patient_id: int, output_dir: str) -> Optional[str]:
         """Create a timeline plot showing decision steps for a specific patient"""
@@ -114,7 +119,10 @@ class TelemetryVisualizer:
         fig.suptitle('Triage System Performance Comparison', fontsize=16, fontweight='bold')
         
         systems = list(system_data.keys())
-        colors = sns.color_palette("husl", len(systems))
+        if HAS_SEABORN:
+            colors = sns.color_palette("husl", len(systems))
+        else:
+            colors = plt.cm.tab10(np.linspace(0, 1, len(systems)))
         
         # 1. Total Duration Comparison
         ax = axes[0, 0]
@@ -230,7 +238,10 @@ class TelemetryVisualizer:
         step_types = df['step_type'].unique()
         step_durations = [df[df['step_type'] == step_type]['duration_ms'].values for step_type in step_types]
         bp = ax.boxplot(step_durations, labels=step_types, patch_artist=True)
-        colors = sns.color_palette("husl", len(step_types))
+        if HAS_SEABORN:
+            colors = sns.color_palette("husl", len(step_types))
+        else:
+            colors = plt.cm.tab10(np.linspace(0, 1, len(step_types)))
         for patch, color in zip(bp['boxes'], colors):
             patch.set_facecolor(color)
         ax.set_title('Step Duration by Type')
@@ -263,8 +274,11 @@ class TelemetryVisualizer:
         # 4. Average Step Duration by System
         ax = axes[1, 1]
         avg_durations = df.groupby('system')['duration_ms'].mean()
-        bars = ax.bar(avg_durations.index, avg_durations.values, 
-                     color=sns.color_palette("husl", len(avg_durations)))
+        if HAS_SEABORN:
+            step_colors = sns.color_palette("husl", len(avg_durations))
+        else:
+            step_colors = plt.cm.tab10(np.linspace(0, 1, len(avg_durations)))
+        bars = ax.bar(avg_durations.index, avg_durations.values, color=step_colors)
         ax.set_title('Average Step Duration by System')
         ax.set_ylabel('Average Duration (ms)')
         ax.tick_params(axis='x', rotation=45)
@@ -344,42 +358,73 @@ class TelemetryVisualizer:
         return report_path
     
     def create_all_visualizations(self, base_output_dir: str) -> Dict[str, List[str]]:
-        """Create all telemetry visualizations and reports"""
-        # Create telemetry output directory
-        telemetry_dir = os.path.join(base_output_dir, 'telemetry')
-        os.makedirs(telemetry_dir, exist_ok=True)
-        
+        """Create all telemetry visualizations and reports in system-specific directories"""
         generated_files = {
             'plots': [],
             'reports': []
         }
         
         try:
-            # Generate system performance comparison
-            perf_plot = self.create_system_performance_comparison(telemetry_dir)
-            if perf_plot:
-                generated_files['plots'].append(perf_plot)
+            # Group sessions by system
+            system_sessions = {}
+            for session in self.completed_sessions:
+                system_name = session.triage_system
+                if system_name not in system_sessions:
+                    system_sessions[system_name] = []
+                system_sessions[system_name].append(session)
             
-            # Generate decision step analysis
-            step_plot = self.create_decision_step_analysis(telemetry_dir)
-            if step_plot:
-                generated_files['plots'].append(step_plot)
+            # Generate system-specific telemetry
+            for system_name, sessions in system_sessions.items():
+                # Create system-specific telemetry directory
+                system_dir = os.path.join(base_output_dir, system_name, 'telemetry')
+                os.makedirs(system_dir, exist_ok=True)
+                
+                # Create a temporary visualizer for this system only
+                system_collector = TelemetryCollector()
+                system_collector.completed_sessions = sessions
+                system_visualizer = TelemetryVisualizer(system_collector)
+                
+                # Generate patient timeline plots for this system
+                patient_ids = list(set(session.patient_id for session in sessions))
+                for patient_id in patient_ids[:3]:  # Limit to first 3 patients per system
+                    timeline_plot = system_visualizer.create_decision_timeline_plot(patient_id, system_dir)
+                    if timeline_plot:
+                        generated_files['plots'].append(timeline_plot)
+                
+                # Generate system-specific telemetry report
+                report_path = system_visualizer.generate_telemetry_report(system_dir)
+                generated_files['reports'].append(report_path)
+                
+                # Export system-specific raw telemetry data
+                json_path = os.path.join(system_dir, f'{system_name.lower().replace(" ", "_").replace("-", "_")}_telemetry_data.json')
+                system_collector.export_telemetry_json(json_path)
+                generated_files['reports'].append(json_path)
+                
+                logger.info(f"Generated telemetry for {system_name}: {len(sessions)} sessions")
             
-            # Generate patient timeline plots
-            patient_ids = list(set(session.patient_id for session in self.completed_sessions))
-            for patient_id in patient_ids[:5]:  # Limit to first 5 patients to avoid too many plots
-                timeline_plot = self.create_decision_timeline_plot(patient_id, telemetry_dir)
-                if timeline_plot:
-                    generated_files['plots'].append(timeline_plot)
-            
-            # Generate telemetry report
-            report_path = self.generate_telemetry_report(telemetry_dir)
-            generated_files['reports'].append(report_path)
-            
-            # Export raw telemetry data
-            json_path = os.path.join(telemetry_dir, 'telemetry_data.json')
-            self.telemetry_collector.export_telemetry_json(json_path)
-            generated_files['reports'].append(json_path)
+            # Generate comparison plots in the comparison directory (if multiple systems)
+            if len(system_sessions) > 1:
+                comparison_dir = os.path.join(base_output_dir, 'comparison')
+                os.makedirs(comparison_dir, exist_ok=True)
+                
+                # Generate system performance comparison
+                perf_plot = self.create_system_performance_comparison(comparison_dir)
+                if perf_plot:
+                    generated_files['plots'].append(perf_plot)
+                
+                # Generate decision step analysis
+                step_plot = self.create_decision_step_analysis(comparison_dir)
+                if step_plot:
+                    generated_files['plots'].append(step_plot)
+                
+                # Generate overall telemetry report
+                overall_report_path = self.generate_telemetry_report(comparison_dir)
+                generated_files['reports'].append(overall_report_path)
+                
+                # Export complete telemetry data
+                json_path = os.path.join(comparison_dir, 'complete_telemetry_data.json')
+                self.telemetry_collector.export_telemetry_json(json_path)
+                generated_files['reports'].append(json_path)
             
             logger.info(f"Generated {len(generated_files['plots'])} plots and {len(generated_files['reports'])} reports")
             

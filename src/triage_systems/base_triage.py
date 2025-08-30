@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 import json
 import logging
+import time
+from src.utils.telemetry import get_telemetry_collector, DecisionStepType
 
 logger = logging.getLogger(__name__)
 
@@ -66,9 +68,37 @@ class BaseTriage(ABC):
         Get the name of the triage system.
         
         Returns:
-            string: Name of the triage system
+            str: Name of the triage system
         """
         pass
+    
+    def _start_telemetry_session(self, patient_data: Dict[str, Any]) -> str:
+        """Start a telemetry session for tracking decision steps"""
+        telemetry = get_telemetry_collector()
+        session_id = telemetry.start_patient_session(
+            patient_data.get('id', 0),
+            self.get_triage_system_name(),
+            patient_data
+        )
+        return session_id
+    
+    def _log_telemetry_step(self, session_id: str, step_type: DecisionStepType,
+                           input_data: Dict[str, Any], output_data: Dict[str, Any],
+                           duration_ms: float, success: bool = True,
+                           error_message: Optional[str] = None,
+                           metadata: Optional[Dict[str, Any]] = None) -> str:
+        """Log a telemetry step"""
+        telemetry = get_telemetry_collector()
+        return telemetry.log_decision_step(
+            session_id, step_type, input_data, output_data,
+            duration_ms, success, error_message, metadata
+        )
+    
+    def _end_telemetry_session(self, session_id: str, final_priority: int,
+                              final_rationale: str, success: bool = True) -> None:
+        """End a telemetry session"""
+        telemetry = get_telemetry_collector()
+        telemetry.end_patient_session(session_id, final_priority, final_rationale, success)
 
     # Triage-specific validation and extraction methods
     @staticmethod

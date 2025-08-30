@@ -166,30 +166,25 @@ class ManchesterTriage(BaseTriage):
         logger.debug(f"Manchester Triage System received patient data: {patient_data}")
         
         # Start telemetry session
-        telemetry = get_telemetry_collector()
-        session_id = telemetry.start_patient_session(
-            patient_data.get('id', 0), 
-            "Manchester Triage System", 
-            patient_data
-        )
+        session_id = self._start_telemetry_session(patient_data)
         
         try:
             # Step 1: Input validation
             start_time = time.time()
             if 'severity' not in patient_data:
                 error_msg = f"Patient data missing required 'severity' key. Available keys: {list(patient_data.keys())}"
-                telemetry.log_decision_step(
-                    session_id, DecisionStepType.INPUT_VALIDATION,
-                    {'patient_data_keys': list(patient_data.keys())},
-                    {'error': error_msg},
-                    (time.time() - start_time) * 1000,
-                    success=False,
-                    error_message=error_msg
-                )
+                self._log_telemetry_step(
+                session_id, DecisionStepType.INPUT_VALIDATION,
+                {'patient_data_keys': list(patient_data.keys())},
+                {'error': error_msg},
+                (time.time() - start_time) * 1000,
+                success=False,
+                error_message=error_msg
+            )
                 logger.error(f"Missing 'severity' key in patient data: {patient_data}")
                 raise KeyError(error_msg)
             
-            telemetry.log_decision_step(
+            self._log_telemetry_step(
                 session_id, DecisionStepType.INPUT_VALIDATION,
                 {'patient_data_keys': list(patient_data.keys())},
                 {'validation_passed': True, 'severity_present': True},
@@ -201,7 +196,7 @@ class ManchesterTriage(BaseTriage):
             severity = patient_data['severity']
             logger.debug(f"Processing severity value: {severity}")
             
-            telemetry.log_decision_step(
+            self._log_telemetry_step(
                 session_id, DecisionStepType.DATA_PREPROCESSING,
                 {'raw_severity': severity},
                 {'processed_severity': severity, 'severity_type': type(severity).__name__},
@@ -212,7 +207,7 @@ class ManchesterTriage(BaseTriage):
             start_time = time.time()
             priority, fuzzy_details = self._fuzzy_categorize_with_telemetry(severity)
             
-            telemetry.log_decision_step(
+            self._log_telemetry_step(
                 session_id, DecisionStepType.FUZZY_LOGIC,
                 {'severity': severity},
                 {
@@ -228,7 +223,7 @@ class ManchesterTriage(BaseTriage):
             start_time = time.time()
             recommended_actions = self.actions_config.get(priority, ["Standard monitoring"])
             
-            telemetry.log_decision_step(
+            self._log_telemetry_step(
                 session_id, DecisionStepType.PRIORITY_ASSIGNMENT,
                 {'calculated_priority': priority},
                 {'final_priority': priority, 'recommended_actions': recommended_actions},
@@ -243,7 +238,7 @@ class ManchesterTriage(BaseTriage):
                 "recommended_actions": recommended_actions
             }
             
-            telemetry.log_decision_step(
+            self._log_telemetry_step(
                 session_id, DecisionStepType.FINAL_VALIDATION,
                 {'priority': priority, 'severity': severity},
                 result,
@@ -251,7 +246,7 @@ class ManchesterTriage(BaseTriage):
             )
             
             # End telemetry session
-            telemetry.end_patient_session(
+            self._end_telemetry_session(
                 session_id, 
                 priority, 
                 result['rationale'],
@@ -263,7 +258,7 @@ class ManchesterTriage(BaseTriage):
             
         except Exception as e:
             # Log error and end session
-            telemetry.end_patient_session(
+            self._end_telemetry_session(
                 session_id, 
                 3,  # fallback priority
                 f"Error in Manchester Triage: {str(e)}",
