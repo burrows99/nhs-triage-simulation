@@ -66,8 +66,11 @@ class EmergencyDepartment:
         This represents the initial assessment where a nurse checks vital signs,
         asks about symptoms, and determines the patient's priority level.
         """
+        logger.debug(f"About to call estimate_triage_time() on {self.triage_system.get_triage_system_name()}")
         triage_duration = self.triage_system.estimate_triage_time()
+        logger.debug(f"Triage duration estimated: {triage_duration} minutes")
         yield self.env.timeout(triage_duration)
+        logger.debug(f"Triage assessment timeout completed")
 
     def consult(self, patient):
         """Simulate the doctor consultation process"""

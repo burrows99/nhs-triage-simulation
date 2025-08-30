@@ -202,13 +202,13 @@ class ConfigManager:
             'model': 'llama3.2:1b',
             'base_url': 'http://ollama:11434',  # Docker service name
             'request': {
-                'timeout_sec': 45,
-                'retries': 2,
+                'timeout_sec': 60,  # Longer timeout for real LLM processing
+                'retries': 2,       # More retries for reliability
                 'options': {
                     'temperature': 0.02,
                     'top_p': 0.7,
-                    'num_predict': 75,
-                    'num_ctx': 1536,
+                    'num_predict': 75,  # Adequate response length
+                    'num_ctx': 1536,    # Full context for medical reasoning
                     'num_gpu': -1,
                     'num_thread': 4
                 }

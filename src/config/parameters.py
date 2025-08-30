@@ -1,7 +1,7 @@
 class p:
     """Simulation parameters for the NHS Triage System"""
     # Patient arrival parameters
-    inter = 5                # Mean time between patient arrivals (minutes)
+    inter = 2                # Mean time between patient arrivals (minutes) - faster for testing
                              # For Poisson process, this is 1/λ where λ is the arrival rate
                              # Expected number of arrivals per hour = 60/inter
                              # In queuing theory notation, this is the μ parameter for
@@ -20,5 +20,5 @@ class p:
     ae_cubicles = 7          # Number of A&E cubicles
     
     # Simulation control parameters
-    warm_up = 120            # Warm-up period (minutes)
-    sim_duration = 1440      # Simulation duration (24 hours in minutes)
+    warm_up = 0              # Warm-up period (minutes) - disabled for testing
+    sim_duration = 15        # Simulation duration (short test run for ~5 patients)

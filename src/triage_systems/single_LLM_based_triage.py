@@ -127,17 +127,30 @@ class SingleLLMBasedTriage(BaseTriage):
         return actions_config.get(priority, ["Standard monitoring"])
     
     def _get_fallback_response(self, patient_data):
-        """Get fallback response when LLM fails"""
+        """Get fallback response when LLM fails - use severity-based priority"""
         from src.config.config_manager import get_patient_generation_config
         patient_config = get_patient_generation_config()
         
+        # Use patient severity to assign a reasonable priority
+        severity = patient_data.get('severity', 0.5)
+        if severity >= 0.8:
+            priority = 1  # High severity -> High priority
+        elif severity >= 0.6:
+            priority = 2
+        elif severity >= 0.4:
+            priority = 3
+        elif severity >= 0.2:
+            priority = 4
+        else:
+            priority = 5  # Low severity -> Low priority
+        
         return {
-            'priority': patient_config['default_priority'],
-            'rationale': 'Fallback assessment due to LLM error',
-            'recommended_actions': self._get_actions_for_priority(patient_config['default_priority']),
+            'priority': priority,
+            'rationale': f'Fallback assessment based on severity {severity:.2f} (LLM unavailable)',
+            'recommended_actions': self._get_actions_for_priority(priority),
             'confidence': 'low',
-            'service_time_estimate': 30,
-            'error': 'LLM processing failed'
+            'service_time_estimate': 25,
+            'error': 'LLM processing failed - used severity-based fallback'
         }
     
     def assign_priority(self, patient):
