@@ -60,6 +60,8 @@ class ManchesterTriage(BaseTriage):
         """
         Categorize the severity using fuzzy logic.
         """
+        logger.debug(f"Fuzzy categorization for severity: {severity}")
+        
         clinical_params = {'severity': severity}
         
         # Fuzzify inputs
@@ -67,19 +69,26 @@ class ManchesterTriage(BaseTriage):
             'severity': [func(severity) for func in self.membership.values()]
         }
         
+        logger.debug(f"Membership values: {dict(zip(self.membership.keys(), membership_values['severity']))}")
+        
         # Rule activation
         activated_rules = []
         for rule in self.rules:
             min_strength = membership_values['severity'][list(self.membership.keys()).index(rule['conditions'][0])]
             if min_strength > 0:
                 activated_rules.append({'strength': min_strength, 'output': rule['output']})
+                logger.debug(f"Activated rule: {rule['conditions'][0]} -> priority {rule['output']} (strength: {min_strength:.3f})")
         
         # Defuzzification (centroid method)
         if not activated_rules:
+            logger.debug("No rules activated, defaulting to priority 5")
             return 5
         numerator = sum(r['strength'] * r['output'] for r in activated_rules)
         denominator = sum(r['strength'] for r in activated_rules)
-        return round(numerator / denominator)
+        final_priority = round(numerator / denominator)
+        
+        logger.debug(f"Defuzzification: numerator={numerator:.3f}, denominator={denominator:.3f}, final_priority={final_priority}")
+        return final_priority
 
     @staticmethod
     def trapezoid(x, a, b, c, d):
@@ -108,15 +117,39 @@ class ManchesterTriage(BaseTriage):
         Perform MTS assessment and return structured triage results
         {"priority": int, "rationale": str, "recommended_actions": list}
         """
-        priority = self._fuzzy_categorize(patient_data['severity'])
-        return {
+        logger.debug(f"Manchester Triage System received patient data: {patient_data}")
+        
+        if 'severity' not in patient_data:
+            logger.error(f"Missing 'severity' key in patient data: {patient_data}")
+            raise KeyError(f"Patient data missing required 'severity' key. Available keys: {list(patient_data.keys())}")
+        
+        severity = patient_data['severity']
+        logger.debug(f"Processing severity value: {severity}")
+        
+        priority = self._fuzzy_categorize(severity)
+        
+        result = {
             "priority": priority,
-            "rationale": f"Manchester Triage System priority {priority}",
+            "rationale": f"Manchester Triage System priority {priority} based on severity {severity:.3f}",
             "recommended_actions": ["Immediate resuscitation" if priority == 1 else "Urgent review" if priority == 2 else "Routine monitoring"]
         }
+        
+        logger.debug(f"Manchester Triage System result: {result}")
+        return result
 
     def assign_priority(self, patient):
-        return self.perform_triage(patient.__dict__)['priority']
+        logger.debug(f"assign_priority called for Patient {patient.id}")
+        logger.debug(f"Patient attributes: {patient.__dict__}")
+        
+        try:
+            triage_result = self.perform_triage(patient.__dict__)
+            priority = triage_result['priority']
+            logger.info(f"Patient {patient.id} assigned priority {priority} (severity: {patient.severity:.3f})")
+            return priority
+        except Exception as e:
+            logger.error(f"Error in assign_priority for Patient {patient.id}: {str(e)}")
+            logger.exception("Full traceback:")
+            raise
 
     def estimate_triage_time(self):
         """

@@ -1,3 +1,8 @@
+import random
+import logging
+
+logger = logging.getLogger(__name__)
+
 class Patient:
     """Patient class for NHS Triage Simulation
     
@@ -14,6 +19,24 @@ class Patient:
         self.wait_for_consult = 0
         self.discharge_time = 0
         self.admitted = False
+        
+        # Generate severity for triage system (0.0 to 1.0)
+        self.severity = self._generate_severity()
+        
+        logger.debug(f"Created Patient {self.id} with severity {self.severity:.3f} at time {arrival_time}")
+    
+    def _generate_severity(self):
+        """Generate a severity score for the patient based on realistic distributions
+        
+        Returns a value between 0.0 and 1.0 where:
+        - 0.0-0.3: Low severity (non-urgent to standard)
+        - 0.3-0.6: Medium severity (urgent)
+        - 0.6-0.8: High severity (very urgent)
+        - 0.8-1.0: Very high severity (immediate)
+        """
+        # Use a beta distribution to create realistic severity distribution
+        # Most patients have lower severity, fewer have high severity
+        return random.betavariate(2, 5)  # Skewed towards lower values
         
     def calculate_wait_times(self):
         """Calculate various wait times based on recorded timestamps"""

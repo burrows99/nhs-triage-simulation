@@ -45,19 +45,32 @@ class EDMetrics:
         self.patients_data.append(patient_data)
     
     def get_summary_stats(self):
-        logger.info("Calculating summary metrics:\n"
-                    f"Total Patients: {self.total_patients}\n"
-                    f"Admission Rate: {self.admitted_patients/self.total_patients:.1%}\n"
-                    f"Avg Consultation Wait: {pd.DataFrame(self.patients_data)['wait_for_consult'].mean():.1f} min")
         """Generate summary statistics for the ED"""
         if not self.patients_data:
-            return "No patient data available"
+            logger.info("No patient data available for summary statistics")
+            return {
+                'total_patients': 0,
+                'admitted_rate': 0,
+                'avg_wait_for_triage': 0,
+                'avg_wait_for_consult': 0,
+                'avg_total_time': 0,
+                'avg_wait_by_priority': {}
+            }
         
         df = pd.DataFrame(self.patients_data)
         
+        # Safe division for admission rate
+        admission_rate = self.admitted_patients / self.total_patients if self.total_patients > 0 else 0
+        avg_consult_wait = df['wait_for_consult'].mean() if len(df) > 0 else 0
+        
+        logger.info(f"Calculating summary metrics:\n"
+                    f"Total Patients: {self.total_patients}\n"
+                    f"Admission Rate: {admission_rate:.1%}\n"
+                    f"Avg Consultation Wait: {avg_consult_wait:.1f} min")
+        
         summary = {
             'total_patients': self.total_patients,
-            'admitted_rate': self.admitted_patients / self.total_patients if self.total_patients > 0 else 0,
+            'admitted_rate': admission_rate,
             'avg_wait_for_triage': df['wait_for_triage'].mean(),
             'avg_wait_for_consult': df['wait_for_consult'].mean(),
             'avg_total_time': df['total_time'].mean(),

@@ -1,14 +1,23 @@
 import simpy
 import logging
+import sys
+
+# Configure comprehensive logging for debugging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
     handlers=[
-        logging.FileHandler('simulation.log'),
-        logging.StreamHandler()
+        logging.FileHandler('simulation.log', mode='w'),  # Overwrite log file each run
+        logging.StreamHandler(sys.stdout)
     ]
 )
+
+# Set specific log levels for different modules
+logging.getLogger('matplotlib').setLevel(logging.WARNING)  # Reduce matplotlib noise
+logging.getLogger('simpy').setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
+logger.info("Starting NHS Emergency Department Simulation with enhanced logging")
 import random
 import numpy as np
 from src.config.parameters import p

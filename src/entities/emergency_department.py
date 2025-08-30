@@ -32,14 +32,26 @@ class EmergencyDepartment:
     def triage(self, patient):
         """Simulate the triage process for a patient"""
         try:
+            logger.debug(f"Starting triage assessment for Patient {patient.id}")
+            logger.debug(f"Patient {patient.id} data: {patient.__dict__}")
+            
             # Simulate triage process
             yield from self.simulate_triage_assessment()
             patient.triage_time = self.env.now
+            
+            # Log triage system input
+            logger.debug(f"Calling triage system {self.triage_system.get_triage_system_name()} for Patient {patient.id}")
+            
             # Assign priority using the configured triage system
             patient.priority = self.triage_system.assign_priority(patient)
+            
+            logger.info(f"Patient {patient.id} assigned priority {patient.priority} by {self.triage_system.get_triage_system_name()}")
             patient.calculate_wait_times()
+            
         except Exception as e:
-            logger.error(LogMessages.TRIAGE_ERROR.format(patient.id, str(e)))
+            logger.error(f"Triage error for Patient {patient.id}: {str(e)}")
+            logger.error(f"Patient data causing error: {patient.__dict__}")
+            logger.exception("Full traceback:")
             patient.priority = 3  # Default to Urgent (Yellow)
             patient.calculate_wait_times()
         
@@ -119,27 +131,50 @@ class EmergencyDepartment:
         except Exception as e:
             yield from self._handle_triage_error(patient, e)
 
-    def _manage_resource_chain(self, resources, process, *args):
-        """Unified method for sequential resource acquisition and processing"""
-        requests = []
+    def _manage_resource_chain(self, resources, process_func, patient):
+        """Manage acquisition and release of multiple resources for a process"""
+        acquired_resources = []
+        resource_names = []
+        
         try:
-            # Request all resources
-            for resource in resources:
-                if hasattr(resource, 'request'):
-                    req = resource.request()
-                else:
-                    req = resource  # Already a request object
-                requests.append(req)
-                yield req
+            logger.debug(f"Patient {patient.id} requesting resources: {[type(r).__name__ for r in resources]}")
             
-            # Execute the process with all resources acquired
-            yield from process(*args)
+            # Request all resources
+            for i, resource in enumerate(resources):
+                if hasattr(resource, 'request'):  # It's a resource object
+                    resource_name = f"{type(resource).__name__}({resource.capacity})"
+                    resource_names.append(resource_name)
+                    logger.debug(f"Patient {patient.id} requesting {resource_name}")
+                    
+                    req = resource.request()
+                    acquired_resources.append(req)
+                    yield req
+                    
+                    logger.debug(f"Patient {patient.id} acquired {resource_name}")
+                else:  # It's already a request object
+                    resource_name = f"PreRequest({type(resource).__name__})"
+                    resource_names.append(resource_name)
+                    logger.debug(f"Patient {patient.id} using pre-created request {resource_name}")
+                    
+                    acquired_resources.append(resource)
+                    yield resource
+                    
+                    logger.debug(f"Patient {patient.id} acquired {resource_name}")
+            
+            logger.info(f"Patient {patient.id} acquired all resources: {resource_names}")
+            
+            # Execute the process with acquired resources
+            yield self.env.process(process_func(patient))
             
         finally:
             # Release all acquired resources
-            for req in requests:
-                if hasattr(req, 'release'):
-                    req.release()
+            logger.debug(f"Patient {patient.id} releasing {len(acquired_resources)} resources")
+            for i, req in enumerate(acquired_resources):
+                if hasattr(req, 'resource'):
+                    req.resource.release(req)
+                    logger.debug(f"Patient {patient.id} released {resource_names[i] if i < len(resource_names) else 'resource'}")
+            
+            logger.info(f"Patient {patient.id} released all resources: {resource_names}")
 
     def _execute_triage(self, patient):
         """Perform actual triage procedure"""
