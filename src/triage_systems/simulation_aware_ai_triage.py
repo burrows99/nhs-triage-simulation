@@ -120,7 +120,8 @@ class SimulationAwareAITriage(BaseTriage):
             prompt, 
             self.config.get('request', {}).get('options', {}),
             patient_id=patient_id,
-            triage_system=self.system_name
+            triage_system=self.system_name,
+            patient_data=patient_data
         )
         
         with self._precompute_lock:
@@ -159,7 +160,8 @@ class SimulationAwareAITriage(BaseTriage):
                             prompt,
                             self.config.get('request', {}).get('options', {}),
                             patient_id=patient_id,
-                            triage_system=f"{self.system_name}_{agent_name}"
+                            triage_system=f"{self.system_name}_{agent_name}",
+                            patient_data=patient_data
                         )
                         return agent_name, cache_key
                     except Exception as e:
@@ -189,7 +191,8 @@ class SimulationAwareAITriage(BaseTriage):
                             prompt,
                             self.config.get('request', {}).get('options', {}),
                             patient_id=patient_id,
-                            triage_system=f"{self.system_name}_{agent_name}"
+                            triage_system=f"{self.system_name}_{agent_name}",
+                            patient_data=patient_data
                         )
                     except Exception as e:
                         logger.error(f"Error pre-computing {agent_name} for patient {patient_id}: {e}")

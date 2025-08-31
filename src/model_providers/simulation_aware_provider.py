@@ -3,7 +3,7 @@ import threading
 import time
 import json
 import os
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Optional, List
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from .ollama import OllamaProvider
@@ -57,9 +57,57 @@ class SimulationAwareProvider:
         """Setup the underlying provider"""
         self.base_provider.setup(system_prompt)
     
+    def _make_json_serializable(self, data: Any) -> Any:
+        """Convert data to JSON-serializable format
+        
+        Args:
+            data: Data that may contain non-serializable objects
+            
+        Returns:
+            JSON-serializable version of the data
+        """
+        if data is None:
+            return None
+        elif hasattr(data, 'to_dict'):
+            # Handle objects with to_dict method (like PatientContext)
+            return self._make_json_serializable(data.to_dict())
+        elif isinstance(data, dict):
+            # Recursively handle dictionary values
+            return {key: self._make_json_serializable(value) for key, value in data.items()}
+        elif isinstance(data, (list, tuple)):
+            # Recursively handle list/tuple items
+            return [self._make_json_serializable(item) for item in data]
+        elif isinstance(data, (str, int, float, bool)):
+            # Already serializable
+            return data
+        else:
+            # Convert other objects to string representation
+            return str(data)
+    
+    def _create_cache_key(self, system_name: str, patient_id: str, timestamp: Optional[str] = None) -> str:
+        """Create a standardized cache key for both setting and retrieving operations
+        
+        Args:
+            system_name: Name of the triage system
+            patient_id: Patient identifier
+            timestamp: Optional timestamp string, if None current datetime is used
+            
+        Returns:
+            Formatted cache key: system_name_patient_id_datetime
+        """
+        from datetime import datetime
+        
+        # Clean system name for filename
+        clean_system = system_name.replace(' ', '_').replace('-', '_').lower()
+        
+        # Use provided timestamp or generate current one
+        if timestamp is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        return f"{clean_system}_{patient_id}_{timestamp}"
+    
     def _generate_cache_key(self, prompt: str, options: Optional[Dict[str, Any]] = None) -> str:
-        """Generate a cache key using patient ID and triage system name"""
-        # Extract patient ID from prompt (look for common patterns)
+        """Generate a cache key using system name, patient ID, and datetime"""
         import re
         
         # Try to extract patient ID from prompt
@@ -78,10 +126,7 @@ class SimulationAwareProvider:
         elif options and 'system_name' in options:
             triage_system = options['system_name']
         
-        # Clean system name for filename
-        clean_system = triage_system.replace(' ', '_').replace('-', '_').lower()
-        
-        return f"{patient_id}_{clean_system}"
+        return self._create_cache_key(triage_system, patient_id)
     
     def _load_persistent_cache(self):
         """Load cached responses from disk"""
@@ -124,23 +169,67 @@ class SimulationAwareProvider:
         """Get individual cache file path for a specific key"""
         return os.path.join(self.persistent_cache_dir, f"{cache_key}.json")
     
+    def _create_cache_content(self, cache_key: str, response_data: Dict[str, Any], patient_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Create standardized cache content structure for both setting and retrieving operations
+        
+        Args:
+            cache_key: The cache key identifier
+            response_data: LLM response data with inference time and timestamp
+            patient_data: Optional comprehensive patient data
+            
+        Returns:
+            Standardized cache content dictionary
+        """
+        # Convert patient data to JSON-serializable format
+        serializable_patient_data = None
+        if patient_data:
+            serializable_patient_data = self._make_json_serializable(patient_data)
+        
+        return {
+            'cache_key': cache_key,
+            'llm_response': response_data,
+            'patient_data': serializable_patient_data,
+            'created_at': response_data.get('timestamp', time.time())
+        }
+    
+    def _extract_response_from_cache(self, cache_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract LLM response data from cache content, handling both old and new formats
+        
+        Args:
+            cache_data: Raw cache data loaded from file
+            
+        Returns:
+            LLM response data dictionary
+        """
+        # Handle both old format (direct response data) and new format (with patient data)
+        if 'llm_response' in cache_data:
+            # New format with patient data
+            return cache_data['llm_response']
+        else:
+            # Old format - direct response data
+            return cache_data
+    
     def _load_individual_cache(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """Load individual cached response from disk"""
         cache_file = self._get_cache_file_for_key(cache_key)
         if os.path.exists(cache_file):
             try:
                 with open(cache_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    cache_data = json.load(f)
+                    return self._extract_response_from_cache(cache_data)
             except Exception as e:
                 logger.error(f"Error loading individual cache {cache_file}: {e}")
         return None
     
-    def _save_individual_cache(self, cache_key: str, response_data: Dict[str, Any]):
-        """Save individual cached response to disk"""
+    def _save_individual_cache(self, cache_key: str, response_data: Dict[str, Any], patient_data: Optional[Dict[str, Any]] = None):
+        """Save individual cached response to disk with optional patient data"""
         cache_file = self._get_cache_file_for_key(cache_key)
         try:
+            # Create comprehensive cache data structure using dedicated function
+            cache_content = self._create_cache_content(cache_key, response_data, patient_data)
+            
             with open(cache_file, 'w', encoding='utf-8') as f:
-                json.dump(response_data, f, indent=2, ensure_ascii=False)
+                json.dump(cache_content, f, indent=2, ensure_ascii=False)
             logger.debug(f"Saved individual cache to {cache_file}")
         except Exception as e:
             logger.error(f"Error saving individual cache {cache_file}: {e}")
@@ -185,15 +274,20 @@ class SimulationAwareProvider:
             'success_rate': (self.completed_requests / self.total_requests * 100) if self.total_requests > 0 else 0
         }
     
-    def precompute_response(self, prompt: str, options: Optional[Dict[str, Any]] = None, patient_id: str = None, triage_system: str = None) -> str:
-        """
-        Precompute LLM response in background thread.
+    def precompute_response(self, prompt: str, options: Optional[Dict[str, Any]] = None, patient_id: str = None, triage_system: str = None, patient_data: Optional[Dict[str, Any]] = None) -> str:
+        """Precompute LLM response in background thread.
         Returns cache key for later retrieval.
+        
+        Args:
+            prompt: The prompt to send to the LLM
+            options: Optional configuration options
+            patient_id: Patient identifier
+            triage_system: Triage system name
+            patient_data: Comprehensive patient data to store with cache
         """
         # If patient_id and triage_system provided directly, use them
         if patient_id and triage_system:
-            clean_system = triage_system.replace(' ', '_').replace('-', '_').lower()
-            cache_key = f"{patient_id}_{clean_system}"
+            cache_key = self._create_cache_key(triage_system, patient_id)
         else:
             # Add triage system to options for key generation
             if options is None:
@@ -227,7 +321,7 @@ class SimulationAwareProvider:
             self.total_requests += 1
         
         # Submit to thread pool for background computation
-        future = self.executor.submit(self._compute_response, prompt, options, cache_key)
+        future = self.executor.submit(self._compute_response, prompt, options, cache_key, patient_data)
         
         with self._lock:
             self.precompute_futures[cache_key] = future
@@ -238,7 +332,7 @@ class SimulationAwareProvider:
         logger.debug(f"Submitted LLM computation for cache key {cache_key[:8]}... (Total: {self.total_requests})")
         return cache_key
     
-    def _compute_response(self, prompt: str, options: Optional[Dict[str, Any]], cache_key: str) -> str:
+    def _compute_response(self, prompt: str, options: Optional[Dict[str, Any]], cache_key: str, patient_data: Optional[Dict[str, Any]] = None) -> str:
         """Compute LLM response in background thread"""
         try:
             start_time = time.time()
@@ -273,8 +367,8 @@ class SimulationAwareProvider:
                                    key=lambda k: self.response_cache[k]['timestamp'])
                     del self.response_cache[oldest_key]
             
-            # Save to persistent cache (outside lock to avoid blocking)
-            self._save_individual_cache(cache_key, response_data)
+            # Save to persistent cache with patient data (outside lock to avoid blocking)
+            self._save_individual_cache(cache_key, response_data, patient_data)
             
             # Update progress tracking
             with self._lock:
@@ -307,8 +401,8 @@ class SimulationAwareProvider:
                 if cache_key in self.precompute_futures:
                     del self.precompute_futures[cache_key]
             
-            # Save error to persistent cache
-            self._save_individual_cache(cache_key, error_data)
+            # Save error to persistent cache with patient data
+            self._save_individual_cache(cache_key, error_data, patient_data)
             
             # Update progress tracking for failed request
             with self._lock:
