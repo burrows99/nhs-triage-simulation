@@ -90,21 +90,16 @@ class SimulationAwareProvider:
         Args:
             system_name: Name of the triage system
             patient_id: Patient identifier
-            timestamp: Optional timestamp string, if None current datetime is used
+            timestamp: Optional timestamp string (ignored for consistency)
             
         Returns:
-            Formatted cache key: system_name_patient_id_datetime
+            Formatted cache key: system_name_patient_id
         """
-        from datetime import datetime
-        
         # Clean system name for filename
         clean_system = system_name.replace(' ', '_').replace('-', '_').lower()
         
-        # Use provided timestamp or generate current one
-        if timestamp is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        return f"{clean_system}_{patient_id}_{timestamp}"
+        # Return consistent key without timestamp for cache reuse
+        return f"{clean_system}_{patient_id}"
     
     def _generate_cache_key(self, prompt: str, options: Optional[Dict[str, Any]] = None) -> str:
         """Generate a cache key using system name, patient ID, and datetime"""
