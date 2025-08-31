@@ -334,10 +334,14 @@ class MultiLLMBasedTriage(AITriage):
     def _prepare_patient_context(self, patient_data):
         """Prepare patient context for prompt formatting"""
         return {
-            'patient_age': patient_data.get('age', 'Unknown'),
-            'patient_gender': patient_data.get('gender', 'Unknown'),
-            'reason_description': patient_data.get('chief_complaint', 'Not specified'),
-            'patient_history': patient_data.get('medical_history', 'No history available'),
+            'age': patient_data.get('age', 'Unknown'),
+            'patient_age': patient_data.get('age', 'Unknown'),  # Keep for backward compatibility
+            'gender': patient_data.get('gender', 'Unknown'),
+            'patient_gender': patient_data.get('gender', 'Unknown'),  # Keep for backward compatibility
+            'chief_complaint': patient_data.get('chief_complaint', 'Not specified'),
+            'reason_description': patient_data.get('chief_complaint', 'Not specified'),  # Keep for backward compatibility
+            'medical_history': patient_data.get('medical_history', 'No history available'),
+            'patient_history': patient_data.get('medical_history', 'No history available'),  # Keep for backward compatibility
             'vital_signs': self._format_vital_signs(patient_data),
             'clinical_context': json.dumps(patient_data, indent=2)
         }
@@ -436,10 +440,17 @@ class MultiLLMBasedTriage(AITriage):
         except Exception as e:
             logger.error(f"Error in assign_priority for Patient {patient.id}: {str(e)}")
             logger.exception("Full traceback:")
-            # Use configured default priority
+            # Use configured default priority with proper patient update
             from src.config.config_manager import get_patient_generation_config
             patient_config = get_patient_generation_config()
-            return patient_config['default_priority']
+            fallback_priority = patient_config['default_priority']
+            
+            patient.set_triage_result(
+                priority=fallback_priority,
+                triage_system=self.get_triage_system_name()
+            )
+            
+            return fallback_priority
     
     def estimate_triage_time(self):
         """Estimate triage time for multi-agent LLM system"""

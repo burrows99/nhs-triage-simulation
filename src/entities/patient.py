@@ -52,7 +52,7 @@ class Patient:
         self.medical_history = kwargs.get('medical_history', patient_data.get('medical_history', 'None reported'))
         
         # Simulation-specific data
-        self.priority = kwargs.get('priority', 0)  # Assigned during triage
+        self.priority = kwargs.get('priority', None)  # Assigned during triage (None = unassigned)
         self.triage_system = kwargs.get('triage_system', "")  # Which system performed triage
         
         # Timing data (simulation tracking)
@@ -192,7 +192,12 @@ class Patient:
             self.total_time = self.discharge_time - self.arrival_time
     
     def set_triage_result(self, priority: int, triage_system: str) -> None:
-        """Set triage results from triage system"""
+        """Set triage results from triage system with validation"""
+        # Validate priority is within NHS range (1-5)
+        if priority is not None and (not isinstance(priority, int) or priority < 1 or priority > 5):
+            logger.error(f"Invalid priority {priority} for Patient {self.id}. Must be 1-5. Using fallback priority 4.")
+            priority = 4  # Standard priority as fallback
+            
         self.priority = priority
         self.triage_system = triage_system
         logger.debug(f"Patient {self.id} triage result: Priority {priority} by {triage_system}")
