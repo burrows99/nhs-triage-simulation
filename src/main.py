@@ -109,6 +109,18 @@ def run_all_triage_systems():
             logger.info("Pre-computing Multi-Agent LLM responses...")
             multi_agent_system.precompute_patient_responses(patient_data_list)
             
+            logger.info("Waiting for all precomputation tasks to complete...")
+            
+            # Wait for Single LLM precomputation to complete
+            logger.info("Waiting for Single LLM precomputation...")
+            if not single_llm_system.wait_for_precomputation(timeout=600):
+                logger.warning("Single LLM precomputation did not complete within timeout")
+            
+            # Wait for Multi-Agent LLM precomputation to complete
+            logger.info("Waiting for Multi-Agent LLM precomputation...")
+            if not multi_agent_system.wait_for_precomputation(timeout=600):
+                logger.warning("Multi-Agent LLM precomputation did not complete within timeout")
+            
             logger.info("Precomputation phase completed successfully")
         except Exception as e:
             logger.error(f"Error during precomputation: {e}")

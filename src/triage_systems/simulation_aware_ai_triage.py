@@ -106,6 +106,10 @@ class SimulationAwareAITriage(BaseTriage):
         stats = self.provider.get_cache_stats()
         logger.info(f"Cache stats: {stats}")
     
+    def wait_for_precomputation(self, timeout: float = 300.0) -> bool:
+        """Wait for all precomputation tasks to complete"""
+        return self.provider.wait_for_precomputation(timeout)
+    
     def _precompute_single_agent_response(self, patient_data, patient_index):
         """Pre-compute single agent LLM response"""
         # Use the new prompt function that accepts patient data directly

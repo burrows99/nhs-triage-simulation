@@ -381,6 +381,39 @@ class SimulationAwareProvider:
             import statistics
             return statistics.median(self.inference_times)
     
+    def wait_for_precomputation(self, timeout: float = 300.0) -> bool:
+        """Wait for all precomputation tasks to complete"""
+        logger.info(f"Waiting for {len(self.precompute_futures)} precomputation tasks to complete...")
+        
+        start_time = time.time()
+        completed_count = 0
+        total_count = len(self.precompute_futures)
+        
+        # Wait for all futures to complete
+        for cache_key, future in list(self.precompute_futures.items()):
+            remaining_timeout = timeout - (time.time() - start_time)
+            if remaining_timeout <= 0:
+                logger.warning(f"Timeout reached while waiting for precomputation. {completed_count}/{total_count} completed.")
+                return False
+                
+            try:
+                future.result(timeout=remaining_timeout)
+                completed_count += 1
+                if completed_count % 10 == 0 or completed_count == total_count:
+                    logger.info(f"Precomputation progress: {completed_count}/{total_count} completed")
+            except Exception as e:
+                logger.error(f"Error in precomputation task {cache_key[:8]}...: {e}")
+                completed_count += 1
+        
+        elapsed_time = time.time() - start_time
+        logger.info(f"Precomputation completed in {elapsed_time:.2f} seconds. {completed_count}/{total_count} tasks finished.")
+        
+        # Clear completed futures
+        with self._lock:
+            self.precompute_futures.clear()
+            
+        return True
+
     def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics for monitoring"""
         with self._lock:
