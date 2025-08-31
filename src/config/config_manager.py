@@ -159,13 +159,54 @@ Based ONLY on your area of expertise ({focus}), assess the triage priority (1-5)
 Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationale": "explanation based on {focus}", "service_min": number, "focus_area": "{focus}", "key_findings": ["finding1", "finding2"]}}"""
     
     def _extract_patient_info(self, patient_data: Dict[str, Any]) -> Dict[str, str]:
-        """Extract basic patient information"""
-        return {
-            'patient_age': str(patient_data.get('age', 'Unknown')),
-            'patient_gender': str(patient_data.get('gender', 'Unknown')),
-            'chief_complaint': str(patient_data.get('chief_complaint', 'Not specified')),
-            'medical_history': str(patient_data.get('medical_history', 'No significant history'))
-        }
+        """Extract basic patient information using only available fields"""
+        result = {}
+        
+        # Age fields - use what's available
+        if 'age' in patient_data:
+            result['age'] = str(patient_data['age'])
+            result['patient_age'] = str(patient_data['age'])  # Template compatibility
+        elif 'patient_age' in patient_data:
+            result['patient_age'] = str(patient_data['patient_age'])
+            result['age'] = str(patient_data['patient_age'])  # Template compatibility
+        else:
+            result['age'] = 'Unknown'
+            result['patient_age'] = 'Unknown'
+        
+        # Gender fields - use what's available
+        if 'gender' in patient_data:
+            result['gender'] = str(patient_data['gender'])
+            result['patient_gender'] = str(patient_data['gender'])  # Template compatibility
+        elif 'patient_gender' in patient_data:
+            result['patient_gender'] = str(patient_data['patient_gender'])
+            result['gender'] = str(patient_data['patient_gender'])  # Template compatibility
+        else:
+            result['gender'] = 'Unknown'
+            result['patient_gender'] = 'Unknown'
+        
+        # Chief complaint fields - use what's available
+        if 'chief_complaint' in patient_data:
+            result['chief_complaint'] = str(patient_data['chief_complaint'])
+            result['reason_description'] = str(patient_data['chief_complaint'])  # Template compatibility
+        elif 'reason_description' in patient_data:
+            result['reason_description'] = str(patient_data['reason_description'])
+            result['chief_complaint'] = str(patient_data['reason_description'])  # Template compatibility
+        else:
+            result['chief_complaint'] = 'Not specified'
+            result['reason_description'] = 'Not specified'
+        
+        # Medical history fields - use what's available
+        if 'medical_history' in patient_data:
+            result['medical_history'] = str(patient_data['medical_history'])
+            result['patient_history'] = str(patient_data['medical_history'])  # Template compatibility
+        elif 'patient_history' in patient_data:
+            result['patient_history'] = str(patient_data['patient_history'])
+            result['medical_history'] = str(patient_data['patient_history'])  # Template compatibility
+        else:
+            result['medical_history'] = 'No significant history'
+            result['patient_history'] = 'No significant history'
+        
+        return result
     
     def _format_vital_signs(self, patient_data: Dict[str, Any]) -> str:
         """Format vital signs for display"""
@@ -334,127 +375,101 @@ def get_triage_actions_config() -> Dict[int, List[str]]:
         5: ['basic_assessment', 'self_care_advice']
     }
 
+# Modular prompt components for shared knowledge
+def get_nhs_priority_guidelines() -> str:
+    """Get NHS priority level definitions - shared across all agents"""
+    return """NHS Priority Levels:
+1 = Immediate (life-threatening)
+2 = Very Urgent (potentially life-threatening, 10min)
+3 = Urgent (serious condition, 60min)
+4 = Standard (less urgent, 120min)
+5 = Non-urgent (minor condition, 240min)"""
+
+def get_json_format_instructions() -> str:
+    """Get strict JSON output instructions - shared across all agents"""
+    return """RESPOND ONLY WITH VALID JSON. DO NOT include explanations, markdown, or any text outside the JSON."""
+
+def get_common_medical_knowledge() -> str:
+    """Get common medical assessment factors - shared across all agents"""
+    return """Consider: patient demographics, vital signs, symptoms, medical history, pain levels, and functional status."""
+
+def get_base_triage_context() -> str:
+    """Get base medical AI context - foundation for all triage agents"""
+    return f"""You are a medical AI for NHS emergency department triage. Analyze patient data and respond with structured assessments.
+
+{get_nhs_priority_guidelines()}
+
+{get_common_medical_knowledge()}
+
+{get_json_format_instructions()}"""
+
 # Legacy function aliases for backward compatibility
 def get_base_agent_prompt() -> str:
     """Get base agent prompt"""
-    return config_manager.get_base_agent_prompt()
+    return get_base_triage_context()
 
 def get_single_agent_prompt(patient_data: Dict[str, Any] = None) -> str:
-    """Get single agent system prompt for comprehensive triage assessment"""
-    return """You are a specialized medical AI assistant for emergency department triage.
-Your role is to perform comprehensive patient assessment and assign priority levels following NHS Manchester Triage System guidelines.
+    """Get single agent system prompt using modular components"""
+    return f"""{get_base_triage_context()}
 
-Priority Levels:
-1 = Immediate (life-threatening, seen immediately)
-2 = Very Urgent (potentially life-threatening, seen within 10 minutes)
-3 = Urgent (serious condition, seen within 60 minutes)
-4 = Standard (less urgent, seen within 120 minutes)
-5 = Non-urgent (minor condition, seen within 240 minutes)
-
-You must analyze all available patient data including:
-- Demographics (age, gender)
-- Chief complaint and symptoms
-- Vital signs and clinical measurements
-- Medical history and current medications
-- Pain levels and functional status
-
-Always provide structured JSON responses with:
-- priority: integer (1-5)
-- rationale: detailed clinical reasoning
-- confidence: float (0.0-1.0)
-- recommended_actions: list of immediate actions needed
-- risk_factors: identified clinical risk factors"""
+RESPOND ONLY WITH THIS EXACT JSON FORMAT:
+{{
+  "mts_priority": <integer 1-5>,
+  "confidence": "<high|medium|low>",
+  "rationale": "<brief clinical reasoning>",
+  "service_min": <integer minutes>,
+  "focus_area": "<primary clinical concern>",
+  "key_findings": ["<finding1>", "<finding2>"]
+}}"""
 
 def get_pediatric_assessor_prompt(patient_data: Dict[str, Any] = None) -> str:
-    """Get pediatric assessor system prompt for age-specific risk assessment"""
-    return """You are a pediatric emergency medicine specialist AI focusing on age-specific triage assessment.
-Your primary role is to evaluate pediatric patients (under 16 years) and identify age-related risk factors.
+    """Get pediatric assessor system prompt using modular components"""
+    return f"""{get_base_triage_context()}
 
-Pediatric-Specific Considerations:
-- Age-appropriate vital sign ranges
-- Developmental stage assessment
-- Pediatric early warning scores
-- Age-specific disease presentations
-- Family and social factors
-- Communication and behavioral indicators
+Specialization: Pediatric emergency medicine (patients under 16 years).
+Additional considerations: age-appropriate vital signs, developmental stage, pediatric early warning scores.
 
-Priority Guidelines for Pediatrics:
-1 = Immediate (respiratory distress, altered consciousness, severe dehydration)
-2 = Very Urgent (high fever in infants, moderate dehydration, significant pain)
-3 = Urgent (persistent vomiting, moderate fever, minor injuries)
-4 = Standard (minor illnesses, routine follow-ups)
-5 = Non-urgent (minor complaints, preventive care)
-
-Provide JSON response with:
-- pediatric_risk: string (low/medium/high)
-- age_calculated: verified patient age
-- mandatory_rules_triggered: list of pediatric-specific rules
-- priority_recommendation: integer (1-5)
-- rationale: pediatric-focused clinical reasoning"""
+RESPOND ONLY WITH THIS EXACT JSON FORMAT:
+{{
+  "pediatric_risk": "<low|medium|high>",
+  "age_calculated": <patient age>,
+  "mandatory_rules_triggered": ["<rule1>", "<rule2>"],
+  "priority_recommendation": <integer 1-5>,
+  "rationale": "<brief pediatric reasoning>"
+}}"""
 
 def get_clinical_assessor_prompt(patient_data: Dict[str, Any] = None, pediatric_assessment: str = "") -> str:
-    """Get clinical assessor system prompt for comprehensive medical evaluation"""
-    return """You are a senior emergency medicine physician AI specializing in comprehensive clinical assessment.
-Your role is to evaluate the complete clinical picture and determine appropriate triage priority.
+    """Get clinical assessor system prompt using modular components"""
+    return f"""{get_base_triage_context()}
 
-Clinical Assessment Focus:
-- Symptom severity and progression
-- Vital signs interpretation
-- Physical examination findings
-- Differential diagnosis considerations
-- Comorbidity impact assessment
-- Medication interactions and contraindications
+Specialization: Senior emergency medicine physician.
+Additional focus: symptom severity, differential diagnosis, comorbidity impact, medication interactions.
+If pediatric assessment provided, integrate those findings.
 
-Integration Requirements:
-- Consider pediatric assessment findings if provided
-- Evaluate clinical complexity
-- Assess need for immediate interventions
-- Determine resource requirements
-
-Priority Determination Factors:
-1 = Life-threatening conditions requiring immediate intervention
-2 = High-risk conditions with potential for rapid deterioration
-3 = Moderate conditions requiring timely assessment
-4 = Stable conditions with standard urgency
-5 = Minor conditions suitable for routine care
-
-Provide JSON response with:
-- clinical_priority: integer (1-5)
-- severity_assessment: string describing condition severity
-- immediate_interventions: list of required immediate actions
-- monitoring_requirements: ongoing monitoring needs
-- rationale: comprehensive clinical reasoning
-- confidence_level: float (0.0-1.0)"""
+RESPOND ONLY WITH THIS EXACT JSON FORMAT:
+{{
+  "clinical_priority": <integer 1-5>,
+  "severity_assessment": "<brief severity description>",
+  "immediate_interventions": ["<action1>", "<action2>"],
+  "monitoring_requirements": "<monitoring needs>",
+  "rationale": "<brief clinical reasoning>",
+  "confidence_level": <float 0.0-1.0>
+}}"""
 
 def get_consensus_coordinator_prompt(patient_data: Dict[str, Any] = None, pediatric_assessment: str = "", clinical_assessment: str = "") -> str:
-    """Get consensus coordinator system prompt for final triage decision"""
-    return """You are the senior triage coordinator AI responsible for making final triage decisions.
-Your role is to synthesize all assessment inputs and determine the definitive triage priority.
+    """Get consensus coordinator system prompt using modular components"""
+    return f"""{get_base_triage_context()}
 
-Coordination Responsibilities:
-- Integrate pediatric and clinical assessments
-- Resolve any conflicting recommendations
-- Apply Manchester Triage System protocols
-- Consider resource availability and patient flow
-- Ensure patient safety as primary concern
+Specialization: Senior triage coordinator - synthesize multiple assessments.
+Decision framework: If assessments agree, validate; if they differ, choose higher priority for safety.
+Consider: pediatric and clinical inputs, resource availability, patient complexity.
 
-Decision Framework:
-- If assessments agree: validate and confirm priority
-- If assessments differ: analyze discrepancies and choose higher priority for safety
-- Apply clinical judgment for edge cases
-- Consider system capacity and patient complexity
-
-Final Priority Assignment:
-1 = Immediate (any life-threatening indicator)
-2 = Very Urgent (high-risk or conflicting high priorities)
-3 = Urgent (moderate risk or mixed assessments)
-4 = Standard (stable conditions, consistent low-moderate priority)
-5 = Non-urgent (minor conditions, all assessments agree)
-
-Provide JSON response with:
-- final_priority: integer (1-5)
-- consensus_rationale: explanation of decision process
-- assessment_agreement: boolean indicating if inputs agreed
-- safety_considerations: key safety factors considered
-- recommended_actions: final action plan
-- confidence: float (0.0-1.0) in final decision"""
+RESPOND ONLY WITH THIS EXACT JSON FORMAT:
+{{
+  "mts_priority": <integer 1-5>,
+  "confidence": "<high|medium|low>",
+  "rationale": "<brief consensus reasoning>",
+  "service_min": <integer minutes>,
+  "consensus_method": "<agreement_type>",
+  "critical_history_factors": ["<factor1>", "<factor2>"]
+}}"""
