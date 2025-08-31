@@ -1,7 +1,7 @@
 class p:
     """Simulation parameters for the NHS Triage System"""
     # Patient arrival parameters
-    inter = 1.0              # Mean time between patient arrivals (minutes) - 100 patients in 100 seconds
+    inter = 0.0167            # Mean time between patient arrivals (minutes) - 100 patients in 100 seconds
                              # For Poisson process, this is 1/λ where λ is the arrival rate
                              # Expected number of arrivals per hour = 60/inter = 60 patients/hour
                              # In queuing theory notation, this is the μ parameter for

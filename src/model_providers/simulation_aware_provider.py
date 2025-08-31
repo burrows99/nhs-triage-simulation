@@ -58,17 +58,30 @@ class SimulationAwareProvider:
         self.base_provider.setup(system_prompt)
     
     def _generate_cache_key(self, prompt: str, options: Optional[Dict[str, Any]] = None) -> str:
-        """Generate a cache key for the prompt and options"""
-        import hashlib
+        """Generate a cache key using patient ID and triage system name"""
+        # Extract patient ID from prompt (look for common patterns)
+        import re
         
-        # Create a deterministic key from prompt and options
-        key_data = prompt
-        if options:
-            # Sort options for consistent hashing
-            sorted_options = sorted(options.items())
-            key_data += str(sorted_options)
+        # Try to extract patient ID from prompt
+        patient_id_match = re.search(r'patient[\s_-]*(?:id[:\s]*)?([a-zA-Z0-9-]+)', prompt, re.IGNORECASE)
+        if patient_id_match:
+            patient_id = patient_id_match.group(1)
+        else:
+            # Fallback to hash if no patient ID found
+            import hashlib
+            patient_id = hashlib.md5(prompt.encode()).hexdigest()[:8]
         
-        return hashlib.md5(key_data.encode()).hexdigest()
+        # Extract triage system from options or use default
+        triage_system = "unknown_system"
+        if options and 'triage_system' in options:
+            triage_system = options['triage_system']
+        elif options and 'system_name' in options:
+            triage_system = options['system_name']
+        
+        # Clean system name for filename
+        clean_system = triage_system.replace(' ', '_').replace('-', '_').lower()
+        
+        return f"{patient_id}_{clean_system}"
     
     def _load_persistent_cache(self):
         """Load cached responses from disk"""
@@ -172,12 +185,22 @@ class SimulationAwareProvider:
             'success_rate': (self.completed_requests / self.total_requests * 100) if self.total_requests > 0 else 0
         }
     
-    def precompute_response(self, prompt: str, options: Optional[Dict[str, Any]] = None) -> str:
+    def precompute_response(self, prompt: str, options: Optional[Dict[str, Any]] = None, patient_id: str = None, triage_system: str = None) -> str:
         """
         Precompute LLM response in background thread.
         Returns cache key for later retrieval.
         """
-        cache_key = self._generate_cache_key(prompt, options)
+        # If patient_id and triage_system provided directly, use them
+        if patient_id and triage_system:
+            clean_system = triage_system.replace(' ', '_').replace('-', '_').lower()
+            cache_key = f"{patient_id}_{clean_system}"
+        else:
+            # Add triage system to options for key generation
+            if options is None:
+                options = {}
+            if triage_system:
+                options['triage_system'] = triage_system
+            cache_key = self._generate_cache_key(prompt, options)
         
         with self._lock:
             # Check if already cached in memory

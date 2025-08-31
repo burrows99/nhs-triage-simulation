@@ -111,12 +111,14 @@ class SimulationAwareAITriage(BaseTriage):
         # Use the new prompt function that accepts patient data directly
         prompt = get_single_agent_prompt(patient_data)
         
+        patient_id = patient_data.get('id', f'patient_{patient_index}')
         cache_key = self.provider.precompute_response(
             prompt, 
-            self.config.get('request', {}).get('options', {})
+            self.config.get('request', {}).get('options', {}),
+            patient_id=patient_id,
+            triage_system=self.system_name
         )
         
-        patient_id = patient_data.get('id', f'patient_{patient_index}')
         with self._precompute_lock:
             self.response_cache_keys[patient_id] = {'single': cache_key}
     
@@ -151,7 +153,9 @@ class SimulationAwareAITriage(BaseTriage):
                         )
                         cache_key = self.provider.precompute_response(
                             prompt,
-                            self.config.get('request', {}).get('options', {})
+                            self.config.get('request', {}).get('options', {}),
+                            patient_id=patient_id,
+                            triage_system=f"{self.system_name}_{agent_name}"
                         )
                         return agent_name, cache_key
                     except Exception as e:
@@ -179,7 +183,9 @@ class SimulationAwareAITriage(BaseTriage):
                         )
                         cache_keys[agent_name] = self.provider.precompute_response(
                             prompt,
-                            self.config.get('request', {}).get('options', {})
+                            self.config.get('request', {}).get('options', {}),
+                            patient_id=patient_id,
+                            triage_system=f"{self.system_name}_{agent_name}"
                         )
                     except Exception as e:
                         logger.error(f"Error pre-computing {agent_name} for patient {patient_id}: {e}")
