@@ -139,7 +139,7 @@ Always provide structured JSON responses with priority, reasoning, and confidenc
 
 {agent_name.upper().replace('_', ' ')} SPECIALIST ASSESSMENT:
 
-Patient: {patient_info['patient_age']}, {patient_info['patient_gender']}
+Patient: {patient_info['age']}, {patient_info['gender']}
 Chief Complaint: {patient_info['chief_complaint']}
 Medical History: {patient_info['medical_history']}
 Vital Signs: {vital_signs_str}{comprehensive_context}
@@ -159,54 +159,23 @@ Based ONLY on your area of expertise ({focus}), assess the triage priority (1-5)
 Return JSON: {{"mts_priority": number, "confidence": "high|medium|low", "rationale": "explanation based on {focus}", "service_min": number, "focus_area": "{focus}", "key_findings": ["finding1", "finding2"]}}"""
     
     def _extract_patient_info(self, patient_data: Dict[str, Any]) -> Dict[str, str]:
-        """Extract basic patient information using only available fields"""
-        result = {}
+        """Extract patient information using Patient entity standard field names"""
+        # Use Patient entity's standard field names as defined in CSV_FIELDS
+        # ['id', 'age', 'gender', 'chief_complaint', 'medical_history', ...]
         
-        # Age fields - use what's available
-        if 'age' in patient_data:
-            result['age'] = str(patient_data['age'])
-            result['patient_age'] = str(patient_data['age'])  # Template compatibility
-        elif 'patient_age' in patient_data:
-            result['patient_age'] = str(patient_data['patient_age'])
-            result['age'] = str(patient_data['patient_age'])  # Template compatibility
-        else:
-            result['age'] = 'Unknown'
-            result['patient_age'] = 'Unknown'
-        
-        # Gender fields - use what's available
-        if 'gender' in patient_data:
-            result['gender'] = str(patient_data['gender'])
-            result['patient_gender'] = str(patient_data['gender'])  # Template compatibility
-        elif 'patient_gender' in patient_data:
-            result['patient_gender'] = str(patient_data['patient_gender'])
-            result['gender'] = str(patient_data['patient_gender'])  # Template compatibility
-        else:
-            result['gender'] = 'Unknown'
-            result['patient_gender'] = 'Unknown'
-        
-        # Chief complaint fields - use what's available
-        if 'chief_complaint' in patient_data:
-            result['chief_complaint'] = str(patient_data['chief_complaint'])
-            result['reason_description'] = str(patient_data['chief_complaint'])  # Template compatibility
-        elif 'reason_description' in patient_data:
-            result['reason_description'] = str(patient_data['reason_description'])
-            result['chief_complaint'] = str(patient_data['reason_description'])  # Template compatibility
-        else:
-            result['chief_complaint'] = 'Not specified'
-            result['reason_description'] = 'Not specified'
-        
-        # Medical history fields - use what's available
-        if 'medical_history' in patient_data:
-            result['medical_history'] = str(patient_data['medical_history'])
-            result['patient_history'] = str(patient_data['medical_history'])  # Template compatibility
-        elif 'patient_history' in patient_data:
-            result['patient_history'] = str(patient_data['patient_history'])
-            result['medical_history'] = str(patient_data['patient_history'])  # Template compatibility
-        else:
-            result['medical_history'] = 'No significant history'
-            result['patient_history'] = 'No significant history'
-        
-        return result
+        return {
+            # Standard Patient entity fields (primary)
+            'age': str(patient_data.get('age', 'Unknown')),
+            'gender': str(patient_data.get('gender', 'Unknown')),
+            'chief_complaint': str(patient_data.get('chief_complaint', 'Not specified')),
+            'medical_history': str(patient_data.get('medical_history', 'No significant history')),
+            
+            # Legacy template compatibility (secondary - for old templates)
+            'patient_age': str(patient_data.get('age', 'Unknown')),
+            'patient_gender': str(patient_data.get('gender', 'Unknown')),
+            'reason_description': str(patient_data.get('chief_complaint', 'Not specified')),
+            'patient_history': str(patient_data.get('medical_history', 'No significant history'))
+        }
     
     def _format_vital_signs(self, patient_data: Dict[str, Any]) -> str:
         """Format vital signs for display"""
