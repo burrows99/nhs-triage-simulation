@@ -92,13 +92,14 @@ def test_basic_triage():
     ]
     
     results = []
-    for case in test_cases:
+    for i, case in enumerate(test_cases, 1):
         print(f"\n📋 Case: {case['name']}")
         print(f"   Reason: {case['reason']}")
         print(f"   Symptoms: {case['symptoms']}")
         
-        # Perform triage
-        result = mts.triage_patient(case['reason'], case['symptoms'])
+        # Perform triage with patient ID
+        patient_id = f"test_patient_{i:02d}"
+        result = mts.triage_patient(case['reason'], case['symptoms'], patient_id=patient_id)
         
         print(f"   ➤ Triage Category: {result['triage_category']}")
         print(f"   ➤ Wait Time: {result['wait_time']}")
@@ -287,10 +288,13 @@ def run_performance_test():
     start_time = time.time()
     results = []
     
+    patient_counter = 1
     for i in range(num_tests):
         for reason, symptoms in test_symptoms.items():
-            result = mts.triage_patient(reason, symptoms)
+            patient_id = f"perf_patient_{patient_counter:04d}"
+            result = mts.triage_patient(reason, symptoms, patient_id=patient_id)
             results.append(result)
+            patient_counter += 1
     
     end_time = time.time()
     total_time = end_time - start_time

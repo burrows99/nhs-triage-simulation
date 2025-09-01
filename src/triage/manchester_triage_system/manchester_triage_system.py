@@ -114,7 +114,7 @@ class ManchesterTriageSystem:
         Returns:
             Dict containing triage result with category, wait time, etc.
         """
-        # Generate patient ID if not provided
+        # Validate required patient ID
         if patient_id is None:
             raise ValueError("patient_id is required for triage processing")
         
