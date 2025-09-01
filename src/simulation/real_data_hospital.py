@@ -62,169 +62,24 @@ class RealDataHospital:
         
         return patient_id, patient_data
     
-    def extract_patient_symptoms(self, patient_data):
-        """Extract symptoms and medical history from real patient data."""
-        symptoms = {
-            'severe_pain': 'none',
-            'crushing_sensation': 'none',
-            'shortness_of_breath': 'none',
-            'chest_pain': 'none',
-            'nausea': 'none'
-        }
-        
-        numeric_inputs = [0.0] * 5  # Default values
-        
-        # Extract from observations
-        observations = patient_data.get('observations', [])
-        for obs in observations:
-            description = obs.get('DESCRIPTION', '').lower()
-            value = obs.get('VALUE', '')
-            
-            # Map observations to symptoms
-            if 'pain' in description and 'severity' in description:
-                try:
-                    pain_score = float(value)
-                    numeric_inputs[0] = pain_score
-                    if pain_score >= 7:
-                        symptoms['severe_pain'] = 'severe'
-                    elif pain_score >= 4:
-                        symptoms['severe_pain'] = 'moderate'
-                except (ValueError, TypeError):
-                    pass
-            
-            elif 'blood pressure' in description:
-                try:
-                    # Extract systolic BP
-                    if '/' in str(value):
-                        systolic = float(str(value).split('/')[0])
-                        numeric_inputs[1] = systolic
-                except (ValueError, TypeError):
-                    pass
-            
-            elif 'heart rate' in description or 'pulse' in description:
-                try:
-                    heart_rate = float(value)
-                    numeric_inputs[2] = heart_rate
-                except (ValueError, TypeError):
-                    pass
-            
-            elif 'temperature' in description:
-                try:
-                    temp = float(value)
-                    numeric_inputs[3] = temp
-                except (ValueError, TypeError):
-                    pass
-            
-            elif 'respiratory rate' in description:
-                try:
-                    resp_rate = float(value)
-                    numeric_inputs[4] = resp_rate
-                except (ValueError, TypeError):
-                    pass
-        
-        # Extract from conditions
-        conditions = patient_data.get('conditions', [])
-        for condition in conditions:
-            description = condition.get('DESCRIPTION', '').lower()
-            
-            if 'chest pain' in description or 'angina' in description:
-                symptoms['chest_pain'] = 'moderate'
-            elif 'myocardial infarction' in description or 'heart attack' in description:
-                symptoms['chest_pain'] = 'severe'
-                symptoms['crushing_sensation'] = 'severe'
-            elif 'hypertension' in description:
-                # Already handled in observations
-                pass
-            elif 'asthma' in description or 'copd' in description:
-                symptoms['shortness_of_breath'] = 'moderate'
-        
-        return numeric_inputs, symptoms
-    
-    def determine_triage_from_real_data(self, patient_data, numeric_inputs, symptoms):
-        """Determine triage category based on real patient data."""
+    def mts_triage(self, patient_symptoms):
+        """Mock triage function using random values."""
         categories = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
         wait_times = ['0 min', '10 min', '60 min', '120 min', '240 min']
         priorities = [1, 2, 3, 4, 5]  # RED=1 (highest), BLUE=5 (lowest)
+        flowcharts = ['chest_pain', 'shortness_of_breath', 'abdominal_pain', 'headache', 'limb_problems']
         
-        # Start with default GREEN (routine)
-        triage_index = 3
-        
-        # Check conditions for higher acuity
-        conditions = patient_data.get('conditions', [])
-        for condition in conditions:
-            description = condition.get('DESCRIPTION', '').lower()
-            
-            # RED conditions (immediate)
-            if any(term in description for term in ['myocardial infarction', 'cardiac arrest', 
-                                                   'stroke', 'severe trauma', 'respiratory failure']):
-                triage_index = 0
-                break
-            
-            # ORANGE conditions (very urgent)
-            elif any(term in description for term in ['chest pain', 'angina', 'pneumonia',
-                                                     'severe asthma', 'diabetic ketoacidosis']):
-                triage_index = min(triage_index, 1)
-            
-            # YELLOW conditions (urgent)
-            elif any(term in description for term in ['hypertension', 'moderate asthma',
-                                                     'urinary tract infection', 'cellulitis']):
-                triage_index = min(triage_index, 2)
-        
-        # Check vital signs for escalation
-        if len(numeric_inputs) >= 5:
-            pain_score, systolic_bp, heart_rate, temperature, resp_rate = numeric_inputs[:5]
-            
-            # Critical vital signs -> RED
-            if (systolic_bp > 200 or systolic_bp < 80 or 
-                heart_rate > 150 or heart_rate < 40 or
-                temperature > 104 or resp_rate > 30 or resp_rate < 8):
-                triage_index = 0
-            
-            # Concerning vital signs -> ORANGE
-            elif (systolic_bp > 180 or systolic_bp < 90 or
-                  heart_rate > 120 or heart_rate < 50 or
-                  temperature > 102 or resp_rate > 24):
-                triage_index = min(triage_index, 1)
-            
-            # Severe pain -> ORANGE
-            elif pain_score >= 8:
-                triage_index = min(triage_index, 1)
-            elif pain_score >= 6:
-                triage_index = min(triage_index, 2)
-        
-        # Check symptoms
-        if symptoms.get('severe_pain') == 'severe' or symptoms.get('crushing_sensation') == 'severe':
-            triage_index = min(triage_index, 1)
-        elif symptoms.get('chest_pain') == 'severe':
-            triage_index = min(triage_index, 1)
-        
-        # Age-based adjustments
-        birth_date = patient_data.get('BIRTHDATE', '')
-        if birth_date:
-            try:
-                birth_year = int(birth_date.split('-')[0])
-                age = 2024 - birth_year
-                
-                # Elderly patients get priority bump for certain conditions
-                if age >= 75 and triage_index >= 2:
-                    triage_index = max(0, triage_index - 1)
-                # Very young patients also get priority
-                elif age <= 2 and triage_index >= 2:
-                    triage_index = max(0, triage_index - 1)
-            except (ValueError, IndexError):
-                pass
+        # Random triage category with realistic distribution
+        idx = random.choices(range(5), weights=[0.05, 0.15, 0.30, 0.40, 0.10])[0]
         
         return {
-            'flowchart_used': 'real_data_triage',
-            'triage_category': np.str_(categories[triage_index]),
-            'wait_time': np.str_(wait_times[triage_index]),
-            'fuzzy_score': 5 - triage_index,  # Higher score for more urgent
-            'symptoms_processed': symptoms,
-            'numeric_inputs': numeric_inputs,
-            'priority_score': np.int64(priorities[triage_index]),
-            'patient_conditions': [c.get('DESCRIPTION', '') for c in patient_data.get('conditions', [])],
-            'patient_age': self._calculate_age(patient_data.get('BIRTHDATE', '')),
-            'patient_gender': patient_data.get('GENDER', 'Unknown')
+            'flowchart_used': random.choice(flowcharts),
+            'triage_category': np.str_(categories[idx]),
+            'wait_time': np.str_(wait_times[idx]),
+            'fuzzy_score': random.uniform(1.0, 5.0),
+            'symptoms_processed': patient_symptoms,
+            'numeric_inputs': [random.uniform(0, 10) for _ in range(5)],
+            'priority_score': np.int64(priorities[idx])
         }
     
     def _calculate_age(self, birth_date):
@@ -282,11 +137,15 @@ class RealDataHospital:
             real_patient_id, patient_data = patient_data_result
             patient_id = f"real_{real_patient_id[:8]}"  # Truncate for display
             
-            # Extract symptoms and medical data
-            numeric_inputs, symptoms = self.extract_patient_symptoms(patient_data)
-            
-            # Determine triage based on real medical data
-            triage_result = self.determine_triage_from_real_data(patient_data, numeric_inputs, symptoms)
+            # Use simple mock triage for real patients too
+            symptoms = {
+                'severe_pain': random.choice(['none', 'moderate', 'severe']),
+                'crushing_sensation': random.choice(['none', 'moderate', 'severe']),
+                'shortness_of_breath': random.choice(['none', 'moderate', 'severe']),
+                'chest_pain': random.choice(['none', 'moderate', 'severe']),
+                'nausea': random.choice(['none', 'moderate', 'severe'])
+            }
+            triage_result = self.mts_triage(symptoms)
         
         category = str(triage_result['triage_category'])
         priority = int(triage_result['priority_score'])
@@ -340,12 +199,12 @@ class RealDataHospital:
         self.metrics['total_time'].append(total_time)
         self.metrics['four_hour_breaches'] += 1 if total_time > 240 else 0
         
-        # Enhanced logging for real patients
+        # Simple logging for all patients
         if patient_data_result:
             _, patient_data = patient_data_result
-            age = triage_result.get('patient_age', 'Unknown')
-            gender = triage_result.get('patient_gender', 'Unknown')
-            conditions = triage_result.get('patient_conditions', [])
+            age = self._calculate_age(patient_data.get('BIRTHDATE', ''))
+            gender = patient_data.get('GENDER', 'Unknown')
+            conditions = [c.get('DESCRIPTION', '') for c in patient_data.get('conditions', [])]
             condition_summary = ', '.join(conditions[:2]) if conditions else 'None'
             print(f"Patient {patient_id} ({category}, Age: {age}, {gender}): "
                   f"Total time {total_time:.1f} min, Conditions: {condition_summary}, "
