@@ -23,9 +23,38 @@ class ManchesterTriage(BaseTriage):
     def __init__(self):
         super().__init__("Fuzzy Manchester Triage System (FMTS)")
         
-        # Official MTS Flowcharts - Core presentations
+        # Extended MTS Flowcharts - Emergency + General Healthcare presentations
         self.flowcharts = {
-            # Respiratory presentations
+            # ROUTINE HEALTHCARE FLOWCHARTS
+            'wellness_visit': {
+                'discriminators': {
+                    'acute_symptoms': {'priority': Priority.URGENT, 'fuzzy_weight': 0.6},
+                    'chronic_condition_concern': {'priority': Priority.STANDARD, 'fuzzy_weight': 0.4},
+                    'routine_screening': {'priority': Priority.NON_URGENT, 'fuzzy_weight': 0.2},
+                    'preventive_care': {'priority': Priority.NON_URGENT, 'fuzzy_weight': 0.1}
+                },
+                'default_priority': Priority.NON_URGENT
+            },
+            
+            'general_examination': {
+                'discriminators': {
+                    'concerning_symptoms': {'priority': Priority.STANDARD, 'fuzzy_weight': 0.5},
+                    'routine_checkup': {'priority': Priority.NON_URGENT, 'fuzzy_weight': 0.2},
+                    'follow_up_required': {'priority': Priority.STANDARD, 'fuzzy_weight': 0.3}
+                },
+                'default_priority': Priority.NON_URGENT
+            },
+            
+            'prenatal_visit': {
+                'discriminators': {
+                    'high_risk_pregnancy': {'priority': Priority.URGENT, 'fuzzy_weight': 0.7},
+                    'pregnancy_complications': {'priority': Priority.VERY_URGENT, 'fuzzy_weight': 0.8},
+                    'routine_prenatal': {'priority': Priority.STANDARD, 'fuzzy_weight': 0.3}
+                },
+                'default_priority': Priority.STANDARD
+            },
+            
+            # EMERGENCY PRESENTATIONS
             'shortness_of_breath_adult': {
                 'discriminators': {
                     'airway_compromise': {'priority': Priority.IMMEDIATE, 'fuzzy_weight': 1.0},
@@ -220,14 +249,31 @@ class ManchesterTriage(BaseTriage):
         )
     
     def _select_flowchart(self, chief_complaint: str) -> Dict[str, Any]:
-        """Select appropriate MTS flowchart based on chief complaint"""
+        """Select appropriate flowchart based on chief complaint - handles both emergency and routine care"""
         if not chief_complaint:
-            return {'name': 'general', 'data': self.flowcharts['chest_pain']}
+            return {'name': 'general_examination', 'data': self.flowcharts['general_examination']}
         
         complaint_lower = chief_complaint.lower()
         
-        # Map complaints to flowcharts (official MTS mapping)
+        # Priority mapping: Routine healthcare first, then emergency presentations
         flowchart_mapping = {
+            # ROUTINE HEALTHCARE ENCOUNTERS
+            'well child visit': 'wellness_visit',
+            'wellness': 'wellness_visit',
+            'checkup': 'wellness_visit',
+            'check up': 'wellness_visit',
+            'general examination': 'general_examination',
+            'examination': 'general_examination',
+            'routine': 'general_examination',
+            'prenatal': 'prenatal_visit',
+            'pregnancy': 'prenatal_visit',
+            'obstetric': 'prenatal_visit',
+            'follow-up': 'general_examination',
+            'follow up': 'general_examination',
+            'consultation': 'general_examination',
+            'telemedicine': 'general_examination',
+            
+            # EMERGENCY PRESENTATIONS
             'shortness of breath': 'shortness_of_breath_adult',
             'difficulty breathing': 'shortness_of_breath_adult',
             'dyspnea': 'shortness_of_breath_adult',
@@ -243,18 +289,25 @@ class ManchesterTriage(BaseTriage):
             'leg': 'limb_problems',
             'mental': 'mental_illness',
             'anxiety': 'mental_illness',
-            'depression': 'mental_illness'
+            'depression': 'mental_illness',
+            'emergency': 'chest_pain',  # Default emergency to chest pain flowchart
+            'urgent': 'chest_pain'
         }
         
+        # Check for exact matches first
         for keyword, flowchart_name in flowchart_mapping.items():
             if keyword in complaint_lower:
                 return {'name': flowchart_name, 'data': self.flowcharts[flowchart_name]}
         
-        # Default to chest pain flowchart if no match
-        return {'name': 'chest_pain', 'data': self.flowcharts['chest_pain']}
+        # If contains 'symptom' or 'problem', treat as potential emergency
+        if 'symptom' in complaint_lower or 'problem' in complaint_lower:
+            return {'name': 'chest_pain', 'data': self.flowcharts['chest_pain']}
+        
+        # Default to general examination for unmatched complaints
+        return {'name': 'general_examination', 'data': self.flowcharts['general_examination']}
     
     def _fuzzy_inference(self, patient: Patient, flowchart: Dict[str, Any]) -> Tuple[Priority, float, str]:
-        """Apply fuzzy inference using MTS discriminators"""
+        """Apply fuzzy inference using MTS discriminators - handles both emergency and routine care"""
         flowchart_data = flowchart['data']
         discriminators = flowchart_data['discriminators']
         
@@ -298,25 +351,19 @@ class ManchesterTriage(BaseTriage):
             logger.info(f"  Max membership: {max_membership:.3f}")
             logger.info(f"  Initial priority: {priority.name}")
         else:
-            # No discriminators fired - default to non-urgent
-            priority = Priority.NON_URGENT
+            # No discriminators fired - use flowchart default or NON_URGENT
+            default_priority = flowchart_data.get('default_priority', Priority.NON_URGENT)
+            priority = default_priority
             confidence = 0.3
             reasoning = "No significant discriminators identified"
-            logger.info(f"  No discriminators activated - defaulting to NON_URGENT")
+            logger.info(f"  No discriminators activated - using default priority: {default_priority.name}")
         
-        # Apply vital signs fuzzy modulation
-        logger.info(f"\nVITAL SIGNS MODULATION:")
-        vital_priority, vital_confidence = self._assess_vital_signs_fuzzy(patient)
-        logger.info(f"  Vital signs priority: {vital_priority.name}")
-        logger.info(f"  Vital signs confidence: {vital_confidence:.3f}")
-        
-        if vital_priority.value < priority.value:  # Higher priority (lower number)
-            logger.info(f"  Vital signs override: {priority.name} → {vital_priority.name}")
-            priority = vital_priority
-            confidence = max(confidence, vital_confidence)
-            reasoning += f"; Vital signs elevation to {vital_priority.name}"
-        else:
-            logger.info(f"  No vital signs override needed")
+        # Apply vital signs fuzzy modulation (less aggressive for routine care)
+        priority, confidence, vital_reasoning = self._apply_vital_signs_modulation(
+            patient, priority, confidence, flowchart['name']
+        )
+        if vital_reasoning:
+            reasoning += f"; {vital_reasoning}"
         
         return priority, confidence, reasoning
     
@@ -399,6 +446,48 @@ class ManchesterTriage(BaseTriage):
         
         logger.info(f"        Final membership: 0.0 (no criteria met)")
         return 0.0
+    
+    def _apply_vital_signs_modulation(self, patient: Patient, initial_priority: Priority, 
+                                     initial_confidence: float, flowchart_name: str = '') -> Tuple[Priority, float, str]:
+        """Apply vital signs modulation with different thresholds for routine vs emergency care"""
+        logger.info(f"\nVITAL SIGNS MODULATION:")
+        
+        vital_priority, vital_confidence = self._assess_vital_signs_fuzzy(patient)
+        logger.info(f"  Vital signs priority: {vital_priority.name}")
+        logger.info(f"  Vital signs confidence: {vital_confidence:.3f}")
+        
+        # Determine if this is routine care
+        is_routine_care = flowchart_name in ['wellness_visit', 'general_examination', 'prenatal_visit']
+        
+        vital_reasoning = ""
+        final_priority = initial_priority
+        final_confidence = initial_confidence
+        
+        if vital_priority.value < initial_priority.value:  # Higher priority (lower number)
+            if is_routine_care:
+                # For routine care, be more conservative with vital signs escalation
+                if vital_priority.value <= Priority.URGENT.value and vital_confidence > 0.7:
+                    logger.info(f"  Vital signs override (routine care): {initial_priority.name} → {vital_priority.name}")
+                    final_priority = vital_priority
+                    final_confidence = max(initial_confidence, vital_confidence)
+                    vital_reasoning = f"Vital signs elevation to {vital_priority.name}"
+                elif vital_priority.value <= Priority.VERY_URGENT.value and vital_confidence > 0.8:
+                    logger.info(f"  Vital signs override (routine care - high confidence): {initial_priority.name} → {vital_priority.name}")
+                    final_priority = vital_priority
+                    final_confidence = max(initial_confidence, vital_confidence)
+                    vital_reasoning = f"Vital signs elevation to {vital_priority.name}"
+                else:
+                    logger.info(f"  Vital signs override suppressed for routine care (confidence {vital_confidence:.3f} insufficient)")
+            else:
+                # For emergency presentations, use standard escalation
+                logger.info(f"  Vital signs override: {initial_priority.name} → {vital_priority.name}")
+                final_priority = vital_priority
+                final_confidence = max(initial_confidence, vital_confidence)
+                vital_reasoning = f"Vital signs elevation to {vital_priority.name}"
+        else:
+            logger.info(f"  No vital signs override needed")
+        
+        return final_priority, final_confidence, vital_reasoning
     
     def _assess_vital_signs_fuzzy(self, patient: Patient) -> Tuple[Priority, float]:
         """Assess vital signs using fuzzy logic"""

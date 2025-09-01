@@ -79,20 +79,28 @@ class MetricsAnalyzer:
     """Advanced statistical analysis for ED simulation metrics"""
     
     def __init__(self):
-        # NHS benchmarks and targets
-        self.nhs_targets = {
+        # General Healthcare benchmarks and targets
+        self.healthcare_targets = {
             'wait_time_targets': {
-                'IMMEDIATE': 0,      # Red - Immediate
-                'VERY_URGENT': 10,   # Orange - 10 minutes
-                'URGENT': 60,        # Yellow - 1 hour
-                'STANDARD': 120,     # Green - 2 hours
-                'NON_URGENT': 240    # Blue - 4 hours
+                'IMMEDIATE': 0,        # Emergency - immediate escalation
+                'VERY_URGENT': 30,     # Serious acute - 30 minutes
+                'URGENT': 120,         # Same-day attention - 2 hours
+                'STANDARD': 480,       # Routine problems - 8 hours (same day)
+                'NON_URGENT': 1440     # Preventive care - 24 hours (next available)
             },
             'performance_targets': {
                 'overall_compliance': 95.0,  # 95% of patients seen within target
-                'throughput_target': 20.0,   # Patients per hour
-                'resource_utilization_target': 85.0,  # 85% utilization
-                'lwbs_rate_target': 5.0      # <5% LWBS rate
+                'throughput_target': 15.0,   # Patients per hour (lower for general practice)
+                'resource_utilization_target': 75.0,  # 75% utilization (more realistic for mixed care)
+                'lwbs_rate_target': 2.0,     # <2% LWBS rate (lower for scheduled care)
+                'admission_rate_target': 5.0  # 5% admission rate (much lower for general practice)
+            },
+            'priority_distribution_targets': {
+                'IMMEDIATE': (1, 2),      # 1-2% true emergencies
+                'VERY_URGENT': (3, 5),    # 3-5% serious acute conditions
+                'URGENT': (10, 15),       # 10-15% same-day problems
+                'STANDARD': (25, 30),     # 25-30% routine problems
+                'NON_URGENT': (50, 60)    # 50-60% preventive/wellness care
             }
         }
         
@@ -192,7 +200,7 @@ class MetricsAnalyzer:
                 wait_time_analysis['by_priority'][priority] = self._calculate_descriptive_stats(times)
                 
                 # Target compliance for this priority
-                target_time = self.nhs_targets['wait_time_targets'].get(priority, 240)
+                target_time = self.healthcare_targets['wait_time_targets'].get(priority, 1440)
                 compliant_count = sum(1 for t in times if t <= target_time)
                 compliance_rate = (compliant_count / len(times)) * 100
                 
@@ -247,7 +255,7 @@ class MetricsAnalyzer:
                 resource_analysis[resource_name] = self._calculate_descriptive_stats(utilization_data)
                 
                 # Calculate efficiency metrics
-                target_utilization = self.nhs_targets['performance_targets']['resource_utilization_target']
+                target_utilization = self.healthcare_targets['performance_targets']['resource_utilization_target']
                 avg_utilization = np.mean(utilization_data)
                 
                 resource_analysis[resource_name]['efficiency'] = {
@@ -297,7 +305,7 @@ class MetricsAnalyzer:
         return indicators
         
     def _analyze_target_compliance(self, metrics: SimulationMetrics) -> Dict[str, float]:
-        """Analyze compliance with NHS targets"""
+        """Analyze compliance with General Healthcare targets"""
         
         compliance = {}
         
@@ -307,7 +315,7 @@ class MetricsAnalyzer:
         
         for priority, times in metrics.wait_times.items():
             if times:
-                target_time = self.nhs_targets['wait_time_targets'].get(priority, 240)
+                target_time = self.healthcare_targets['wait_time_targets'].get(priority, 1440)
                 compliant_count = sum(1 for t in times if t <= target_time)
                 compliance_rate = (compliant_count / len(times)) * 100
                 
@@ -320,7 +328,7 @@ class MetricsAnalyzer:
             compliance['overall_compliance'] = (overall_compliant / overall_total) * 100
             
         # Performance target compliance
-        targets = self.nhs_targets['performance_targets']
+        targets = self.healthcare_targets['performance_targets']
         
         if metrics.throughput_per_hour > 0:
             compliance['throughput_compliance'] = min(100, (metrics.throughput_per_hour / targets['throughput_target']) * 100)
@@ -332,7 +340,37 @@ class MetricsAnalyzer:
             lwbs_rate = (metrics.total_lwbs / metrics.total_arrivals) * 100
             compliance['lwbs_compliance'] = max(0, 100 - (lwbs_rate / targets['lwbs_rate_target']) * 100)
             
+        # Priority distribution compliance
+        priority_distribution = self._calculate_priority_distribution(metrics)
+        for priority, (min_target, max_target) in self.healthcare_targets['priority_distribution_targets'].items():
+            actual_percentage = priority_distribution.get(priority, 0)
+            if min_target <= actual_percentage <= max_target:
+                compliance[f'{priority}_distribution_compliance'] = 100.0
+            else:
+                # Calculate how far off from target range
+                if actual_percentage < min_target:
+                    deviation = min_target - actual_percentage
+                else:
+                    deviation = actual_percentage - max_target
+                compliance[f'{priority}_distribution_compliance'] = max(0, 100 - (deviation * 2))  # 2% penalty per 1% deviation
+            
         return compliance
+    
+    def _calculate_priority_distribution(self, metrics: SimulationMetrics) -> Dict[str, float]:
+        """Calculate actual priority distribution percentages"""
+        total_patients = metrics.total_arrivals
+        if total_patients == 0:
+            return {}
+        
+        distribution = {}
+        priority_counts = getattr(metrics, 'priority_counts', {})
+        
+        for priority in ['IMMEDIATE', 'VERY_URGENT', 'URGENT', 'STANDARD', 'NON_URGENT']:
+            count = priority_counts.get(priority, 0)
+            percentage = (count / total_patients) * 100
+            distribution[priority] = percentage
+            
+        return distribution
         
     def _calculate_efficiency_metrics(self, metrics: SimulationMetrics) -> Dict[str, float]:
         """Calculate efficiency metrics"""

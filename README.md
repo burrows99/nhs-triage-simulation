@@ -1,98 +1,262 @@
-# NHS Triage Simulator
+# General Healthcare Triage Simulator
 
-A simulation of an NHS emergency department triage system using SimPy. This project models patient flow through an emergency department, including triage, consultation, and potential admission processes.
+A comprehensive simulation system for general healthcare triage using an enhanced Manchester Triage System (MTS) that handles both routine healthcare encounters and emergency presentations.
 
-## Project Structure
+## Overview
+
+This simulator models patient flow through a general healthcare facility, including:
+- **Routine Care**: Wellness visits, check-ups, preventive care
+- **Emergency Care**: Urgent symptoms, acute conditions, life-threatening situations
+- **Mixed Scenarios**: Realistic healthcare environments with varied patient acuity
+
+## Quick Start
+
+### Basic Simulation
+```bash
+# Run default simulation (24 hours, 0.5 patients/minute)
+python -m src.main
+
+# Run with verbose logging
+python -m src.main --verbose
+
+# Run shorter simulation (2 hours)
+python -m src.main --duration 120
+```
+
+### Predefined Scenarios
+
+#### 1. Low Demand Scenario
+```bash
+python -m src.main --scenario low_demand
+```
+- **Duration**: 12 hours
+- **Arrival Rate**: 0.3 patients/minute
+- **Resources**: 3 doctors, 6 cubicles, 2 nurses
+- **Use Case**: Quiet periods, rural practices
+
+#### 2. High Demand Scenario
+```bash
+python -m src.main --scenario high_demand
+```
+- **Duration**: 24 hours
+- **Arrival Rate**: 0.8 patients/minute
+- **Resources**: 6 doctors, 12 cubicles, 3 nurses
+- **Use Case**: Busy urban practices, flu season
+
+#### 3. Crisis Scenario
+```bash
+python -m src.main --scenario crisis
+```
+- **Duration**: 48 hours
+- **Arrival Rate**: 1.2 patients/minute
+- **Resources**: 8 doctors, 16 cubicles, 4 nurses
+- **Use Case**: Pandemic conditions, major incidents
+
+#### 4. Optimization Test
+```bash
+python -m src.main --scenario optimization_test
+```
+- **Duration**: 16 hours
+- **Features**: Dynamic resource optimization enabled
+- **Use Case**: Testing adaptive resource allocation
+
+### Custom Configuration
+
+#### Manual Parameters
+```bash
+# Custom duration and arrival rate
+python -m src.main --duration 480 --rate 0.6
+
+# Custom staffing levels
+python -m src.main --doctors 5 --nurses 3 --cubicles 10
+
+# Specific random seed for reproducibility
+python -m src.main --seed 12345
+```
+
+#### Configuration File
+```bash
+# Use custom configuration file
+python -m src.main --config my_config.json
+```
+
+Example configuration file (`my_config.json`):
+```json
+{
+  "simulation": {
+    "duration": 720,
+    "arrival_rate": 0.4,
+    "random_seed": 42
+  },
+  "resources": {
+    "num_doctors": 4,
+    "num_triage_nurses": 2,
+    "num_cubicles": 8,
+    "num_admission_beds": 20
+  },
+  "triage_system": {
+    "type": "manchester"
+  }
+}
+```
+
+### Analysis and Visualization
+
+#### Generate Comprehensive Analysis
+```bash
+# Run with detailed analysis and plots
+python -m src.main --analyze --output results_folder
+
+# Compare multiple scenarios
+python -m src.main --compare low_demand high_demand --output comparison
+```
+
+#### Metrics Demo
+```bash
+# Run comprehensive metrics demonstration
+python metrics_demo.py
+```
+
+## Understanding the Output
+
+### Priority Distribution (General Healthcare)
+- **IMMEDIATE**: 1-2% (true emergencies requiring immediate escalation)
+- **VERY_URGENT**: 3-5% (serious acute conditions, 30-minute target)
+- **URGENT**: 10-15% (same-day attention required, 2-hour target)
+- **STANDARD**: 25-30% (routine problems, 8-hour target)
+- **NON_URGENT**: 50-60% (preventive care, wellness visits, 24-hour target)
+
+### Key Metrics
+- **Throughput**: Patients processed per hour
+- **Wait Times**: Time from arrival to consultation by priority
+- **Resource Utilization**: Doctor, nurse, and cubicle usage
+- **Compliance**: Adherence to healthcare time targets
+- **System Efficiency**: Overall performance indicators
+
+### Generated Files
+- **Simulation Results**: JSON files with detailed metrics
+- **Visualizations**: PNG charts showing performance analysis
+- **Statistical Reports**: Comprehensive analysis with recommendations
+
+## Advanced Usage
+
+### Scenario Comparison
+```bash
+# Compare three scenarios with custom output
+python -m src.main --compare low_demand high_demand crisis --output multi_scenario_analysis
+```
+
+### Performance Optimization
+```bash
+# Enable dynamic optimization during simulation
+python -m src.main --scenario optimization_test --analyze
+```
+
+### Research Mode
+```bash
+# Long-term study with detailed logging
+python -m src.main --duration 2880 --verbose --analyze --output longitudinal_study
+```
+
+## Triage System Details
+
+### Manchester Triage System (Enhanced)
+The system uses an enhanced MTS that handles:
+
+#### Emergency Presentations
+- **Chest Pain**: Cardiac risk assessment
+- **Shortness of Breath**: Respiratory evaluation
+- **Neurological**: Stroke/seizure protocols
+- **Trauma**: Injury severity assessment
+
+#### Routine Healthcare
+- **Wellness Visits**: Preventive care, screenings
+- **General Examinations**: Routine check-ups
+- **Prenatal Care**: Pregnancy-related visits
+- **Follow-up Care**: Chronic condition management
+
+### Fuzzy Logic Implementation
+- **Discriminator Evaluation**: Pain, vital signs, symptoms
+- **Confidence Scoring**: Uncertainty quantification
+- **Vital Signs Modulation**: Conservative escalation for routine care
+- **Medical History Integration**: Risk factor consideration
+
+## Troubleshooting
+
+### Common Issues
+
+#### Empty Visualization Charts
+```bash
+# Ensure sufficient simulation duration for data collection
+python -m src.main --duration 240  # At least 4 hours recommended
+```
+
+#### Low Resource Utilization
+```bash
+# Increase arrival rate or reduce resources
+python -m src.main --rate 0.8 --doctors 3
+```
+
+#### Memory Issues with Long Simulations
+```bash
+# Reduce logging for very long simulations
+python -m src.main --duration 2880 --quiet
+```
+
+### Performance Tips
+- Use `--quiet` flag for faster execution
+- Set appropriate `--seed` for reproducible results
+- Monitor system resources during long simulations
+- Use `--analyze` only when needed (computationally intensive)
+
+## File Structure
 
 ```
 src/
-  ├── __init__.py
-  ├── main.py                # Main simulation runner
-  ├── core/                  # Core simulation components
-  │   ├── __init__.py
-  │   ├── emergency_department.py  # ED simulation logic
-  │   ├── patient.py              # Patient class
-  │   └── parameters.py           # Simulation parameters
-  ├── utils/                 # Utility functions
-  │   ├── __init__.py
-  │   └── time_utils.py           # Time estimation functions
-  └── visualization/         # Visualization components
-      ├── __init__.py
-      ├── metrics.py              # Metrics collection and analysis
-      └── plots.py                # Data visualization functions
+├── main.py                 # Main simulation runner
+├── core/
+│   ├── simulation_engine.py    # Core simulation logic
+│   ├── emergency_department.py # Healthcare facility model
+│   └── patient_generator.py    # Patient arrival simulation
+├── triage/
+│   ├── manchester_triage.py    # Enhanced MTS implementation
+│   └── base_triage.py         # Triage system interface
+├── metrics/
+│   ├── metrics_collector.py   # Performance data collection
+│   ├── analysis.py           # Statistical analysis
+│   └── visualization.py      # Chart generation
+└── config/
+    └── simulation_parameters.py # Configuration management
 ```
 
-## Features
+## Research Applications
 
-- NHS Manchester Triage System simulation (5 priority levels)
-- Poisson arrival process following queuing theory principles
-- Realistic time distributions for triage and consultation
-- Priority-based doctor allocation
-- Comprehensive metrics collection and analysis
-- Data visualization of wait times and patient flow
-- Statistical verification of Poisson arrival distribution
-- Docker containerization with hot reload for development
-
-## Running the Simulation
-
-### Using Docker Compose (Recommended)
-
+### Baseline Studies
 ```bash
-docker-compose up --build
+# Establish MTS baseline performance
+python -m src.main --scenario high_demand --analyze --output mts_baseline
 ```
 
-This will build and run the simulation in a Docker container with hot reload enabled. Any changes to the Python files will automatically trigger a re-run of the simulation.
-
-### Running Locally
-
-1. Install dependencies:
-
+### Comparative Analysis
 ```bash
-pip install -r requirements.txt
+# Compare different resource configurations
+python -m src.main --compare low_demand high_demand optimization_test
 ```
 
-2. Run the simulation:
-
+### Longitudinal Studies
 ```bash
-python -m src.main
+# Extended simulation for trend analysis
+python -m src.main --duration 4320 --verbose --output week_long_study
 ```
 
-## Simulation Parameters
+## Contributing
 
-The simulation parameters can be modified in `src/core/parameters.py`. Key parameters include:
+To extend the system:
+1. Add new triage algorithms in `src/triage/`
+2. Implement custom scenarios in `simulation_parameters.py`
+3. Create additional metrics in `metrics_collector.py`
+4. Add visualization types in `visualization.py`
 
-- Number of nurses and doctors
-- Number of cubicles
-- Mean and standard deviation for triage and consultation times
-- Simulation duration
-- Patient inter-arrival time (`inter` parameter)
+## License
 
-## Queueing Theory Implementation
-
-This simulation implements a Poisson arrival process, a fundamental concept in queueing theory:
-
-- Patient arrivals follow a Poisson distribution with rate parameter λ = 1/`inter`
-- Inter-arrival times follow an exponential distribution with mean = `inter`
-- The `generate_interarrival_time()` function in `src/utils/time_utils.py` generates these times
-- Statistical verification is performed using the `verify_poisson_arrivals()` function in `src/visualization/plots.py`
-- Verification includes:
-  - Histogram of arrivals per time interval compared to theoretical Poisson distribution
-  - Histogram of inter-arrival times compared to theoretical exponential distribution
-  - Kolmogorov-Smirnov test for exponential distribution fit
-
-## Output
-
-The simulation produces:
-
-1. Console output with summary statistics including:
-   - Total patients processed
-   - Admission rate
-   - Average wait times for triage and consultation
-   - Average total time in system
-   - Average wait times by priority level
-   - Statistical verification of Poisson arrival process
-
-2. Visualizations saved as:
-   - `simulation_results.png` - showing wait times by priority and total time distribution
-   - `priority_distribution.png` - showing the distribution of patient priorities
-   - `poisson_verification.png` - verifying that patient arrivals follow a Poisson distribution
+This project is developed for academic research purposes.

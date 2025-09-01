@@ -322,12 +322,15 @@ class EmergencyDepartment:
         while True:
             yield self.env.timeout(self.monitoring_interval)
             
-            # Record resource utilization
-            doctor_utilization = (self.doctors.capacity - len(self.doctors.users)) / self.doctors.capacity
-            cubicle_utilization = (self.cubicles.capacity - len(self.cubicles.users)) / self.cubicles.capacity
+            # Take comprehensive metrics snapshot
+            self.take_metrics_snapshot()
             
-            self.metrics['resource_utilization']['doctors'].append((self.env.now, 1 - doctor_utilization))
-            self.metrics['resource_utilization']['cubicles'].append((self.env.now, 1 - cubicle_utilization))
+            # Record resource utilization for legacy metrics
+            doctor_utilization = len(self.doctors.users) / self.doctors.capacity
+            cubicle_utilization = len(self.cubicles.users) / self.cubicles.capacity
+            
+            self.metrics['resource_utilization']['doctors'].append((self.env.now, doctor_utilization))
+            self.metrics['resource_utilization']['cubicles'].append((self.env.now, cubicle_utilization))
             
             # Record queue lengths
             for priority, queue in self.priority_queues.items():
@@ -458,11 +461,11 @@ class EmergencyDepartment:
     
     def take_metrics_snapshot(self):
         """Take a metrics snapshot of current system state"""
-        # Get current resource utilization
-        doctors_busy = self.doctors.capacity - len(self.doctors.users)
-        nurses_busy = getattr(self, 'triage_nurses', self.doctors).capacity - len(getattr(self, 'triage_nurses', self.doctors).users) 
-        cubicles_busy = self.cubicles.capacity - len(self.cubicles.users)
-        beds_busy = self.admission_beds.capacity - len(self.admission_beds.users)
+        # Get current resource utilization (busy resources, not available)
+        doctors_busy = len(self.doctors.users)
+        nurses_busy = len(getattr(self, 'triage_nurses', self.doctors).users) 
+        cubicles_busy = len(self.cubicles.users)
+        beds_busy = len(self.admission_beds.users)
         
         # Get current queue lengths by priority
         priority_queues = {}

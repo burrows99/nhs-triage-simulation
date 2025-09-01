@@ -1,0 +1,70 @@
+{
+  "simulation": {
+    "duration": 1440,
+    "warmup_period": 120,
+    "random_seed": 42
+  },
+  "patient_arrival": {
+    "arrival_rate": 0.5,
+    "arrival_pattern": "constant"
+  },
+  "resources": {
+    "num_triage_nurses": 2,
+    "num_doctors": 4,
+    "num_cubicles": 8,
+    "num_admission_beds": 20
+  },
+  "triage_system": {
+    "type": "manchester"
+  },
+  "performance_targets": {
+    "max_wait_time_p1": 0,
+    "max_wait_time_p2": 10,
+    "max_wait_time_p3": 60,
+    "max_wait_time_p4": 120,
+    "max_wait_time_p5": 240
+  },
+  "optimization": {
+    "enabled": false,
+    "optimization_interval": 240,
+    "target_wait_time": 60.0
+  },
+  "consultation_times": {
+    "IMMEDIATE": {
+      "mean": 45,
+      "std": 15
+    },
+    "VERY_URGENT": {
+      "mean": 35,
+      "std": 12
+    },
+    "URGENT": {
+      "mean": 25,
+      "std": 10
+    },
+    "STANDARD": {
+      "mean": 20,
+      "std": 8
+    },
+    "NON_URGENT": {
+      "mean": 15,
+      "std": 5
+    }
+  },
+  "admission_probabilities": {
+    "IMMEDIATE": 0.8,
+    "VERY_URGENT": 0.4,
+    "URGENT": 0.2,
+    "STANDARD": 0.1,
+    "NON_URGENT": 0.05
+  },
+  "data_sources": {
+    "csv_directory": "output/csv",
+    "metrics_output_directory": "metrics_output"
+  },
+  "monitoring": {
+    "monitoring_interval": 60,
+    "enable_detailed_logging": true,
+    "log_patient_journeys": true
+  }
+}
