@@ -1,16 +1,19 @@
 import simpy
 import numpy as np
+import random
 from typing import Dict, List, Optional, Any, Callable
-from ..entities.patient import Patient, Priority
+from ..entities.patient import Patient, Priority, PatientContext
+from ..utils.csv_utils import CSVDataLoader
 
 
 class PatientGenerator:
-    """Patient generator for emergency department simulation using Poisson arrival process"""
+    """Patient generator for emergency department simulation using CSV data and Poisson arrival process"""
     
     def __init__(self, 
                  env: simpy.Environment,
                  ed: 'EmergencyDepartment',
                  arrival_rate: float = 0.5,  # patients per minute
+                 csv_directory: str = '/Users/raunakburrows/dissertation/output/csv',
                  patient_profiles: Optional[Dict[str, Any]] = None):
         """
         Initialize patient generator
@@ -19,38 +22,39 @@ class PatientGenerator:
             env: SimPy environment
             ed: Emergency Department instance
             arrival_rate: Average patients per minute (lambda for Poisson process)
-            patient_profiles: Configuration for patient characteristics distribution
+            csv_directory: Path to directory containing CSV files
+            patient_profiles: Configuration for patient characteristics distribution (for chief complaints)
         """
         self.env = env
         self.ed = ed
         self.arrival_rate = arrival_rate  # λ (lambda) for Poisson process
         self.mean_interarrival_time = 1.0 / arrival_rate  # Mean time between arrivals
         
-        # Patient characteristic distributions
+        # Initialize CSV data loader
+        self.csv_loader = CSVDataLoader(csv_directory)
+        
+        # Load patient data from CSV
+        try:
+            self.patient_data = self.csv_loader.load_csv_file('patients.csv')
+            print(f"Loaded {len(self.patient_data)} patient records from CSV")
+        except Exception as e:
+            print(f"Warning: Could not load patient CSV data: {e}")
+            self.patient_data = []
+        
+        # Patient characteristic distributions (for chief complaints and vital signs)
         self.patient_profiles = patient_profiles or self._default_patient_profiles()
         
         # Tracking
         self.generated_patients = []
         self.arrival_times = []
+        self.used_patient_indices = set()  # Track which CSV patients we've used
         
         # Start the patient generation process
         self.generation_process = env.process(self._generate_patients())
     
     def _default_patient_profiles(self) -> Dict[str, Any]:
-        """Default patient characteristic distributions based on typical ED demographics"""
+        """Default patient characteristic distributions for synthetic data (chief complaints, vital signs)"""
         return {
-            'age_distribution': {
-                'type': 'mixed',
-                'distributions': [
-                    {'type': 'normal', 'mean': 5, 'std': 2, 'weight': 0.15, 'min': 0, 'max': 18},  # Pediatric
-                    {'type': 'normal', 'mean': 35, 'std': 15, 'weight': 0.50, 'min': 18, 'max': 65},  # Adult
-                    {'type': 'normal', 'mean': 75, 'std': 8, 'weight': 0.35, 'min': 65, 'max': 100}  # Elderly
-                ]
-            },
-            'gender_distribution': {
-                'male': 0.48,
-                'female': 0.52
-            },
             'chief_complaints': {
                 'chest pain': 0.15,
                 'difficulty breathing': 0.12,
@@ -112,51 +116,53 @@ class PatientGenerator:
             patient_id += 1
     
     def _create_patient(self, patient_id: int, arrival_time: float) -> Patient:
-        """Create a patient with realistic characteristics"""
-        # Generate basic demographics
-        age = self._generate_age()
-        gender = self._generate_gender()
+        """Create a patient using CSV data with realistic characteristics"""
+        
+        # Get patient context from CSV data
+        patient_context = self._get_patient_context_from_csv()
+        
+        # Generate chief complaint (still synthetic as it's not in CSV)
         chief_complaint = self._generate_chief_complaint()
         
-        # Create patient
+        # Create patient with context
         patient = Patient(
             patient_id=f"P{patient_id:06d}",
             arrival_time=arrival_time,
-            age=age,
-            gender=gender,
-            chief_complaint=chief_complaint
+            chief_complaint=chief_complaint,
+            patient_context=patient_context
         )
         
-        # Generate vital signs
+        # Generate vital signs based on age and chief complaint
         self._generate_vital_signs(patient)
         
-        # Generate medical history
+        # Generate medical history based on age and demographics
         self._generate_medical_history(patient)
         
         return patient
     
-    def _generate_age(self) -> int:
-        """Generate patient age based on mixed distribution"""
-        age_config = self.patient_profiles['age_distribution']
-        
-        if age_config['type'] == 'mixed':
-            # Choose distribution based on weights
-            distributions = age_config['distributions']
-            weights = [d['weight'] for d in distributions]
-            chosen_dist = np.random.choice(distributions, p=weights)
+    def _get_patient_context_from_csv(self) -> Optional[PatientContext]:
+        """Get patient context from CSV data, cycling through available records"""
+        if not self.patient_data:
+            return None
             
-            if chosen_dist['type'] == 'normal':
-                age = np.random.normal(chosen_dist['mean'], chosen_dist['std'])
-                age = np.clip(age, chosen_dist['min'], chosen_dist['max'])
-                return int(age)
+        # If we've used all patients, reset the tracking (allows reuse)
+        if len(self.used_patient_indices) >= len(self.patient_data):
+            self.used_patient_indices.clear()
+            
+        # Find an unused patient record
+        available_indices = set(range(len(self.patient_data))) - self.used_patient_indices
         
-        # Fallback to uniform distribution
-        return np.random.randint(0, 100)
-    
-    def _generate_gender(self) -> str:
-        """Generate patient gender"""
-        gender_dist = self.patient_profiles['gender_distribution']
-        return np.random.choice(list(gender_dist.keys()), p=list(gender_dist.values()))
+        if not available_indices:
+            # Fallback: use random patient if somehow no available indices
+            patient_index = random.randint(0, len(self.patient_data) - 1)
+        else:
+            patient_index = random.choice(list(available_indices))
+            
+        self.used_patient_indices.add(patient_index)
+        
+        # Get the patient record and create context
+        patient_record = self.patient_data[patient_index]
+        return PatientContext.from_csv_row(patient_record)
     
     def _generate_chief_complaint(self) -> str:
         """Generate chief complaint based on probability distribution"""

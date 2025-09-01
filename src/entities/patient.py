@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from enum import Enum
 import uuid
 from datetime import datetime
+import csv
 
 
 class PatientStatus(Enum):
@@ -25,6 +26,103 @@ class Priority(Enum):
     URGENT = 3  # Yellow - Urgent
     STANDARD = 4  # Green - Less urgent
     NON_URGENT = 5  # Blue - Non-urgent
+
+
+@dataclass
+class PatientContext:
+    """Complete patient context with all demographic and healthcare data"""
+    # Core identifiers
+    id: str
+    ssn: Optional[str] = None
+    drivers: Optional[str] = None
+    passport: Optional[str] = None
+    
+    # Personal information
+    birthdate: Optional[str] = None
+    deathdate: Optional[str] = None
+    prefix: Optional[str] = None
+    first: Optional[str] = None
+    last: Optional[str] = None
+    suffix: Optional[str] = None
+    maiden: Optional[str] = None
+    marital: Optional[str] = None
+    
+    # Demographics
+    race: Optional[str] = None
+    ethnicity: Optional[str] = None
+    gender: Optional[str] = None
+    birthplace: Optional[str] = None
+    
+    # Address information
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    county: Optional[str] = None
+    zip_code: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    
+    # Healthcare information
+    healthcare_expenses: Optional[float] = None
+    healthcare_coverage: Optional[float] = None
+    
+    @classmethod
+    def from_csv_row(cls, row: Dict[str, str]) -> 'PatientContext':
+        """Create PatientContext from CSV row data"""
+        return cls(
+            id=row.get('Id', ''),
+            ssn=row.get('SSN'),
+            drivers=row.get('DRIVERS'),
+            passport=row.get('PASSPORT'),
+            birthdate=row.get('BIRTHDATE'),
+            deathdate=row.get('DEATHDATE'),
+            prefix=row.get('PREFIX'),
+            first=row.get('FIRST'),
+            last=row.get('LAST'),
+            suffix=row.get('SUFFIX'),
+            maiden=row.get('MAIDEN'),
+            marital=row.get('MARITAL'),
+            race=row.get('RACE'),
+            ethnicity=row.get('ETHNICITY'),
+            gender=row.get('GENDER'),
+            birthplace=row.get('BIRTHPLACE'),
+            address=row.get('ADDRESS'),
+            city=row.get('CITY'),
+            state=row.get('STATE'),
+            county=row.get('COUNTY'),
+            zip_code=row.get('ZIP'),
+            lat=float(row['LAT']) if row.get('LAT') else None,
+            lon=float(row['LON']) if row.get('LON') else None,
+            healthcare_expenses=float(row['HEALTHCARE_EXPENSES']) if row.get('HEALTHCARE_EXPENSES') else None,
+            healthcare_coverage=float(row['HEALTHCARE_COVERAGE']) if row.get('HEALTHCARE_COVERAGE') else None
+        )
+    
+    def get_age(self) -> Optional[int]:
+        """Calculate age from birthdate"""
+        if not self.birthdate:
+            return None
+        try:
+            birth_date = datetime.strptime(self.birthdate, '%Y-%m-%d')
+            today = datetime.now()
+            age = today.year - birth_date.year
+            if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
+                age -= 1
+            return age
+        except ValueError:
+            return None
+    
+    def get_full_name(self) -> str:
+        """Get formatted full name"""
+        parts = []
+        if self.prefix:
+            parts.append(self.prefix)
+        if self.first:
+            parts.append(self.first)
+        if self.last:
+            parts.append(self.last)
+        if self.suffix:
+            parts.append(self.suffix)
+        return ' '.join(parts) if parts else 'Unknown Patient'
 
 
 @dataclass
@@ -83,7 +181,8 @@ class Patient:
                  gender: Optional[str] = None,
                  chief_complaint: Optional[str] = None,
                  vital_signs: Optional[Dict[str, Any]] = None,
-                 medical_history: Optional[Dict[str, Any]] = None):
+                 medical_history: Optional[Dict[str, Any]] = None,
+                 patient_context: Optional[PatientContext] = None):
         """
         Initialize a patient entity
         
@@ -98,8 +197,16 @@ class Patient:
         """
         self.patient_id = patient_id or str(uuid.uuid4())
         self.arrival_time = arrival_time
-        self.age = age
-        self.gender = gender
+        self.patient_context = patient_context
+        
+        # Use context data if available, otherwise use provided parameters
+        if patient_context:
+            self.age = patient_context.get_age() or age
+            self.gender = patient_context.gender or gender
+        else:
+            self.age = age
+            self.gender = gender
+            
         self.chief_complaint = chief_complaint
         self.vital_signs = vital_signs or {}
         self.medical_history = medical_history or {}

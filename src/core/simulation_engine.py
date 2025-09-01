@@ -118,7 +118,8 @@ class SimulationEngine:
         self.patient_generator = PatientGenerator(
             env=self.env,
             ed=self.ed,
-            arrival_rate=arrival_rate
+            arrival_rate=arrival_rate,
+            csv_directory='/Users/raunakburrows/dissertation/output/csv'
         )
         
         # Setup optimization if enabled
