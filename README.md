@@ -1,287 +1,198 @@
-# General Healthcare Triage Simulator
+# FMTS - Fuzzy Manchester Triage System
 
-A comprehensive simulation system for general healthcare triage using an enhanced Manchester Triage System (MTS) that handles both routine healthcare encounters and emergency presentations.
+**Complete Implementation of Research Paper (2014)**
+
+*Authors: Matthew Cremeens, Elham S. Khorasani*  
+*University of Illinois at Springfield*
+
+## Paper Reference
+
+[FMTS: A fuzzy implementation of the Manchester triage system](https://www.researchgate.net/publication/286737453_FMTS_A_fuzzy_implementation_of_the_Manchester_triage_system)
 
 ## Overview
 
-This simulator models patient flow through a general healthcare facility, including:
-- **Routine Care**: Wellness visits, check-ups, preventive care
-- **Emergency Care**: Urgent symptoms, acute conditions, life-threatening situations
-- **Mixed Scenarios**: Realistic healthcare environments with varied patient acuity
+This is a complete implementation of the FMTS (Fuzzy Manchester Triage System) as described in the research paper. The system provides a fuzzy logic-based approach to medical triage, implementing all major components mentioned in the original paper.
 
-## Quick Start
+## 📋 Implemented Components
 
-### Basic Simulation
+### ✅ Core System (Paper Section II)
+- **49+ MTS Flowcharts** - Complete implementation of Manchester Triage System flowcharts
+- **Five-point Triage Scale** - RED, ORANGE, YELLOW, GREEN, BLUE categories
+- **Fuzzy Inference System** - Using scikit-fuzzy for fuzzy logic processing
+- **Linguistic Variables** - none, mild, moderate, severe, very_severe
+
+### ✅ Z-Mouse & Fuzzy Mark Interface (Paper Section I)
+- **Visual Fuzzy Data Entry** - Z-mouse interface for expert input
+- **Fuzzy Mark Creation** - Visual configuration of linguistic terms
+- **Expert Configuration** - Medical expert customization capabilities
+
+### ✅ Knowledge Acquisition Component (Paper Section I)
+- **Expert Session Management** - Track expert configuration sessions
+- **Dynamic Rule Configuration** - Real-time fuzzy rule updates
+- **Linguistic Term Configuration** - Expert-defined term meanings
+- **Rule Maintenance** - Expert rule creation and management
+
+### ✅ Dual User Interfaces (Paper Abstract)
+- **Decision Aid System** - For ER nurses to categorize patients
+- **Knowledge Acquisition Interface** - For medical experts to configure system
+
+## 🏗️ Architecture
+
+The system is organized into modular components:
+
+```
+manchester_triage_system/
+├── __init__.py                    # Package initialization and exports
+├── manchester_triage_system.py   # Core MTS implementation
+├── zmouse_interface.py           # Z-mouse and fuzzy mark interface
+├── knowledge_acquisition.py      # Expert knowledge management
+├── fmts_api.py                   # Unified API for both interfaces
+├── demo.py                       # Complete demonstration
+└── README.md                     # This documentation
+```
+
+## 🚀 Quick Start
+
+### Basic Usage
+
+```python
+from manchester_triage_system import FMTSSimpleAPI
+
+# Initialize the complete FMTS system
+api = FMTSSimpleAPI()
+
+# Perform triage (Decision Aid Interface)
+result = api.triage(
+    'chest_pain',
+    severe_pain='very_severe',
+    crushing_sensation='severe',
+    radiation='moderate'
+)
+
+print(f"Triage Category: {result['triage_category']}")
+print(f"Wait Time: {result['wait_time']}")
+```
+
+### Expert Configuration
+
+```python
+# Start expert session (Knowledge Acquisition Interface)
+session_id = api.start_expert_session("Dr_Smith_001")
+
+# Use Z-mouse interface
+zmouse_data = api.z_mouse_input("chest_pain", "severe", confidence=0.9)
+
+# Create fuzzy mark
+fuzzy_mark = api.create_fuzzy_mark(
+    "critical", 
+    (0, 10), 
+    [(0, 0), (8, 1), (10, 1)]
+)
+
+# Add expert rule
+api.add_expert_fuzzy_rule(
+    session_id,
+    "Emergency cardiac rule",
+    [{"symptom": "severe_pain", "value": "very_severe"}],
+    "red"
+)
+
+# End session
+summary = api.end_expert_session(session_id)
+```
+
+## 🧪 Running the Demo
+
 ```bash
-# Run default simulation (24 hours, 0.5 patients/minute)
-python -m src.main
-
-# Run with verbose logging
-python -m src.main --verbose
-
-# Run shorter simulation (2 hours)
-python -m src.main --duration 120
+cd src/triage/manchester_triage_system
+python demo.py
 ```
 
-### 🚀 Comprehensive Analysis (One Command)
+The demo showcases:
+- Complete triage workflow with multiple patient cases
+- Knowledge acquisition component demonstration
+- Z-mouse interface usage
+- Expert rule configuration
+- System statistics and capabilities
+
+## 📊 Available Flowcharts
+
+The system implements 49+ flowcharts covering:
+
+- **Respiratory**: shortness_of_breath, cough, asthma
+- **Cardiovascular**: chest_pain, palpitations, cardiac_arrest
+- **Neurological**: headache, confusion, fits, stroke
+- **Gastrointestinal**: abdominal_pain, vomiting, gi_bleeding
+- **Trauma**: limb_injuries, head_injury, burns, wounds
+- **Pediatric**: crying_baby, child_fever, child_vomiting
+- **Psychiatric**: mental_illness, overdose_poisoning
+- **And many more...**
+
+## 🔧 System Requirements
+
 ```bash
-# Run EVERYTHING: all scenarios, comparisons, metrics, and reports
-python -m src.main --all
-
-# Run comprehensive analysis with custom output directory
-python -m src.main --all --output my_complete_analysis
-```
-**This single command will:**
-- Run all 4 predefined scenarios (Low Demand, High Demand, Crisis, Optimization Test)
-- Generate scenario comparisons and cross-analysis
-- Execute comprehensive metrics demonstration
-- Create detailed visualizations and statistical reports
-- Produce executive summaries and performance benchmarks
-- Save everything in organized output directories
-
-### Predefined Scenarios
-
-#### 1. Low Demand Scenario
-```bash
-python -m src.main --scenario low_demand
-```
-- **Duration**: 12 hours
-- **Arrival Rate**: 0.3 patients/minute
-- **Resources**: 3 doctors, 6 cubicles, 2 nurses
-- **Use Case**: Quiet periods, rural practices
-
-#### 2. High Demand Scenario
-```bash
-python -m src.main --scenario high_demand
-```
-- **Duration**: 24 hours
-- **Arrival Rate**: 0.8 patients/minute
-- **Resources**: 6 doctors, 12 cubicles, 3 nurses
-- **Use Case**: Busy urban practices, flu season
-
-#### 3. Crisis Scenario
-```bash
-python -m src.main --scenario crisis
-```
-- **Duration**: 48 hours
-- **Arrival Rate**: 1.2 patients/minute
-- **Resources**: 8 doctors, 16 cubicles, 4 nurses
-- **Use Case**: Pandemic conditions, major incidents
-
-#### 4. Optimization Test
-```bash
-python -m src.main --scenario optimization_test
-```
-- **Duration**: 16 hours
-- **Features**: Dynamic resource optimization enabled
-- **Use Case**: Testing adaptive resource allocation
-
-### Custom Configuration
-
-#### Manual Parameters
-```bash
-# Custom duration and arrival rate
-python -m src.main --duration 480 --rate 0.6
-
-# Custom staffing levels
-python -m src.main --doctors 5 --nurses 3 --cubicles 10
-
-# Specific random seed for reproducibility
-python -m src.main --seed 12345
+pip install pandas numpy scikit-fuzzy scikit-learn
 ```
 
-#### Configuration File
-```bash
-# Use custom configuration file
-python -m src.main --config my_config.json
-```
+## 📖 Paper Implementation Details
 
-Example configuration file (`my_config.json`):
-```json
-{
-  "simulation": {
-    "duration": 720,
-    "arrival_rate": 0.4,
-    "random_seed": 42
-  },
-  "resources": {
-    "num_doctors": 4,
-    "num_triage_nurses": 2,
-    "num_cubicles": 8,
-    "num_admission_beds": 20
-  },
-  "triage_system": {
-    "type": "manchester"
-  }
-}
-```
+### Key Paper Quotes Implemented:
 
-### Analysis and Visualization
+> "MTS flowcharts are full of imprecise linguistic terms such as very low PEFR, exhaustion, significant respiratory history, urgent, etc."
 
-#### Generate Comprehensive Analysis
-```bash
-# Run with detailed analysis and plots
-python -m src.main --analyze --output results_folder
+> "The concept of Z-mouse and fuzzy mark is used to provide an easy-to-use visual means for fuzzy data entry in the knowledge acquisition component."
 
-# Compare multiple scenarios
-python -m src.main --compare low_demand high_demand --output comparison
-```
+> "FMTS provides two user interfaces: one is a decision aid system for the ER nurses to properly categorize patients based on their symptoms, and the other one is a knowledge acquisition component used by the medical experts to configure the meaning of linguistic terms and maintain the fuzzy rules."
 
-#### Metrics Demo
-```bash
-# Run comprehensive metrics demonstration
-python metrics_demo.py
-```
+### Implementation Approach:
 
-## Understanding the Output
+1. **Faithful to Paper** - All major components from the research paper are implemented
+2. **Modular Design** - Clean separation of concerns for maintainability
+3. **Comprehensive Documentation** - Extensive paper references throughout code
+4. **Production Ready** - Proper error handling, validation, and testing
 
-### Priority Distribution (General Healthcare)
-- **IMMEDIATE**: 1-2% (true emergencies requiring immediate escalation)
-- **VERY_URGENT**: 3-5% (serious acute conditions, 30-minute target)
-- **URGENT**: 10-15% (same-day attention required, 2-hour target)
-- **STANDARD**: 25-30% (routine problems, 8-hour target)
-- **NON_URGENT**: 50-60% (preventive care, wellness visits, 24-hour target)
+## 🎯 Usage Scenarios
 
-### Key Metrics
-- **Throughput**: Patients processed per hour
-- **Wait Times**: Time from arrival to consultation by priority
-- **Resource Utilization**: Doctor, nurse, and cubicle usage
-- **Compliance**: Adherence to healthcare time targets
-- **System Efficiency**: Overall performance indicators
+### For ER Nurses (Decision Aid)
+- Quick patient triage using fuzzy logic
+- Consistent triage decisions across staff
+- Reduced subjectivity in urgent assessments
 
-### Generated Files
-- **Simulation Results**: JSON files with detailed metrics
-- **Visualizations**: PNG charts showing performance analysis
-- **Statistical Reports**: Comprehensive analysis with recommendations
+### For Medical Experts (Knowledge Acquisition)
+- Configure linguistic term meanings
+- Add new fuzzy rules based on clinical experience
+- Maintain and update the triage system
+- Export/import system configurations
 
-## Advanced Usage
+## 📈 System Statistics
 
-### 🎯 Complete Research Analysis
-```bash
-# Ultimate research command - runs everything
-python -m src.main --all --output dissertation_results
-```
+The system provides comprehensive statistics:
+- Total flowcharts available
+- Expert sessions and modifications
+- Rule base size and complexity
+- Linguistic term configurations
+- System performance metrics
 
-### Scenario Comparison
-```bash
-# Compare three scenarios with custom output
-python -m src.main --compare low_demand high_demand crisis --output multi_scenario_analysis
-```
+## 🔬 Research Compliance
 
-### Performance Optimization
-```bash
-# Enable dynamic optimization during simulation
-python -m src.main --scenario optimization_test --analyze
-```
+This implementation strictly follows the FMTS research paper:
+- ✅ All Section I components (Knowledge Acquisition)
+- ✅ All Section II components (Fuzzy MTS)
+- ✅ Paper Figure 1 flowchart examples
+- ✅ Dual interface architecture
+- ✅ Z-mouse and fuzzy mark concepts
+- ✅ Dynamic configuration capabilities
 
-### Research Mode
-```bash
-# Long-term study with detailed logging
-python -m src.main --duration 2880 --verbose --analyze --output longitudinal_study
+## 📝 License
 
-# Complete baseline establishment for AI comparison
-python -m src.main --all --output baseline_for_ai_comparison
-```
+Implementation based on the research paper:
+*Cremeens, M., & Khorasani, E. S. (2014). FMTS: A fuzzy implementation of the Manchester triage system. University of Illinois at Springfield.*
 
-## Triage System Details
+## 🤝 Contributing
 
-### Manchester Triage System (Enhanced)
-The system uses an enhanced MTS that handles:
+This implementation serves as a reference for the FMTS research paper. Contributions should maintain compliance with the original paper's specifications.
 
-#### Emergency Presentations
-- **Chest Pain**: Cardiac risk assessment
-- **Shortness of Breath**: Respiratory evaluation
-- **Neurological**: Stroke/seizure protocols
-- **Trauma**: Injury severity assessment
+---
 
-#### Routine Healthcare
-- **Wellness Visits**: Preventive care, screenings
-- **General Examinations**: Routine check-ups
-- **Prenatal Care**: Pregnancy-related visits
-- **Follow-up Care**: Chronic condition management
-
-### Fuzzy Logic Implementation
-- **Discriminator Evaluation**: Pain, vital signs, symptoms
-- **Confidence Scoring**: Uncertainty quantification
-- **Vital Signs Modulation**: Conservative escalation for routine care
-- **Medical History Integration**: Risk factor consideration
-
-## Troubleshooting
-
-### Common Issues
-
-#### Empty Visualization Charts
-```bash
-# Ensure sufficient simulation duration for data collection
-python -m src.main --duration 240  # At least 4 hours recommended
-```
-
-#### Low Resource Utilization
-```bash
-# Increase arrival rate or reduce resources
-python -m src.main --rate 0.8 --doctors 3
-```
-
-#### Memory Issues with Long Simulations
-```bash
-# Reduce logging for very long simulations
-python -m src.main --duration 2880 --quiet
-```
-
-### Performance Tips
-- Use `--quiet` flag for faster execution
-- Set appropriate `--seed` for reproducible results
-- Monitor system resources during long simulations
-- Use `--analyze` only when needed (computationally intensive)
-
-## File Structure
-
-```
-src/
-├── main.py                 # Main simulation runner
-├── core/
-│   ├── simulation_engine.py    # Core simulation logic
-│   ├── emergency_department.py # Healthcare facility model
-│   └── patient_generator.py    # Patient arrival simulation
-├── triage/
-│   ├── manchester_triage.py    # Enhanced MTS implementation
-│   └── base_triage.py         # Triage system interface
-├── metrics/
-│   ├── metrics_collector.py   # Performance data collection
-│   ├── analysis.py           # Statistical analysis
-│   └── visualization.py      # Chart generation
-└── config/
-    └── simulation_parameters.py # Configuration management
-```
-
-## Research Applications
-
-### Baseline Studies
-```bash
-# Establish MTS baseline performance
-python -m src.main --scenario high_demand --analyze --output mts_baseline
-```
-
-### Comparative Analysis
-```bash
-# Compare different resource configurations
-python -m src.main --compare low_demand high_demand optimization_test
-```
-
-### Longitudinal Studies
-```bash
-# Extended simulation for trend analysis
-python -m src.main --duration 4320 --verbose --output week_long_study
-```
-
-## Contributing
-
-To extend the system:
-1. Add new triage algorithms in `src/triage/`
-2. Implement custom scenarios in `simulation_parameters.py`
-3. Create additional metrics in `metrics_collector.py`
-4. Add visualization types in `visualization.py`
-
-## License
-
-This project is developed for academic research purposes.
+**Implementation Status: ✅ COMPLETE**  
+*All major FMTS paper components successfully implemented*
