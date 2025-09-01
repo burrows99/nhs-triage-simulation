@@ -202,7 +202,7 @@ def run_single_simulation(params: SimulationParameters,
         raise ValueError("Invalid simulation parameters")
     
     # Create and run simulation
-    engine = SimulationEngine(params.to_dict())
+    engine = SimulationEngine(params)
     results = engine.run_simulation()
     
     # Print summary
