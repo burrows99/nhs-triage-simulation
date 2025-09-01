@@ -21,11 +21,8 @@ from .config import FlowchartConfigManager, FuzzySystemConfigManager
 from .rules import FuzzyRulesManager
 from .core import TriageProcessor
 
-# Import telemetry service from the new location
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
-from services.telemetry_service import TelemetryService
+# Import services using absolute imports
+from src.services import TelemetryService, MetricsService
 
 
 class ManchesterTriageSystem:
@@ -49,7 +46,8 @@ class ManchesterTriageSystem:
                  flowchart_manager: FlowchartConfigManager = None,
                  fuzzy_manager: FuzzySystemConfigManager = None,
                  rules_manager: FuzzyRulesManager = None,
-                 telemetry_service: TelemetryService = None):
+                 telemetry_service: TelemetryService = None,
+                 metrics_service: MetricsService = None):
         """Initialize MTS with dependency injection
         
         Args:
@@ -57,19 +55,23 @@ class ManchesterTriageSystem:
             fuzzy_manager: Manages fuzzy system configuration
             rules_manager: Manages fuzzy rules
             telemetry_service: Required telemetry service for logging steps
+            metrics_service: Required metrics service for analysis
             
         Raises:
-            ValueError: If telemetry_service is None
+            ValueError: If telemetry_service or metrics_service is None
         """
-        # Validate required telemetry service
+        # Validate required services
         if telemetry_service is None:
             raise ValueError("TelemetryService is required for Manchester Triage System initialization")
+        if metrics_service is None:
+            raise ValueError("MetricsService is required for Manchester Triage System initialization")
         
         # Use dependency injection with default implementations
         self._flowchart_manager = flowchart_manager or FlowchartConfigManager()
         self._fuzzy_manager = fuzzy_manager or FuzzySystemConfigManager()
         self._rules_manager = rules_manager or FuzzyRulesManager()
         self._telemetry_service = telemetry_service
+        self._metrics_service = metrics_service
         
         # Initialize the triage processor
         self._triage_processor = TriageProcessor(
@@ -164,6 +166,9 @@ class ManchesterTriageSystem:
         # End patient session
         self._telemetry_service.end_patient_session(result)
         
+        # Update metrics with latest telemetry data
+        self._update_metrics()
+        
         return result
     
     def get_available_flowcharts(self) -> List[str]:
@@ -177,9 +182,41 @@ class ManchesterTriageSystem:
         """Get the telemetry service instance
         
         Returns:
-            The telemetry service if available, None otherwise
+            The telemetry service instance
         """
         return self._telemetry_service
+    
+    def get_metrics_service(self) -> MetricsService:
+        """Get the metrics service instance
+        
+        Returns:
+            The metrics service instance
+        """
+        return self._metrics_service
+    
+    def _update_metrics(self) -> None:
+        """Update metrics service with latest telemetry data"""
+        self._metrics_service.update_from_telemetry_service(self._telemetry_service)
+    
+    def dump_metrics(self, output_path: str = "output/manchester_triage_system/metrics", filename: str = None) -> str:
+        """Dump current metrics to JSON file
+        
+        Args:
+            output_path: Directory path for metrics output
+            filename: Optional filename for the metrics file
+            
+        Returns:
+            Full path to the created metrics file
+        """
+        return self._metrics_service.export_metrics_report(output_path, filename)
+    
+    def get_current_metrics_summary(self) -> dict:
+        """Get current metrics summary
+        
+        Returns:
+            Dictionary containing current system metrics
+        """
+        return self._metrics_service.get_metrics_summary()
     
     def get_symptoms_for_flowchart(self, flowchart_reason: str) -> List[str]:
         """Get symptoms for a specific flowchart

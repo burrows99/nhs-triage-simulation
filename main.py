@@ -25,7 +25,7 @@ from triage.manchester_triage_system import (
     PAPER_INFO,
     CAPABILITIES
 )
-from services.telemetry_service import TelemetryService
+from src.services import TelemetryService, MetricsService
 
 
 def test_basic_triage():
@@ -33,11 +33,12 @@ def test_basic_triage():
     print("\n🏥 Testing Basic Triage Functionality")
     print("=" * 50)
     
-    # Initialize telemetry service
+    # Initialize services
     telemetry = TelemetryService()
+    metrics = MetricsService()
     
-    # Initialize the Manchester Triage System with telemetry
-    mts = ManchesterTriageSystem(telemetry_service=telemetry)
+    # Initialize the Manchester Triage System with required services
+    mts = ManchesterTriageSystem(telemetry_service=telemetry, metrics_service=metrics)
     
     # Test cases representing different severity levels
     test_cases = [
@@ -125,7 +126,11 @@ def test_basic_triage():
     print(f"   Unique Patients: {stats['unique_patients']}")
     print(f"   Total Duration: {stats['total_duration_ms']:.2f}ms")
     
-    return results, telemetry
+    # Dump metrics for basic triage test
+    metrics_file = mts.dump_metrics(filename="basic_triage_metrics.json")
+    print(f"   Basic Triage Metrics: {metrics_file}")
+    
+    return results, telemetry, metrics
 
 
 def test_knowledge_acquisition():
@@ -230,10 +235,11 @@ def test_system_capabilities():
     print("\n🔧 Testing System Capabilities")
     print("=" * 50)
     
-    # Initialize telemetry service for system capabilities test
+    # Initialize services for system capabilities test
     telemetry = TelemetryService()
+    metrics = MetricsService()
     
-    mts = ManchesterTriageSystem(telemetry_service=telemetry)
+    mts = ManchesterTriageSystem(telemetry_service=telemetry, metrics_service=metrics)
     
     # Test flowchart availability
     print("\n1. Available Flowcharts")
@@ -269,9 +275,10 @@ def run_performance_test():
     
     import time
     
-    # Initialize telemetry service for performance testing
+    # Initialize services for performance testing
     telemetry = TelemetryService()
-    mts = ManchesterTriageSystem(telemetry_service=telemetry)
+    metrics = MetricsService()
+    mts = ManchesterTriageSystem(telemetry_service=telemetry, metrics_service=metrics)
     
     # Generate test cases
     test_symptoms = {
@@ -322,6 +329,10 @@ def run_performance_test():
     print(f"   Unique Patients Processed: {perf_stats['unique_patients']}")
     print(f"   Total Telemetry Duration: {perf_stats['total_duration_ms']:.2f}ms")
     
+    # Dump metrics for performance test
+    metrics_file = mts.dump_metrics(filename="performance_test_metrics.json")
+    print(f"   Performance Test Metrics: {metrics_file}")
+    
     performance_results = {
         'total_assessments': total_assessments,
         'total_time': total_time,
@@ -330,7 +341,7 @@ def run_performance_test():
         'category_distribution': category_counts
     }
     
-    return performance_results, telemetry
+    return performance_results, telemetry, metrics
 
 
 def main():
@@ -343,7 +354,7 @@ def main():
     
     try:
         # Test basic triage functionality
-        triage_results, basic_telemetry = test_basic_triage()
+        triage_results, basic_telemetry, basic_metrics = test_basic_triage()
         
         # Test knowledge acquisition system
         knowledge_stats = test_knowledge_acquisition()
@@ -352,7 +363,7 @@ def main():
         system_capabilities = test_system_capabilities()
         
         # Run performance test
-        performance_results, perf_telemetry = run_performance_test()
+        performance_results, perf_telemetry, perf_metrics = run_performance_test()
         
         # Summary
         print("\n🎯 Test Summary")
@@ -383,6 +394,60 @@ def main():
         # Dump performance test telemetry
         perf_file = perf_telemetry.dump_to_file(output_dir, "performance_test_telemetry.json")
         print(f"   Performance Test Telemetry: {perf_file}")
+        
+        # Generate comprehensive metrics analysis
+        print("\n📊 Generating Comprehensive Metrics Analysis...")
+        
+        # Create combined metrics service for all data
+        combined_metrics = MetricsService()
+        
+        # Add basic triage telemetry data
+        basic_telemetry_data = {
+            'metadata': {
+                'session_start_time': basic_telemetry._session_start_time.isoformat(),
+                'total_steps': len(basic_telemetry._steps)
+            },
+            'telemetry_steps': basic_telemetry.get_telemetry_data()
+        }
+        combined_metrics.add_telemetry_data(basic_telemetry_data)
+        
+        # Add performance test telemetry data
+        perf_telemetry_data = {
+            'metadata': {
+                'session_start_time': perf_telemetry._session_start_time.isoformat(),
+                'total_steps': len(perf_telemetry._steps)
+            },
+            'telemetry_steps': perf_telemetry.get_telemetry_data()
+        }
+        combined_metrics.add_telemetry_data(perf_telemetry_data)
+        
+        # Dump comprehensive metrics report
+        metrics_file = combined_metrics.export_metrics_report(
+            "output/manchester_triage_system/metrics", 
+            "comprehensive_metrics_report.json"
+        )
+        print(f"   Comprehensive Metrics Report: {metrics_file}")
+        
+        # Display key metrics summary
+        metrics_summary = combined_metrics.generate_system_metrics()
+        
+        print("\n📈 Key Metrics Summary:")
+        print(f"   Total Patients Analyzed: {metrics_summary.total_patients}")
+        print(f"   Average Wait Time: {metrics_summary.avg_wait_time:.2f} minutes")
+        print(f"   Median Wait Time: {metrics_summary.median_wait_time:.2f} minutes")
+        print(f"   Resource Utilization: {metrics_summary.resource_utilization:.1f}%")
+        print(f"   Peak Arrival Hour: {metrics_summary.peak_arrival_hour}:00")
+        
+        print("\n🏥 Triage Category Distribution:")
+        for category, count in metrics_summary.triage_category_distribution.items():
+            percentage = (count / metrics_summary.total_patients) * 100
+            print(f"   {category.value}: {count} patients ({percentage:.1f}%)")
+        
+        print("\n📋 Top Flowchart Reasons:")
+        sorted_flowcharts = sorted(metrics_summary.flowchart_usage.items(), key=lambda x: x[1], reverse=True)[:5]
+        for reason, count in sorted_flowcharts:
+            percentage = (count / metrics_summary.total_patients) * 100
+            print(f"   {reason.value}: {count} cases ({percentage:.1f}%)")
         
         print("\n✅ All tests completed successfully!")
         print(f"\nPaper Reference: {PAPER_INFO['url']}")

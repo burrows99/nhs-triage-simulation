@@ -1,0 +1,4143 @@
+{
+  "metadata": {
+    "report_timestamp": "2025-09-01T17:10:09.069010",
+    "analysis_period": {
+      "start": "2025-09-01T17:10:03.593747",
+      "end": "2025-09-01T17:10:09.045140"
+    },
+    "total_patients_analyzed": 500
+  },
+  "system_metrics": {
+    "total_patients": 500,
+    "wait_time_statistics": {
+      "mean_minutes": 120.0,
+      "median_minutes": 120.0,
+      "mode_minutes": 120.0,
+      "min_minutes": 60.0,
+      "max_minutes": 240.0,
+      "std_deviation_minutes": 65.72670690061993
+    },
+    "resource_utilization": {
+      "utilization_percentage": 3.526841671477363,
+      "total_system_time_seconds": 5.451393,
+      "total_processing_time_seconds": 0.192262,
+      "patients_per_hour": 330190.8337923903,
+      "avg_processing_time_seconds": 0.00038452399999999997
+    },
+    "peak_arrival_hour": 17,
+    "triage_category_distribution": {
+      "GREEN": 200,
+      "YELLOW": 200,
+      "BLUE": 100
+    },
+    "flowchart_usage": {
+      "chest_pain": 100,
+      "headache": 100,
+      "abdominal_pain": 100,
+      "limb_injuries": 100,
+      "shortness_of_breath": 100
+    }
+  },
+  "wait_time_histogram": {
+    "histogram": {
+      "counts": [
+        200,
+        0,
+        0,
+        0,
+        0,
+        0,
+        200,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100
+      ],
+      "bin_edges": [
+        60.0,
+        69.0,
+        78.0,
+        87.0,
+        96.0,
+        105.0,
+        114.0,
+        123.0,
+        132.0,
+        141.0,
+        150.0,
+        159.0,
+        168.0,
+        177.0,
+        186.0,
+        195.0,
+        204.0,
+        213.0,
+        222.0,
+        231.0,
+        240.0
+      ],
+      "bin_centers": [
+        64.5,
+        73.5,
+        82.5,
+        91.5,
+        100.5,
+        109.5,
+        118.5,
+        127.5,
+        136.5,
+        145.5,
+        154.5,
+        163.5,
+        172.5,
+        181.5,
+        190.5,
+        199.5,
+        208.5,
+        217.5,
+        226.5,
+        235.5
+      ]
+    },
+    "patient_data": [
+      {
+        "patient_id": "perf_patient_0001",
+        "arrival_time": "2025-09-01T17:10:03.719493",
+        "encounter_start_time": "2025-09-01T19:10:03.739260",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0002",
+        "arrival_time": "2025-09-01T17:10:03.739374",
+        "encounter_start_time": "2025-09-01T18:10:03.758670",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0003",
+        "arrival_time": "2025-09-01T17:10:03.758805",
+        "encounter_start_time": "2025-09-01T19:10:03.759063",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0004",
+        "arrival_time": "2025-09-01T17:10:03.759210",
+        "encounter_start_time": "2025-09-01T21:10:03.778611",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0005",
+        "arrival_time": "2025-09-01T17:10:03.778813",
+        "encounter_start_time": "2025-09-01T18:10:03.797993",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0006",
+        "arrival_time": "2025-09-01T17:10:03.798245",
+        "encounter_start_time": "2025-09-01T19:10:03.798501",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0007",
+        "arrival_time": "2025-09-01T17:10:03.798767",
+        "encounter_start_time": "2025-09-01T18:10:03.799005",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0008",
+        "arrival_time": "2025-09-01T17:10:03.799310",
+        "encounter_start_time": "2025-09-01T19:10:03.799545",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0009",
+        "arrival_time": "2025-09-01T17:10:03.799897",
+        "encounter_start_time": "2025-09-01T21:10:03.800130",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0010",
+        "arrival_time": "2025-09-01T17:10:03.800515",
+        "encounter_start_time": "2025-09-01T18:10:03.800740",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0011",
+        "arrival_time": "2025-09-01T17:10:03.801149",
+        "encounter_start_time": "2025-09-01T19:10:03.801370",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0012",
+        "arrival_time": "2025-09-01T17:10:03.801839",
+        "encounter_start_time": "2025-09-01T18:10:03.802061",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0013",
+        "arrival_time": "2025-09-01T17:10:03.802547",
+        "encounter_start_time": "2025-09-01T19:10:03.802763",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0014",
+        "arrival_time": "2025-09-01T17:10:03.803288",
+        "encounter_start_time": "2025-09-01T21:10:03.803509",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0015",
+        "arrival_time": "2025-09-01T17:10:03.804148",
+        "encounter_start_time": "2025-09-01T18:10:03.804412",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0016",
+        "arrival_time": "2025-09-01T17:10:03.805041",
+        "encounter_start_time": "2025-09-01T19:10:03.805280",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0017",
+        "arrival_time": "2025-09-01T17:10:03.805956",
+        "encounter_start_time": "2025-09-01T18:10:03.806190",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0018",
+        "arrival_time": "2025-09-01T17:10:03.807120",
+        "encounter_start_time": "2025-09-01T19:10:03.807426",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0019",
+        "arrival_time": "2025-09-01T17:10:03.808172",
+        "encounter_start_time": "2025-09-01T21:10:03.808406",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0020",
+        "arrival_time": "2025-09-01T17:10:03.809191",
+        "encounter_start_time": "2025-09-01T18:10:03.809420",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0021",
+        "arrival_time": "2025-09-01T17:10:03.810224",
+        "encounter_start_time": "2025-09-01T19:10:03.810451",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0022",
+        "arrival_time": "2025-09-01T17:10:03.811290",
+        "encounter_start_time": "2025-09-01T18:10:03.811518",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0023",
+        "arrival_time": "2025-09-01T17:10:03.812397",
+        "encounter_start_time": "2025-09-01T19:10:03.812619",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0024",
+        "arrival_time": "2025-09-01T17:10:03.813528",
+        "encounter_start_time": "2025-09-01T21:10:03.813751",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0025",
+        "arrival_time": "2025-09-01T17:10:03.814697",
+        "encounter_start_time": "2025-09-01T18:10:03.814919",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0026",
+        "arrival_time": "2025-09-01T17:10:03.815897",
+        "encounter_start_time": "2025-09-01T19:10:03.816115",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0027",
+        "arrival_time": "2025-09-01T17:10:03.817131",
+        "encounter_start_time": "2025-09-01T18:10:03.817351",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0028",
+        "arrival_time": "2025-09-01T17:10:03.818408",
+        "encounter_start_time": "2025-09-01T19:10:03.818631",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0029",
+        "arrival_time": "2025-09-01T17:10:03.819722",
+        "encounter_start_time": "2025-09-01T21:10:03.819941",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0030",
+        "arrival_time": "2025-09-01T17:10:03.821172",
+        "encounter_start_time": "2025-09-01T18:10:03.821468",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0031",
+        "arrival_time": "2025-09-01T17:10:03.822660",
+        "encounter_start_time": "2025-09-01T19:10:03.822901",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0032",
+        "arrival_time": "2025-09-01T17:10:03.824111",
+        "encounter_start_time": "2025-09-01T18:10:03.824343",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0033",
+        "arrival_time": "2025-09-01T17:10:03.825595",
+        "encounter_start_time": "2025-09-01T19:10:03.825833",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0034",
+        "arrival_time": "2025-09-01T17:10:03.827199",
+        "encounter_start_time": "2025-09-01T21:10:03.827496",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0035",
+        "arrival_time": "2025-09-01T17:10:03.829038",
+        "encounter_start_time": "2025-09-01T18:10:03.829428",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0036",
+        "arrival_time": "2025-09-01T17:10:03.830955",
+        "encounter_start_time": "2025-09-01T19:10:03.831292",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0037",
+        "arrival_time": "2025-09-01T17:10:03.832714",
+        "encounter_start_time": "2025-09-01T18:10:03.832955",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0038",
+        "arrival_time": "2025-09-01T17:10:03.834403",
+        "encounter_start_time": "2025-09-01T19:10:03.834635",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0039",
+        "arrival_time": "2025-09-01T17:10:03.836103",
+        "encounter_start_time": "2025-09-01T21:10:03.836332",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0040",
+        "arrival_time": "2025-09-01T17:10:03.837835",
+        "encounter_start_time": "2025-09-01T18:10:03.838060",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0041",
+        "arrival_time": "2025-09-01T17:10:03.839603",
+        "encounter_start_time": "2025-09-01T19:10:03.839827",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0042",
+        "arrival_time": "2025-09-01T17:10:03.841470",
+        "encounter_start_time": "2025-09-01T18:10:03.841698",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0043",
+        "arrival_time": "2025-09-01T17:10:03.843314",
+        "encounter_start_time": "2025-09-01T19:10:03.843537",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0044",
+        "arrival_time": "2025-09-01T17:10:03.845191",
+        "encounter_start_time": "2025-09-01T21:10:03.845416",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0045",
+        "arrival_time": "2025-09-01T17:10:03.847109",
+        "encounter_start_time": "2025-09-01T18:10:03.847333",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0046",
+        "arrival_time": "2025-09-01T17:10:03.849066",
+        "encounter_start_time": "2025-09-01T19:10:03.849291",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0047",
+        "arrival_time": "2025-09-01T17:10:03.851064",
+        "encounter_start_time": "2025-09-01T18:10:03.851290",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0048",
+        "arrival_time": "2025-09-01T17:10:03.853096",
+        "encounter_start_time": "2025-09-01T19:10:03.853320",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0049",
+        "arrival_time": "2025-09-01T17:10:03.855240",
+        "encounter_start_time": "2025-09-01T21:10:03.855484",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0050",
+        "arrival_time": "2025-09-01T17:10:03.857388",
+        "encounter_start_time": "2025-09-01T18:10:03.857621",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0051",
+        "arrival_time": "2025-09-01T17:10:03.859560",
+        "encounter_start_time": "2025-09-01T19:10:03.859789",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0052",
+        "arrival_time": "2025-09-01T17:10:03.861760",
+        "encounter_start_time": "2025-09-01T18:10:03.861990",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0053",
+        "arrival_time": "2025-09-01T17:10:03.864007",
+        "encounter_start_time": "2025-09-01T19:10:03.864241",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0054",
+        "arrival_time": "2025-09-01T17:10:03.866273",
+        "encounter_start_time": "2025-09-01T21:10:03.866507",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0055",
+        "arrival_time": "2025-09-01T17:10:03.868611",
+        "encounter_start_time": "2025-09-01T18:10:03.868844",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0056",
+        "arrival_time": "2025-09-01T17:10:03.870961",
+        "encounter_start_time": "2025-09-01T19:10:03.871191",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0057",
+        "arrival_time": "2025-09-01T17:10:03.873341",
+        "encounter_start_time": "2025-09-01T18:10:03.873571",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0058",
+        "arrival_time": "2025-09-01T17:10:03.875766",
+        "encounter_start_time": "2025-09-01T19:10:03.875995",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0059",
+        "arrival_time": "2025-09-01T17:10:03.878270",
+        "encounter_start_time": "2025-09-01T21:10:03.878510",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0060",
+        "arrival_time": "2025-09-01T17:10:03.880783",
+        "encounter_start_time": "2025-09-01T18:10:03.881012",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0061",
+        "arrival_time": "2025-09-01T17:10:03.883324",
+        "encounter_start_time": "2025-09-01T19:10:03.883555",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0062",
+        "arrival_time": "2025-09-01T17:10:03.885911",
+        "encounter_start_time": "2025-09-01T18:10:03.886146",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0063",
+        "arrival_time": "2025-09-01T17:10:03.888612",
+        "encounter_start_time": "2025-09-01T19:10:03.888882",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0064",
+        "arrival_time": "2025-09-01T17:10:03.891322",
+        "encounter_start_time": "2025-09-01T21:10:03.891563",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0065",
+        "arrival_time": "2025-09-01T17:10:03.894027",
+        "encounter_start_time": "2025-09-01T18:10:03.894264",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0066",
+        "arrival_time": "2025-09-01T17:10:03.896756",
+        "encounter_start_time": "2025-09-01T19:10:03.896992",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0067",
+        "arrival_time": "2025-09-01T17:10:03.899528",
+        "encounter_start_time": "2025-09-01T18:10:03.899760",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0068",
+        "arrival_time": "2025-09-01T17:10:03.902324",
+        "encounter_start_time": "2025-09-01T19:10:03.902557",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0069",
+        "arrival_time": "2025-09-01T17:10:03.905181",
+        "encounter_start_time": "2025-09-01T21:10:03.905415",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0070",
+        "arrival_time": "2025-09-01T17:10:03.908062",
+        "encounter_start_time": "2025-09-01T18:10:03.908297",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0071",
+        "arrival_time": "2025-09-01T17:10:03.910986",
+        "encounter_start_time": "2025-09-01T19:10:03.911221",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0072",
+        "arrival_time": "2025-09-01T17:10:03.913939",
+        "encounter_start_time": "2025-09-01T18:10:03.914174",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0073",
+        "arrival_time": "2025-09-01T17:10:03.916947",
+        "encounter_start_time": "2025-09-01T19:10:03.917183",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0074",
+        "arrival_time": "2025-09-01T17:10:03.919990",
+        "encounter_start_time": "2025-09-01T21:10:03.920231",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0075",
+        "arrival_time": "2025-09-01T17:10:03.923130",
+        "encounter_start_time": "2025-09-01T18:10:03.923375",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0076",
+        "arrival_time": "2025-09-01T17:10:03.926288",
+        "encounter_start_time": "2025-09-01T19:10:03.926528",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0077",
+        "arrival_time": "2025-09-01T17:10:03.929481",
+        "encounter_start_time": "2025-09-01T18:10:03.929722",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0078",
+        "arrival_time": "2025-09-01T17:10:03.932705",
+        "encounter_start_time": "2025-09-01T19:10:03.932944",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0079",
+        "arrival_time": "2025-09-01T17:10:03.935939",
+        "encounter_start_time": "2025-09-01T21:10:03.936179",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0080",
+        "arrival_time": "2025-09-01T17:10:03.939205",
+        "encounter_start_time": "2025-09-01T18:10:03.939440",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0081",
+        "arrival_time": "2025-09-01T17:10:03.942520",
+        "encounter_start_time": "2025-09-01T19:10:03.942765",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0082",
+        "arrival_time": "2025-09-01T17:10:03.945933",
+        "encounter_start_time": "2025-09-01T18:10:03.946188",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0083",
+        "arrival_time": "2025-09-01T17:10:03.949343",
+        "encounter_start_time": "2025-09-01T19:10:03.949579",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0084",
+        "arrival_time": "2025-09-01T17:10:03.952767",
+        "encounter_start_time": "2025-09-01T21:10:03.953004",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0085",
+        "arrival_time": "2025-09-01T17:10:03.956295",
+        "encounter_start_time": "2025-09-01T18:10:03.956577",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0086",
+        "arrival_time": "2025-09-01T17:10:03.959852",
+        "encounter_start_time": "2025-09-01T19:10:03.960098",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0087",
+        "arrival_time": "2025-09-01T17:10:03.963394",
+        "encounter_start_time": "2025-09-01T18:10:03.963638",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0088",
+        "arrival_time": "2025-09-01T17:10:03.966971",
+        "encounter_start_time": "2025-09-01T19:10:03.967212",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0089",
+        "arrival_time": "2025-09-01T17:10:03.970637",
+        "encounter_start_time": "2025-09-01T21:10:03.970937",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0090",
+        "arrival_time": "2025-09-01T17:10:03.974398",
+        "encounter_start_time": "2025-09-01T18:10:03.974665",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0091",
+        "arrival_time": "2025-09-01T17:10:03.978147",
+        "encounter_start_time": "2025-09-01T19:10:03.978398",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0092",
+        "arrival_time": "2025-09-01T17:10:03.981907",
+        "encounter_start_time": "2025-09-01T18:10:03.982155",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0093",
+        "arrival_time": "2025-09-01T17:10:03.985692",
+        "encounter_start_time": "2025-09-01T19:10:03.985936",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0094",
+        "arrival_time": "2025-09-01T17:10:03.989525",
+        "encounter_start_time": "2025-09-01T21:10:03.989776",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0095",
+        "arrival_time": "2025-09-01T17:10:03.993501",
+        "encounter_start_time": "2025-09-01T18:10:03.993750",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0096",
+        "arrival_time": "2025-09-01T17:10:03.997386",
+        "encounter_start_time": "2025-09-01T19:10:03.997630",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0097",
+        "arrival_time": "2025-09-01T17:10:04.001300",
+        "encounter_start_time": "2025-09-01T18:10:04.001545",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0098",
+        "arrival_time": "2025-09-01T17:10:04.005293",
+        "encounter_start_time": "2025-09-01T19:10:04.005548",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0099",
+        "arrival_time": "2025-09-01T17:10:04.009308",
+        "encounter_start_time": "2025-09-01T21:10:04.009556",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0100",
+        "arrival_time": "2025-09-01T17:10:04.013374",
+        "encounter_start_time": "2025-09-01T18:10:04.013619",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0101",
+        "arrival_time": "2025-09-01T17:10:04.017485",
+        "encounter_start_time": "2025-09-01T19:10:04.017728",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0102",
+        "arrival_time": "2025-09-01T17:10:04.021661",
+        "encounter_start_time": "2025-09-01T18:10:04.021926",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0103",
+        "arrival_time": "2025-09-01T17:10:04.025877",
+        "encounter_start_time": "2025-09-01T19:10:04.026126",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0104",
+        "arrival_time": "2025-09-01T17:10:04.030084",
+        "encounter_start_time": "2025-09-01T21:10:04.030334",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0105",
+        "arrival_time": "2025-09-01T17:10:04.034308",
+        "encounter_start_time": "2025-09-01T18:10:04.034554",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0106",
+        "arrival_time": "2025-09-01T17:10:04.038613",
+        "encounter_start_time": "2025-09-01T19:10:04.038877",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0107",
+        "arrival_time": "2025-09-01T17:10:04.042941",
+        "encounter_start_time": "2025-09-01T18:10:04.043190",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0108",
+        "arrival_time": "2025-09-01T17:10:04.047274",
+        "encounter_start_time": "2025-09-01T19:10:04.047520",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0109",
+        "arrival_time": "2025-09-01T17:10:04.051649",
+        "encounter_start_time": "2025-09-01T21:10:04.051894",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0110",
+        "arrival_time": "2025-09-01T17:10:04.056086",
+        "encounter_start_time": "2025-09-01T18:10:04.056340",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0111",
+        "arrival_time": "2025-09-01T17:10:04.060559",
+        "encounter_start_time": "2025-09-01T19:10:04.060808",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0112",
+        "arrival_time": "2025-09-01T17:10:04.065049",
+        "encounter_start_time": "2025-09-01T18:10:04.065297",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0113",
+        "arrival_time": "2025-09-01T17:10:04.069816",
+        "encounter_start_time": "2025-09-01T19:10:04.070146",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0114",
+        "arrival_time": "2025-09-01T17:10:04.074605",
+        "encounter_start_time": "2025-09-01T21:10:04.074877",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0115",
+        "arrival_time": "2025-09-01T17:10:04.079255",
+        "encounter_start_time": "2025-09-01T18:10:04.079511",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0116",
+        "arrival_time": "2025-09-01T17:10:04.083931",
+        "encounter_start_time": "2025-09-01T19:10:04.084182",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0117",
+        "arrival_time": "2025-09-01T17:10:04.088632",
+        "encounter_start_time": "2025-09-01T18:10:04.088886",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0118",
+        "arrival_time": "2025-09-01T17:10:04.093443",
+        "encounter_start_time": "2025-09-01T19:10:04.093712",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0119",
+        "arrival_time": "2025-09-01T17:10:04.098234",
+        "encounter_start_time": "2025-09-01T21:10:04.098485",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0120",
+        "arrival_time": "2025-09-01T17:10:04.103053",
+        "encounter_start_time": "2025-09-01T18:10:04.103305",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0121",
+        "arrival_time": "2025-09-01T17:10:04.108030",
+        "encounter_start_time": "2025-09-01T19:10:04.108282",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0122",
+        "arrival_time": "2025-09-01T17:10:04.112939",
+        "encounter_start_time": "2025-09-01T18:10:04.113190",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0123",
+        "arrival_time": "2025-09-01T17:10:04.117858",
+        "encounter_start_time": "2025-09-01T19:10:04.118108",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0124",
+        "arrival_time": "2025-09-01T17:10:04.122845",
+        "encounter_start_time": "2025-09-01T21:10:04.123098",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0125",
+        "arrival_time": "2025-09-01T17:10:04.127874",
+        "encounter_start_time": "2025-09-01T18:10:04.128128",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0126",
+        "arrival_time": "2025-09-01T17:10:04.132956",
+        "encounter_start_time": "2025-09-01T19:10:04.133208",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0127",
+        "arrival_time": "2025-09-01T17:10:04.138056",
+        "encounter_start_time": "2025-09-01T18:10:04.138311",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0128",
+        "arrival_time": "2025-09-01T17:10:04.143219",
+        "encounter_start_time": "2025-09-01T19:10:04.143475",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0129",
+        "arrival_time": "2025-09-01T17:10:04.148413",
+        "encounter_start_time": "2025-09-01T21:10:04.148666",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0130",
+        "arrival_time": "2025-09-01T17:10:04.153610",
+        "encounter_start_time": "2025-09-01T18:10:04.153864",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0131",
+        "arrival_time": "2025-09-01T17:10:04.158841",
+        "encounter_start_time": "2025-09-01T19:10:04.159094",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0132",
+        "arrival_time": "2025-09-01T17:10:04.164116",
+        "encounter_start_time": "2025-09-01T18:10:04.164372",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0133",
+        "arrival_time": "2025-09-01T17:10:04.169420",
+        "encounter_start_time": "2025-09-01T19:10:04.169677",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0134",
+        "arrival_time": "2025-09-01T17:10:04.175226",
+        "encounter_start_time": "2025-09-01T21:10:04.175483",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0135",
+        "arrival_time": "2025-09-01T17:10:04.180626",
+        "encounter_start_time": "2025-09-01T18:10:04.180883",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0136",
+        "arrival_time": "2025-09-01T17:10:04.186051",
+        "encounter_start_time": "2025-09-01T19:10:04.186309",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0137",
+        "arrival_time": "2025-09-01T17:10:04.191519",
+        "encounter_start_time": "2025-09-01T18:10:04.191775",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0138",
+        "arrival_time": "2025-09-01T17:10:04.197026",
+        "encounter_start_time": "2025-09-01T19:10:04.197282",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0139",
+        "arrival_time": "2025-09-01T17:10:04.202563",
+        "encounter_start_time": "2025-09-01T21:10:04.202818",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0140",
+        "arrival_time": "2025-09-01T17:10:04.208247",
+        "encounter_start_time": "2025-09-01T18:10:04.208504",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0141",
+        "arrival_time": "2025-09-01T17:10:04.213876",
+        "encounter_start_time": "2025-09-01T19:10:04.214131",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0142",
+        "arrival_time": "2025-09-01T17:10:04.219634",
+        "encounter_start_time": "2025-09-01T18:10:04.219941",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0143",
+        "arrival_time": "2025-09-01T17:10:04.225710",
+        "encounter_start_time": "2025-09-01T19:10:04.226020",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0144",
+        "arrival_time": "2025-09-01T17:10:04.232304",
+        "encounter_start_time": "2025-09-01T21:10:04.232952",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0145",
+        "arrival_time": "2025-09-01T17:10:04.239156",
+        "encounter_start_time": "2025-09-01T18:10:04.239541",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0146",
+        "arrival_time": "2025-09-01T17:10:04.245323",
+        "encounter_start_time": "2025-09-01T19:10:04.245595",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0147",
+        "arrival_time": "2025-09-01T17:10:04.251303",
+        "encounter_start_time": "2025-09-01T18:10:04.251567",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0148",
+        "arrival_time": "2025-09-01T17:10:04.257595",
+        "encounter_start_time": "2025-09-01T19:10:04.257959",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0149",
+        "arrival_time": "2025-09-01T17:10:04.263941",
+        "encounter_start_time": "2025-09-01T21:10:04.264216",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0150",
+        "arrival_time": "2025-09-01T17:10:04.270180",
+        "encounter_start_time": "2025-09-01T18:10:04.270454",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0151",
+        "arrival_time": "2025-09-01T17:10:04.276674",
+        "encounter_start_time": "2025-09-01T19:10:04.277044",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0152",
+        "arrival_time": "2025-09-01T17:10:04.282948",
+        "encounter_start_time": "2025-09-01T18:10:04.283229",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0153",
+        "arrival_time": "2025-09-01T17:10:04.289304",
+        "encounter_start_time": "2025-09-01T19:10:04.289666",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0154",
+        "arrival_time": "2025-09-01T17:10:04.295677",
+        "encounter_start_time": "2025-09-01T21:10:04.295963",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0155",
+        "arrival_time": "2025-09-01T17:10:04.301975",
+        "encounter_start_time": "2025-09-01T18:10:04.302248",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0156",
+        "arrival_time": "2025-09-01T17:10:04.308428",
+        "encounter_start_time": "2025-09-01T19:10:04.308727",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0157",
+        "arrival_time": "2025-09-01T17:10:04.314844",
+        "encounter_start_time": "2025-09-01T18:10:04.315112",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0158",
+        "arrival_time": "2025-09-01T17:10:04.321310",
+        "encounter_start_time": "2025-09-01T19:10:04.321621",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0159",
+        "arrival_time": "2025-09-01T17:10:04.327817",
+        "encounter_start_time": "2025-09-01T21:10:04.328094",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0160",
+        "arrival_time": "2025-09-01T17:10:04.334271",
+        "encounter_start_time": "2025-09-01T18:10:04.334543",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0161",
+        "arrival_time": "2025-09-01T17:10:04.340917",
+        "encounter_start_time": "2025-09-01T19:10:04.341260",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0162",
+        "arrival_time": "2025-09-01T17:10:04.347584",
+        "encounter_start_time": "2025-09-01T18:10:04.347860",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0163",
+        "arrival_time": "2025-09-01T17:10:04.354209",
+        "encounter_start_time": "2025-09-01T19:10:04.354525",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0164",
+        "arrival_time": "2025-09-01T17:10:04.360942",
+        "encounter_start_time": "2025-09-01T21:10:04.361226",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0165",
+        "arrival_time": "2025-09-01T17:10:04.367630",
+        "encounter_start_time": "2025-09-01T18:10:04.367903",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0166",
+        "arrival_time": "2025-09-01T17:10:04.374400",
+        "encounter_start_time": "2025-09-01T19:10:04.374694",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0167",
+        "arrival_time": "2025-09-01T17:10:04.381159",
+        "encounter_start_time": "2025-09-01T18:10:04.381431",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0168",
+        "arrival_time": "2025-09-01T17:10:04.387974",
+        "encounter_start_time": "2025-09-01T19:10:04.388302",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0169",
+        "arrival_time": "2025-09-01T17:10:04.394967",
+        "encounter_start_time": "2025-09-01T21:10:04.395251",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0170",
+        "arrival_time": "2025-09-01T17:10:04.401875",
+        "encounter_start_time": "2025-09-01T18:10:04.402149",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0171",
+        "arrival_time": "2025-09-01T17:10:04.408833",
+        "encounter_start_time": "2025-09-01T19:10:04.409122",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0172",
+        "arrival_time": "2025-09-01T17:10:04.415800",
+        "encounter_start_time": "2025-09-01T18:10:04.416075",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0173",
+        "arrival_time": "2025-09-01T17:10:04.422868",
+        "encounter_start_time": "2025-09-01T19:10:04.423186",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0174",
+        "arrival_time": "2025-09-01T17:10:04.429962",
+        "encounter_start_time": "2025-09-01T21:10:04.430242",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0175",
+        "arrival_time": "2025-09-01T17:10:04.437004",
+        "encounter_start_time": "2025-09-01T18:10:04.437303",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0176",
+        "arrival_time": "2025-09-01T17:10:04.444177",
+        "encounter_start_time": "2025-09-01T19:10:04.444478",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0177",
+        "arrival_time": "2025-09-01T17:10:04.451348",
+        "encounter_start_time": "2025-09-01T18:10:04.451622",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0178",
+        "arrival_time": "2025-09-01T17:10:04.458538",
+        "encounter_start_time": "2025-09-01T19:10:04.458832",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0179",
+        "arrival_time": "2025-09-01T17:10:04.465785",
+        "encounter_start_time": "2025-09-01T21:10:04.466062",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0180",
+        "arrival_time": "2025-09-01T17:10:04.473117",
+        "encounter_start_time": "2025-09-01T18:10:04.473432",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0181",
+        "arrival_time": "2025-09-01T17:10:04.480501",
+        "encounter_start_time": "2025-09-01T19:10:04.480787",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0182",
+        "arrival_time": "2025-09-01T17:10:04.487917",
+        "encounter_start_time": "2025-09-01T18:10:04.488247",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0183",
+        "arrival_time": "2025-09-01T17:10:04.495362",
+        "encounter_start_time": "2025-09-01T19:10:04.495639",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0184",
+        "arrival_time": "2025-09-01T17:10:04.502733",
+        "encounter_start_time": "2025-09-01T21:10:04.503008",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0185",
+        "arrival_time": "2025-09-01T17:10:04.510237",
+        "encounter_start_time": "2025-09-01T18:10:04.510524",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0186",
+        "arrival_time": "2025-09-01T17:10:04.517747",
+        "encounter_start_time": "2025-09-01T19:10:04.518030",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0187",
+        "arrival_time": "2025-09-01T17:10:04.525720",
+        "encounter_start_time": "2025-09-01T18:10:04.526096",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0188",
+        "arrival_time": "2025-09-01T17:10:04.533545",
+        "encounter_start_time": "2025-09-01T19:10:04.533887",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0189",
+        "arrival_time": "2025-09-01T17:10:04.541528",
+        "encounter_start_time": "2025-09-01T21:10:04.541890",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0190",
+        "arrival_time": "2025-09-01T17:10:04.549345",
+        "encounter_start_time": "2025-09-01T18:10:04.549660",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0191",
+        "arrival_time": "2025-09-01T17:10:04.557977",
+        "encounter_start_time": "2025-09-01T19:10:04.558413",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0192",
+        "arrival_time": "2025-09-01T17:10:04.566117",
+        "encounter_start_time": "2025-09-01T18:10:04.566485",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0193",
+        "arrival_time": "2025-09-01T17:10:04.574321",
+        "encounter_start_time": "2025-09-01T19:10:04.574674",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0194",
+        "arrival_time": "2025-09-01T17:10:04.582254",
+        "encounter_start_time": "2025-09-01T21:10:04.582542",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0195",
+        "arrival_time": "2025-09-01T17:10:04.590180",
+        "encounter_start_time": "2025-09-01T18:10:04.590498",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0196",
+        "arrival_time": "2025-09-01T17:10:04.598120",
+        "encounter_start_time": "2025-09-01T19:10:04.598400",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0197",
+        "arrival_time": "2025-09-01T17:10:04.606127",
+        "encounter_start_time": "2025-09-01T18:10:04.606498",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0198",
+        "arrival_time": "2025-09-01T17:10:04.614225",
+        "encounter_start_time": "2025-09-01T19:10:04.614522",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0199",
+        "arrival_time": "2025-09-01T17:10:04.622257",
+        "encounter_start_time": "2025-09-01T21:10:04.622571",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0200",
+        "arrival_time": "2025-09-01T17:10:04.630318",
+        "encounter_start_time": "2025-09-01T18:10:04.630604",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0201",
+        "arrival_time": "2025-09-01T17:10:04.638523",
+        "encounter_start_time": "2025-09-01T19:10:04.638887",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0202",
+        "arrival_time": "2025-09-01T17:10:04.646784",
+        "encounter_start_time": "2025-09-01T18:10:04.647086",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0203",
+        "arrival_time": "2025-09-01T17:10:04.654981",
+        "encounter_start_time": "2025-09-01T19:10:04.655345",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0204",
+        "arrival_time": "2025-09-01T17:10:04.663288",
+        "encounter_start_time": "2025-09-01T21:10:04.663577",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0205",
+        "arrival_time": "2025-09-01T17:10:04.671545",
+        "encounter_start_time": "2025-09-01T18:10:04.671860",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0206",
+        "arrival_time": "2025-09-01T17:10:04.679887",
+        "encounter_start_time": "2025-09-01T19:10:04.680174",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0207",
+        "arrival_time": "2025-09-01T17:10:04.688247",
+        "encounter_start_time": "2025-09-01T18:10:04.688601",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0208",
+        "arrival_time": "2025-09-01T17:10:04.696687",
+        "encounter_start_time": "2025-09-01T19:10:04.696976",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0209",
+        "arrival_time": "2025-09-01T17:10:04.705092",
+        "encounter_start_time": "2025-09-01T21:10:04.705434",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0210",
+        "arrival_time": "2025-09-01T17:10:04.713606",
+        "encounter_start_time": "2025-09-01T18:10:04.713899",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0211",
+        "arrival_time": "2025-09-01T17:10:04.722122",
+        "encounter_start_time": "2025-09-01T19:10:04.722454",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0212",
+        "arrival_time": "2025-09-01T17:10:04.730691",
+        "encounter_start_time": "2025-09-01T18:10:04.730983",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0213",
+        "arrival_time": "2025-09-01T17:10:04.739503",
+        "encounter_start_time": "2025-09-01T19:10:04.739854",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0214",
+        "arrival_time": "2025-09-01T17:10:04.748199",
+        "encounter_start_time": "2025-09-01T21:10:04.748496",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0215",
+        "arrival_time": "2025-09-01T17:10:04.756881",
+        "encounter_start_time": "2025-09-01T18:10:04.757222",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0216",
+        "arrival_time": "2025-09-01T17:10:04.765586",
+        "encounter_start_time": "2025-09-01T19:10:04.765881",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0217",
+        "arrival_time": "2025-09-01T17:10:04.774370",
+        "encounter_start_time": "2025-09-01T18:10:04.774717",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0218",
+        "arrival_time": "2025-09-01T17:10:04.783149",
+        "encounter_start_time": "2025-09-01T19:10:04.783443",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0219",
+        "arrival_time": "2025-09-01T17:10:04.792024",
+        "encounter_start_time": "2025-09-01T21:10:04.792344",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0220",
+        "arrival_time": "2025-09-01T17:10:04.800852",
+        "encounter_start_time": "2025-09-01T18:10:04.801142",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0221",
+        "arrival_time": "2025-09-01T17:10:04.809802",
+        "encounter_start_time": "2025-09-01T19:10:04.810130",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0222",
+        "arrival_time": "2025-09-01T17:10:04.818708",
+        "encounter_start_time": "2025-09-01T18:10:04.819002",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0223",
+        "arrival_time": "2025-09-01T17:10:04.827694",
+        "encounter_start_time": "2025-09-01T19:10:04.828001",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0224",
+        "arrival_time": "2025-09-01T17:10:04.836648",
+        "encounter_start_time": "2025-09-01T21:10:04.836937",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0225",
+        "arrival_time": "2025-09-01T17:10:04.845760",
+        "encounter_start_time": "2025-09-01T18:10:04.846097",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0226",
+        "arrival_time": "2025-09-01T17:10:04.854901",
+        "encounter_start_time": "2025-09-01T19:10:04.855249",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0227",
+        "arrival_time": "2025-09-01T17:10:04.864071",
+        "encounter_start_time": "2025-09-01T18:10:04.864364",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0228",
+        "arrival_time": "2025-09-01T17:10:04.873178",
+        "encounter_start_time": "2025-09-01T19:10:04.873495",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0229",
+        "arrival_time": "2025-09-01T17:10:04.882352",
+        "encounter_start_time": "2025-09-01T21:10:04.882642",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0230",
+        "arrival_time": "2025-09-01T17:10:04.891624",
+        "encounter_start_time": "2025-09-01T18:10:04.891965",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0231",
+        "arrival_time": "2025-09-01T17:10:04.900916",
+        "encounter_start_time": "2025-09-01T19:10:04.901214",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0232",
+        "arrival_time": "2025-09-01T17:10:04.910285",
+        "encounter_start_time": "2025-09-01T18:10:04.910621",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0233",
+        "arrival_time": "2025-09-01T17:10:04.919644",
+        "encounter_start_time": "2025-09-01T19:10:04.919940",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0234",
+        "arrival_time": "2025-09-01T17:10:04.929164",
+        "encounter_start_time": "2025-09-01T21:10:04.929503",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0235",
+        "arrival_time": "2025-09-01T17:10:04.938687",
+        "encounter_start_time": "2025-09-01T18:10:04.939044",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0236",
+        "arrival_time": "2025-09-01T17:10:04.948411",
+        "encounter_start_time": "2025-09-01T19:10:04.948777",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0237",
+        "arrival_time": "2025-09-01T17:10:04.958444",
+        "encounter_start_time": "2025-09-01T18:10:04.958826",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0238",
+        "arrival_time": "2025-09-01T17:10:04.968099",
+        "encounter_start_time": "2025-09-01T19:10:04.968399",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0239",
+        "arrival_time": "2025-09-01T17:10:04.977831",
+        "encounter_start_time": "2025-09-01T21:10:04.978181",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0240",
+        "arrival_time": "2025-09-01T17:10:04.987537",
+        "encounter_start_time": "2025-09-01T18:10:04.987874",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0241",
+        "arrival_time": "2025-09-01T17:10:04.997342",
+        "encounter_start_time": "2025-09-01T19:10:04.997689",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0242",
+        "arrival_time": "2025-09-01T17:10:05.007221",
+        "encounter_start_time": "2025-09-01T18:10:05.007584",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0243",
+        "arrival_time": "2025-09-01T17:10:05.017067",
+        "encounter_start_time": "2025-09-01T19:10:05.017367",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0244",
+        "arrival_time": "2025-09-01T17:10:05.026926",
+        "encounter_start_time": "2025-09-01T21:10:05.027268",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0245",
+        "arrival_time": "2025-09-01T17:10:05.036785",
+        "encounter_start_time": "2025-09-01T18:10:05.037162",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0246",
+        "arrival_time": "2025-09-01T17:10:05.046907",
+        "encounter_start_time": "2025-09-01T19:10:05.047306",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0247",
+        "arrival_time": "2025-09-01T17:10:05.057005",
+        "encounter_start_time": "2025-09-01T18:10:05.057354",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0248",
+        "arrival_time": "2025-09-01T17:10:05.066931",
+        "encounter_start_time": "2025-09-01T19:10:05.067238",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0249",
+        "arrival_time": "2025-09-01T17:10:05.076901",
+        "encounter_start_time": "2025-09-01T21:10:05.077218",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0250",
+        "arrival_time": "2025-09-01T17:10:05.124940",
+        "encounter_start_time": "2025-09-01T18:10:05.125386",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0251",
+        "arrival_time": "2025-09-01T17:10:05.135307",
+        "encounter_start_time": "2025-09-01T19:10:05.135639",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0252",
+        "arrival_time": "2025-09-01T17:10:05.145592",
+        "encounter_start_time": "2025-09-01T18:10:05.145982",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0253",
+        "arrival_time": "2025-09-01T17:10:05.155885",
+        "encounter_start_time": "2025-09-01T19:10:05.156207",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0254",
+        "arrival_time": "2025-09-01T17:10:05.166041",
+        "encounter_start_time": "2025-09-01T21:10:05.166349",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0255",
+        "arrival_time": "2025-09-01T17:10:05.176228",
+        "encounter_start_time": "2025-09-01T18:10:05.176567",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0256",
+        "arrival_time": "2025-09-01T17:10:05.186420",
+        "encounter_start_time": "2025-09-01T19:10:05.186728",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0257",
+        "arrival_time": "2025-09-01T17:10:05.196628",
+        "encounter_start_time": "2025-09-01T18:10:05.196933",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0258",
+        "arrival_time": "2025-09-01T17:10:05.206872",
+        "encounter_start_time": "2025-09-01T19:10:05.207191",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0259",
+        "arrival_time": "2025-09-01T17:10:05.217157",
+        "encounter_start_time": "2025-09-01T21:10:05.217464",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0260",
+        "arrival_time": "2025-09-01T17:10:05.227518",
+        "encounter_start_time": "2025-09-01T18:10:05.227829",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0261",
+        "arrival_time": "2025-09-01T17:10:05.237862",
+        "encounter_start_time": "2025-09-01T19:10:05.238164",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0262",
+        "arrival_time": "2025-09-01T17:10:05.248229",
+        "encounter_start_time": "2025-09-01T18:10:05.248530",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0263",
+        "arrival_time": "2025-09-01T17:10:05.258645",
+        "encounter_start_time": "2025-09-01T19:10:05.258955",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0264",
+        "arrival_time": "2025-09-01T17:10:05.269172",
+        "encounter_start_time": "2025-09-01T21:10:05.269478",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0265",
+        "arrival_time": "2025-09-01T17:10:05.279747",
+        "encounter_start_time": "2025-09-01T18:10:05.280058",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0266",
+        "arrival_time": "2025-09-01T17:10:05.290315",
+        "encounter_start_time": "2025-09-01T19:10:05.290620",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0267",
+        "arrival_time": "2025-09-01T17:10:05.300962",
+        "encounter_start_time": "2025-09-01T18:10:05.301304",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0268",
+        "arrival_time": "2025-09-01T17:10:05.311882",
+        "encounter_start_time": "2025-09-01T19:10:05.312251",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0269",
+        "arrival_time": "2025-09-01T17:10:05.322989",
+        "encounter_start_time": "2025-09-01T21:10:05.323398",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0270",
+        "arrival_time": "2025-09-01T17:10:05.333894",
+        "encounter_start_time": "2025-09-01T18:10:05.334218",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0271",
+        "arrival_time": "2025-09-01T17:10:05.344624",
+        "encounter_start_time": "2025-09-01T19:10:05.344936",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0272",
+        "arrival_time": "2025-09-01T17:10:05.355439",
+        "encounter_start_time": "2025-09-01T18:10:05.355748",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0273",
+        "arrival_time": "2025-09-01T17:10:05.366284",
+        "encounter_start_time": "2025-09-01T19:10:05.366590",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0274",
+        "arrival_time": "2025-09-01T17:10:05.377097",
+        "encounter_start_time": "2025-09-01T21:10:05.377404",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0275",
+        "arrival_time": "2025-09-01T17:10:05.388009",
+        "encounter_start_time": "2025-09-01T18:10:05.388322",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0276",
+        "arrival_time": "2025-09-01T17:10:05.398926",
+        "encounter_start_time": "2025-09-01T19:10:05.399232",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0277",
+        "arrival_time": "2025-09-01T17:10:05.409998",
+        "encounter_start_time": "2025-09-01T18:10:05.410304",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0278",
+        "arrival_time": "2025-09-01T17:10:05.421070",
+        "encounter_start_time": "2025-09-01T19:10:05.421376",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0279",
+        "arrival_time": "2025-09-01T17:10:05.432156",
+        "encounter_start_time": "2025-09-01T21:10:05.432460",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0280",
+        "arrival_time": "2025-09-01T17:10:05.443404",
+        "encounter_start_time": "2025-09-01T18:10:05.443713",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0281",
+        "arrival_time": "2025-09-01T17:10:05.454594",
+        "encounter_start_time": "2025-09-01T19:10:05.454900",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0282",
+        "arrival_time": "2025-09-01T17:10:05.465801",
+        "encounter_start_time": "2025-09-01T18:10:05.466110",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0283",
+        "arrival_time": "2025-09-01T17:10:05.477046",
+        "encounter_start_time": "2025-09-01T19:10:05.477353",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0284",
+        "arrival_time": "2025-09-01T17:10:05.488330",
+        "encounter_start_time": "2025-09-01T21:10:05.488642",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0285",
+        "arrival_time": "2025-09-01T17:10:05.499685",
+        "encounter_start_time": "2025-09-01T18:10:05.499997",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0286",
+        "arrival_time": "2025-09-01T17:10:05.511260",
+        "encounter_start_time": "2025-09-01T19:10:05.511567",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0287",
+        "arrival_time": "2025-09-01T17:10:05.522674",
+        "encounter_start_time": "2025-09-01T18:10:05.522985",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0288",
+        "arrival_time": "2025-09-01T17:10:05.534123",
+        "encounter_start_time": "2025-09-01T19:10:05.534432",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0289",
+        "arrival_time": "2025-09-01T17:10:05.545643",
+        "encounter_start_time": "2025-09-01T21:10:05.545954",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0290",
+        "arrival_time": "2025-09-01T17:10:05.557149",
+        "encounter_start_time": "2025-09-01T18:10:05.557459",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0291",
+        "arrival_time": "2025-09-01T17:10:05.569008",
+        "encounter_start_time": "2025-09-01T19:10:05.569386",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0292",
+        "arrival_time": "2025-09-01T17:10:05.581088",
+        "encounter_start_time": "2025-09-01T18:10:05.581515",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0293",
+        "arrival_time": "2025-09-01T17:10:05.593351",
+        "encounter_start_time": "2025-09-01T19:10:05.593789",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0294",
+        "arrival_time": "2025-09-01T17:10:05.605506",
+        "encounter_start_time": "2025-09-01T21:10:05.605906",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0295",
+        "arrival_time": "2025-09-01T17:10:05.617623",
+        "encounter_start_time": "2025-09-01T18:10:05.618014",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0296",
+        "arrival_time": "2025-09-01T17:10:05.629991",
+        "encounter_start_time": "2025-09-01T19:10:05.630439",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0297",
+        "arrival_time": "2025-09-01T17:10:05.642051",
+        "encounter_start_time": "2025-09-01T18:10:05.642409",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0298",
+        "arrival_time": "2025-09-01T17:10:05.654124",
+        "encounter_start_time": "2025-09-01T19:10:05.654449",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0299",
+        "arrival_time": "2025-09-01T17:10:05.665971",
+        "encounter_start_time": "2025-09-01T21:10:05.666290",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0300",
+        "arrival_time": "2025-09-01T17:10:05.677891",
+        "encounter_start_time": "2025-09-01T18:10:05.678210",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0301",
+        "arrival_time": "2025-09-01T17:10:05.689844",
+        "encounter_start_time": "2025-09-01T19:10:05.690159",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0302",
+        "arrival_time": "2025-09-01T17:10:05.701813",
+        "encounter_start_time": "2025-09-01T18:10:05.702130",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0303",
+        "arrival_time": "2025-09-01T17:10:05.713815",
+        "encounter_start_time": "2025-09-01T19:10:05.714128",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0304",
+        "arrival_time": "2025-09-01T17:10:05.725985",
+        "encounter_start_time": "2025-09-01T21:10:05.726301",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0305",
+        "arrival_time": "2025-09-01T17:10:05.738078",
+        "encounter_start_time": "2025-09-01T18:10:05.738400",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0306",
+        "arrival_time": "2025-09-01T17:10:05.750505",
+        "encounter_start_time": "2025-09-01T19:10:05.750914",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0307",
+        "arrival_time": "2025-09-01T17:10:05.762999",
+        "encounter_start_time": "2025-09-01T18:10:05.763342",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0308",
+        "arrival_time": "2025-09-01T17:10:05.775677",
+        "encounter_start_time": "2025-09-01T19:10:05.776104",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0309",
+        "arrival_time": "2025-09-01T17:10:05.788153",
+        "encounter_start_time": "2025-09-01T21:10:05.788491",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0310",
+        "arrival_time": "2025-09-01T17:10:05.800666",
+        "encounter_start_time": "2025-09-01T18:10:05.800992",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0311",
+        "arrival_time": "2025-09-01T17:10:05.813022",
+        "encounter_start_time": "2025-09-01T19:10:05.813342",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0312",
+        "arrival_time": "2025-09-01T17:10:05.825413",
+        "encounter_start_time": "2025-09-01T18:10:05.825732",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0313",
+        "arrival_time": "2025-09-01T17:10:05.837852",
+        "encounter_start_time": "2025-09-01T19:10:05.838177",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0314",
+        "arrival_time": "2025-09-01T17:10:05.850314",
+        "encounter_start_time": "2025-09-01T21:10:05.850633",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0315",
+        "arrival_time": "2025-09-01T17:10:05.862812",
+        "encounter_start_time": "2025-09-01T18:10:05.863129",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0316",
+        "arrival_time": "2025-09-01T17:10:05.875551",
+        "encounter_start_time": "2025-09-01T19:10:05.875868",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0317",
+        "arrival_time": "2025-09-01T17:10:05.888209",
+        "encounter_start_time": "2025-09-01T18:10:05.888531",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0318",
+        "arrival_time": "2025-09-01T17:10:05.900843",
+        "encounter_start_time": "2025-09-01T19:10:05.901167",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0319",
+        "arrival_time": "2025-09-01T17:10:05.913479",
+        "encounter_start_time": "2025-09-01T21:10:05.913805",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0320",
+        "arrival_time": "2025-09-01T17:10:05.926187",
+        "encounter_start_time": "2025-09-01T18:10:05.926508",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0321",
+        "arrival_time": "2025-09-01T17:10:05.939047",
+        "encounter_start_time": "2025-09-01T19:10:05.939422",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0322",
+        "arrival_time": "2025-09-01T17:10:05.952020",
+        "encounter_start_time": "2025-09-01T18:10:05.952355",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0323",
+        "arrival_time": "2025-09-01T17:10:05.964795",
+        "encounter_start_time": "2025-09-01T19:10:05.965122",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0324",
+        "arrival_time": "2025-09-01T17:10:05.977624",
+        "encounter_start_time": "2025-09-01T21:10:05.977950",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0325",
+        "arrival_time": "2025-09-01T17:10:05.990498",
+        "encounter_start_time": "2025-09-01T18:10:05.990822",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0326",
+        "arrival_time": "2025-09-01T17:10:06.003447",
+        "encounter_start_time": "2025-09-01T19:10:06.003777",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0327",
+        "arrival_time": "2025-09-01T17:10:06.016517",
+        "encounter_start_time": "2025-09-01T18:10:06.016873",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0328",
+        "arrival_time": "2025-09-01T17:10:06.029724",
+        "encounter_start_time": "2025-09-01T19:10:06.030055",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0329",
+        "arrival_time": "2025-09-01T17:10:06.042958",
+        "encounter_start_time": "2025-09-01T21:10:06.043392",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0330",
+        "arrival_time": "2025-09-01T17:10:06.056365",
+        "encounter_start_time": "2025-09-01T18:10:06.056733",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0331",
+        "arrival_time": "2025-09-01T17:10:06.069580",
+        "encounter_start_time": "2025-09-01T19:10:06.069906",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0332",
+        "arrival_time": "2025-09-01T17:10:06.083071",
+        "encounter_start_time": "2025-09-01T18:10:06.083473",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0333",
+        "arrival_time": "2025-09-01T17:10:06.096606",
+        "encounter_start_time": "2025-09-01T19:10:06.096974",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0334",
+        "arrival_time": "2025-09-01T17:10:06.110059",
+        "encounter_start_time": "2025-09-01T21:10:06.110386",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0335",
+        "arrival_time": "2025-09-01T17:10:06.150688",
+        "encounter_start_time": "2025-09-01T18:10:06.151109",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0336",
+        "arrival_time": "2025-09-01T17:10:06.164151",
+        "encounter_start_time": "2025-09-01T19:10:06.164494",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0337",
+        "arrival_time": "2025-09-01T17:10:06.177562",
+        "encounter_start_time": "2025-09-01T18:10:06.177910",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0338",
+        "arrival_time": "2025-09-01T17:10:06.190960",
+        "encounter_start_time": "2025-09-01T19:10:06.191293",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0339",
+        "arrival_time": "2025-09-01T17:10:06.204352",
+        "encounter_start_time": "2025-09-01T21:10:06.204683",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0340",
+        "arrival_time": "2025-09-01T17:10:06.217771",
+        "encounter_start_time": "2025-09-01T18:10:06.218099",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0341",
+        "arrival_time": "2025-09-01T17:10:06.231233",
+        "encounter_start_time": "2025-09-01T19:10:06.231569",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0342",
+        "arrival_time": "2025-09-01T17:10:06.244804",
+        "encounter_start_time": "2025-09-01T18:10:06.245130",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0343",
+        "arrival_time": "2025-09-01T17:10:06.258327",
+        "encounter_start_time": "2025-09-01T19:10:06.258653",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0344",
+        "arrival_time": "2025-09-01T17:10:06.271893",
+        "encounter_start_time": "2025-09-01T21:10:06.272226",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0345",
+        "arrival_time": "2025-09-01T17:10:06.285495",
+        "encounter_start_time": "2025-09-01T18:10:06.285824",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0346",
+        "arrival_time": "2025-09-01T17:10:06.299156",
+        "encounter_start_time": "2025-09-01T19:10:06.299489",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0347",
+        "arrival_time": "2025-09-01T17:10:06.312885",
+        "encounter_start_time": "2025-09-01T18:10:06.313217",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0348",
+        "arrival_time": "2025-09-01T17:10:06.327272",
+        "encounter_start_time": "2025-09-01T19:10:06.327754",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0349",
+        "arrival_time": "2025-09-01T17:10:06.342236",
+        "encounter_start_time": "2025-09-01T21:10:06.342755",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0350",
+        "arrival_time": "2025-09-01T17:10:06.360017",
+        "encounter_start_time": "2025-09-01T18:10:06.360652",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0351",
+        "arrival_time": "2025-09-01T17:10:06.376827",
+        "encounter_start_time": "2025-09-01T19:10:06.377308",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0352",
+        "arrival_time": "2025-09-01T17:10:06.393410",
+        "encounter_start_time": "2025-09-01T18:10:06.394005",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0353",
+        "arrival_time": "2025-09-01T17:10:06.407958",
+        "encounter_start_time": "2025-09-01T19:10:06.408329",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0354",
+        "arrival_time": "2025-09-01T17:10:06.422161",
+        "encounter_start_time": "2025-09-01T21:10:06.422593",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0355",
+        "arrival_time": "2025-09-01T17:10:06.436366",
+        "encounter_start_time": "2025-09-01T18:10:06.436718",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0356",
+        "arrival_time": "2025-09-01T17:10:06.450540",
+        "encounter_start_time": "2025-09-01T19:10:06.450884",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0357",
+        "arrival_time": "2025-09-01T17:10:06.465108",
+        "encounter_start_time": "2025-09-01T18:10:06.465593",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0358",
+        "arrival_time": "2025-09-01T17:10:06.480156",
+        "encounter_start_time": "2025-09-01T19:10:06.480660",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0359",
+        "arrival_time": "2025-09-01T17:10:06.494798",
+        "encounter_start_time": "2025-09-01T21:10:06.495208",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0360",
+        "arrival_time": "2025-09-01T17:10:06.509188",
+        "encounter_start_time": "2025-09-01T18:10:06.509541",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0361",
+        "arrival_time": "2025-09-01T17:10:06.523549",
+        "encounter_start_time": "2025-09-01T19:10:06.523913",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0362",
+        "arrival_time": "2025-09-01T17:10:06.538011",
+        "encounter_start_time": "2025-09-01T18:10:06.538376",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0363",
+        "arrival_time": "2025-09-01T17:10:06.552568",
+        "encounter_start_time": "2025-09-01T19:10:06.552932",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0364",
+        "arrival_time": "2025-09-01T17:10:06.567235",
+        "encounter_start_time": "2025-09-01T21:10:06.567655",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0365",
+        "arrival_time": "2025-09-01T17:10:06.581976",
+        "encounter_start_time": "2025-09-01T18:10:06.582337",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0366",
+        "arrival_time": "2025-09-01T17:10:06.596563",
+        "encounter_start_time": "2025-09-01T19:10:06.596933",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0367",
+        "arrival_time": "2025-09-01T17:10:06.611137",
+        "encounter_start_time": "2025-09-01T18:10:06.611483",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0368",
+        "arrival_time": "2025-09-01T17:10:06.626329",
+        "encounter_start_time": "2025-09-01T19:10:06.626987",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0369",
+        "arrival_time": "2025-09-01T17:10:06.641724",
+        "encounter_start_time": "2025-09-01T21:10:06.642187",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0370",
+        "arrival_time": "2025-09-01T17:10:06.657095",
+        "encounter_start_time": "2025-09-01T18:10:06.657598",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0371",
+        "arrival_time": "2025-09-01T17:10:06.673050",
+        "encounter_start_time": "2025-09-01T19:10:06.673586",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0372",
+        "arrival_time": "2025-09-01T17:10:06.688660",
+        "encounter_start_time": "2025-09-01T18:10:06.689116",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0373",
+        "arrival_time": "2025-09-01T17:10:06.703732",
+        "encounter_start_time": "2025-09-01T19:10:06.704151",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0374",
+        "arrival_time": "2025-09-01T17:10:06.718629",
+        "encounter_start_time": "2025-09-01T21:10:06.718993",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0375",
+        "arrival_time": "2025-09-01T17:10:06.733490",
+        "encounter_start_time": "2025-09-01T18:10:06.733838",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0376",
+        "arrival_time": "2025-09-01T17:10:06.748415",
+        "encounter_start_time": "2025-09-01T19:10:06.748799",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0377",
+        "arrival_time": "2025-09-01T17:10:06.763380",
+        "encounter_start_time": "2025-09-01T18:10:06.763737",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0378",
+        "arrival_time": "2025-09-01T17:10:06.778436",
+        "encounter_start_time": "2025-09-01T19:10:06.778828",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0379",
+        "arrival_time": "2025-09-01T17:10:06.793655",
+        "encounter_start_time": "2025-09-01T21:10:06.794016",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0380",
+        "arrival_time": "2025-09-01T17:10:06.808904",
+        "encounter_start_time": "2025-09-01T18:10:06.809311",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0381",
+        "arrival_time": "2025-09-01T17:10:06.824145",
+        "encounter_start_time": "2025-09-01T19:10:06.824497",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0382",
+        "arrival_time": "2025-09-01T17:10:06.839284",
+        "encounter_start_time": "2025-09-01T18:10:06.839631",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0383",
+        "arrival_time": "2025-09-01T17:10:06.854512",
+        "encounter_start_time": "2025-09-01T19:10:06.854907",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0384",
+        "arrival_time": "2025-09-01T17:10:06.869788",
+        "encounter_start_time": "2025-09-01T21:10:06.870146",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0385",
+        "arrival_time": "2025-09-01T17:10:06.885062",
+        "encounter_start_time": "2025-09-01T18:10:06.885412",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0386",
+        "arrival_time": "2025-09-01T17:10:06.900277",
+        "encounter_start_time": "2025-09-01T19:10:06.900634",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0387",
+        "arrival_time": "2025-09-01T17:10:06.915581",
+        "encounter_start_time": "2025-09-01T18:10:06.915928",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0388",
+        "arrival_time": "2025-09-01T17:10:06.931144",
+        "encounter_start_time": "2025-09-01T19:10:06.931561",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0389",
+        "arrival_time": "2025-09-01T17:10:06.946896",
+        "encounter_start_time": "2025-09-01T21:10:06.947331",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0390",
+        "arrival_time": "2025-09-01T17:10:06.962549",
+        "encounter_start_time": "2025-09-01T18:10:06.962952",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0391",
+        "arrival_time": "2025-09-01T17:10:06.978165",
+        "encounter_start_time": "2025-09-01T19:10:06.978524",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0392",
+        "arrival_time": "2025-09-01T17:10:06.993690",
+        "encounter_start_time": "2025-09-01T18:10:06.994040",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0393",
+        "arrival_time": "2025-09-01T17:10:07.009243",
+        "encounter_start_time": "2025-09-01T19:10:07.009594",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0394",
+        "arrival_time": "2025-09-01T17:10:07.024863",
+        "encounter_start_time": "2025-09-01T21:10:07.025212",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0395",
+        "arrival_time": "2025-09-01T17:10:07.040532",
+        "encounter_start_time": "2025-09-01T18:10:07.040881",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0396",
+        "arrival_time": "2025-09-01T17:10:07.056171",
+        "encounter_start_time": "2025-09-01T19:10:07.056514",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0397",
+        "arrival_time": "2025-09-01T17:10:07.071906",
+        "encounter_start_time": "2025-09-01T18:10:07.072252",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0398",
+        "arrival_time": "2025-09-01T17:10:07.087639",
+        "encounter_start_time": "2025-09-01T19:10:07.087985",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0399",
+        "arrival_time": "2025-09-01T17:10:07.103409",
+        "encounter_start_time": "2025-09-01T21:10:07.103753",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0400",
+        "arrival_time": "2025-09-01T17:10:07.119174",
+        "encounter_start_time": "2025-09-01T18:10:07.119521",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0401",
+        "arrival_time": "2025-09-01T17:10:07.135020",
+        "encounter_start_time": "2025-09-01T19:10:07.135371",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0402",
+        "arrival_time": "2025-09-01T17:10:07.150912",
+        "encounter_start_time": "2025-09-01T18:10:07.151263",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0403",
+        "arrival_time": "2025-09-01T17:10:07.167004",
+        "encounter_start_time": "2025-09-01T19:10:07.167383",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0404",
+        "arrival_time": "2025-09-01T17:10:07.183064",
+        "encounter_start_time": "2025-09-01T21:10:07.183448",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0405",
+        "arrival_time": "2025-09-01T17:10:07.199159",
+        "encounter_start_time": "2025-09-01T18:10:07.199519",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0406",
+        "arrival_time": "2025-09-01T17:10:07.215319",
+        "encounter_start_time": "2025-09-01T19:10:07.215688",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0407",
+        "arrival_time": "2025-09-01T17:10:07.231533",
+        "encounter_start_time": "2025-09-01T18:10:07.231910",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0408",
+        "arrival_time": "2025-09-01T17:10:07.247669",
+        "encounter_start_time": "2025-09-01T19:10:07.248032",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0409",
+        "arrival_time": "2025-09-01T17:10:07.263837",
+        "encounter_start_time": "2025-09-01T21:10:07.264197",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0410",
+        "arrival_time": "2025-09-01T17:10:07.280149",
+        "encounter_start_time": "2025-09-01T18:10:07.280508",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0411",
+        "arrival_time": "2025-09-01T17:10:07.296521",
+        "encounter_start_time": "2025-09-01T19:10:07.296871",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0412",
+        "arrival_time": "2025-09-01T17:10:07.312881",
+        "encounter_start_time": "2025-09-01T18:10:07.313243",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0413",
+        "arrival_time": "2025-09-01T17:10:07.329189",
+        "encounter_start_time": "2025-09-01T19:10:07.329543",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0414",
+        "arrival_time": "2025-09-01T17:10:07.345507",
+        "encounter_start_time": "2025-09-01T21:10:07.345857",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0415",
+        "arrival_time": "2025-09-01T17:10:07.361890",
+        "encounter_start_time": "2025-09-01T18:10:07.362247",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0416",
+        "arrival_time": "2025-09-01T17:10:07.378396",
+        "encounter_start_time": "2025-09-01T19:10:07.378751",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0417",
+        "arrival_time": "2025-09-01T17:10:07.394991",
+        "encounter_start_time": "2025-09-01T18:10:07.395362",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0418",
+        "arrival_time": "2025-09-01T17:10:07.411557",
+        "encounter_start_time": "2025-09-01T19:10:07.411921",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0419",
+        "arrival_time": "2025-09-01T17:10:07.428171",
+        "encounter_start_time": "2025-09-01T21:10:07.428536",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0420",
+        "arrival_time": "2025-09-01T17:10:07.444856",
+        "encounter_start_time": "2025-09-01T18:10:07.445213",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0421",
+        "arrival_time": "2025-09-01T17:10:07.461607",
+        "encounter_start_time": "2025-09-01T19:10:07.461963",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0422",
+        "arrival_time": "2025-09-01T17:10:07.478321",
+        "encounter_start_time": "2025-09-01T18:10:07.478675",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0423",
+        "arrival_time": "2025-09-01T17:10:07.494998",
+        "encounter_start_time": "2025-09-01T19:10:07.495351",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0424",
+        "arrival_time": "2025-09-01T17:10:07.511839",
+        "encounter_start_time": "2025-09-01T21:10:07.512195",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0425",
+        "arrival_time": "2025-09-01T17:10:07.528630",
+        "encounter_start_time": "2025-09-01T18:10:07.528986",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0426",
+        "arrival_time": "2025-09-01T17:10:07.545431",
+        "encounter_start_time": "2025-09-01T19:10:07.545814",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0427",
+        "arrival_time": "2025-09-01T17:10:07.562997",
+        "encounter_start_time": "2025-09-01T18:10:07.563466",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0428",
+        "arrival_time": "2025-09-01T17:10:07.580841",
+        "encounter_start_time": "2025-09-01T19:10:07.581331",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0429",
+        "arrival_time": "2025-09-01T17:10:07.598785",
+        "encounter_start_time": "2025-09-01T21:10:07.599242",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0430",
+        "arrival_time": "2025-09-01T17:10:07.616067",
+        "encounter_start_time": "2025-09-01T18:10:07.616445",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0431",
+        "arrival_time": "2025-09-01T17:10:07.633345",
+        "encounter_start_time": "2025-09-01T19:10:07.633706",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0432",
+        "arrival_time": "2025-09-01T17:10:07.680606",
+        "encounter_start_time": "2025-09-01T18:10:07.681070",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0433",
+        "arrival_time": "2025-09-01T17:10:07.699026",
+        "encounter_start_time": "2025-09-01T19:10:07.699402",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0434",
+        "arrival_time": "2025-09-01T17:10:07.716845",
+        "encounter_start_time": "2025-09-01T21:10:07.717374",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0435",
+        "arrival_time": "2025-09-01T17:10:07.734701",
+        "encounter_start_time": "2025-09-01T18:10:07.735176",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0436",
+        "arrival_time": "2025-09-01T17:10:07.753057",
+        "encounter_start_time": "2025-09-01T19:10:07.753521",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0437",
+        "arrival_time": "2025-09-01T17:10:07.770814",
+        "encounter_start_time": "2025-09-01T18:10:07.771297",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0438",
+        "arrival_time": "2025-09-01T17:10:07.789421",
+        "encounter_start_time": "2025-09-01T19:10:07.789812",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0439",
+        "arrival_time": "2025-09-01T17:10:07.807122",
+        "encounter_start_time": "2025-09-01T21:10:07.807481",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0440",
+        "arrival_time": "2025-09-01T17:10:07.824700",
+        "encounter_start_time": "2025-09-01T18:10:07.825065",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0441",
+        "arrival_time": "2025-09-01T17:10:07.842109",
+        "encounter_start_time": "2025-09-01T19:10:07.842481",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0442",
+        "arrival_time": "2025-09-01T17:10:07.859613",
+        "encounter_start_time": "2025-09-01T18:10:07.859975",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0443",
+        "arrival_time": "2025-09-01T17:10:07.877100",
+        "encounter_start_time": "2025-09-01T19:10:07.877459",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0444",
+        "arrival_time": "2025-09-01T17:10:07.894778",
+        "encounter_start_time": "2025-09-01T21:10:07.895142",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0445",
+        "arrival_time": "2025-09-01T17:10:07.912365",
+        "encounter_start_time": "2025-09-01T18:10:07.912730",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0446",
+        "arrival_time": "2025-09-01T17:10:07.930047",
+        "encounter_start_time": "2025-09-01T19:10:07.930413",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0447",
+        "arrival_time": "2025-09-01T17:10:07.947710",
+        "encounter_start_time": "2025-09-01T18:10:07.948075",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0448",
+        "arrival_time": "2025-09-01T17:10:07.965657",
+        "encounter_start_time": "2025-09-01T19:10:07.966031",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0449",
+        "arrival_time": "2025-09-01T17:10:07.983591",
+        "encounter_start_time": "2025-09-01T21:10:07.983968",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0450",
+        "arrival_time": "2025-09-01T17:10:08.001530",
+        "encounter_start_time": "2025-09-01T18:10:08.001903",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0451",
+        "arrival_time": "2025-09-01T17:10:08.019839",
+        "encounter_start_time": "2025-09-01T19:10:08.020209",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0452",
+        "arrival_time": "2025-09-01T17:10:08.037949",
+        "encounter_start_time": "2025-09-01T18:10:08.038322",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0453",
+        "arrival_time": "2025-09-01T17:10:08.055957",
+        "encounter_start_time": "2025-09-01T19:10:08.056339",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0454",
+        "arrival_time": "2025-09-01T17:10:08.073873",
+        "encounter_start_time": "2025-09-01T21:10:08.074243",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0455",
+        "arrival_time": "2025-09-01T17:10:08.091925",
+        "encounter_start_time": "2025-09-01T18:10:08.092294",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0456",
+        "arrival_time": "2025-09-01T17:10:08.110323",
+        "encounter_start_time": "2025-09-01T19:10:08.110752",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0457",
+        "arrival_time": "2025-09-01T17:10:08.130734",
+        "encounter_start_time": "2025-09-01T18:10:08.131283",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0458",
+        "arrival_time": "2025-09-01T17:10:08.149815",
+        "encounter_start_time": "2025-09-01T19:10:08.150302",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0459",
+        "arrival_time": "2025-09-01T17:10:08.168734",
+        "encounter_start_time": "2025-09-01T21:10:08.169231",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0460",
+        "arrival_time": "2025-09-01T17:10:08.187755",
+        "encounter_start_time": "2025-09-01T18:10:08.188225",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0461",
+        "arrival_time": "2025-09-01T17:10:08.206570",
+        "encounter_start_time": "2025-09-01T19:10:08.207042",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0462",
+        "arrival_time": "2025-09-01T17:10:08.225148",
+        "encounter_start_time": "2025-09-01T18:10:08.225594",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0463",
+        "arrival_time": "2025-09-01T17:10:08.244214",
+        "encounter_start_time": "2025-09-01T19:10:08.244678",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0464",
+        "arrival_time": "2025-09-01T17:10:08.263082",
+        "encounter_start_time": "2025-09-01T21:10:08.263575",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0465",
+        "arrival_time": "2025-09-01T17:10:08.284500",
+        "encounter_start_time": "2025-09-01T18:10:08.285127",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0466",
+        "arrival_time": "2025-09-01T17:10:08.303987",
+        "encounter_start_time": "2025-09-01T19:10:08.304529",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0467",
+        "arrival_time": "2025-09-01T17:10:08.323431",
+        "encounter_start_time": "2025-09-01T18:10:08.323923",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0468",
+        "arrival_time": "2025-09-01T17:10:08.343465",
+        "encounter_start_time": "2025-09-01T19:10:08.343963",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0469",
+        "arrival_time": "2025-09-01T17:10:08.363473",
+        "encounter_start_time": "2025-09-01T21:10:08.363998",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0470",
+        "arrival_time": "2025-09-01T17:10:08.383395",
+        "encounter_start_time": "2025-09-01T18:10:08.383952",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0471",
+        "arrival_time": "2025-09-01T17:10:08.407642",
+        "encounter_start_time": "2025-09-01T19:10:08.408385",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0472",
+        "arrival_time": "2025-09-01T17:10:08.427863",
+        "encounter_start_time": "2025-09-01T18:10:08.428438",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0473",
+        "arrival_time": "2025-09-01T17:10:08.447817",
+        "encounter_start_time": "2025-09-01T19:10:08.448352",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0474",
+        "arrival_time": "2025-09-01T17:10:08.469485",
+        "encounter_start_time": "2025-09-01T21:10:08.470068",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0475",
+        "arrival_time": "2025-09-01T17:10:08.490853",
+        "encounter_start_time": "2025-09-01T18:10:08.491418",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0476",
+        "arrival_time": "2025-09-01T17:10:08.546426",
+        "encounter_start_time": "2025-09-01T19:10:08.546990",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0477",
+        "arrival_time": "2025-09-01T17:10:08.568712",
+        "encounter_start_time": "2025-09-01T18:10:08.569481",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0478",
+        "arrival_time": "2025-09-01T17:10:08.591115",
+        "encounter_start_time": "2025-09-01T19:10:08.591706",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0479",
+        "arrival_time": "2025-09-01T17:10:08.613334",
+        "encounter_start_time": "2025-09-01T21:10:08.614044",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0480",
+        "arrival_time": "2025-09-01T17:10:08.633882",
+        "encounter_start_time": "2025-09-01T18:10:08.634396",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0481",
+        "arrival_time": "2025-09-01T17:10:08.653893",
+        "encounter_start_time": "2025-09-01T19:10:08.654436",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0482",
+        "arrival_time": "2025-09-01T17:10:08.674386",
+        "encounter_start_time": "2025-09-01T18:10:08.674915",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0483",
+        "arrival_time": "2025-09-01T17:10:08.694517",
+        "encounter_start_time": "2025-09-01T19:10:08.695016",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0484",
+        "arrival_time": "2025-09-01T17:10:08.715156",
+        "encounter_start_time": "2025-09-01T21:10:08.715641",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0485",
+        "arrival_time": "2025-09-01T17:10:08.735535",
+        "encounter_start_time": "2025-09-01T18:10:08.736029",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0486",
+        "arrival_time": "2025-09-01T17:10:08.755772",
+        "encounter_start_time": "2025-09-01T19:10:08.756270",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0487",
+        "arrival_time": "2025-09-01T17:10:08.776171",
+        "encounter_start_time": "2025-09-01T18:10:08.776698",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0488",
+        "arrival_time": "2025-09-01T17:10:08.796713",
+        "encounter_start_time": "2025-09-01T19:10:08.797315",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0489",
+        "arrival_time": "2025-09-01T17:10:08.817090",
+        "encounter_start_time": "2025-09-01T21:10:08.817593",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0490",
+        "arrival_time": "2025-09-01T17:10:08.836968",
+        "encounter_start_time": "2025-09-01T18:10:08.837447",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0491",
+        "arrival_time": "2025-09-01T17:10:08.857798",
+        "encounter_start_time": "2025-09-01T19:10:08.858304",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0492",
+        "arrival_time": "2025-09-01T17:10:08.878291",
+        "encounter_start_time": "2025-09-01T18:10:08.878737",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0493",
+        "arrival_time": "2025-09-01T17:10:08.898994",
+        "encounter_start_time": "2025-09-01T19:10:08.899459",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0494",
+        "arrival_time": "2025-09-01T17:10:08.919306",
+        "encounter_start_time": "2025-09-01T21:10:08.919802",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0495",
+        "arrival_time": "2025-09-01T17:10:08.940010",
+        "encounter_start_time": "2025-09-01T18:10:08.940546",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      },
+      {
+        "patient_id": "perf_patient_0496",
+        "arrival_time": "2025-09-01T17:10:08.961097",
+        "encounter_start_time": "2025-09-01T19:10:08.961618",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "chest_pain"
+      },
+      {
+        "patient_id": "perf_patient_0497",
+        "arrival_time": "2025-09-01T17:10:08.981915",
+        "encounter_start_time": "2025-09-01T18:10:08.982383",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "headache"
+      },
+      {
+        "patient_id": "perf_patient_0498",
+        "arrival_time": "2025-09-01T17:10:09.002449",
+        "encounter_start_time": "2025-09-01T19:10:09.002942",
+        "wait_time_minutes": 120.0,
+        "triage_category": "GREEN",
+        "flowchart_reason": "abdominal_pain"
+      },
+      {
+        "patient_id": "perf_patient_0499",
+        "arrival_time": "2025-09-01T17:10:09.023199",
+        "encounter_start_time": "2025-09-01T21:10:09.023768",
+        "wait_time_minutes": 240.0,
+        "triage_category": "BLUE",
+        "flowchart_reason": "limb_injuries"
+      },
+      {
+        "patient_id": "perf_patient_0500",
+        "arrival_time": "2025-09-01T17:10:09.044675",
+        "encounter_start_time": "2025-09-01T18:10:09.045140",
+        "wait_time_minutes": 60.0,
+        "triage_category": "YELLOW",
+        "flowchart_reason": "shortness_of_breath"
+      }
+    ],
+    "statistics": {
+      "mean": 120.0,
+      "median": 120.0,
+      "mode": 120.0,
+      "min": 60.0,
+      "max": 240.0,
+      "std": 65.72670690061993,
+      "count": 500
+    }
+  },
+  "arrival_curve": {
+    "time_intervals": [
+      "2025-09-01T17:10:03.719493",
+      "2025-09-01T18:10:03.719493",
+      "2025-09-01T19:10:03.719493",
+      "2025-09-01T20:10:03.719493"
+    ],
+    "arrivals": [
+      500,
+      0,
+      0,
+      0
+    ],
+    "encounters": [
+      0,
+      200,
+      200,
+      0
+    ]
+  }
+}
