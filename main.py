@@ -25,6 +25,7 @@ from triage.manchester_triage_system import (
     PAPER_INFO,
     CAPABILITIES
 )
+from services.telemetry_service import TelemetryService
 
 
 def test_basic_triage():
@@ -32,8 +33,11 @@ def test_basic_triage():
     print("\n🏥 Testing Basic Triage Functionality")
     print("=" * 50)
     
-    # Initialize the Manchester Triage System
-    mts = ManchesterTriageSystem()
+    # Initialize telemetry service
+    telemetry = TelemetryService()
+    
+    # Initialize the Manchester Triage System with telemetry
+    mts = ManchesterTriageSystem(telemetry_service=telemetry)
     
     # Test cases representing different severity levels
     test_cases = [
@@ -113,7 +117,14 @@ def test_basic_triage():
             'fuzzy_score': result['fuzzy_score']
         })
     
-    return results
+    # Print telemetry summary
+    print(f"\n📊 Telemetry Summary:")
+    stats = telemetry.get_summary_stats()
+    print(f"   Total Steps: {stats['total_steps']}")
+    print(f"   Unique Patients: {stats['unique_patients']}")
+    print(f"   Total Duration: {stats['total_duration_ms']:.2f}ms")
+    
+    return results, telemetry
 
 
 def test_knowledge_acquisition():
@@ -218,7 +229,10 @@ def test_system_capabilities():
     print("\n🔧 Testing System Capabilities")
     print("=" * 50)
     
-    mts = ManchesterTriageSystem()
+    # Initialize telemetry service for system capabilities test
+    telemetry = TelemetryService()
+    
+    mts = ManchesterTriageSystem(telemetry_service=telemetry)
     
     # Test flowchart availability
     print("\n1. Available Flowcharts")
@@ -254,7 +268,9 @@ def run_performance_test():
     
     import time
     
-    mts = ManchesterTriageSystem()
+    # Initialize telemetry service for performance testing
+    telemetry = TelemetryService()
+    mts = ManchesterTriageSystem(telemetry_service=telemetry)
     
     # Generate test cases
     test_symptoms = {
@@ -295,13 +311,22 @@ def run_performance_test():
         percentage = (count / total_assessments) * 100
         print(f"   {category}: {count} ({percentage:.1f}%)")
     
-    return {
+    # Print telemetry summary for performance test
+    print(f"\n📊 Performance Telemetry Summary:")
+    perf_stats = telemetry.get_summary_stats()
+    print(f"   Total Telemetry Steps: {perf_stats['total_steps']}")
+    print(f"   Unique Patients Processed: {perf_stats['unique_patients']}")
+    print(f"   Total Telemetry Duration: {perf_stats['total_duration_ms']:.2f}ms")
+    
+    performance_results = {
         'total_assessments': total_assessments,
         'total_time': total_time,
         'avg_time_ms': (total_time/total_assessments)*1000,
         'assessments_per_second': total_assessments/total_time,
         'category_distribution': category_counts
     }
+    
+    return performance_results, telemetry
 
 
 def main():
@@ -314,7 +339,7 @@ def main():
     
     try:
         # Test basic triage functionality
-        triage_results = test_basic_triage()
+        triage_results, basic_telemetry = test_basic_triage()
         
         # Test knowledge acquisition system
         knowledge_stats = test_knowledge_acquisition()
@@ -323,7 +348,7 @@ def main():
         system_capabilities = test_system_capabilities()
         
         # Run performance test
-        performance_results = run_performance_test()
+        performance_results, perf_telemetry = run_performance_test()
         
         # Summary
         print("\n🎯 Test Summary")
@@ -342,6 +367,18 @@ def main():
         
         # Performance
         print(f"Performance: {performance_results['assessments_per_second']:.1f} assessments/sec")
+        
+        # Dump telemetry data
+        print("\n📁 Dumping Telemetry Data...")
+        output_dir = "output/manchester_triage_system/telemetry"
+        
+        # Dump basic triage telemetry
+        basic_file = basic_telemetry.dump_to_file(output_dir, "basic_triage_telemetry.json")
+        print(f"   Basic Triage Telemetry: {basic_file}")
+        
+        # Dump performance test telemetry
+        perf_file = perf_telemetry.dump_to_file(output_dir, "performance_test_telemetry.json")
+        print(f"   Performance Test Telemetry: {perf_file}")
         
         print("\n✅ All tests completed successfully!")
         print(f"\nPaper Reference: {PAPER_INFO['url']}")

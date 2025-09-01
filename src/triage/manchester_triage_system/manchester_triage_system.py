@@ -16,10 +16,16 @@ definitions designed to categorize patients arriving to an emergency room
 based on their level of urgency."
 """
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from .config import FlowchartConfigManager, FuzzySystemConfigManager
 from .rules import FuzzyRulesManager
 from .core import TriageProcessor
+
+# Import telemetry service from the new location
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
+from services.telemetry_service import TelemetryService
 
 
 class ManchesterTriageSystem:
@@ -42,24 +48,44 @@ class ManchesterTriageSystem:
     def __init__(self, 
                  flowchart_manager: FlowchartConfigManager = None,
                  fuzzy_manager: FuzzySystemConfigManager = None,
-                 rules_manager: FuzzyRulesManager = None):
+                 rules_manager: FuzzyRulesManager = None,
+                 telemetry_service: TelemetryService = None):
         """Initialize MTS with dependency injection
         
         Args:
             flowchart_manager: Manages flowchart configurations
             fuzzy_manager: Manages fuzzy system configuration
             rules_manager: Manages fuzzy rules
+            telemetry_service: Required telemetry service for logging steps
+            
+        Raises:
+            ValueError: If telemetry_service is None
         """
+        # Validate required telemetry service
+        if telemetry_service is None:
+            raise ValueError("TelemetryService is required for Manchester Triage System initialization")
+        
         # Use dependency injection with default implementations
         self._flowchart_manager = flowchart_manager or FlowchartConfigManager()
         self._fuzzy_manager = fuzzy_manager or FuzzySystemConfigManager()
         self._rules_manager = rules_manager or FuzzyRulesManager()
+        self._telemetry_service = telemetry_service
         
         # Initialize the triage processor
         self._triage_processor = TriageProcessor(
             self._flowchart_manager,
             self._fuzzy_manager,
             self._rules_manager
+        )
+        
+        # Log system initialization
+        self._telemetry_service.add_step(
+            step_name="mts_initialization",
+            step_type="initialization",
+            data={
+                "flowcharts_loaded": len(self._flowchart_manager.load_flowcharts()),
+                "system_ready": True
+            }
         )
         
         # Maintain backward compatibility
@@ -74,7 +100,7 @@ class ManchesterTriageSystem:
         output_var = self._fuzzy_manager.create_output_variable()
         return self._rules_manager.create_rules(input_vars, output_var)
     
-    def triage_patient(self, flowchart_reason: str, symptoms_input: Dict[str, str]) -> Dict[str, Any]:
+    def triage_patient(self, flowchart_reason: str, symptoms_input: Dict[str, str], patient_id: str = None) -> Dict[str, Any]:
         """Perform FMTS triage using SOLID-compliant architecture
         
         Reference: FMTS paper describes "decision aid system for the ER nurses 
@@ -83,11 +109,62 @@ class ManchesterTriageSystem:
         Args:
             flowchart_reason: One of the 49+ reasons (e.g., 'chest_pain')
             symptoms_input: Dict of symptom_name -> linguistic_value
+            patient_id: Optional patient identifier for telemetry tracking
             
         Returns:
             Dict containing triage result with category, wait time, etc.
         """
-        return self._triage_processor.process_triage(flowchart_reason, symptoms_input)
+        # Generate patient ID if not provided
+        if patient_id is None:
+            raise ValueError("patient_id is required for triage processing")
+        
+        # Start telemetry session
+        self._telemetry_service.start_patient_session(patient_id, flowchart_reason)
+        self._telemetry_service.start_step_timer()
+        
+        # Log input validation
+        self._telemetry_service.add_step(
+            step_name="input_validation",
+            step_type="processing",
+            data={
+                "flowchart_reason": flowchart_reason,
+                "symptoms_count": len(symptoms_input),
+                "symptoms": symptoms_input
+            }
+        )
+        
+        # Log flowchart lookup
+        self._telemetry_service.start_step_timer()
+        self._telemetry_service.add_step(
+            step_name="flowchart_lookup",
+            step_type="processing",
+            data={
+                "flowchart_reason": flowchart_reason,
+                "available_flowcharts": len(self.get_available_flowcharts())
+            }
+        )
+        
+        # Start timing for triage processing
+        self._telemetry_service.start_step_timer()
+        
+        # Perform the actual triage
+        result = self._triage_processor.process_triage(flowchart_reason, symptoms_input)
+        
+        # Log triage processing completion
+        self._telemetry_service.add_step(
+            step_name="triage_processing",
+            step_type="processing",
+            data={
+                "fuzzy_score": result.get('fuzzy_score', 0),
+                "triage_category": result.get('triage_category', 'UNKNOWN'),
+                "wait_time": result.get('wait_time', 0)
+            }
+        )
+        
+        # End patient session
+        self._telemetry_service.end_patient_session(result)
+        
+        return result
     
     def get_available_flowcharts(self) -> List[str]:
         """Get list of available flowcharts
@@ -95,6 +172,14 @@ class ManchesterTriageSystem:
         Reference: FMTS paper mentions "around 50 flowcharts" in the system
         """
         return self._triage_processor.get_available_flowcharts()
+    
+    def get_telemetry_service(self) -> TelemetryService:
+        """Get the telemetry service instance
+        
+        Returns:
+            The telemetry service if available, None otherwise
+        """
+        return self._telemetry_service
     
     def get_symptoms_for_flowchart(self, flowchart_reason: str) -> List[str]:
         """Get symptoms for a specific flowchart

@@ -1,0 +1,396 @@
+{
+  "metadata": {
+    "export_timestamp": "2025-09-01T16:37:53.290876",
+    "session_start_time": "2025-09-01T16:37:52.526691",
+    "total_steps": 21
+  },
+  "summary_stats": {
+    "total_steps": 21,
+    "unique_patients": 4,
+    "step_types": {
+      "initialization": 5,
+      "processing": 12,
+      "result": 4
+    },
+    "flowchart_reasons": {
+      "chest_pain": 5,
+      "headache": 5,
+      "limb_injuries": 5,
+      "abdominal_pain": 5
+    },
+    "total_duration_ms": 84.85300000000001,
+    "average_duration_per_step_ms": 4.040619047619048,
+    "session_start_time": "2025-09-01T16:37:52.526691",
+    "session_duration_ms": 764.205
+  },
+  "telemetry_steps": [
+    {
+      "timestamp": "2025-09-01T16:37:52.698199",
+      "step_name": "mts_initialization",
+      "step_type": "initialization",
+      "data": {
+        "flowcharts_loaded": 37,
+        "system_ready": true
+      },
+      "duration_ms": null,
+      "patient_id": null,
+      "flowchart_reason": null
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.698278",
+      "step_name": "patient_session_start",
+      "step_type": "initialization",
+      "data": {
+        "patient_id": "patient_b40f48dc",
+        "flowchart_reason": "chest_pain",
+        "session_start_time": "2025-09-01T16:37:52.526691"
+      },
+      "duration_ms": null,
+      "patient_id": "patient_b40f48dc",
+      "flowchart_reason": "chest_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.698290",
+      "step_name": "input_validation",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "chest_pain",
+        "symptoms_count": 5,
+        "symptoms": {
+          "severe_pain": "very_severe",
+          "crushing_sensation": "severe",
+          "radiation": "moderate",
+          "breathless": "severe",
+          "sweating": "severe"
+        }
+      },
+      "duration_ms": 0.001,
+      "patient_id": "patient_b40f48dc",
+      "flowchart_reason": "chest_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.699543",
+      "step_name": "flowchart_lookup",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "chest_pain",
+        "available_flowcharts": 37
+      },
+      "duration_ms": 1.244,
+      "patient_id": "patient_b40f48dc",
+      "flowchart_reason": "chest_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.720884",
+      "step_name": "triage_processing",
+      "step_type": "processing",
+      "data": {
+        "fuzzy_score": 2.7407407407407405,
+        "triage_category": "YELLOW",
+        "wait_time": "60 min"
+      },
+      "duration_ms": 21.325,
+      "patient_id": "patient_b40f48dc",
+      "flowchart_reason": "chest_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.720894",
+      "step_name": "patient_session_end",
+      "step_type": "result",
+      "data": {
+        "triage_result": {
+          "flowchart_used": "chest_pain",
+          "triage_category": "YELLOW",
+          "wait_time": "60 min",
+          "fuzzy_score": 2.7407407407407405,
+          "symptoms_processed": {
+            "severe_pain": "very_severe",
+            "crushing_sensation": "severe",
+            "radiation": "moderate",
+            "breathless": "severe",
+            "sweating": "severe"
+          },
+          "numeric_inputs": [
+            10.0,
+            8.0,
+            5.0,
+            8.0,
+            8.0
+          ],
+          "priority_score": 3
+        },
+        "total_steps": 4
+      },
+      "duration_ms": null,
+      "patient_id": "patient_b40f48dc",
+      "flowchart_reason": "chest_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.720981",
+      "step_name": "patient_session_start",
+      "step_type": "initialization",
+      "data": {
+        "patient_id": "patient_e54717e5",
+        "flowchart_reason": "headache",
+        "session_start_time": "2025-09-01T16:37:52.526691"
+      },
+      "duration_ms": null,
+      "patient_id": "patient_e54717e5",
+      "flowchart_reason": "headache"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.720987",
+      "step_name": "input_validation",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "headache",
+        "symptoms_count": 5,
+        "symptoms": {
+          "pain_severity": "moderate",
+          "sudden_onset": "none",
+          "neck_stiffness": "none",
+          "photophobia": "mild",
+          "confusion": "none"
+        }
+      },
+      "duration_ms": 0.001,
+      "patient_id": "patient_e54717e5",
+      "flowchart_reason": "headache"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.721021",
+      "step_name": "flowchart_lookup",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "headache",
+        "available_flowcharts": 37
+      },
+      "duration_ms": 0.030000000000000002,
+      "patient_id": "patient_e54717e5",
+      "flowchart_reason": "headache"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.741435",
+      "step_name": "triage_processing",
+      "step_type": "processing",
+      "data": {
+        "fuzzy_score": 4.0,
+        "triage_category": "GREEN",
+        "wait_time": "120 min"
+      },
+      "duration_ms": 20.402,
+      "patient_id": "patient_e54717e5",
+      "flowchart_reason": "headache"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.741445",
+      "step_name": "patient_session_end",
+      "step_type": "result",
+      "data": {
+        "triage_result": {
+          "flowchart_used": "headache",
+          "triage_category": "GREEN",
+          "wait_time": "120 min",
+          "fuzzy_score": 4.0,
+          "symptoms_processed": {
+            "pain_severity": "moderate",
+            "sudden_onset": "none",
+            "neck_stiffness": "none",
+            "photophobia": "mild",
+            "confusion": "none"
+          },
+          "numeric_inputs": [
+            5.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          "priority_score": 4
+        },
+        "total_steps": 4
+      },
+      "duration_ms": null,
+      "patient_id": "patient_e54717e5",
+      "flowchart_reason": "headache"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.741523",
+      "step_name": "patient_session_start",
+      "step_type": "initialization",
+      "data": {
+        "patient_id": "patient_81890dc3",
+        "flowchart_reason": "limb_injuries",
+        "session_start_time": "2025-09-01T16:37:52.526691"
+      },
+      "duration_ms": null,
+      "patient_id": "patient_81890dc3",
+      "flowchart_reason": "limb_injuries"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.741530",
+      "step_name": "input_validation",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "limb_injuries",
+        "symptoms_count": 5,
+        "symptoms": {
+          "deformity": "none",
+          "pain": "mild",
+          "swelling": "mild",
+          "loss_of_function": "none",
+          "bleeding": "none"
+        }
+      },
+      "duration_ms": 0.001,
+      "patient_id": "patient_81890dc3",
+      "flowchart_reason": "limb_injuries"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.741560",
+      "step_name": "flowchart_lookup",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "limb_injuries",
+        "available_flowcharts": 37
+      },
+      "duration_ms": 0.027,
+      "patient_id": "patient_81890dc3",
+      "flowchart_reason": "limb_injuries"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.762170",
+      "step_name": "triage_processing",
+      "step_type": "processing",
+      "data": {
+        "fuzzy_score": 4.655555555555556,
+        "triage_category": "BLUE",
+        "wait_time": "240 min"
+      },
+      "duration_ms": 20.597,
+      "patient_id": "patient_81890dc3",
+      "flowchart_reason": "limb_injuries"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.762181",
+      "step_name": "patient_session_end",
+      "step_type": "result",
+      "data": {
+        "triage_result": {
+          "flowchart_used": "limb_injuries",
+          "triage_category": "BLUE",
+          "wait_time": "240 min",
+          "fuzzy_score": 4.655555555555556,
+          "symptoms_processed": {
+            "deformity": "none",
+            "pain": "mild",
+            "swelling": "mild",
+            "loss_of_function": "none",
+            "bleeding": "none"
+          },
+          "numeric_inputs": [
+            0.0,
+            2.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          "priority_score": 5
+        },
+        "total_steps": 4
+      },
+      "duration_ms": null,
+      "patient_id": "patient_81890dc3",
+      "flowchart_reason": "limb_injuries"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.762258",
+      "step_name": "patient_session_start",
+      "step_type": "initialization",
+      "data": {
+        "patient_id": "patient_0a669f7f",
+        "flowchart_reason": "abdominal_pain",
+        "session_start_time": "2025-09-01T16:37:52.526691"
+      },
+      "duration_ms": null,
+      "patient_id": "patient_0a669f7f",
+      "flowchart_reason": "abdominal_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.762264",
+      "step_name": "input_validation",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "abdominal_pain",
+        "symptoms_count": 5,
+        "symptoms": {
+          "pain_intensity": "severe",
+          "vomiting": "moderate",
+          "rigidity": "severe",
+          "distension": "mild",
+          "tenderness": "severe"
+        }
+      },
+      "duration_ms": 0.001,
+      "patient_id": "patient_0a669f7f",
+      "flowchart_reason": "abdominal_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.762296",
+      "step_name": "flowchart_lookup",
+      "step_type": "processing",
+      "data": {
+        "flowchart_reason": "abdominal_pain",
+        "available_flowcharts": 37
+      },
+      "duration_ms": 0.029,
+      "patient_id": "patient_0a669f7f",
+      "flowchart_reason": "abdominal_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.783502",
+      "step_name": "triage_processing",
+      "step_type": "processing",
+      "data": {
+        "fuzzy_score": 2.9551515151515146,
+        "triage_category": "YELLOW",
+        "wait_time": "60 min"
+      },
+      "duration_ms": 21.195,
+      "patient_id": "patient_0a669f7f",
+      "flowchart_reason": "abdominal_pain"
+    },
+    {
+      "timestamp": "2025-09-01T16:37:52.783514",
+      "step_name": "patient_session_end",
+      "step_type": "result",
+      "data": {
+        "triage_result": {
+          "flowchart_used": "abdominal_pain",
+          "triage_category": "YELLOW",
+          "wait_time": "60 min",
+          "fuzzy_score": 2.9551515151515146,
+          "symptoms_processed": {
+            "pain_intensity": "severe",
+            "vomiting": "moderate",
+            "rigidity": "severe",
+            "distension": "mild",
+            "tenderness": "severe"
+          },
+          "numeric_inputs": [
+            8.0,
+            5.0,
+            8.0,
+            2.0,
+            8.0
+          ],
+          "priority_score": 3
+        },
+        "total_steps": 4
+      },
+      "duration_ms": null,
+      "patient_id": "patient_0a669f7f",
+      "flowchart_reason": "abdominal_pain"
+    }
+  ]
+}
