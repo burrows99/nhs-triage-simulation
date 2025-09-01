@@ -58,11 +58,31 @@ def run_hospital_simulation():
         percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
         print(f"    {category}: {count} patients ({percentage:.1f}%)")
     
-    # No metrics export - pure simulation results only
-    print(f"\n📊 Basic Simulation Summary:")
-    print(f"  Patients Processed: {results['total_patients']}")
-    print(f"  Average Time: {results['avg_time']:.1f} minutes")
-    print(f"  Categories Assigned: {len(results['categories'])} total")
+    # Export NHS metrics and generate plots
+    print(f"\n📊 Generating Output Files...")
+    
+    # Create output directories
+    os.makedirs('./output/hospital_simulation/metrics', exist_ok=True)
+    os.makedirs('./output/hospital_simulation/plots', exist_ok=True)
+    
+    # Export NHS metrics data
+    hospital.export_nhs_data(
+        json_filepath='./output/hospital_simulation/metrics/nhs_metrics.json',
+        csv_filepath='./output/hospital_simulation/metrics/patient_data.csv'
+    )
+    
+    # Generate NHS metrics plots
+    plots_generated = hospital.nhs_metrics.generate_all_plots('./output/hospital_simulation/plots')
+    
+    print(f"\n📁 Files Generated:")
+    print(f"  📊 NHS Metrics JSON: ./output/hospital_simulation/metrics/nhs_metrics.json")
+    print(f"  📋 Patient Data CSV: ./output/hospital_simulation/metrics/patient_data.csv")
+    print(f"  📈 Plots Generated: {len(plots_generated)} files in ./output/hospital_simulation/plots/")
+    for plot in plots_generated:
+        print(f"    - {plot}")
+    
+    # Clean up matplotlib resources
+    hospital.nhs_metrics.close_plots()
     
     return results
 
