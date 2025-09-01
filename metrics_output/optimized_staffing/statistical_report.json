@@ -1,0 +1,339 @@
+{
+  "report_metadata": {
+    "report_id": "optimized_staffing_1756725417",
+    "generated_at": "2025-09-01T12:16:57.428954",
+    "simulation_duration": 120
+  },
+  "descriptive_statistics": {
+    "patient_flow": {
+      "total_arrivals": 48,
+      "total_departures": 18,
+      "total_admissions": 7,
+      "total_discharges": 11,
+      "total_lwbs": 0,
+      "completion_rate": 37.5,
+      "admission_rate": 38.88888888888889,
+      "discharge_rate": 61.111111111111114,
+      "lwbs_rate": 0.0,
+      "throughput_per_hour": 9.0,
+      "priority_distribution": {
+        "IMMEDIATE": 9,
+        "VERY_URGENT": 22,
+        "URGENT": 4,
+        "STANDARD": 0,
+        "NON_URGENT": 10
+      },
+      "priority_percentages": {
+        "IMMEDIATE": 18.75,
+        "VERY_URGENT": 45.83333333333333,
+        "URGENT": 8.333333333333332,
+        "STANDARD": 0.0,
+        "NON_URGENT": 20.833333333333336
+      }
+    },
+    "wait_times": {
+      "overall": {
+        "count": 24,
+        "mean": 27.774395409276462,
+        "median": 33.005653547037696,
+        "std": 21.00829880956475,
+        "var": 441.3486188719596,
+        "min": 0.0,
+        "max": 57.154119654100356,
+        "range": 57.154119654100356,
+        "skewness": -0.16984872892650915,
+        "kurtosis": -1.6102824781214027,
+        "percentiles": {
+          "p50": 33.005653547037696,
+          "p75": 46.795197476792595,
+          "p90": 51.67307263999566,
+          "p95": 53.90602629927444,
+          "p99": 56.45817755048622
+        }
+      },
+      "by_priority": {
+        "IMMEDIATE": {
+          "count": 5,
+          "mean": 23.5662733447543,
+          "median": 14.771692790769226,
+          "std": 19.529119652245306,
+          "var": 381.3865143917139,
+          "min": 0.0,
+          "max": 52.646563609522175,
+          "range": 52.646563609522175,
+          "skewness": 0.34680158333599986,
+          "kurtosis": -1.45183394015336,
+          "target_compliance": {
+            "target_time": 0,
+            "compliance_rate": 20.0,
+            "breach_count": 4,
+            "breach_rate": 80.0
+          }
+        },
+        "VERY_URGENT": {
+          "count": 11,
+          "mean": 33.34339768013203,
+          "median": 40.623507236450145,
+          "std": 18.979198425141913,
+          "var": 360.2099728609093,
+          "min": 0.0,
+          "max": 57.154119654100356,
+          "range": 57.154119654100356,
+          "skewness": -0.7194740650488483,
+          "kurtosis": -0.8895973105355228,
+          "target_compliance": {
+            "target_time": 10,
+            "compliance_rate": 18.181818181818183,
+            "breach_count": 9,
+            "breach_rate": 81.81818181818181
+          }
+        },
+        "URGENT": {
+          "count": 3,
+          "mean": 1.9523825935792078,
+          "median": 0.0,
+          "std": 2.761085942780874,
+          "var": 7.623595583422148,
+          "min": 0.0,
+          "max": 5.857147780737623,
+          "range": 5.857147780737623,
+          "skewness": 0.7071067811865475,
+          "kurtosis": -1.5000000000000004,
+          "target_compliance": {
+            "target_time": 60,
+            "compliance_rate": 100.0,
+            "breach_count": 0,
+            "breach_rate": 0.0
+          }
+        },
+        "NON_URGENT": {
+          "count": 5,
+          "mean": 35.223920167334725,
+          "median": 46.07634275503243,
+          "std": 19.963739899182958,
+          "var": 398.55091076222953,
+          "min": 0.0,
+          "max": 54.12828442099543,
+          "range": 54.12828442099543,
+          "skewness": -0.8415737006601045,
+          "kurtosis": -0.8253401122062414,
+          "target_compliance": {
+            "target_time": 240,
+            "compliance_rate": 100.0,
+            "breach_count": 0,
+            "breach_rate": 0.0
+          }
+        }
+      }
+    },
+    "service_times": {
+      "triage": {
+        "count": 45,
+        "mean": 5.267570865122332,
+        "median": 5.076308444162022,
+        "std": 1.82468652281252,
+        "var": 3.329480906533645,
+        "min": 1.8610982851666402,
+        "max": 9.50545017445803,
+        "range": 7.644351889291389,
+        "skewness": 0.34547896324859545,
+        "kurtosis": -0.1714775180353838
+      },
+      "consultation": {
+        "count": 18,
+        "mean": 31.950538122297726,
+        "median": 34.58910443748502,
+        "std": 11.35116146317452,
+        "var": 128.84886656305832,
+        "min": 13.692418942670798,
+        "max": 48.32205272880786,
+        "range": 34.62963378613706,
+        "skewness": -0.23519984843675518,
+        "kurtosis": -1.1855068666962774
+      },
+      "total_system": {
+        "count": 18,
+        "mean": 57.129558474704226,
+        "median": 59.85643456480426,
+        "std": 21.34676762709586,
+        "var": 455.6844881252278,
+        "min": 17.3701158290777,
+        "max": 93.92671527963742,
+        "range": 76.55659945055972,
+        "skewness": -0.08094176044333573,
+        "kurtosis": -0.9443610516217054,
+        "percentiles": {
+          "p50": 59.85643456480426,
+          "p75": 69.64439261165896,
+          "p90": 85.86717641037612,
+          "p95": 87.45636133454055
+        }
+      }
+    },
+    "resource_utilization": {
+      "doctors": {
+        "count": 25,
+        "mean": 14.0,
+        "median": 0.0,
+        "std": 32.550814975289875,
+        "var": 1059.5555555555557,
+        "min": 0.0,
+        "max": 100.0,
+        "range": 100.0,
+        "skewness": 2.1578032711892656,
+        "kurtosis": 2.8792804941218844,
+        "efficiency": {
+          "target_utilization": 85.0,
+          "actual_utilization": 14.0,
+          "efficiency_ratio": 0.16470588235294117,
+          "underutilization": 71.0,
+          "overutilization": 0
+        }
+      },
+      "nurses": {
+        "count": 25,
+        "mean": 14.0,
+        "median": 0.0,
+        "std": 32.550814975289875,
+        "var": 1059.5555555555557,
+        "min": 0.0,
+        "max": 100.0,
+        "range": 100.0,
+        "skewness": 2.1578032711892656,
+        "kurtosis": 2.8792804941218844,
+        "efficiency": {
+          "target_utilization": 85.0,
+          "actual_utilization": 14.0,
+          "efficiency_ratio": 0.16470588235294117,
+          "underutilization": 71.0,
+          "overutilization": 0
+        }
+      },
+      "cubicles": {
+        "count": 25,
+        "mean": 16.0,
+        "median": 0.0,
+        "std": 33.26409475695979,
+        "var": 1106.5,
+        "min": 0.0,
+        "max": 100.0,
+        "range": 100.0,
+        "skewness": 1.9012696156198707,
+        "kurtosis": 1.9710529265815993,
+        "efficiency": {
+          "target_utilization": 85.0,
+          "actual_utilization": 16.0,
+          "efficiency_ratio": 0.18823529411764706,
+          "underutilization": 69.0,
+          "overutilization": 0
+        }
+      },
+      "beds": {
+        "count": 25,
+        "mean": 100.0,
+        "median": 100.0,
+        "std": 0.0,
+        "var": 0.0,
+        "min": 100.0,
+        "max": 100.0,
+        "range": 0.0,
+        "skewness": NaN,
+        "kurtosis": NaN,
+        "efficiency": {
+          "target_utilization": 85.0,
+          "actual_utilization": 100.0,
+          "efficiency_ratio": 1.1764705882352942,
+          "underutilization": 0,
+          "overutilization": 15.0
+        }
+      }
+    }
+  },
+  "performance_analysis": {
+    "performance_indicators": {
+      "throughput_per_hour": 9.0,
+      "average_length_of_stay": 57.129558474704226,
+      "average_wait_time": 27.774395409276462,
+      "median_wait_time": 33.005653547037696,
+      "p95_wait_time": 53.90602629927444,
+      "resource_efficiency": 36.0,
+      "completion_rate": 37.5,
+      "lwbs_rate": 0.0,
+      "admission_rate": 38.88888888888889,
+      "average_triage_confidence": 0.5254222222222222
+    },
+    "target_compliance": {
+      "IMMEDIATE_compliance": 20.0,
+      "VERY_URGENT_compliance": 18.181818181818183,
+      "URGENT_compliance": 100.0,
+      "NON_URGENT_compliance": 100.0,
+      "overall_compliance": 45.83333333333333,
+      "throughput_compliance": 45.0,
+      "resource_efficiency_compliance": 42.35294117647059,
+      "lwbs_compliance": 100.0
+    },
+    "efficiency_metrics": {
+      "doctor_efficiency": 14.0,
+      "nurse_efficiency": 14.0,
+      "triage_efficiency": 94.92041261572818,
+      "flow_efficiency": 30.0,
+      "queue_efficiency": 83.52
+    }
+  },
+  "statistical_analysis": {
+    "normality_tests": {
+      "wait_times": {
+        "shapiro_wilk_statistic": 0.8579216741887142,
+        "shapiro_wilk_p_value": 0.003077968696982539,
+        "shapiro_wilk_normal": "False",
+        "ks_statistic": 0.21159245080178146,
+        "ks_p_value": 0.20178590510774397,
+        "ks_normal": "True",
+        "sample_size": 24
+      },
+      "consultation_times": {
+        "shapiro_wilk_statistic": 0.9170022569004462,
+        "shapiro_wilk_p_value": 0.11439721941991578,
+        "shapiro_wilk_normal": "True",
+        "ks_statistic": 0.18041072750546833,
+        "ks_p_value": 0.5421005029871749,
+        "ks_normal": "True",
+        "sample_size": 18
+      },
+      "triage_times": {
+        "shapiro_wilk_statistic": 0.9700711605767938,
+        "shapiro_wilk_p_value": 0.2913122844327946,
+        "shapiro_wilk_normal": "True",
+        "ks_statistic": 0.10647852849185335,
+        "ks_p_value": 0.6482843046653266,
+        "ks_normal": "True",
+        "sample_size": 45
+      },
+      "system_times": {
+        "shapiro_wilk_statistic": 0.9768180003515998,
+        "shapiro_wilk_p_value": 0.9114040047035042,
+        "shapiro_wilk_normal": "True",
+        "ks_statistic": 0.10031787758532329,
+        "ks_p_value": 0.9849286069555546,
+        "ks_normal": "True",
+        "sample_size": 18
+      }
+    },
+    "correlation_analysis": {
+      "doctor_nurse_utilization": 1.0,
+      "doctor_utilization_queue_length": -0.4989749658861947
+    }
+  },
+  "comparative_analysis": {
+    "benchmark_comparison": null,
+    "trend_analysis": null
+  },
+  "recommendations": [
+    "Wait time compliance is 45.8%, below the 95% NHS target. Consider increasing staffing levels or optimizing patient flow processes.",
+    "Resource efficiency is 36.0%, indicating underutilization. Review staffing schedules and consider demand-based resource allocation.",
+    "Throughput is 9.0 patients/hour, which may be below optimal levels. Review triage processes and consider parallel processing workflows.",
+    "IMMEDIATE priority compliance is 20.0%. Ensure immediate escalation protocols and dedicated fast-track pathways.",
+    "VERY_URGENT priority compliance is 18.2%. Ensure immediate escalation protocols and dedicated fast-track pathways.",
+    "Average triage confidence is 0.53. Consider additional triage training or decision support tools."
+  ]
+}

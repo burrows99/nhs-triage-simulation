@@ -107,11 +107,14 @@ class MetricsVisualizer:
         
         # 1. Arrivals vs Departures over time
         if metrics.timestamps and metrics.arrivals_over_time:
-            # Convert to cumulative
-            cumulative_arrivals = np.cumsum(metrics.arrivals_over_time)
-            cumulative_departures = np.cumsum(metrics.departures_over_time)
+            # Ensure all arrays have the same length
+            min_length = min(len(metrics.timestamps), len(metrics.arrivals_over_time), len(metrics.departures_over_time))
             
-            time_hours = [t/60 for t in metrics.timestamps]  # Convert to hours
+            # Convert to cumulative
+            cumulative_arrivals = np.cumsum(metrics.arrivals_over_time[:min_length])
+            cumulative_departures = np.cumsum(metrics.departures_over_time[:min_length])
+            
+            time_hours = [t/60 for t in metrics.timestamps[:min_length]]  # Convert to hours
             
             ax1.plot(time_hours, cumulative_arrivals, label='Arrivals', 
                     color='#2E8B57', linewidth=2)
@@ -150,7 +153,7 @@ class MetricsVisualizer:
                     
         # 4. Throughput Analysis
         if metrics.duration > 0:
-            duration_hours = metrics.duration / 3600
+            duration_hours = metrics.duration / 60  # Convert minutes to hours
             throughput = metrics.total_departures / duration_hours
             
             # Create throughput gauge
@@ -297,15 +300,19 @@ class MetricsVisualizer:
                     
         # 2. Utilization over time
         if metrics.timestamps and metrics.doctor_utilization:
-            time_hours = [t/60 for t in metrics.timestamps[:len(metrics.doctor_utilization)]]
+            # Ensure data arrays match in length
+            min_length = min(len(metrics.timestamps), len(metrics.doctor_utilization))
+            time_hours = [t/60 for t in metrics.timestamps[:min_length]]
             
-            ax2.plot(time_hours, metrics.doctor_utilization, label='Doctors', color='#FF6B6B')
-            if metrics.nurse_utilization:
-                ax2.plot(time_hours[:len(metrics.nurse_utilization)], 
-                        metrics.nurse_utilization, label='Nurses', color='#4ECDC4')
-            if metrics.cubicle_utilization:
-                ax2.plot(time_hours[:len(metrics.cubicle_utilization)], 
-                        metrics.cubicle_utilization, label='Cubicles', color='#45B7D1')
+            ax2.plot(time_hours, metrics.doctor_utilization[:min_length], label='Doctors', color='#FF6B6B')
+            if metrics.nurse_utilization and len(metrics.nurse_utilization) > 0:
+                nurse_length = min(len(time_hours), len(metrics.nurse_utilization))
+                ax2.plot(time_hours[:nurse_length], 
+                        metrics.nurse_utilization[:nurse_length], label='Nurses', color='#4ECDC4')
+            if metrics.cubicle_utilization and len(metrics.cubicle_utilization) > 0:
+                cubicle_length = min(len(time_hours), len(metrics.cubicle_utilization))
+                ax2.plot(time_hours[:cubicle_length], 
+                        metrics.cubicle_utilization[:cubicle_length], label='Cubicles', color='#45B7D1')
                         
             ax2.set_xlabel('Time (hours)')
             ax2.set_ylabel('Utilization (%)')
@@ -943,11 +950,13 @@ class MetricsVisualizer:
         # Resource utilization over time
         ax6 = fig.add_subplot(gs[1, 2:])
         if metrics.timestamps and metrics.doctor_utilization:
-            time_hours = [t/60 for t in metrics.timestamps[:len(metrics.doctor_utilization)]]
-            ax6.plot(time_hours, metrics.doctor_utilization, label='Doctors', color='#FF6B6B', linewidth=2)
+            # Ensure data arrays match in length
+            min_length = min(len(metrics.timestamps), len(metrics.doctor_utilization))
+            time_hours = [t/60 for t in metrics.timestamps[:min_length]]
+            ax6.plot(time_hours, metrics.doctor_utilization[:min_length], label='Doctors', color='#FF6B6B', linewidth=2)
             
-            if metrics.nurse_utilization:
-                nurse_length = min(len(metrics.nurse_utilization), len(time_hours))
+            if metrics.nurse_utilization and len(metrics.nurse_utilization) > 0:
+                nurse_length = min(len(time_hours), len(metrics.nurse_utilization))
                 ax6.plot(time_hours[:nurse_length], metrics.nurse_utilization[:nurse_length], 
                         label='Nurses', color='#4ECDC4', linewidth=2)
                         

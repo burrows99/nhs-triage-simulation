@@ -151,12 +151,12 @@ class MetricsCollector:
         
     def start_simulation(self, current_time: float = None):
         """Initialize metrics collection for new simulation"""
-        self.metrics.start_time = current_time or time.time()
+        self.metrics.start_time = current_time if current_time is not None else 0.0
         self.last_snapshot_time = self.metrics.start_time
         
     def end_simulation(self, current_time: float = None):
         """Finalize metrics collection and calculate summary statistics"""
-        self.metrics.end_time = current_time or time.time()
+        self.metrics.end_time = current_time if current_time is not None else 0.0
         self.metrics.duration = self.metrics.end_time - self.metrics.start_time
         
         # Calculate final performance indicators
@@ -167,6 +167,10 @@ class MetricsCollector:
         self.metrics.total_arrivals += 1
         self.active_patients[patient.patient_id] = patient
         self.patient_timelines[patient.patient_id]['arrival'] = arrival_time
+        
+        # Update priority distribution
+        if patient.priority:
+            self.metrics.priority_distribution[patient.priority.name] += 1
         
         # Update time series
         self._update_time_series(arrival_time, 'arrival')
@@ -182,6 +186,12 @@ class MetricsCollector:
             self.metrics.total_discharges += 1
         elif departure_type == 'lwbs':
             self.metrics.total_lwbs += 1
+            
+        # Update departures over time (increment current time slot)
+        if len(self.metrics.departures_over_time) == 0:
+            self.metrics.departures_over_time.append(1)
+        else:
+            self.metrics.departures_over_time[-1] += 1
             
         # Calculate system time
         if patient.patient_id in self.patient_timelines:
@@ -275,6 +285,16 @@ class MetricsCollector:
         if current_time - self.last_snapshot_time >= self.snapshot_interval:
             self.metrics.timestamps.append(current_time)
             
+            # Initialize time series arrays if empty
+            if len(self.metrics.arrivals_over_time) == 0:
+                self.metrics.arrivals_over_time.append(0)
+            if len(self.metrics.departures_over_time) == 0:
+                self.metrics.departures_over_time.append(0)
+                
+            # Add new time slot for next interval
+            self.metrics.arrivals_over_time.append(0)
+            self.metrics.departures_over_time.append(0)
+            
             # Record current system state
             if 'resource_utilization' in ed_status:
                 util = ed_status['resource_utilization']
@@ -322,7 +342,7 @@ class MetricsCollector:
         
         # Throughput (patients per hour)
         if self.metrics.duration > 0:
-            duration_hours = self.metrics.duration / 3600  # Convert to hours
+            duration_hours = self.metrics.duration / 60  # Convert minutes to hours
             self.metrics.throughput_per_hour = self.metrics.total_departures / duration_hours
             
         # Average length of stay
