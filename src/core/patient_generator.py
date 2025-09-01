@@ -33,16 +33,23 @@ class PatientGenerator:
         # Initialize CSV data loader
         self.csv_loader = CSVDataLoader(csv_directory)
         
-        # Load patient data from CSV
+        # Load all CSV data
         try:
             self.patient_data = self.csv_loader.load_csv_file('patients.csv')
-            print(f"Loaded {len(self.patient_data)} patient records from CSV")
+            self.encounters_data = self.csv_loader.load_csv_file('encounters.csv')
+            self.conditions_data = self.csv_loader.load_csv_file('conditions.csv')
+            self.observations_data = self.csv_loader.load_csv_file('observations.csv')
+            self.medications_data = self.csv_loader.load_csv_file('medications.csv')
+            print(f"Loaded CSV data: {len(self.patient_data)} patients, {len(self.encounters_data)} encounters, {len(self.conditions_data)} conditions, {len(self.observations_data)} observations")
         except Exception as e:
-            print(f"Warning: Could not load patient CSV data: {e}")
+            print(f"Warning: Could not load CSV data: {e}")
             self.patient_data = []
+            self.encounters_data = []
+            self.conditions_data = []
+            self.observations_data = []
+            self.medications_data = []
         
-        # Patient characteristic distributions (for chief complaints and vital signs)
-        self.patient_profiles = patient_profiles or self._default_patient_profiles()
+        # No synthetic data generation - all data comes from CSV files
         
         # Tracking
         self.generated_patients = []
@@ -51,47 +58,6 @@ class PatientGenerator:
         
         # Start the patient generation process
         self.generation_process = env.process(self._generate_patients())
-    
-    def _default_patient_profiles(self) -> Dict[str, Any]:
-        """Default patient characteristic distributions for synthetic data (chief complaints, vital signs)"""
-        return {
-            'chief_complaints': {
-                'chest pain': 0.15,
-                'difficulty breathing': 0.12,
-                'abdominal pain': 0.10,
-                'head injury': 0.08,
-                'fever': 0.08,
-                'nausea and vomiting': 0.07,
-                'back pain': 0.06,
-                'wound/laceration': 0.06,
-                'dizziness': 0.05,
-                'allergic reaction': 0.04,
-                'anxiety': 0.04,
-                'cold symptoms': 0.03,
-                'skin rash': 0.03,
-                'joint pain': 0.03,
-                'other': 0.06
-            },
-            'vital_signs_ranges': {
-                'systolic_bp': {'normal_mean': 120, 'normal_std': 15, 'abnormal_prob': 0.25},
-                'heart_rate': {'normal_mean': 75, 'normal_std': 12, 'abnormal_prob': 0.20},
-                'respiratory_rate': {'normal_mean': 16, 'normal_std': 3, 'abnormal_prob': 0.15},
-                'temperature': {'normal_mean': 36.8, 'normal_std': 0.5, 'abnormal_prob': 0.30},
-                'oxygen_saturation': {'normal_mean': 98, 'normal_std': 2, 'abnormal_prob': 0.10},
-                'pain_score': {'mean': 4, 'std': 2.5, 'min': 0, 'max': 10}
-            },
-            'medical_history_prob': 0.40,  # Probability of having significant medical history
-            'medical_conditions': {
-                'diabetes': 0.174,
-                'hypertension': 0.261,
-                'heart disease': 0.116,
-                'asthma': 0.145,
-                'copd': 0.087,
-                'cancer': 0.058,
-                'kidney disease': 0.043,
-                'mental health': 0.116
-            }
-        }
     
     def _generate_patients(self):
         """Main patient generation process using Poisson arrival distribution"""
@@ -116,13 +82,20 @@ class PatientGenerator:
             patient_id += 1
     
     def _create_patient(self, patient_id: int, arrival_time: float) -> Patient:
-        """Create a patient using CSV data with realistic characteristics"""
+        """Create a patient using only CSV data - no synthetic generation"""
         
         # Get patient context from CSV data
         patient_context = self._get_patient_context_from_csv()
         
-        # Generate chief complaint (still synthetic as it's not in CSV)
-        chief_complaint = self._generate_chief_complaint()
+        if not patient_context:
+            # If no CSV data available, create minimal patient
+            return Patient(
+                patient_id=f"P{patient_id:06d}",
+                arrival_time=arrival_time
+            )
+        
+        # Get chief complaint from encounters data
+        chief_complaint = self._get_chief_complaint_from_csv(patient_context.id)
         
         # Create patient with context
         patient = Patient(
@@ -132,11 +105,11 @@ class PatientGenerator:
             patient_context=patient_context
         )
         
-        # Generate vital signs based on age and chief complaint
-        self._generate_vital_signs(patient)
+        # Load vital signs from observations CSV
+        self._load_vital_signs_from_csv(patient, patient_context.id)
         
-        # Generate medical history based on age and demographics
-        self._generate_medical_history(patient)
+        # Load medical history from conditions and medications CSV
+        self._load_medical_history_from_csv(patient, patient_context.id)
         
         return patient
     
@@ -164,148 +137,83 @@ class PatientGenerator:
         patient_record = self.patient_data[patient_index]
         return PatientContext.from_csv_row(patient_record)
     
-    def _generate_chief_complaint(self) -> str:
-        """Generate chief complaint based on probability distribution"""
-        complaints = self.patient_profiles['chief_complaints']
-        return np.random.choice(list(complaints.keys()), p=list(complaints.values()))
-    
-    def _generate_vital_signs(self, patient: Patient) -> None:
-        """Generate realistic vital signs for the patient"""
-        vital_ranges = self.patient_profiles['vital_signs_ranges']
-        
-        for vital_name, config in vital_ranges.items():
-            if vital_name == 'pain_score':
-                # Pain score uses different distribution
-                value = np.random.normal(config['mean'], config['std'])
-                value = np.clip(value, config['min'], config['max'])
-                patient.add_vital_sign(vital_name, round(value))
-            else:
-                # Other vitals can be normal or abnormal
-                if np.random.random() < config['abnormal_prob']:
-                    # Generate abnormal value
-                    value = self._generate_abnormal_vital(vital_name, config)
-                else:
-                    # Generate normal value
-                    value = np.random.normal(config['normal_mean'], config['normal_std'])
-                
-                # Apply age-based adjustments
-                value = self._adjust_vital_for_age(vital_name, value, patient.age)
-                
-                # Round appropriately
-                if vital_name in ['systolic_bp', 'heart_rate', 'respiratory_rate', 'oxygen_saturation']:
-                    patient.add_vital_sign(vital_name, int(round(value)))
-                else:
-                    patient.add_vital_sign(vital_name, round(value, 1))
-    
-    def _generate_abnormal_vital(self, vital_name: str, config: Dict[str, Any]) -> float:
-        """Generate abnormal vital sign values"""
-        normal_mean = config['normal_mean']
-        normal_std = config['normal_std']
-        
-        # Generate either high or low abnormal value
-        if np.random.random() < 0.5:
-            # High abnormal
-            if vital_name == 'systolic_bp':
-                return np.random.normal(160, 20)  # Hypertensive
-            elif vital_name == 'heart_rate':
-                return np.random.normal(110, 15)  # Tachycardic
-            elif vital_name == 'respiratory_rate':
-                return np.random.normal(24, 4)    # Tachypneic
-            elif vital_name == 'temperature':
-                return np.random.normal(38.5, 0.8)  # Febrile
-            else:
-                return normal_mean + 2 * normal_std
-        else:
-            # Low abnormal
-            if vital_name == 'systolic_bp':
-                return np.random.normal(85, 10)   # Hypotensive
-            elif vital_name == 'heart_rate':
-                return np.random.normal(55, 8)    # Bradycardic
-            elif vital_name == 'respiratory_rate':
-                return np.random.normal(10, 2)    # Bradypneic
-            elif vital_name == 'temperature':
-                return np.random.normal(35.5, 0.5)  # Hypothermic
-            elif vital_name == 'oxygen_saturation':
-                return np.random.normal(92, 3)    # Hypoxic
-            else:
-                return normal_mean - 2 * normal_std
-    
-    def _adjust_vital_for_age(self, vital_name: str, value: float, age: Optional[int]) -> float:
-        """Adjust vital signs based on patient age"""
-        if age is None:
-            return value
-        
-        # Pediatric adjustments (age < 18)
-        if age < 18:
-            if vital_name == 'heart_rate':
-                if age < 2:
-                    return value + 40  # Infants have higher HR
-                elif age < 12:
-                    return value + 20  # Children have higher HR
-            elif vital_name == 'respiratory_rate':
-                if age < 2:
-                    return value + 14  # Infants breathe faster
-                elif age < 12:
-                    return value + 6   # Children breathe faster
-            elif vital_name == 'systolic_bp':
-                if age < 12:
-                    return value - 20  # Children have lower BP
-        
-        # Elderly adjustments (age > 65)
-        elif age > 65:
-            if vital_name == 'systolic_bp':
-                return value + 10  # Elderly tend to have higher BP
-        
-        return value
-    
-    def _generate_medical_history(self, patient: Patient) -> None:
-        """Generate medical history for the patient"""
-        if np.random.random() < self.patient_profiles['medical_history_prob']:
-            conditions = self.patient_profiles['medical_conditions']
+    def _get_chief_complaint_from_csv(self, patient_id: str) -> Optional[str]:
+        """Get chief complaint from encounters CSV data"""
+        if not self.encounters_data:
+            return None
             
-            # Generate 1-3 conditions
-            num_conditions = np.random.choice([1, 2, 3], p=[0.6, 0.3, 0.1])
+        # Find encounters for this patient
+        patient_encounters = [enc for enc in self.encounters_data if enc.get('PATIENT') == patient_id]
+        
+        if not patient_encounters:
+            return None
             
-            patient_conditions = []
-            for _ in range(num_conditions):
-                condition = np.random.choice(list(conditions.keys()), p=list(conditions.values()))
-                if condition not in patient_conditions:
-                    patient_conditions.append(condition)
+        # Get the most recent encounter description
+        # Sort by START date if available
+        try:
+            patient_encounters.sort(key=lambda x: x.get('START', ''), reverse=True)
+        except:
+            pass
             
-            patient.medical_history = {
-                'conditions': patient_conditions,
-                'medications': self._generate_medications(patient_conditions),
-                'allergies': self._generate_allergies()
-            }
+        return patient_encounters[0].get('DESCRIPTION')
     
-    def _generate_medications(self, conditions: List[str]) -> List[str]:
-        """Generate medications based on medical conditions"""
-        medication_map = {
-            'diabetes': ['metformin', 'insulin'],
-            'hypertension': ['lisinopril', 'amlodipine'],
-            'heart disease': ['aspirin', 'atorvastatin'],
-            'asthma': ['albuterol', 'fluticasone'],
-            'copd': ['tiotropium', 'prednisone'],
-            'mental health': ['sertraline', 'lorazepam']
+    def _load_vital_signs_from_csv(self, patient: Patient, patient_id: str) -> None:
+        """Load vital signs from observations CSV data"""
+        if not self.observations_data:
+            return
+            
+        # Find observations for this patient
+        patient_observations = [obs for obs in self.observations_data if obs.get('PATIENT') == patient_id]
+        
+        # Map observation codes to vital sign names
+        vital_sign_mapping = {
+            '8480-6': 'systolic_bp',
+            '8462-4': 'diastolic_bp', 
+            '8867-4': 'heart_rate',
+            '9279-1': 'respiratory_rate',
+            '8310-5': 'temperature',
+            '2708-6': 'oxygen_saturation',
+            '72514-3': 'pain_score'
         }
         
-        medications = []
-        for condition in conditions:
-            if condition in medication_map:
-                meds = medication_map[condition]
-                medications.extend(np.random.choice(meds, size=np.random.randint(1, len(meds)+1), replace=False))
-        
-        return list(set(medications))  # Remove duplicates
+        for obs in patient_observations:
+            code = obs.get('CODE')
+            if code in vital_sign_mapping:
+                vital_name = vital_sign_mapping[code]
+                value = obs.get('VALUE')
+                if value:
+                    try:
+                        # Convert to appropriate type
+                        if vital_name == 'pain_score':
+                            patient.add_vital_sign(vital_name, float(value))
+                        else:
+                            patient.add_vital_sign(vital_name, float(value))
+                    except (ValueError, TypeError):
+                        pass
     
-    def _generate_allergies(self) -> List[str]:
-        """Generate patient allergies"""
-        common_allergies = ['penicillin', 'sulfa', 'latex', 'shellfish', 'nuts']
+    def _load_medical_history_from_csv(self, patient: Patient, patient_id: str) -> None:
+        """Load medical history from conditions and medications CSV data"""
+        medical_history = {
+            'conditions': [],
+            'medications': [],
+            'allergies': []
+        }
         
-        if np.random.random() < 0.15:  # 15% chance of having allergies
-            num_allergies = np.random.choice([1, 2], p=[0.8, 0.2])
-            return list(np.random.choice(common_allergies, size=num_allergies, replace=False))
+        # Load conditions
+        if self.conditions_data:
+            patient_conditions = [cond for cond in self.conditions_data if cond.get('PATIENT') == patient_id]
+            medical_history['conditions'] = [cond.get('DESCRIPTION') for cond in patient_conditions if cond.get('DESCRIPTION')]
         
-        return []
+        # Load medications
+        if self.medications_data:
+            patient_medications = [med for med in self.medications_data if med.get('PATIENT') == patient_id]
+            medical_history['medications'] = [med.get('DESCRIPTION') for med in patient_medications if med.get('DESCRIPTION')]
+        
+        # Set medical history if any data found
+        if any(medical_history.values()):
+            patient.medical_history = medical_history
+    
+    # All synthetic generation methods removed - using only CSV data
     
     def set_arrival_rate(self, new_rate: float) -> None:
         """Update the patient arrival rate"""

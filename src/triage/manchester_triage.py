@@ -1,7 +1,12 @@
 import numpy as np
+import logging
 from typing import List, Dict, Any, Tuple, Optional
 from .base_triage import BaseTriage, TriageResult
 from ..entities.patient import Patient, Priority
+
+# Configure logging for Manchester Triage System
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('ManchesterTriage')
 
 
 class ManchesterTriage(BaseTriage):
@@ -174,14 +179,37 @@ class ManchesterTriage(BaseTriage):
     def assess_single_patient(self, patient: Patient) -> TriageResult:
         """Assess single patient using authentic MTS flowcharts and fuzzy logic"""
         
+        # Log patient data being used for triage assessment
+        logger.info(f"\n{'='*80}")
+        logger.info(f"MANCHESTER TRIAGE ASSESSMENT - Patient {patient.patient_id}")
+        logger.info(f"{'='*80}")
+        
+        # Log patient demographics and context
+        self._log_patient_demographics(patient)
+        
+        # Log patient vital signs
+        self._log_patient_vital_signs(patient)
+        
+        # Log medical history
+        self._log_patient_medical_history(patient)
+        
         # Step 1: Select appropriate flowchart based on chief complaint
         flowchart = self._select_flowchart(patient.chief_complaint)
+        logger.info(f"Selected MTS Flowchart: {flowchart['name']} (based on chief complaint: '{patient.chief_complaint}')")
         
         # Step 2: Apply fuzzy inference using selected flowchart
         priority, confidence, reasoning = self._fuzzy_inference(patient, flowchart)
         
         # Step 3: Calculate service time based on MTS standards
         service_time = self._calculate_mts_service_time(priority)
+        
+        # Log final triage decision
+        logger.info(f"\nFINAL TRIAGE DECISION:")
+        logger.info(f"  Priority: {priority.name} (Level {priority.value})")
+        logger.info(f"  Confidence: {confidence:.2f}")
+        logger.info(f"  Reasoning: {reasoning}")
+        logger.info(f"  Service Time: {service_time:.1f} minutes")
+        logger.info(f"{'='*80}\n")
         
         return TriageResult(
             patient=patient,
@@ -368,3 +396,179 @@ class ManchesterTriage(BaseTriage):
         variation = np.random.uniform(0.9, 1.1)
         
         return base_time * variation
+    
+    def _log_patient_demographics(self, patient: Patient) -> None:
+        """Log patient demographic information used in triage"""
+        logger.info(f"\nPATIENT DEMOGRAPHICS:")
+        logger.info(f"  Age: {patient.age} years")
+        logger.info(f"  Gender: {patient.gender}")
+        logger.info(f"  Chief Complaint: '{patient.chief_complaint}'")
+        
+        if patient.patient_context:
+            logger.info(f"  Full Name: {patient.patient_context.get_full_name()}")
+            logger.info(f"  Race: {patient.patient_context.race}")
+            logger.info(f"  Ethnicity: {patient.patient_context.ethnicity}")
+            logger.info(f"  Location: {patient.patient_context.city}, {patient.patient_context.state}")
+            logger.info(f"  Healthcare Coverage: ${patient.patient_context.healthcare_coverage:.2f}" if patient.patient_context.healthcare_coverage else "  Healthcare Coverage: Not available")
+        else:
+            logger.info(f"  Extended Demographics: Not available (no patient context)")
+    
+    def _log_patient_vital_signs(self, patient: Patient) -> None:
+        """Log patient vital signs used in triage assessment"""
+        logger.info(f"\nVITAL SIGNS ASSESSMENT:")
+        
+        if not patient.vital_signs:
+            logger.info(f"  No vital signs available")
+            return
+            
+        vital_sign_names = {
+            'systolic_bp': 'Systolic Blood Pressure',
+            'diastolic_bp': 'Diastolic Blood Pressure', 
+            'heart_rate': 'Heart Rate',
+            'respiratory_rate': 'Respiratory Rate',
+            'temperature': 'Temperature',
+            'oxygen_saturation': 'Oxygen Saturation',
+            'pain_score': 'Pain Score (0-10)'
+        }
+        
+        for vital_key, vital_name in vital_sign_names.items():
+            value = patient.get_current_vital_sign(vital_key)
+            if value is not None:
+                # Determine if vital sign is abnormal
+                abnormal_status = self._assess_vital_abnormality(vital_key, value, patient.age)
+                logger.info(f"  {vital_name}: {value} {abnormal_status}")
+                
+                # Log how this vital sign influences triage
+                influence = self._get_vital_sign_triage_influence(vital_key, value)
+                if influence:
+                    logger.info(f"    → Triage Impact: {influence}")
+            else:
+                logger.info(f"  {vital_name}: Not recorded")
+    
+    def _log_patient_medical_history(self, patient: Patient) -> None:
+        """Log patient medical history used in triage"""
+        logger.info(f"\nMEDICAL HISTORY ASSESSMENT:")
+        
+        if not patient.medical_history:
+            logger.info(f"  No medical history available")
+            return
+            
+        # Log conditions
+        conditions = patient.medical_history.get('conditions', [])
+        if conditions:
+            logger.info(f"  Medical Conditions ({len(conditions)}):")
+            for condition in conditions:
+                logger.info(f"    - {condition}")
+                # Log how condition influences triage
+                influence = self._get_condition_triage_influence(condition)
+                if influence:
+                    logger.info(f"      → Triage Impact: {influence}")
+        else:
+            logger.info(f"  Medical Conditions: None recorded")
+            
+        # Log medications
+        medications = patient.medical_history.get('medications', [])
+        if medications:
+            logger.info(f"  Current Medications ({len(medications)}):")
+            for medication in medications:
+                logger.info(f"    - {medication}")
+        else:
+            logger.info(f"  Current Medications: None recorded")
+            
+        # Log allergies
+        allergies = patient.medical_history.get('allergies', [])
+        if allergies:
+            logger.info(f"  Known Allergies ({len(allergies)}):")
+            for allergy in allergies:
+                logger.info(f"    - {allergy}")
+        else:
+            logger.info(f"  Known Allergies: None recorded")
+    
+    def _assess_vital_abnormality(self, vital_key: str, value: float, age: Optional[int]) -> str:
+        """Assess if a vital sign is abnormal and return status string"""
+        normal_ranges = {
+            'systolic_bp': (90, 140),
+            'diastolic_bp': (60, 90),
+            'heart_rate': (60, 100),
+            'respiratory_rate': (12, 20),
+            'temperature': (36.1, 37.2),
+            'oxygen_saturation': (95, 100),
+            'pain_score': (0, 3)
+        }
+        
+        if vital_key not in normal_ranges:
+            return ""
+            
+        min_val, max_val = normal_ranges[vital_key]
+        
+        # Adjust ranges for age if needed
+        if age and vital_key in ['heart_rate', 'respiratory_rate']:
+            if age < 18:
+                if vital_key == 'heart_rate':
+                    min_val, max_val = (70, 120)
+                elif vital_key == 'respiratory_rate':
+                    min_val, max_val = (15, 25)
+        
+        if value < min_val:
+            return "(LOW - ABNORMAL)"
+        elif value > max_val:
+            return "(HIGH - ABNORMAL)"
+        else:
+            return "(Normal)"
+    
+    def _get_vital_sign_triage_influence(self, vital_key: str, value: float) -> str:
+        """Get description of how vital sign influences triage priority"""
+        influences = {
+            'systolic_bp': {
+                'low': (0, 90, "Hypotension - may indicate shock (IMMEDIATE priority)"),
+                'high': (180, 300, "Severe hypertension - cardiovascular risk (URGENT priority)")
+            },
+            'heart_rate': {
+                'low': (0, 50, "Bradycardia - cardiac concern (URGENT priority)"),
+                'high': (120, 300, "Tachycardia - cardiac stress (URGENT priority)")
+            },
+            'respiratory_rate': {
+                'low': (0, 10, "Bradypnea - respiratory depression (VERY_URGENT priority)"),
+                'high': (25, 60, "Tachypnea - respiratory distress (URGENT priority)")
+            },
+            'oxygen_saturation': {
+                'low': (0, 94, "Hypoxemia - respiratory compromise (VERY_URGENT priority)")
+            },
+            'pain_score': {
+                'high': (7, 10, "Severe pain - requires urgent attention (VERY_URGENT priority)")
+            },
+            'temperature': {
+                'low': (0, 35, "Hypothermia - systemic concern (URGENT priority)"),
+                'high': (38.5, 45, "High fever - infection/inflammation (URGENT priority)")
+            }
+        }
+        
+        if vital_key not in influences:
+            return ""
+            
+        for category, (min_val, max_val, description) in influences[vital_key].items():
+            if min_val <= value <= max_val:
+                return description
+                
+        return ""
+    
+    def _get_condition_triage_influence(self, condition: str) -> str:
+        """Get description of how medical condition influences triage"""
+        condition_lower = condition.lower()
+        
+        high_risk_conditions = {
+            'heart': "Cardiac history - increases urgency for chest symptoms",
+            'diabetes': "Diabetes - complications can be life-threatening", 
+            'asthma': "Asthma - respiratory symptoms require urgent assessment",
+            'copd': "COPD - respiratory compromise risk",
+            'hypertension': "Hypertension - cardiovascular risk factor",
+            'cancer': "Cancer history - immunocompromised, complications possible",
+            'kidney': "Renal disease - fluid/electrolyte complications",
+            'stroke': "Stroke history - neurological symptoms critical"
+        }
+        
+        for keyword, influence in high_risk_conditions.items():
+            if keyword in condition_lower:
+                return influence
+                
+        return ""
