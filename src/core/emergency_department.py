@@ -5,6 +5,7 @@ from collections import defaultdict, deque
 from ..entities.patient import Patient, Priority, PatientStatus
 from ..triage.base_triage import BaseTriage
 from ..triage.manchester_triage import ManchesterTriage
+from ..metrics.metrics_collector import MetricsCollector
 
 
 class EmergencyDepartment:
@@ -16,7 +17,8 @@ class EmergencyDepartment:
                  num_doctors: int = 4,
                  num_cubicles: int = 8,
                  num_admission_beds: int = 20,
-                 triage_system: Optional[BaseTriage] = None):
+                 triage_system: Optional[BaseTriage] = None,
+                 metrics_collector: Optional[MetricsCollector] = None):
         """
         Initialize Emergency Department simulation
         
@@ -40,6 +42,9 @@ class EmergencyDepartment:
             self.triage_system = ManchesterTriage()
         else:
             self.triage_system = triage_system
+        
+        # Initialize metrics collector
+        self.metrics_collector = metrics_collector or MetricsCollector()
         
         # Patient tracking
         self.patients_in_system: List[Patient] = []
@@ -84,7 +89,9 @@ class EmergencyDepartment:
         self.env.process(self._monitor_performance())
     
     def patient_arrival(self, patient: Patient):
-        """Handle patient arrival and initiate ED journey"""
+        """Handle patient arrival and start their journey"""
+        # Record patient arrival in metrics
+        self.metrics_collector.record_patient_arrival(patient, self.env.now)
         return self._patient_journey(patient)
     
     def _patient_journey(self, patient: Patient):
@@ -139,6 +146,11 @@ class EmergencyDepartment:
         patient.set_priority(triage_result.priority, triage_result.confidence_score, triage_result.reason)
         patient.estimated_consultation_time = triage_result.service_time
         
+        # Record triage completion in metrics
+        self.metrics_collector.record_triage_completion(
+            patient, triage_time, triage_result.confidence_score, self.env.now
+        )
+        
         print(f"Time {self.env.now:.1f}: Patient {patient.patient_id[:8]} triaged as {triage_result.priority.name} "
               f"(Service time: {triage_result.service_time:.1f}min) - {triage_result.reason}")
         
@@ -170,6 +182,9 @@ class EmergencyDepartment:
             if patient.priority and patient in self.priority_queues[patient.priority]:
                 self.priority_queues[patient.priority].remove(patient)
             
+            # Record consultation start in metrics
+            self.metrics_collector.record_consultation_start(patient, self.env.now)
+            
             # Use service time from triage assessment
             consultation_time = patient.estimated_consultation_time or self._estimate_consultation_time(patient)
             
@@ -179,6 +194,9 @@ class EmergencyDepartment:
             yield self.env.timeout(consultation_time)
             
             self.metrics['consultation_times'].append(consultation_time)
+            
+            # Record consultation completion in metrics
+            self.metrics_collector.record_consultation_completion(patient, self.env.now)
             
             print(f"Time {self.env.now:.1f}: Patient {patient.patient_id[:8]} completed consultation")
             
@@ -213,6 +231,9 @@ class EmergencyDepartment:
             self.metrics['total_admissions'] += 1
             self.metrics['total_departures'] += 1
             
+            # Record patient departure in metrics
+            self.metrics_collector.record_patient_departure(patient, self.env.now, 'admission')
+            
             print(f"Time {self.env.now:.1f}: Patient {patient.patient_id[:8]} admitted")
     
     def _discharge_process(self, patient: Patient):
@@ -222,6 +243,9 @@ class EmergencyDepartment:
         
         self.metrics['total_discharges'] += 1
         self.metrics['total_departures'] += 1
+        
+        # Record patient departure in metrics
+        self.metrics_collector.record_patient_departure(patient, self.env.now, 'discharge')
         
         print(f"Time {self.env.now:.1f}: Patient {patient.patient_id[:8]} discharged")
         
@@ -383,7 +407,7 @@ class EmergencyDepartment:
         suggestions = {
             'doctors': self.doctors.capacity,
             'cubicles': self.cubicles.capacity,
-            'triage_nurses': self.triage_system.nurses.capacity
+            'triage_nurses': getattr(self, 'triage_nurses', self.doctors).capacity
         }
         
         # Simple optimization logic based on research paper methodology
@@ -397,3 +421,51 @@ class EmergencyDepartment:
             suggestions['cubicles'] = min(self.cubicles.capacity + 1, 10)
         
         return suggestions
+    
+    def get_comprehensive_metrics(self):
+        """Get comprehensive metrics from the metrics collector"""
+        return self.metrics_collector.get_metrics()
+    
+    def get_metrics_summary(self):
+        """Get summary statistics from the metrics collector"""
+        return self.metrics_collector.get_summary_statistics()
+    
+    def take_metrics_snapshot(self):
+        """Take a metrics snapshot of current system state"""
+        # Get current resource utilization
+        doctors_busy = self.doctors.capacity - len(self.doctors.users)
+        nurses_busy = getattr(self, 'triage_nurses', self.doctors).capacity - len(getattr(self, 'triage_nurses', self.doctors).users) 
+        cubicles_busy = self.cubicles.capacity - len(self.cubicles.users)
+        beds_busy = self.admission_beds.capacity - len(self.admission_beds.users)
+        
+        # Get current queue lengths by priority
+        priority_queues = {}
+        for priority, queue in self.priority_queues.items():
+            priority_queues[priority] = len(queue)
+        
+        # Record resource utilization
+        self.metrics_collector.record_resource_utilization(
+            self.env.now, doctors_busy, nurses_busy, cubicles_busy, beds_busy,
+            self.doctors.capacity, getattr(self, 'triage_nurses', self.doctors).capacity, 
+            self.cubicles.capacity, self.admission_beds.capacity
+        )
+        
+        # Record queue lengths
+        self.metrics_collector.record_queue_lengths(self.env.now, priority_queues)
+        
+        # Take comprehensive snapshot
+        ed_status = {
+            'resource_utilization': {
+                'doctors_busy': doctors_busy,
+                'nurses_busy': nurses_busy,
+                'cubicles_busy': cubicles_busy,
+                'beds_busy': beds_busy,
+                'total_doctors': self.doctors.capacity,
+                'total_nurses': getattr(self, 'triage_nurses', self.doctors).capacity,
+                'total_cubicles': self.cubicles.capacity,
+                'total_beds': self.admission_beds.capacity
+            },
+            'queue_lengths': priority_queues
+        }
+        
+        self.metrics_collector.take_snapshot(self.env.now, ed_status)
