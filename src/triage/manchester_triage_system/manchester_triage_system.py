@@ -21,9 +21,6 @@ from .config import FlowchartConfigManager, FuzzySystemConfigManager
 from .rules import FuzzyRulesManager
 from .core import TriageProcessor
 
-# Import services using absolute imports
-from src.services import TelemetryService, MetricsService
-
 
 class ManchesterTriageSystem:
     """Fuzzy Manchester Triage System - SOLID Compliant Implementation
@@ -45,49 +42,24 @@ class ManchesterTriageSystem:
     def __init__(self, 
                  flowchart_manager: FlowchartConfigManager = None,
                  fuzzy_manager: FuzzySystemConfigManager = None,
-                 rules_manager: FuzzyRulesManager = None,
-                 telemetry_service: TelemetryService = None,
-                 metrics_service: MetricsService = None):
+                 rules_manager: FuzzyRulesManager = None):
         """Initialize MTS with dependency injection
         
         Args:
             flowchart_manager: Manages flowchart configurations
             fuzzy_manager: Manages fuzzy system configuration
             rules_manager: Manages fuzzy rules
-            telemetry_service: Required telemetry service for logging steps
-            metrics_service: Required metrics service for analysis
-            
-        Raises:
-            ValueError: If telemetry_service or metrics_service is None
         """
-        # Validate required services
-        if telemetry_service is None:
-            raise ValueError("TelemetryService is required for Manchester Triage System initialization")
-        if metrics_service is None:
-            raise ValueError("MetricsService is required for Manchester Triage System initialization")
-        
         # Use dependency injection with default implementations
         self._flowchart_manager = flowchart_manager or FlowchartConfigManager()
         self._fuzzy_manager = fuzzy_manager or FuzzySystemConfigManager()
         self._rules_manager = rules_manager or FuzzyRulesManager()
-        self._telemetry_service = telemetry_service
-        self._metrics_service = metrics_service
         
         # Initialize the triage processor
         self._triage_processor = TriageProcessor(
             self._flowchart_manager,
             self._fuzzy_manager,
             self._rules_manager
-        )
-        
-        # Log system initialization
-        self._telemetry_service.add_step(
-            step_name="mts_initialization",
-            step_type="initialization",
-            data={
-                "flowcharts_loaded": len(self._flowchart_manager.load_flowcharts()),
-                "system_ready": True
-            }
         )
         
         # Maintain backward compatibility
@@ -111,63 +83,13 @@ class ManchesterTriageSystem:
         Args:
             flowchart_reason: One of the 49+ reasons (e.g., 'chest_pain')
             symptoms_input: Dict of symptom_name -> linguistic_value
-            patient_id: Optional patient identifier for telemetry tracking
+            patient_id: Optional patient identifier (not used in current implementation)
             
         Returns:
             Dict containing triage result with category, wait time, etc.
         """
-        # Validate required patient ID
-        if patient_id is None:
-            raise ValueError("patient_id is required for triage processing")
-        
-        # Start telemetry session
-        self._telemetry_service.start_patient_session(patient_id, flowchart_reason)
-        self._telemetry_service.start_step_timer()
-        
-        # Log input validation
-        self._telemetry_service.add_step(
-            step_name="input_validation",
-            step_type="processing",
-            data={
-                "flowchart_reason": flowchart_reason,
-                "symptoms_count": len(symptoms_input),
-                "symptoms": symptoms_input
-            }
-        )
-        
-        # Log flowchart lookup
-        self._telemetry_service.start_step_timer()
-        self._telemetry_service.add_step(
-            step_name="flowchart_lookup",
-            step_type="processing",
-            data={
-                "flowchart_reason": flowchart_reason,
-                "available_flowcharts": len(self.get_available_flowcharts())
-            }
-        )
-        
-        # Start timing for triage processing
-        self._telemetry_service.start_step_timer()
-        
         # Perform the actual triage
         result = self._triage_processor.process_triage(flowchart_reason, symptoms_input)
-        
-        # Log triage processing completion
-        self._telemetry_service.add_step(
-            step_name="triage_processing",
-            step_type="processing",
-            data={
-                "fuzzy_score": result.get('fuzzy_score', 0),
-                "triage_category": result.get('triage_category', 'UNKNOWN'),
-                "wait_time": result.get('wait_time', 0)
-            }
-        )
-        
-        # End patient session
-        self._telemetry_service.end_patient_session(result)
-        
-        # Update metrics with latest telemetry data
-        self._update_metrics()
         
         return result
     
@@ -178,45 +100,7 @@ class ManchesterTriageSystem:
         """
         return self._triage_processor.get_available_flowcharts()
     
-    def get_telemetry_service(self) -> TelemetryService:
-        """Get the telemetry service instance
-        
-        Returns:
-            The telemetry service instance
-        """
-        return self._telemetry_service
-    
-    def get_metrics_service(self) -> MetricsService:
-        """Get the metrics service instance
-        
-        Returns:
-            The metrics service instance
-        """
-        return self._metrics_service
-    
-    def _update_metrics(self) -> None:
-        """Update metrics service with latest telemetry data"""
-        self._metrics_service.update_from_telemetry_service(self._telemetry_service)
-    
-    def dump_metrics(self, output_path: str = "output/manchester_triage_system/metrics", filename: str = None) -> str:
-        """Dump current metrics to JSON file
-        
-        Args:
-            output_path: Directory path for metrics output
-            filename: Optional filename for the metrics file
-            
-        Returns:
-            Full path to the created metrics file
-        """
-        return self._metrics_service.export_metrics_report(output_path, filename)
-    
-    def get_current_metrics_summary(self) -> dict:
-        """Get current metrics summary
-        
-        Returns:
-            Dictionary containing current system metrics
-        """
-        return self._metrics_service.get_metrics_summary()
+
     
     def get_symptoms_for_flowchart(self, flowchart_reason: str) -> List[str]:
         """Get symptoms for a specific flowchart
@@ -243,49 +127,3 @@ class ManchesterTriageSystem:
         """
         converter = self._fuzzy_manager.get_linguistic_converter()
         return converter.convert_to_numeric(linguistic_value)
-    
-    # Deprecated methods for backward compatibility
-    def setup_mts_flowcharts(self):
-        """DEPRECATED: Flowcharts are now managed by FlowchartConfigManager
-        
-        This method is kept for backward compatibility but does nothing.
-        The flowcharts are automatically loaded during initialization.
-        """
-        import warnings
-        warnings.warn(
-            "setup_mts_flowcharts() is deprecated. Flowcharts are now managed automatically.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        # Do nothing - flowcharts are managed by the config manager
-        pass
-    
-    def setup_fuzzy_system(self):
-        """DEPRECATED: Fuzzy system is now managed by FuzzySystemConfigManager
-        
-        This method is kept for backward compatibility but does nothing.
-        The fuzzy system is automatically configured during initialization.
-        """
-        import warnings
-        warnings.warn(
-            "setup_fuzzy_system() is deprecated. Fuzzy system is now managed automatically.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        # Do nothing - fuzzy system is managed by the config manager
-        pass
-    
-    def create_fuzzy_rules(self):
-        """DEPRECATED: Fuzzy rules are now managed by FuzzyRulesManager
-        
-        This method is kept for backward compatibility but does nothing.
-        The fuzzy rules are automatically created during initialization.
-        """
-        import warnings
-        warnings.warn(
-            "create_fuzzy_rules() is deprecated. Fuzzy rules are now managed automatically.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        # Do nothing - rules are managed by the rules manager
-        pass

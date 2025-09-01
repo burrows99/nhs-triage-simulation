@@ -13,30 +13,9 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 from typing import Dict, List, Any, Protocol
-from abc import ABC, abstractmethod
-
-
-class FuzzySystemConfig(Protocol):
-    """Protocol for fuzzy system configuration
-    
-    Enables dependency inversion for different fuzzy system setups
-    """
-    
-    def get_input_variables_config(self) -> Dict[str, Any]:
-        """Get configuration for input variables"""
-        ...
-    
-    def get_output_variables_config(self) -> Dict[str, Any]:
-        """Get configuration for output variables"""
-        ...
-    
-    def get_linguistic_terms(self) -> List[str]:
-        """Get linguistic terms configuration"""
-        ...
-    
-    def get_membership_functions_config(self) -> Dict[str, Any]:
-        """Get membership functions configuration"""
-        ...
+from src.triage.triage_constants import (
+    TriageCategories, LinguisticValues, FuzzyCategories, WaitTimeDisplays
+)
 
 
 class LinguisticValueConverter:
@@ -54,13 +33,7 @@ class LinguisticValueConverter:
         Reference: FMTS paper Section II - objective numeric mapping
         for imprecise linguistic terms
         """
-        return {
-            'none': 0.0,
-            'mild': 2.0,
-            'moderate': 5.0,
-            'severe': 8.0,
-            'very_severe': 10.0
-        }
+        return LinguisticValues.get_numeric_mapping()
     
     def convert_to_numeric(self, linguistic_value: str) -> float:
         """Convert linguistic value to numeric representation"""
@@ -96,8 +69,8 @@ class TriageCategoryMapper:
     """
     
     def __init__(self):
-        self._categories = np.array(['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE'])
-        self._wait_times = np.array(['Immediate', '10 min', '60 min', '120 min', '240 min'])
+        self._categories = np.array(TriageCategories.get_all_categories())
+        self._wait_times = np.array(WaitTimeDisplays.get_all_wait_times())
         self._priority_scores = np.array([1, 2, 3, 4, 5])
     
     def map_score_to_category(self, fuzzy_score: float) -> Dict[str, Any]:
@@ -163,7 +136,7 @@ class DefaultFuzzyConfig:
         
         Reference: FMTS paper - imprecise linguistic terms
         """
-        return ['none', 'mild', 'moderate', 'severe', 'very_severe']
+        return LinguisticValues.get_all_values()
     
     @staticmethod
     def get_membership_functions_config() -> Dict[str, Any]:
@@ -173,13 +146,7 @@ class DefaultFuzzyConfig:
         """
         return {
             'input_function_type': 'auto',  # Use scikit-fuzzy's automf
-            'output_functions': {
-                'red': [1, 1, 2],
-                'orange': [1, 2, 3],
-                'yellow': [2, 3, 4],
-                'green': [3, 4, 5],
-                'blue': [4, 5, 5]
-            }
+            'output_functions': FuzzyCategories.get_membership_functions()
         }
 
 
@@ -230,11 +197,11 @@ class FuzzySystemConfigManager:
     
     Single Responsibility: Manages fuzzy system configuration
     Open/Closed: Can be extended with new configuration sources
-    Dependency Inversion: Depends on FuzzySystemConfig abstraction
     """
     
-    def __init__(self, config_source: FuzzySystemConfig = None):
-        self._config_source = config_source or DefaultFuzzyConfig()
+    def __init__(self):
+        """Initialize with default fuzzy configuration"""
+        self._config_source = DefaultFuzzyConfig()
         self._linguistic_converter = None
         self._category_mapper = None
         self._input_variables = None
@@ -295,14 +262,14 @@ class FuzzySystemConfigManager:
         # Validate linguistic terms
         if 'linguistic_terms' in config:
             terms = config['linguistic_terms']
-            expected_terms = ['none', 'mild', 'moderate', 'severe', 'very_severe']
+            expected_terms = LinguisticValues.get_all_values()
             if terms != expected_terms:
                 validation_result['warnings'].append("Non-standard linguistic terms detected")
         
         # Validate output categories
         if 'output_functions' in config:
             functions = config['output_functions']
-            expected_categories = ['red', 'orange', 'yellow', 'green', 'blue']
+            expected_categories = FuzzyCategories.get_all_categories()
             missing_categories = set(expected_categories) - set(functions.keys())
             if missing_categories:
                 validation_result['errors'].append(f"Missing output categories: {missing_categories}")

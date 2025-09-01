@@ -15,16 +15,14 @@ that eliminates the clumsiness of manual flowchart handling.
 
 import pandas as pd
 from typing import Dict, List, Any
-from .flowchart_config_source import FlowchartConfigSource
 from .default_flowchart_config import DefaultFlowchartConfig
 
 
 class FlowchartConfigManager:
     """Manages flowchart configurations with SOLID principles
     
-    Single Responsibility: Manages flowchart configuration loading and access
+    Single Responsibility: Only manages flowchart configurations
     Open/Closed: Can be extended with new configuration sources
-    Dependency Inversion: Depends on FlowchartConfigSource abstraction
     
     Reference: FMTS paper emphasizes the need for systematic management of the
     numerous flowcharts that define the Manchester Triage System.
@@ -38,16 +36,9 @@ class FlowchartConfigManager:
     triage assessment.
     """
     
-    def __init__(self, config_source: FlowchartConfigSource = None):
-        """Initialize the flowchart configuration manager
-        
-        Args:
-            config_source: Source for flowchart configurations (defaults to DefaultFlowchartConfig)
-            
-        Reference: Paper emphasizes flexibility in configuration management to support
-        the dynamic nature of medical triage requirements across different institutions.
-        """
-        self._config_source = config_source or DefaultFlowchartConfig()
+    def __init__(self):
+        """Initialize with default flowchart configuration"""
+        self._config_source = DefaultFlowchartConfig()
         self._flowcharts_df = None
         self._flowcharts_dict = None
     

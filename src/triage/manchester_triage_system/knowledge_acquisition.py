@@ -208,18 +208,3 @@ class KnowledgeAcquisitionSystem:
             return True
         except Exception as e:
             return False
-    
-    def get_system_statistics(self) -> Dict[str, Any]:
-        """Get statistics about the knowledge acquisition system"""
-        active_sessions = len([s for s in self.expert_sessions if s['status'] == 'active'])
-        completed_sessions = len([s for s in self.expert_sessions if s['status'] == 'completed'])
-        
-        return {
-            'total_sessions': len(self.expert_sessions),
-            'active_sessions': active_sessions,
-            'completed_sessions': completed_sessions,
-            'total_rules': len(self.rule_base),
-            'configured_terms': len(self.zmouse.expert_configurations),
-            'fuzzy_marks': len(self.zmouse.fuzzy_marks),
-            'unique_experts': len(set(s['expert_id'] for s in self.expert_sessions))
-        }

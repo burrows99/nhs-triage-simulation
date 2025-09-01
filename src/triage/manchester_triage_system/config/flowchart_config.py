@@ -10,13 +10,11 @@ All components implement the paper's systematic flowchart management requirement
 """
 
 # Import all flowchart configuration components
-from .flowchart_config_source import FlowchartConfigSource
 from .default_flowchart_config import DefaultFlowchartConfig
 from .flowchart_config_manager import FlowchartConfigManager
 
 # Export all components for backward compatibility
 __all__ = [
-    'FlowchartConfigSource',
     'DefaultFlowchartConfig',
     'FlowchartConfigManager'
 ]

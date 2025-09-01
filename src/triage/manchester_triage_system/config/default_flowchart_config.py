@@ -14,6 +14,7 @@ of the objective triage system described in the paper.
 """
 
 from typing import Dict, List, Any
+from src.triage.triage_constants import MedicalCategories, LinguisticValues, SymptomNames
 
 
 class DefaultFlowchartConfig:
@@ -47,27 +48,27 @@ class DefaultFlowchartConfig:
         """
         return {
             'shortness_of_breath': {
-                'symptoms': ['difficulty_breathing', 'wheeze', 'unable_to_speak', 'cyanosis', 'exhaustion'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'respiratory',
+                'symptoms': [SymptomNames.DIFFICULTY_BREATHING, SymptomNames.WHEEZE, SymptomNames.UNABLE_TO_SPEAK, SymptomNames.CYANOSIS, SymptomNames.EXHAUSTION],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.RESPIRATORY,
                 'paper_reference': 'Figure 1 example flowchart'
             },
             'shortness_of_breath_child': {
-                'symptoms': ['very_low_pefr', 'exhaustion', 'significant_respiratory_history', 'acute_onset_after_injury', 'low_sao2'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'respiratory',
+                'symptoms': [SymptomNames.VERY_LOW_PEFR, SymptomNames.EXHAUSTION, SymptomNames.SIGNIFICANT_RESPIRATORY_HISTORY, SymptomNames.ACUTE_ONSET_AFTER_INJURY, SymptomNames.LOW_SAO2],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.RESPIRATORY,
                 'paper_reference': 'Paper mentions very low PEFR as example of imprecise term'
             },
             'cough': {
-                'symptoms': ['productive_cough', 'blood_in_sputum', 'chest_pain', 'fever', 'night_sweats'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'respiratory',
+                'symptoms': [SymptomNames.PRODUCTIVE_COUGH, SymptomNames.BLOOD_IN_SPUTUM, SymptomNames.CHEST_PAIN, SymptomNames.FEVER, SymptomNames.NIGHT_SWEATS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.RESPIRATORY,
                 'paper_reference': 'Standard MTS respiratory presentation'
             },
             'asthma': {
-                'symptoms': ['peak_flow', 'wheeze', 'speech_difficulty', 'accessory_muscles', 'cyanosis'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'respiratory',
+                'symptoms': [SymptomNames.PEAK_FLOW, SymptomNames.WHEEZE, SymptomNames.SPEECH_DIFFICULTY, SymptomNames.ACCESSORY_MUSCLES, SymptomNames.CYANOSIS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.RESPIRATORY,
                 'paper_reference': 'Respiratory emergency requiring objective assessment'
             }
         }
@@ -88,21 +89,23 @@ class DefaultFlowchartConfig:
         """
         return {
             'chest_pain': {
-                'symptoms': ['severe_pain', 'crushing_sensation', 'radiation', 'breathless', 'sweating'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'cardiovascular',
-                'paper_reference': 'Critical cardiac presentation requiring objective triage'
-            },
-            'palpitations': {
-                'symptoms': ['irregular_pulse', 'chest_discomfort', 'dizziness', 'syncope', 'breathlessness'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'cardiovascular',
-                'paper_reference': 'Cardiac rhythm disturbance assessment'
-            },
-            'cardiac_arrest': {
-                'symptoms': ['unconscious', 'no_pulse', 'not_breathing', 'cyanosis', 'collapse'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'cardiovascular',
+            'symptoms': [SymptomNames.SEVERE_PAIN, SymptomNames.CRUSHING_SENSATION, SymptomNames.RADIATION, SymptomNames.BREATHLESS, SymptomNames.SWEATING],
+            'linguistic_values': LinguisticValues.get_severity_levels(),
+            'category': MedicalCategories.CARDIOVASCULAR,
+            'paper_reference': 'Figure 1 example flowchart'
+        },
+        
+        'palpitations': {
+            'symptoms': [SymptomNames.IRREGULAR_PULSE, SymptomNames.CHEST_DISCOMFORT, SymptomNames.DIZZINESS, SymptomNames.SYNCOPE, SymptomNames.BREATHLESSNESS],
+            'linguistic_values': LinguisticValues.get_severity_levels(),
+            'category': MedicalCategories.CARDIOVASCULAR,
+            'paper_reference': 'Cardiac rhythm assessment'
+        },
+        
+        'cardiac_arrest': {
+            'symptoms': [SymptomNames.UNCONSCIOUS, SymptomNames.NO_PULSE, SymptomNames.NOT_BREATHING, SymptomNames.CYANOSIS, SymptomNames.COLLAPSE],
+            'linguistic_values': LinguisticValues.get_severity_levels(),
+            'category': MedicalCategories.CARDIOVASCULAR,
                 'paper_reference': 'Most critical cardiac emergency - immediate category'
             }
         }
@@ -119,33 +122,33 @@ class DefaultFlowchartConfig:
         """
         return {
             'headache': {
-                'symptoms': ['pain_severity', 'sudden_onset', 'neck_stiffness', 'photophobia', 'confusion'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'neurological',
+                'symptoms': [SymptomNames.PAIN_SEVERITY, SymptomNames.SUDDEN_ONSET, SymptomNames.NECK_STIFFNESS, SymptomNames.PHOTOPHOBIA, SymptomNames.CONFUSION],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Neurological assessment requiring objective severity evaluation'
             },
             'confusion': {
-                'symptoms': ['altered_consciousness', 'disorientation', 'agitation', 'memory_loss', 'speech_problems'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'neurological',
+                'symptoms': [SymptomNames.ALTERED_CONSCIOUSNESS, SymptomNames.DISORIENTATION, SymptomNames.AGITATION, SymptomNames.MEMORY_LOSS, SymptomNames.SPEECH_PROBLEMS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Mental status changes requiring systematic evaluation'
             },
             'fits': {
-                'symptoms': ['active_seizure', 'post_ictal', 'tongue_biting', 'incontinence', 'injury_during_fit'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'neurological',
+                'symptoms': [SymptomNames.ACTIVE_SEIZURE, SymptomNames.POST_ICTAL, SymptomNames.TONGUE_BITING, SymptomNames.INCONTINENCE, SymptomNames.INJURY_DURING_FIT],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Seizure activity assessment'
             },
             'stroke': {
-                'symptoms': ['facial_droop', 'arm_weakness', 'speech_problems', 'sudden_onset', 'headache'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'neurological',
+                'symptoms': [SymptomNames.FACIAL_DROOP, SymptomNames.ARM_WEAKNESS, SymptomNames.SPEECH_PROBLEMS, SymptomNames.SUDDEN_ONSET, SymptomNames.HEADACHE],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Acute stroke requiring rapid objective assessment'
             },
             'unconscious_adult': {
-                'symptoms': ['gcs_score', 'response_to_pain', 'pupil_reaction', 'breathing_pattern', 'pulse_quality'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'neurological',
+                'symptoms': [SymptomNames.GCS_SCORE, SymptomNames.RESPONSE_TO_PAIN, SymptomNames.PUPIL_REACTION, SymptomNames.BREATHING_PATTERN, SymptomNames.PULSE_QUALITY],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Altered consciousness requiring immediate evaluation'
             }
         }
@@ -162,27 +165,30 @@ class DefaultFlowchartConfig:
         """
         return {
             'abdominal_pain': {
-                'symptoms': ['pain_intensity', 'vomiting', 'rigidity', 'distension', 'tenderness'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'gastrointestinal',
-                'paper_reference': 'Abdominal emergency requiring objective pain assessment'
+                'symptoms': [SymptomNames.PAIN_INTENSITY, SymptomNames.VOMITING, SymptomNames.RIGIDITY, SymptomNames.DISTENSION, SymptomNames.TENDERNESS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.GASTROINTESTINAL,
+                'paper_reference': 'Abdominal emergency assessment'
             },
+            
             'vomiting': {
-                'symptoms': ['blood_in_vomit', 'dehydration', 'abdominal_pain', 'bile_stained', 'projectile'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'gastrointestinal',
-                'paper_reference': 'GI symptom requiring systematic evaluation'
+                'symptoms': [SymptomNames.BLOOD_IN_VOMIT, SymptomNames.DEHYDRATION, SymptomNames.ABDOMINAL_PAIN, SymptomNames.BILE_STAINED, SymptomNames.PROJECTILE],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.GASTROINTESTINAL,
+                'paper_reference': 'GI symptom evaluation'
             },
+            
             'diarrhoea': {
-                'symptoms': ['blood_in_stool', 'dehydration', 'cramping', 'fever', 'mucus'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'gastrointestinal',
-                'paper_reference': 'GI condition with potential for dehydration'
+                'symptoms': [SymptomNames.BLOOD_IN_STOOL, SymptomNames.DEHYDRATION, SymptomNames.CRAMPING, SymptomNames.FEVER, SymptomNames.MUCUS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.GASTROINTESTINAL,
+                'paper_reference': 'Gastrointestinal assessment'
             },
+            
             'gi_bleeding': {
-                'symptoms': ['haematemesis', 'melaena', 'shock', 'pallor', 'weakness'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'gastrointestinal',
+                'symptoms': [SymptomNames.HAEMATEMESIS, SymptomNames.MELAENA, SymptomNames.SHOCK, SymptomNames.PALLOR, SymptomNames.WEAKNESS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.GASTROINTESTINAL,
                 'paper_reference': 'Critical GI emergency requiring immediate assessment'
             }
         }
@@ -199,39 +205,39 @@ class DefaultFlowchartConfig:
         """
         return {
             'limb_injuries': {
-                'symptoms': ['deformity', 'pain', 'swelling', 'loss_of_function', 'bleeding'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'trauma',
+                'symptoms': [SymptomNames.DEFORMITY, SymptomNames.PAIN, SymptomNames.SWELLING, SymptomNames.LOSS_OF_FUNCTION, SymptomNames.BLEEDING],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Musculoskeletal trauma assessment'
             },
             'head_injury': {
-                'symptoms': ['loss_of_consciousness', 'confusion', 'vomiting', 'headache', 'amnesia'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'trauma',
+                'symptoms': [SymptomNames.LOSS_OF_CONSCIOUSNESS, SymptomNames.CONFUSION, SymptomNames.VOMITING, SymptomNames.HEADACHE, SymptomNames.AMNESIA],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Critical head trauma requiring immediate evaluation'
             },
             'neck_injury': {
-                'symptoms': ['neck_pain', 'neurological_deficit', 'mechanism_of_injury', 'tenderness', 'deformity'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'trauma',
+                'symptoms': [SymptomNames.NECK_PAIN, SymptomNames.NEUROLOGICAL_DEFICIT, SymptomNames.MECHANISM_OF_INJURY, SymptomNames.TENDERNESS, SymptomNames.DEFORMITY],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Spinal injury requiring careful assessment'
             },
             'back_injury': {
-                'symptoms': ['back_pain', 'leg_weakness', 'numbness', 'bladder_problems', 'mechanism'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'trauma',
+                'symptoms': [SymptomNames.BACK_PAIN, SymptomNames.LEG_WEAKNESS, SymptomNames.NUMBNESS, SymptomNames.BLADDER_PROBLEMS, SymptomNames.MECHANISM],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Spinal trauma with potential neurological involvement'
             },
             'burns': {
-                'symptoms': ['burn_area', 'depth', 'airway_involvement', 'pain', 'blistering'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'trauma',
+                'symptoms': [SymptomNames.BURN_AREA, SymptomNames.DEPTH, SymptomNames.AIRWAY_INVOLVEMENT, SymptomNames.PAIN, SymptomNames.BLISTERING],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Thermal injury requiring systematic assessment'
             },
             'wounds': {
-                'symptoms': ['bleeding', 'depth', 'contamination', 'pain', 'location'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'trauma',
+                'symptoms': [SymptomNames.BLEEDING, SymptomNames.DEPTH, SymptomNames.CONTAMINATION, SymptomNames.PAIN, SymptomNames.LOCATION],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Wound assessment for infection and healing potential'
             }
         }
@@ -249,101 +255,101 @@ class DefaultFlowchartConfig:
         return {
             # Genitourinary
             'urinary_problems': {
-                'symptoms': ['dysuria', 'frequency', 'urgency', 'haematuria', 'retention'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'genitourinary',
+                'symptoms': [SymptomNames.DYSURIA, SymptomNames.FREQUENCY, SymptomNames.URGENCY, SymptomNames.HAEMATURIA, SymptomNames.RETENTION],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.GENITOURINARY,
                 'paper_reference': 'Urological conditions requiring assessment'
             },
             'renal_colic': {
-                'symptoms': ['loin_pain', 'haematuria', 'nausea', 'restlessness', 'radiation'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'genitourinary',
+                'symptoms': [SymptomNames.LOIN_PAIN, SymptomNames.HAEMATURIA, SymptomNames.NAUSEA, SymptomNames.RESTLESSNESS, SymptomNames.RADIATION],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.GENITOURINARY,
                 'paper_reference': 'Severe pain condition requiring objective assessment'
             },
             
             # Obstetric and gynaecological
             'pregnancy_problems': {
-                'symptoms': ['bleeding', 'pain', 'contractions', 'fetal_movements', 'blood_pressure'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'obstetric',
+                'symptoms': [SymptomNames.BLEEDING, SymptomNames.PAIN, SymptomNames.CONTRACTIONS, SymptomNames.FETAL_MOVEMENTS, SymptomNames.BLOOD_PRESSURE],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.OBSTETRIC,
                 'paper_reference': 'Obstetric emergency requiring rapid assessment'
             },
             'vaginal_bleeding': {
-                'symptoms': ['amount', 'pain', 'pregnancy_test', 'clots', 'shock'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'obstetric',
+                'symptoms': [SymptomNames.AMOUNT, SymptomNames.PAIN, SymptomNames.PREGNANCY_TEST, SymptomNames.CLOTS, SymptomNames.SHOCK],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.OBSTETRIC,
                 'paper_reference': 'Gynaecological bleeding assessment'
             },
             
             # Paediatric specific
             'crying_baby': {
-                'symptoms': ['inconsolable', 'fever', 'feeding_problems', 'rash', 'lethargy'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'paediatric',
+                'symptoms': [SymptomNames.INCONSOLABLE, SymptomNames.FEVER, SymptomNames.FEEDING_PROBLEMS, SymptomNames.RASH, SymptomNames.LETHARGY],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.PAEDIATRIC,
                 'paper_reference': 'Paediatric assessment requiring objective evaluation'
             },
             'child_fever': {
-                'symptoms': ['temperature', 'rash', 'neck_stiffness', 'lethargy', 'feeding'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'paediatric',
+                'symptoms': [SymptomNames.TEMPERATURE, SymptomNames.RASH, SymptomNames.NECK_STIFFNESS, SymptomNames.LETHARGY, SymptomNames.FEEDING],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.PAEDIATRIC,
                 'paper_reference': 'Febrile child requiring systematic assessment'
             },
             'child_vomiting': {
-                'symptoms': ['dehydration', 'bile_stained', 'blood', 'lethargy', 'abdominal_pain'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'paediatric',
+                'symptoms': [SymptomNames.DEHYDRATION, SymptomNames.BILE_STAINED, SymptomNames.BLOOD, SymptomNames.LETHARGY, SymptomNames.ABDOMINAL_PAIN],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.PAEDIATRIC,
                 'paper_reference': 'Paediatric GI emergency'
             },
             
             # Psychiatric presentations
             'mental_illness': {
-                'symptoms': ['risk_to_self', 'risk_to_others', 'psychosis', 'depression', 'agitation'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'psychiatric',
+                'symptoms': [SymptomNames.RISK_TO_SELF, SymptomNames.RISK_TO_OTHERS, SymptomNames.PSYCHOSIS, SymptomNames.DEPRESSION, SymptomNames.AGITATION],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.PSYCHIATRIC,
                 'paper_reference': 'Mental health crisis requiring objective risk assessment'
             },
             'overdose_poisoning': {
-                'symptoms': ['consciousness_level', 'respiratory_depression', 'cardiac_effects', 'seizures', 'antidote_available'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'psychiatric',
+                'symptoms': [SymptomNames.CONSCIOUSNESS_LEVEL, SymptomNames.RESPIRATORY_DEPRESSION, SymptomNames.CARDIAC_EFFECTS, SymptomNames.SEIZURES, SymptomNames.ANTIDOTE_AVAILABLE],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.PSYCHIATRIC,
                 'paper_reference': 'Toxicological emergency requiring immediate assessment'
             },
             
             # Additional categories
             'rash': {
-                'symptoms': ['distribution', 'fever', 'itch', 'blistering', 'systemic_illness'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'dermatological',
+                'symptoms': [SymptomNames.DISTRIBUTION, SymptomNames.FEVER, SymptomNames.ITCH, SymptomNames.BLISTERING, SymptomNames.SYSTEMIC_ILLNESS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.DERMATOLOGICAL,
                 'paper_reference': 'Skin condition assessment'
             },
             'eye_problems': {
-                'symptoms': ['pain', 'vision_loss', 'discharge', 'photophobia', 'injury'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'ophthalmological',
+                'symptoms': [SymptomNames.PAIN, SymptomNames.VISION_LOSS, SymptomNames.DISCHARGE, SymptomNames.PHOTOPHOBIA, SymptomNames.INJURY],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.OPHTHALMOLOGICAL,
                 'paper_reference': 'Ocular emergency assessment'
             },
             'ear_problems': {
-                'symptoms': ['pain', 'discharge', 'hearing_loss', 'dizziness', 'fever'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'ent',
+                'symptoms': [SymptomNames.PAIN, SymptomNames.DISCHARGE, SymptomNames.HEARING_LOSS, SymptomNames.DIZZINESS, SymptomNames.FEVER],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.ENT,
                 'paper_reference': 'ENT condition assessment'
             },
             'sore_throat': {
-                'symptoms': ['pain', 'difficulty_swallowing', 'fever', 'drooling', 'stridor'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'ent',
+                'symptoms': [SymptomNames.PAIN, SymptomNames.DIFFICULTY_SWALLOWING, SymptomNames.FEVER, SymptomNames.DROOLING, SymptomNames.STRIDOR],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.ENT,
                 'paper_reference': 'Throat condition with potential airway involvement'
             },
             'diabetes': {
-                'symptoms': ['blood_glucose', 'ketones', 'dehydration', 'consciousness', 'breathing'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'endocrine',
+                'symptoms': [SymptomNames.BLOOD_GLUCOSE, SymptomNames.KETONES, SymptomNames.DEHYDRATION, SymptomNames.CONSCIOUSNESS, SymptomNames.BREATHING],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.ENDOCRINE,
                 'paper_reference': 'Diabetic emergency requiring objective assessment'
             },
             'allergy': {
-                'symptoms': ['rash', 'swelling', 'breathing_difficulty', 'shock', 'tongue_swelling'],
-                'linguistic_values': ['none', 'mild', 'moderate', 'severe', 'very_severe'],
-                'category': 'allergic',
+                'symptoms': [SymptomNames.RASH, SymptomNames.SWELLING, SymptomNames.BREATHING_DIFFICULTY, SymptomNames.SHOCK, SymptomNames.TONGUE_SWELLING],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.ALLERGIC,
                 'paper_reference': 'Allergic reaction requiring rapid assessment'
             }
         }

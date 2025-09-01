@@ -108,13 +108,7 @@ class ZMouseFuzzyInterface:
         
         return True
     
-    def get_expert_configuration(self, term: str) -> Dict[str, Any]:
-        """Retrieve expert configuration for a linguistic term"""
-        return self.expert_configurations.get(term, {})
-    
-    def get_all_fuzzy_marks(self) -> Dict[str, Any]:
-        """Get all created fuzzy marks"""
-        return self.fuzzy_marks
+
     
     def get_linguistic_terms(self) -> List[str]:
         """Get all available linguistic terms"""

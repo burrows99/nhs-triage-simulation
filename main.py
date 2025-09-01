@@ -16,6 +16,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from src.simulation.real_data_hospital import SimpleHospital
+from src.triage.triage_constants import TriageCategories
 
 
 def run_hospital_simulation():
@@ -52,7 +53,7 @@ def run_hospital_simulation():
     from collections import Counter
     category_counts = Counter(results['categories'])
     print(f"\n🏷️  Triage Category Distribution:")
-    for category in ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']:
+    for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
         count = category_counts.get(category, 0)
         percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
         print(f"    {category}: {count} patients ({percentage:.1f}%)")

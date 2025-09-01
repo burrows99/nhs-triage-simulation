@@ -11,6 +11,10 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.insert(0, project_root)
 
 from src.services.data_service import DataService
+from src.triage.manchester_triage_system import ManchesterTriageSystem
+from src.triage.triage_constants import (
+    TriageFlowcharts, FlowchartSymptomMapping, TriageCategories
+)
 
 
 class SimpleHospital:
@@ -36,8 +40,7 @@ class SimpleHospital:
         
         # Initialize Manchester Triage System (without telemetry)
         print("Initializing Manchester Triage System...")
-        # Note: MTS requires telemetry service, so we'll use a minimal implementation
-        # or modify MTS to work without telemetry
+        self.mts = ManchesterTriageSystem()
         print("Manchester Triage System ready")
         
         # Simulation state
@@ -54,12 +57,45 @@ class SimpleHospital:
         
         return patient_id, patient_data
     
-    def simple_triage(self):
-        """Simple random triage assignment."""
-        categories = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
-        priorities = [1, 2, 3, 4, 5]
-        idx = random.choices(range(5), weights=[0.05, 0.15, 0.30, 0.40, 0.10])[0]
-        return categories[idx], priorities[idx]
+    def mts_triage(self, patient_data=None):
+        """Manchester Triage System triage assignment using centralized constants."""
+        # Select a random valid flowchart from available options
+        flowchart_reason = TriageFlowcharts.get_random_flowchart()
+        
+        # Generate appropriate symptoms for the selected flowchart
+        if patient_data and len(patient_data) > 1:
+            # Try to extract meaningful data from patient record
+            data = patient_data[1]  # patient_data is (patient_id, data)
+            
+            # Could enhance this with real condition mapping in the future
+            # For now, use flowchart-appropriate random symptoms
+            symptoms_input = FlowchartSymptomMapping.generate_random_symptoms(flowchart_reason)
+        else:
+            # Generate random symptoms appropriate for the flowchart
+            symptoms_input = FlowchartSymptomMapping.generate_random_symptoms(flowchart_reason)
+        
+        try:
+            # Perform MTS triage with valid flowchart and symptoms
+            result = self.mts.triage_patient(flowchart_reason, symptoms_input)
+            
+            # Handle numpy string types and extract category
+            category = result.get('triage_category', TriageCategories.GREEN)
+            if hasattr(category, 'item'):  # Handle numpy types
+                category = category.item()
+            category = str(category).strip()
+            
+            # Convert category to priority using centralized mapping
+            priority_map = TriageCategories.get_priority_mapping()
+            priority = priority_map.get(category, 4)  # Default to GREEN priority
+            
+            return category, priority
+        except Exception as e:
+            # Fallback to simple random triage if MTS fails
+            print(f"MTS triage failed: {e}, using fallback")
+            categories = TriageCategories.get_all_categories()
+            priorities = list(TriageCategories.get_priority_mapping().values())
+            idx = random.choices(range(5), weights=[0.05, 0.15, 0.30, 0.40, 0.10])[0]
+            return categories[idx], priorities[idx]
     
     def patient_flow(self, patient_num):
         """Simulate patient journey with comprehensive metrics tracking."""
@@ -75,8 +111,8 @@ class SimpleHospital:
         else:
             patient_id, age, gender = f"fake_{patient_num}", 30, 'Unknown'
         
-        # Triage using simple random triage (MTS removed)
-        category, priority = self.simple_triage()
+        # Triage using Manchester Triage System
+        category, priority = self.mts_triage(patient_data)
         
         # No metrics recording - pure simulation
         
@@ -104,7 +140,7 @@ class SimpleHospital:
             # No diagnostics stage recording
         
         # Disposition
-        if category in ['RED', 'ORANGE'] and random.random() < 0.6:
+        if category in [TriageCategories.RED, TriageCategories.ORANGE] and random.random() < 0.6:
             bed_start = self.env.now
             with self.bed_resource.request(priority=priority) as req:
                 yield req

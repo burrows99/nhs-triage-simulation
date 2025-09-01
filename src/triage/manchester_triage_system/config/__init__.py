@@ -13,25 +13,23 @@ All components implement the paper's systematic configuration management require
 """
 
 # Import from individual files (one class per file)
-from .flowchart_config_source import FlowchartConfigSource
 from .default_flowchart_config import DefaultFlowchartConfig
 from .flowchart_config_manager import FlowchartConfigManager
 
 from .fuzzy_config import (
-    FuzzySystemConfigManager,
-    DefaultFuzzyConfig,
-    LinguisticValueConverter,
-    TriageCategoryMapper,
-    FuzzyVariableFactory
+    LinguisticValueConverter, TriageCategoryMapper,
+    DefaultFuzzyConfig, FuzzySystemConfigManager
 )
 
+# Export all configuration components
 __all__ = [
-    'FlowchartConfigSource',
+    # Flowchart configuration
     'DefaultFlowchartConfig',
     'FlowchartConfigManager',
-    'FuzzySystemConfigManager',
+    
+    # Fuzzy system configuration
     'DefaultFuzzyConfig',
     'LinguisticValueConverter',
     'TriageCategoryMapper',
-    'FuzzyVariableFactory'
+    'FuzzySystemConfigManager'
 ]

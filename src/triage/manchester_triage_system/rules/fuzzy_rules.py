@@ -10,14 +10,12 @@ All components implement the paper's objective triage system requirements.
 """
 
 # Import all fuzzy rules components
-from .fuzzy_rule_source import FuzzyRuleSource
 from .rule_builder import RuleBuilder
 from .default_fuzzy_rules import DefaultFuzzyRules
 from .fuzzy_rules_manager import FuzzyRulesManager
 
 # Export all components for backward compatibility
 __all__ = [
-    'FuzzyRuleSource',
     'RuleBuilder', 
     'DefaultFuzzyRules',
     'FuzzyRulesManager'

@@ -15,40 +15,31 @@ rule management with validation and performance optimization.
 
 from skfuzzy import control as ctrl
 from typing import List, Dict, Any
-from .fuzzy_rule_source import FuzzyRuleSource
 from .default_fuzzy_rules import DefaultFuzzyRules
+from src.triage.triage_constants import FuzzyCategories
 
 
 class FuzzyRulesManager:
     """Manages fuzzy rules with SOLID principles
     
-    Single Responsibility: Manages fuzzy rule creation and validation
+    Single Responsibility: Only manages fuzzy rules
     Open/Closed: Can be extended with new rule sources
-    Dependency Inversion: Depends on FuzzyRuleSource abstraction
     
-    Reference: FMTS paper emphasizes the need for a dynamic fuzzy system that can
-    handle the complexity of medical triage decisions.
+    Reference: FMTS paper describes the need for systematic rule management
+    to handle the ~50 flowcharts and various triage scenarios.
     
-    Paper Context: "For a triage nurse with 50 flowcharts in her hand, trying to 
-    correctly prioritize a patient is a clumsy process. The evaluation is typically 
-    performed by a triage nurse who collects patient information and relies on her 
-    memory of guidelines and subjective assessment to assign an urgency level to patients."
+    Paper Quote: "The system consists of around 50 flowcharts with standard 
+    definitions designed to categorize patients arriving to an emergency room 
+    based on their level of urgency."
     
-    This manager addresses the paper's concern by providing systematic rule management
-    that eliminates reliance on memory and subjective assessment.
+    This manager ensures all rules are properly validated and organized
+    to support the paper's objective triage system.
     """
     
-    def __init__(self, rule_source: FuzzyRuleSource = None):
-        """Initialize the fuzzy rules manager
-        
-        Args:
-            rule_source: Source for fuzzy rules (defaults to DefaultFuzzyRules)
-            
-        Reference: Paper emphasizes flexibility in rule configuration to support
-        the dynamic nature of medical triage requirements.
-        """
-        self._rule_source = rule_source or DefaultFuzzyRules()
-        self._rules_cache = None
+    def __init__(self):
+        """Initialize with default fuzzy rules"""
+        self._rule_source = DefaultFuzzyRules()
+        self._cached_rules = None
     
     def create_rules(self, input_vars: List[ctrl.Antecedent], output_var: ctrl.Consequent) -> List[ctrl.Rule]:
         """Create fuzzy rules for the system
@@ -68,9 +59,10 @@ class FuzzyRulesManager:
         Returns:
             List of fuzzy rules implementing the FMTS logic
         """
-        if self._rules_cache is None:
-            self._rules_cache = self._rule_source.get_rules(input_vars, output_var)
-        return self._rules_cache
+        if self._cached_rules is None:
+            self._cached_rules = self._rule_source.get_rules(input_vars, output_var)
+            
+        return self._cached_rules
     
     def validate_rules(self, rules: List[ctrl.Rule]) -> Dict[str, Any]:
         """Validate fuzzy rules
@@ -106,7 +98,7 @@ class FuzzyRulesManager:
         
         # Analyze rule coverage for five-point scale as per paper
         # Reference: Paper describes five-point triage scale implementation
-        expected_categories = {'red', 'orange', 'yellow', 'green', 'blue'}
+        expected_categories = FuzzyCategories.get_category_set()
         
         for rule in rules:
             try:
@@ -165,7 +157,7 @@ class FuzzyRulesManager:
         }
         
         # Count rules per category
-        expected_categories = ['red', 'orange', 'yellow', 'green', 'blue']
+        expected_categories = FuzzyCategories.get_all_categories()
         for category in expected_categories:
             stats['categories'][category] = 0
         
@@ -201,7 +193,7 @@ class FuzzyRulesManager:
         Reference: FMTS paper emphasizes dynamic system capabilities.
         Cache clearing supports dynamic rule updates as mentioned in the paper.
         """
-        self._rules_cache = None
+        self._cached_rules = None
     
     def get_paper_compliance_report(self, rules: List[ctrl.Rule]) -> Dict[str, Any]:
         """Generate a comprehensive paper compliance report

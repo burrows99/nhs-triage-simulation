@@ -13,13 +13,11 @@ All components implement the paper's objective triage system requirements:
 """
 
 # Import from individual files (one class per file)
-from .fuzzy_rule_source import FuzzyRuleSource
 from .rule_builder import RuleBuilder
 from .default_fuzzy_rules import DefaultFuzzyRules
 from .fuzzy_rules_manager import FuzzyRulesManager
 
 __all__ = [
-    'FuzzyRuleSource',
     'RuleBuilder',
     'DefaultFuzzyRules', 
     'FuzzyRulesManager'

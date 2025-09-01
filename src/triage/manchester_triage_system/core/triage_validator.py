@@ -17,6 +17,7 @@ Single Responsibility: Only handles validation
 """
 
 from typing import Dict, Any
+from src.triage.triage_constants import TriageCategories
 
 
 class TriageValidator:
@@ -72,7 +73,7 @@ class TriageValidator:
         
         # Validate triage category
         if 'triage_category' in result:
-            valid_categories = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
+            valid_categories = TriageCategories.get_all_categories()
             if result['triage_category'] not in valid_categories:
                 validation_result['valid'] = False
                 validation_result['errors'].append(f"Invalid triage category: {result['triage_category']}")
