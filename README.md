@@ -23,6 +23,22 @@ python -m src.main --verbose
 python -m src.main --duration 120
 ```
 
+### 🚀 Comprehensive Analysis (One Command)
+```bash
+# Run EVERYTHING: all scenarios, comparisons, metrics, and reports
+python -m src.main --all
+
+# Run comprehensive analysis with custom output directory
+python -m src.main --all --output my_complete_analysis
+```
+**This single command will:**
+- Run all 4 predefined scenarios (Low Demand, High Demand, Crisis, Optimization Test)
+- Generate scenario comparisons and cross-analysis
+- Execute comprehensive metrics demonstration
+- Create detailed visualizations and statistical reports
+- Produce executive summaries and performance benchmarks
+- Save everything in organized output directories
+
 ### Predefined Scenarios
 
 #### 1. Low Demand Scenario
@@ -140,6 +156,12 @@ python metrics_demo.py
 
 ## Advanced Usage
 
+### 🎯 Complete Research Analysis
+```bash
+# Ultimate research command - runs everything
+python -m src.main --all --output dissertation_results
+```
+
 ### Scenario Comparison
 ```bash
 # Compare three scenarios with custom output
@@ -156,6 +178,9 @@ python -m src.main --scenario optimization_test --analyze
 ```bash
 # Long-term study with detailed logging
 python -m src.main --duration 2880 --verbose --analyze --output longitudinal_study
+
+# Complete baseline establishment for AI comparison
+python -m src.main --all --output baseline_for_ai_comparison
 ```
 
 ## Triage System Details

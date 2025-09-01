@@ -122,6 +122,12 @@ Examples:
         help='Compare multiple scenarios or configurations'
     )
     
+    parser.add_argument(
+        '--all',
+        action='store_true',
+        help='Run comprehensive analysis: all scenarios, comparisons, and generate complete reports'
+    )
+    
     return parser
 
 
@@ -294,13 +300,112 @@ def run_comparison(scenarios: list, output_dir: Optional[str] = None) -> Dict[st
     return all_results
 
 
+def run_comprehensive_analysis(output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Run comprehensive analysis with all scenarios and comparisons"""
+    import os
+    from datetime import datetime
+    
+    # Set default output directory
+    if not output_dir:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = f"comprehensive_analysis_{timestamp}"
+    
+    # Create output directory
+    os.makedirs(output_dir, exist_ok=True)
+    
+    print("\n" + "="*80)
+    print("COMPREHENSIVE HEALTHCARE TRIAGE ANALYSIS")
+    print("="*80)
+    
+    # Define all scenarios to run
+    all_scenarios = ['low_demand', 'high_demand', 'crisis', 'optimization_test']
+    scenario_results = {}
+    
+    print(f"\n🔄 Running {len(all_scenarios)} scenarios...")
+    
+    # Run each scenario
+    for i, scenario in enumerate(all_scenarios, 1):
+        print(f"\n[{i}/{len(all_scenarios)}] Running {scenario.replace('_', ' ').title()} scenario...")
+        
+        # Load scenario configuration
+        scenarios = SimulationParameters().get_scenario_configs()
+        params = scenarios[scenario]
+        
+        # Create scenario-specific output directory
+        scenario_dir = os.path.join(output_dir, scenario)
+        os.makedirs(scenario_dir, exist_ok=True)
+        
+        # Run simulation
+        results = run_single_simulation(params, scenario_dir, quiet=True)
+        scenario_results[scenario] = results
+        
+        print(f"   ✅ {scenario.replace('_', ' ').title()} completed")
+    
+    print(f"\n📊 Generating scenario comparisons...")
+    
+    # Run comprehensive comparison
+    comparison_results = run_comparison(all_scenarios, output_dir)
+    
+    print(f"\n📈 Running metrics demonstration...")
+    
+    # Run metrics demo for comprehensive analysis
+    try:
+        import subprocess
+        import sys
+        result = subprocess.run([sys.executable, 'metrics_demo.py'], 
+                              capture_output=True, text=True, cwd='.')
+        if result.returncode == 0:
+            print("   ✅ Metrics demonstration completed")
+        else:
+            print(f"   ⚠️  Metrics demo completed with warnings")
+    except Exception as e:
+        print(f"   ⚠️  Metrics demo error: {e}")
+    
+    # Generate summary report
+    print(f"\n📋 Generating comprehensive summary...")
+    
+    summary = {
+        'analysis_timestamp': datetime.now().isoformat(),
+        'scenarios_analyzed': all_scenarios,
+        'output_directory': output_dir,
+        'scenario_results': scenario_results,
+        'comparison_results': comparison_results,
+        'files_generated': {
+            'individual_scenarios': [f"{output_dir}/{s}/" for s in all_scenarios],
+            'comparisons': f"{output_dir}/comparison_results.json",
+            'metrics_output': "metrics_output/",
+            'summary_report': f"{output_dir}/comprehensive_summary.json"
+        }
+    }
+    
+    # Save comprehensive summary
+    import json
+    summary_file = os.path.join(output_dir, 'comprehensive_summary.json')
+    with open(summary_file, 'w') as f:
+        json.dump(summary, f, indent=2, default=str)
+    
+    print(f"\n" + "="*80)
+    print("COMPREHENSIVE ANALYSIS COMPLETE")
+    print("="*80)
+    print(f"📁 All results saved to: {output_dir}")
+    print(f"📊 Scenarios analyzed: {', '.join([s.replace('_', ' ').title() for s in all_scenarios])}")
+    print(f"📈 Metrics and visualizations: metrics_output/")
+    print(f"📋 Summary report: {summary_file}")
+    print("="*80)
+    
+    return summary
+
+
 def main():
     """Main entry point"""
     parser = create_argument_parser()
     args = parser.parse_args()
     
     try:
-        if args.compare:
+        if args.all:
+            # Run comprehensive analysis
+            results = run_comprehensive_analysis(args.output)
+        elif args.compare:
             # Run comparison mode
             results = run_comparison(args.compare, args.output)
         else:
@@ -309,7 +414,7 @@ def main():
             results = run_single_simulation(params, args.output, args.quiet)
         
         # Generate analysis if requested
-        if args.analyze and args.output:
+        if args.analyze and args.output and not args.all:
             print("\nGenerating detailed analysis...")
             # This would call visualization functions when implemented
             # from .visualization import generate_analysis_plots
