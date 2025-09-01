@@ -43,6 +43,10 @@
     "STANDARD": 0.1,
     "NON_URGENT": 0.05
   },
+  "data_sources": {
+    "csv_directory": "output/csv",
+    "metrics_output_directory": "metrics_output"
+  },
   "monitoring": {
     "monitoring_interval": 60,
     "enable_detailed_logging": true,

@@ -11,12 +11,15 @@ from ..metrics.metrics_collector import MetricsCollector
 class EmergencyDepartment:
     """Main Emergency Department simulation class based on research paper methodology <mcreference link="https://www.researchgate.net/publication/365839940_Patient_Flow_Optimization_in_an_Emergency_Department_Using_SimPy-Based_Simulation_Modeling_and_Analysis_A_Case_Study" index="0">0</mcreference>"""
     
-    def __init__(self, 
+    def __init__(self,
                  env: simpy.Environment,
-                 num_triage_nurses: int = 2,
-                 num_doctors: int = 4,
-                 num_cubicles: int = 8,
-                 num_admission_beds: int = 20,
+                 num_triage_nurses: int,
+                 num_doctors: int,
+                 num_cubicles: int,
+                 num_admission_beds: int,
+                 consultation_times: Dict[str, Dict[str, float]],
+                 admission_probabilities: Dict[str, float],
+                 monitoring_interval: float,
                  triage_system: Optional[BaseTriage] = None,
                  metrics_collector: Optional[MetricsCollector] = None):
         """
@@ -67,26 +70,49 @@ class EmergencyDepartment:
             'queue_lengths': defaultdict(list)
         }
         
-        # Configuration parameters
-        self.consultation_time_params = {
-            Priority.IMMEDIATE: {'mean': 45, 'std': 15},
-            Priority.VERY_URGENT: {'mean': 35, 'std': 12},
-            Priority.URGENT: {'mean': 25, 'std': 10},
-            Priority.STANDARD: {'mean': 20, 'std': 8},
-            Priority.NON_URGENT: {'mean': 15, 'std': 5}
-        }
-        
-        self.admission_probability = {
-            Priority.IMMEDIATE: 0.8,
-            Priority.VERY_URGENT: 0.4,
-            Priority.URGENT: 0.2,
-            Priority.STANDARD: 0.1,
-            Priority.NON_URGENT: 0.05
-        }
+        # Configuration parameters from SimulationParameters
+        self.consultation_time_params = self._convert_consultation_times(consultation_times)
+        self.admission_probability = self._convert_admission_probabilities(admission_probabilities)
         
         # Performance monitoring
-        self.monitoring_interval = 60  # Monitor every hour
+        self.monitoring_interval = monitoring_interval
         self.env.process(self._monitor_performance())
+    
+    def _convert_consultation_times(self, consultation_times: Dict[str, Dict[str, float]]) -> Dict[Priority, Dict[str, float]]:
+        """Convert string-based consultation times to Priority-based dictionary"""
+        converted = {}
+        for priority_str, params in consultation_times.items():
+            try:
+                priority = Priority[priority_str]
+                converted[priority] = params
+            except KeyError:
+                raise ValueError(f"Invalid priority level: {priority_str}. Must be one of: {[p.name for p in Priority]}")
+        
+        # Validate all priorities are provided
+        missing_priorities = [p.name for p in Priority if p not in converted]
+        if missing_priorities:
+            raise ValueError(f"Missing consultation times for priorities: {missing_priorities}")
+        
+        return converted
+    
+    def _convert_admission_probabilities(self, admission_probabilities: Dict[str, float]) -> Dict[Priority, float]:
+        """Convert string-based admission probabilities to Priority-based dictionary"""
+        converted = {}
+        for priority_str, prob in admission_probabilities.items():
+            try:
+                priority = Priority[priority_str]
+                if not 0 <= prob <= 1:
+                    raise ValueError(f"Admission probability for {priority_str} must be between 0 and 1, got {prob}")
+                converted[priority] = prob
+            except KeyError:
+                raise ValueError(f"Invalid priority level: {priority_str}. Must be one of: {[p.name for p in Priority]}")
+        
+        # Validate all priorities are provided
+        missing_priorities = [p.name for p in Priority if p not in converted]
+        if missing_priorities:
+            raise ValueError(f"Missing admission probabilities for priorities: {missing_priorities}")
+        
+        return converted
     
     def patient_arrival(self, patient: Patient):
         """Handle patient arrival and start their journey"""

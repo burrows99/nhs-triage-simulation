@@ -154,6 +154,27 @@ class MetricsCollector:
         self.metrics.start_time = current_time if current_time is not None else 0.0
         self.last_snapshot_time = self.metrics.start_time
         
+    def reset_metrics(self):
+        """Reset all metrics (used after warmup period)"""
+        # Store current time as new start time
+        current_time = self.metrics.start_time if hasattr(self.metrics, 'start_time') else 0.0
+        
+        # Reset metrics but keep simulation_id
+        simulation_id = self.simulation_id
+        self.metrics = SimulationMetrics(simulation_id=simulation_id)
+        
+        # Clear tracking dictionaries
+        self.active_patients.clear()
+        self.patient_timelines.clear()
+        
+        # Clear resource usage history
+        for key in self.resource_usage_history:
+            self.resource_usage_history[key].clear()
+        
+        # Reset start time
+        self.metrics.start_time = current_time
+        self.last_snapshot_time = current_time
+        
     def end_simulation(self, current_time: float = None):
         """Finalize metrics collection and calculate summary statistics"""
         self.metrics.end_time = current_time if current_time is not None else 0.0

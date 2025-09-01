@@ -56,38 +56,11 @@ class SimulationParameters:
         'NON_URGENT': 0.05
     })
     
-    # Patient demographics configuration
-    patient_demographics: Dict[str, Any] = field(default_factory=lambda: {
-        'age_distribution': {
-            'type': 'mixed',
-            'distributions': [
-                {'type': 'normal', 'mean': 5, 'std': 2, 'weight': 0.15, 'min': 0, 'max': 18},
-                {'type': 'normal', 'mean': 35, 'std': 15, 'weight': 0.50, 'min': 18, 'max': 65},
-                {'type': 'normal', 'mean': 75, 'std': 8, 'weight': 0.35, 'min': 65, 'max': 100}
-            ]
-        },
-        'gender_distribution': {
-            'male': 0.48,
-            'female': 0.52
-        },
-        'chief_complaints': {
-            'chest pain': 0.15,
-            'difficulty breathing': 0.12,
-            'abdominal pain': 0.10,
-            'head injury': 0.08,
-            'fever': 0.08,
-            'nausea and vomiting': 0.07,
-            'back pain': 0.06,
-            'wound/laceration': 0.06,
-            'dizziness': 0.05,
-            'allergic reaction': 0.04,
-            'anxiety': 0.04,
-            'cold symptoms': 0.03,
-            'skin rash': 0.03,
-            'joint pain': 0.03,
-            'other': 0.06
-        }
-    })
+    # CSV data configuration
+    csv_directory: str = 'output/csv'  # Relative path from project root
+    
+    # Metrics output configuration
+    metrics_output_directory: str = 'metrics_output'  # Relative path from project root
     
     # Monitoring and reporting
     monitoring_interval: float = 60  # Monitor every hour
@@ -129,7 +102,10 @@ class SimulationParameters:
             },
             'consultation_times': self.consultation_times,
             'admission_probabilities': self.admission_probabilities,
-            'patient_demographics': self.patient_demographics,
+            'data_sources': {
+                'csv_directory': self.csv_directory,
+                'metrics_output_directory': self.metrics_output_directory
+            },
             'monitoring': {
                 'monitoring_interval': self.monitoring_interval,
                 'enable_detailed_logging': self.enable_detailed_logging,
@@ -191,8 +167,11 @@ class SimulationParameters:
         if 'admission_probabilities' in config_dict:
             params.admission_probabilities.update(config_dict['admission_probabilities'])
         
-        if 'patient_demographics' in config_dict:
-            params.patient_demographics.update(config_dict['patient_demographics'])
+        # Update data source parameters
+        if 'data_sources' in config_dict:
+            data_config = config_dict['data_sources']
+            params.csv_directory = data_config.get('csv_directory', params.csv_directory)
+            params.metrics_output_directory = data_config.get('metrics_output_directory', params.metrics_output_directory)
         
         if 'monitoring' in config_dict:
             mon_config = config_dict['monitoring']

@@ -11,155 +11,96 @@ from ..metrics.metrics_collector import MetricsCollector
 class SimulationEngine:
     """Main simulation engine for emergency department simulation"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config):
         """
         Initialize simulation engine
         
         Args:
-            config: Simulation configuration parameters
+            config: SimulationParameters object (required)
         """
-        self.config = config or self._default_config()
+        if config is None:
+            raise ValueError("SimulationParameters config is required - no fallback defaults provided")
+        
+        self.config = config
         self.env = None
         self.ed = None
         self.patient_generator = None
         self.results = None
         
-    def _default_config(self) -> Dict[str, Any]:
-        """Default simulation configuration"""
-        return {
-            'simulation': {
-                'duration': 24 * 60,  # 24 hours in minutes
-                'warmup_period': 2 * 60,  # 2 hours warmup
-                'random_seed': 42
-            },
-            'resources': {
-                'num_triage_nurses': 2,
-                'num_doctors': 4,
-                'num_cubicles': 8,
-                'num_admission_beds': 20
-            },
-            'patient_arrival': {
-                'arrival_rate': 0.5,  # patients per minute
-                'arrival_pattern': 'constant'  # or 'variable'
-            },
-            'triage_system': {
-                'type': 'manchester',  # 'manchester', 'adaptive', 'custom'
-                'priority_calculator': 'manchester',  # 'manchester', 'weighted', 'custom'
-                'base_triage_time': 5.0,
-                'triage_time_std': 2.0
-            },
-            'performance_targets': {
-                'max_wait_time_p1': 0,    # Immediate
-                'max_wait_time_p2': 10,   # Very urgent
-                'max_wait_time_p3': 60,   # Urgent
-                'max_wait_time_p4': 120,  # Standard
-                'max_wait_time_p5': 240   # Non-urgent
-            },
-            'optimization': {
-                'enabled': False,
-                'optimization_interval': 4 * 60,  # 4 hours
-                'target_wait_time': 60.0
-            }
-        }
+        # Set random seed if provided
+        if hasattr(config, 'random_seed') and config.random_seed is not None:
+            import numpy as np
+            import random
+            np.random.seed(config.random_seed)
+            random.seed(config.random_seed)
+        
+
     
     def setup_simulation(self) -> None:
         """Setup simulation environment and components"""
         # Set random seed if provided
         if hasattr(self.config, 'random_seed') and self.config.random_seed:
             np.random.seed(self.config.random_seed)
-        elif isinstance(self.config, dict) and self.config.get('simulation', {}).get('random_seed'):
-            np.random.seed(self.config['simulation']['random_seed'])
         
         # Create SimPy environment
         self.env = simpy.Environment()
         
-        # Setup triage system
-        triage_system = self._create_triage_system()
+        # Validate required parameters
+        if not hasattr(self.config, 'num_triage_nurses'):
+            raise ValueError("SimulationParameters must have num_triage_nurses")
+        if not hasattr(self.config, 'consultation_times'):
+            raise ValueError("SimulationParameters must have consultation_times")
+        if not hasattr(self.config, 'admission_probabilities'):
+            raise ValueError("SimulationParameters must have admission_probabilities")
         
-        # Create Emergency Department
-        # Handle both dictionary config and SimulationParameters object
-        if hasattr(self.config, 'num_triage_nurses'):
-            # SimulationParameters object
-            num_triage_nurses = self.config.num_triage_nurses
-            num_doctors = self.config.num_doctors
-            num_cubicles = self.config.num_cubicles
-            num_admission_beds = self.config.num_admission_beds
-        else:
-            # Dictionary config
-            num_triage_nurses = self.config['resources']['num_triage_nurses']
-            num_doctors = self.config['resources']['num_doctors']
-            num_cubicles = self.config['resources']['num_cubicles']
-            num_admission_beds = self.config['resources']['num_admission_beds']
-            
         # Create metrics collector for this simulation
         metrics_collector = MetricsCollector(simulation_id=f"sim_{int(self.env.now)}")
         
         self.ed = EmergencyDepartment(
             env=self.env,
-            num_triage_nurses=num_triage_nurses,
-            num_doctors=num_doctors,
-            num_cubicles=num_cubicles,
-            num_admission_beds=num_admission_beds,
+            num_triage_nurses=self.config.num_triage_nurses,
+            num_doctors=self.config.num_doctors,
+            num_cubicles=self.config.num_cubicles,
+            num_admission_beds=self.config.num_admission_beds,
+            consultation_times=self.config.consultation_times,
+            admission_probabilities=self.config.admission_probabilities,
+            monitoring_interval=self.config.monitoring_interval,
             triage_system=self._create_triage_system(),
             metrics_collector=metrics_collector
         )
         
-        # Create patient generator
-        # Handle both dictionary config and SimulationParameters object
-        if hasattr(self.config, 'arrival_rate'):
-            # SimulationParameters object
-            arrival_rate = self.config.arrival_rate
-            arrival_pattern = getattr(self.config, 'arrival_pattern', 'constant')
-        else:
-            # Dictionary config
-            arrival_rate = self.config['patient_arrival']['arrival_rate']
-            arrival_pattern = self.config['patient_arrival']['arrival_pattern']
-            
+        # Create patient generator with CSV directory from config
+        from ..utils.path_utils import PathUtils
+        
+        csv_directory = PathUtils.resolve_relative_path(self.config.csv_directory)
+        
         self.patient_generator = PatientGenerator(
             env=self.env,
             ed=self.ed,
-            arrival_rate=arrival_rate,
-            csv_directory='/Users/raunakburrows/dissertation/output/csv'
+            arrival_rate=self.config.arrival_rate,
+            csv_directory=str(csv_directory)
         )
         
         # Setup optimization if enabled
-        # Handle both dictionary config and SimulationParameters object
-        optimization_enabled = False
-        if hasattr(self.config, 'optimization_enabled'):
-            optimization_enabled = self.config.optimization_enabled
-        elif isinstance(self.config, dict) and 'optimization' in self.config:
-            optimization_enabled = self.config['optimization']['enabled']
-            
-        if optimization_enabled:
+        if self.config.optimization_enabled:
             self.env.process(self._optimization_process())
         
         # Setup variable arrival pattern if configured
-        # Handle both dictionary config and SimulationParameters object
-        arrival_pattern = 'constant'
-        if hasattr(self.config, 'arrival_pattern'):
-            arrival_pattern = self.config.arrival_pattern
-        elif isinstance(self.config, dict) and 'patient_arrival' in self.config:
-            arrival_pattern = self.config['patient_arrival']['arrival_pattern']
-            
-        if arrival_pattern == 'variable':
+        if self.config.arrival_pattern == 'variable':
             self.env.process(self._variable_arrival_process())
             
         # Setup metrics monitoring process
         self.env.process(self._metrics_monitoring_process())
         
         print(f"Simulation setup complete:")
-        
-        # Handle both dictionary config and SimulationParameters object for display
-        if hasattr(self.config, 'duration'):
-            print(f"  Duration: {self.config.duration} minutes")
-            print(f"  Resources: {self.config.num_doctors} doctors, {self.config.num_cubicles} cubicles")
-            print(f"  Arrival rate: {self.config.arrival_rate} patients/minute")
-            print(f"  Triage system: {self.config.triage_system_type}")
-        else:
-            print(f"  Duration: {self.config['simulation']['duration']} minutes")
-            print(f"  Resources: {self.config['resources']['num_doctors']} doctors, {self.config['resources']['num_cubicles']} cubicles")
-            print(f"  Arrival rate: {self.config['patient_arrival']['arrival_rate']} patients/minute")
-            print(f"  Triage system: {self.config['triage_system']['type']}")
+        print(f"  Duration: {self.config.duration} minutes")
+        print(f"  Resources: {self.config.num_doctors} doctors, {self.config.num_cubicles} cubicles")
+        print(f"  Arrival rate: {self.config.arrival_rate} patients/minute")
+        print(f"  Triage system: {self.config.triage_system_type}")
+        print(f"  CSV directory: {self.config.csv_directory}")
+        print(f"  Random seed: {self.config.random_seed}")
+        print(f"  Optimization enabled: {self.config.optimization_enabled}")
+        print(f"  Arrival pattern: {self.config.arrival_pattern}")
     
     def _create_triage_system(self):
         """Create and configure triage system"""
@@ -177,14 +118,11 @@ class SimulationEngine:
     
     def _optimization_process(self):
         """Process for dynamic resource optimization during simulation"""
-        optimization_interval = self.config['optimization']['optimization_interval']
-        target_wait_time = self.config['optimization']['target_wait_time']
-        
         while True:
-            yield self.env.timeout(optimization_interval)
+            yield self.env.timeout(self.config.optimization_interval)
             
             # Get resource optimization suggestions
-            suggestions = self.ed.optimize_resources(target_wait_time)
+            suggestions = self.ed.optimize_resources(self.config.target_wait_time)
             
             print(f"Time {self.env.now:.1f}: Resource optimization suggestions: {suggestions}")
             
@@ -207,8 +145,6 @@ class SimulationEngine:
     
     def _variable_arrival_process(self):
         """Process for variable patient arrival rates (e.g., daily patterns)"""
-        base_rate = self.config['patient_arrival']['arrival_rate']
-        
         while True:
             # Simulate daily variation in arrival rates
             current_hour = (self.env.now / 60) % 24
@@ -221,7 +157,7 @@ class SimulationEngine:
             else:
                 multiplier = 1.0  # Normal rate
             
-            new_rate = base_rate * multiplier
+            new_rate = self.config.arrival_rate * multiplier
             self.patient_generator.set_arrival_rate(new_rate)
             
             # Check every hour
@@ -232,27 +168,28 @@ class SimulationEngine:
         if not self.env:
             self.setup_simulation()
         
-        # Handle both dictionary config and SimulationParameters object for warmup period
-        if hasattr(self.config, 'warmup_period'):
-            warmup_period = self.config.warmup_period
-        else:
-            warmup_period = self.config['simulation']['warmup_period']
-            
         print(f"\nStarting simulation...")
-        print(f"Warmup period: {warmup_period} minutes")
         
-        # Handle both dictionary config and SimulationParameters object for duration
-        if hasattr(self.config, 'duration'):
-            duration = self.config.duration
-        else:
-            duration = self.config['simulation']['duration']
+        # Implement warmup period
+        if self.config.warmup_period > 0:
+            print(f"Warmup period: {self.config.warmup_period} minutes")
+            
+            # Run warmup period
+            self.env.run(until=self.config.warmup_period)
+            
+            # Reset metrics after warmup
+            self.ed.metrics_collector.reset_metrics()
+            print(f"Warmup completed. Resetting metrics at time {self.env.now} minutes")
         
         # Start metrics collection
         self.ed.metrics_collector.start_simulation(self.env.now)
         
+        # Run main simulation
+        total_duration = self.config.warmup_period + self.config.duration
+        
         # Run simulation
         try:
-            self.env.run(until=duration)
+            self.env.run(until=total_duration)
             print(f"\nSimulation completed at time {self.env.now:.1f} minutes")
         except Exception as e:
             print(f"Simulation error: {e}")
