@@ -258,17 +258,33 @@ class ManchesterTriage(BaseTriage):
         flowchart_data = flowchart['data']
         discriminators = flowchart_data['discriminators']
         
+        logger.info(f"\nFUZZY INFERENCE PROCESS:")
+        logger.info(f"  Evaluating {len(discriminators)} discriminators from {flowchart['name']} flowchart")
+        
         # Calculate fuzzy membership for each discriminator
         discriminator_memberships = []
         active_discriminators = []
         
+        logger.info(f"\nDISCRIMINATOR EVALUATION:")
         for disc_name, disc_info in discriminators.items():
             membership = self._calculate_discriminator_membership(patient, disc_name, disc_info)
+            weighted_membership = membership * disc_info['fuzzy_weight']
+            
+            logger.info(f"  {disc_name.replace('_', ' ').title()}:")
+            logger.info(f"    Raw membership: {membership:.3f}")
+            logger.info(f"    Fuzzy weight: {disc_info['fuzzy_weight']}")
+            logger.info(f"    Weighted membership: {weighted_membership:.3f}")
+            logger.info(f"    Target priority: {disc_info['priority'].name}")
+            
             if membership > 0.1:  # Threshold for fuzzy activation
-                discriminator_memberships.append(membership * disc_info['fuzzy_weight'])
+                discriminator_memberships.append(weighted_membership)
                 active_discriminators.append(disc_name)
+                logger.info(f"    Status: ACTIVATED (above 0.1 threshold)")
+            else:
+                logger.info(f"    Status: Not activated (below 0.1 threshold)")
         
         # Apply fuzzy aggregation (max operator as per FMTS)
+        logger.info(f"\nFUZZY AGGREGATION:")
         if discriminator_memberships:
             max_membership = max(discriminator_memberships)
             max_index = discriminator_memberships.index(max_membership)
@@ -276,63 +292,112 @@ class ManchesterTriage(BaseTriage):
             priority = discriminators[primary_discriminator]['priority']
             confidence = max_membership
             reasoning = f"Primary discriminator: {primary_discriminator.replace('_', ' ').title()}"
+            
+            logger.info(f"  Active discriminators: {len(active_discriminators)}")
+            logger.info(f"  Primary discriminator: {primary_discriminator.replace('_', ' ').title()}")
+            logger.info(f"  Max membership: {max_membership:.3f}")
+            logger.info(f"  Initial priority: {priority.name}")
         else:
             # No discriminators fired - default to non-urgent
             priority = Priority.NON_URGENT
             confidence = 0.3
             reasoning = "No significant discriminators identified"
+            logger.info(f"  No discriminators activated - defaulting to NON_URGENT")
         
         # Apply vital signs fuzzy modulation
+        logger.info(f"\nVITAL SIGNS MODULATION:")
         vital_priority, vital_confidence = self._assess_vital_signs_fuzzy(patient)
+        logger.info(f"  Vital signs priority: {vital_priority.name}")
+        logger.info(f"  Vital signs confidence: {vital_confidence:.3f}")
+        
         if vital_priority.value < priority.value:  # Higher priority (lower number)
+            logger.info(f"  Vital signs override: {priority.name} → {vital_priority.name}")
             priority = vital_priority
             confidence = max(confidence, vital_confidence)
             reasoning += f"; Vital signs elevation to {vital_priority.name}"
+        else:
+            logger.info(f"  No vital signs override needed")
         
         return priority, confidence, reasoning
     
     def _calculate_discriminator_membership(self, patient: Patient, disc_name: str, disc_info: Dict[str, Any]) -> float:
         """Calculate fuzzy membership for a discriminator"""
         
+        logger.info(f"      Calculating membership for '{disc_name}':")
+        
         # Pain-based discriminators
         if 'pain' in disc_name:
             pain_score = patient.get_current_vital_sign('pain_score')
+            logger.info(f"        Pain-based discriminator detected")
+            logger.info(f"        Patient pain score: {pain_score}")
+            
             if pain_score is not None:
                 if 'severe' in disc_name:
-                    return self._get_fuzzy_membership(pain_score, self.pain_fuzzy_terms['severe_pain'])
+                    membership = self._get_fuzzy_membership(pain_score, self.pain_fuzzy_terms['severe_pain'])
+                    logger.info(f"        Severe pain threshold evaluation: {membership:.3f}")
+                    return membership
                 elif 'moderate' in disc_name:
-                    return self._get_fuzzy_membership(pain_score, self.pain_fuzzy_terms['moderate_pain'])
+                    membership = self._get_fuzzy_membership(pain_score, self.pain_fuzzy_terms['moderate_pain'])
+                    logger.info(f"        Moderate pain threshold evaluation: {membership:.3f}")
+                    return membership
+            else:
+                logger.info(f"        No pain score available - membership: 0.0")
         
         # Respiratory discriminators
         if 'respiratory' in disc_name or 'breathing' in disc_name:
             rr = patient.get_current_vital_sign('respiratory_rate')
             o2_sat = patient.get_current_vital_sign('oxygen_saturation')
+            logger.info(f"        Respiratory discriminator detected")
+            logger.info(f"        Respiratory rate: {rr}, O2 saturation: {o2_sat}")
             
             if rr is not None:
                 if 'severe' in disc_name:
-                    return max(
-                        self._get_fuzzy_membership(rr, self.fuzzy_vital_terms['respiratory_rate']['very_high']),
-                        self._get_fuzzy_membership(rr, self.fuzzy_vital_terms['respiratory_rate']['very_low'])
-                    )
+                    high_membership = self._get_fuzzy_membership(rr, self.fuzzy_vital_terms['respiratory_rate']['very_high'])
+                    low_membership = self._get_fuzzy_membership(rr, self.fuzzy_vital_terms['respiratory_rate']['very_low'])
+                    membership = max(high_membership, low_membership)
+                    logger.info(f"        Severe respiratory distress (RR high: {high_membership:.3f}, low: {low_membership:.3f}) = {membership:.3f}")
+                    return membership
             
             if o2_sat is not None and o2_sat < 94:
-                return self._get_fuzzy_membership(o2_sat, self.fuzzy_vital_terms['oxygen_saturation']['low'])
+                membership = self._get_fuzzy_membership(o2_sat, self.fuzzy_vital_terms['oxygen_saturation']['low'])
+                logger.info(f"        Low oxygen saturation evaluation: {membership:.3f}")
+                return membership
+            
+            logger.info(f"        Respiratory vitals within normal range or not available")
         
         # Shock discriminators
         if 'shock' in disc_name:
             systolic_bp = patient.get_current_vital_sign('systolic_bp')
+            logger.info(f"        Shock discriminator detected")
+            logger.info(f"        Systolic BP: {systolic_bp}")
+            
             if systolic_bp is not None and systolic_bp < 90:
-                return self._get_fuzzy_membership(systolic_bp, self.fuzzy_vital_terms['systolic_bp']['very_low'])
+                membership = self._get_fuzzy_membership(systolic_bp, self.fuzzy_vital_terms['systolic_bp']['very_low'])
+                logger.info(f"        Hypotensive shock evaluation: {membership:.3f}")
+                return membership
+            else:
+                logger.info(f"        BP not indicative of shock")
         
         # Default membership based on chief complaint keywords
+        logger.info(f"        Evaluating chief complaint keyword matching")
         if patient.chief_complaint:
             complaint_lower = patient.chief_complaint.lower()
             disc_keywords = disc_name.replace('_', ' ').split()
             
+            logger.info(f"        Chief complaint: '{patient.chief_complaint}'")
+            logger.info(f"        Discriminator keywords: {disc_keywords}")
+            
             keyword_matches = sum(1 for keyword in disc_keywords if keyword in complaint_lower)
             if keyword_matches > 0:
-                return min(1.0, keyword_matches / len(disc_keywords))
+                membership = min(1.0, keyword_matches / len(disc_keywords))
+                logger.info(f"        Keyword matches: {keyword_matches}/{len(disc_keywords)} = {membership:.3f}")
+                return membership
+            else:
+                logger.info(f"        No keyword matches found")
+        else:
+            logger.info(f"        No chief complaint available")
         
+        logger.info(f"        Final membership: 0.0 (no criteria met)")
         return 0.0
     
     def _assess_vital_signs_fuzzy(self, patient: Patient) -> Tuple[Priority, float]:
@@ -340,27 +405,39 @@ class ManchesterTriage(BaseTriage):
         max_priority = Priority.NON_URGENT
         max_confidence = 0.0
         
+        logger.info(f"  Detailed vital signs fuzzy assessment:")
+        
         for vital_name, fuzzy_terms in self.fuzzy_vital_terms.items():
             vital_value = patient.get_current_vital_sign(vital_name)
+            logger.info(f"    {vital_name}: {vital_value}")
+            
             if vital_value is not None:
-                
                 for term_name, term_data in fuzzy_terms.items():
                     membership = self._get_fuzzy_membership(vital_value, term_data)
+                    logger.info(f"      {term_name} membership: {membership:.3f}")
                     
                     if membership > 0.5:  # Significant membership
                         if term_name in ['very_low', 'very_high']:
                             priority = Priority.IMMEDIATE
                             confidence = membership * 0.9
+                            logger.info(f"      → IMMEDIATE priority triggered by {vital_name} {term_name} (confidence: {confidence:.3f})")
                         elif term_name in ['low', 'high']:
                             priority = Priority.VERY_URGENT
                             confidence = membership * 0.7
+                            logger.info(f"      → VERY_URGENT priority triggered by {vital_name} {term_name} (confidence: {confidence:.3f})")
                         else:
                             continue
                         
                         if priority.value < max_priority.value:
+                            logger.info(f"      → New max priority: {priority.name} (was {max_priority.name})")
                             max_priority = priority
                             max_confidence = max(max_confidence, confidence)
+                        else:
+                            logger.info(f"      → Priority {priority.name} not higher than current max {max_priority.name}")
+            else:
+                logger.info(f"      No value recorded")
         
+        logger.info(f"  Final vital signs assessment: {max_priority.name} (confidence: {max_confidence:.3f})")
         return max_priority, max_confidence
     
     def _get_fuzzy_membership(self, value: float, fuzzy_term: Dict[str, Any]) -> float:
