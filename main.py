@@ -449,6 +449,14 @@ def main():
             percentage = (count / metrics_summary.total_patients) * 100
             print(f"   {reason.value}: {count} cases ({percentage:.1f}%)")
         
+        # Generate visualization plots
+        print("\n📊 Generating Visualization Plots...")
+        plot_files = combined_metrics.generate_all_plots(prefix="comprehensive_analysis")
+        
+        print("\n📈 Generated Plots:")
+        for plot_type, filepath in plot_files.items():
+            print(f"   {plot_type.replace('_', ' ').title()}: {filepath}")
+        
         print("\n✅ All tests completed successfully!")
         print(f"\nPaper Reference: {PAPER_INFO['url']}")
         

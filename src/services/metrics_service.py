@@ -59,13 +59,22 @@ class MetricsService:
     - Resource utilization metrics
     - Patient arrival patterns
     - Histogram data for visualization
+    - Integrated plotting capabilities
     """
     
-    def __init__(self):
-        """Initialize the metrics service"""
+    def __init__(self, plotting_output_dir: str = "output/manchester_triage_system/plots"):
+        """Initialize the metrics service
+        
+        Args:
+            plotting_output_dir: Directory for saving generated plots
+        """
         self._patient_metrics: List[PatientMetrics] = []
         self._system_start_time: Optional[datetime] = None
         self._system_end_time: Optional[datetime] = None
+        
+        # Initialize integrated plotting service
+        from .plotting_service import PlottingService
+        self._plotting_service = PlottingService(plotting_output_dir)
     
     def load_telemetry_data(self, telemetry_file_path: str) -> None:
         """Load telemetry data from JSON file and extract patient metrics
@@ -474,3 +483,176 @@ class MetricsService:
         self._patient_metrics.clear()
         self._system_start_time = None
         self._system_end_time = None
+    
+    # Plotting Methods
+    
+    def plot_wait_time_histogram(self, filename: str = None, show: bool = False) -> str:
+        """Generate wait time histogram plot
+        
+        Args:
+            filename: Optional filename for saving the plot
+            show: Whether to display the plot
+            
+        Returns:
+            Path to the saved plot file
+        """
+        wait_time_data = self.generate_wait_time_histogram_data()
+        return self._plotting_service.plot_wait_time_histogram(wait_time_data, filename, show)
+    
+    def plot_arrival_curves(self, interval: TimeInterval = TimeInterval.HOUR, 
+                           filename: str = None, show: bool = False) -> str:
+        """Generate patient arrival and encounter curves plot
+        
+        Args:
+            interval: Time interval for grouping data
+            filename: Optional filename for saving the plot
+            show: Whether to display the plot
+            
+        Returns:
+            Path to the saved plot file
+        """
+        arrival_data = self.generate_arrival_curve_data(interval)
+        return self._plotting_service.plot_arrival_curves(arrival_data, filename, show)
+    
+    def plot_triage_distribution(self, filename: str = None, show: bool = False) -> str:
+        """Generate triage category distribution plots
+        
+        Args:
+            filename: Optional filename for saving the plot
+            show: Whether to display the plot
+            
+        Returns:
+            Path to the saved plot file
+        """
+        system_metrics = self.generate_system_metrics()
+        triage_dist = {k.value: v for k, v in system_metrics.triage_category_distribution.items()}
+        return self._plotting_service.plot_triage_distribution(triage_dist, filename, show)
+    
+    def plot_resource_utilization(self, filename: str = None, show: bool = False) -> str:
+        """Generate resource utilization visualization
+        
+        Args:
+            filename: Optional filename for saving the plot
+            show: Whether to display the plot
+            
+        Returns:
+            Path to the saved plot file
+        """
+        resource_data = self.calculate_resource_utilization()
+        return self._plotting_service.plot_resource_utilization(resource_data, filename, show)
+    
+    def plot_flowchart_usage(self, filename: str = None, show: bool = False) -> str:
+        """Generate flowchart usage analysis plot
+        
+        Args:
+            filename: Optional filename for saving the plot
+            show: Whether to display the plot
+            
+        Returns:
+            Path to the saved plot file
+        """
+        system_metrics = self.generate_system_metrics()
+        flowchart_usage = {k.value: v for k, v in system_metrics.flowchart_usage.items()}
+        return self._plotting_service.plot_flowchart_usage(flowchart_usage, filename, show)
+    
+    def create_dashboard(self, filename: str = None, show: bool = False) -> str:
+        """Create a comprehensive dashboard with multiple visualizations
+        
+        Args:
+            filename: Optional filename for saving the plot
+            show: Whether to display the plot
+            
+        Returns:
+            Path to the saved plot file
+        """
+        # Gather all metrics data for dashboard
+        dashboard_data = {
+            'system_metrics': {
+                'total_patients': len(self._patient_metrics),
+                'wait_time_statistics': self.calculate_wait_time_statistics(),
+                'resource_utilization': self.calculate_resource_utilization(),
+                'peak_arrival_hour': self.generate_system_metrics().peak_arrival_hour,
+                'triage_category_distribution': {k.value: v for k, v in self.generate_system_metrics().triage_category_distribution.items()},
+                'flowchart_usage': {k.value: v for k, v in self.generate_system_metrics().flowchart_usage.items()}
+            },
+            'wait_time_histogram': self.generate_wait_time_histogram_data(),
+            'arrival_curve': self.generate_arrival_curve_data()
+        }
+        return self._plotting_service.create_dashboard(dashboard_data, filename, show)
+    
+    def generate_all_plots(self, prefix: str = None) -> Dict[str, str]:
+        """Generate all available plots
+        
+        Args:
+            prefix: Optional prefix for all filenames
+            
+        Returns:
+            Dictionary mapping plot types to their file paths
+        """
+        plot_files = {}
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        if prefix:
+            base_prefix = f"{prefix}_{timestamp}"
+        else:
+            base_prefix = timestamp
+        
+        try:
+            plot_files['wait_time_histogram'] = self.plot_wait_time_histogram(
+                filename=f"{base_prefix}_wait_time_histogram.png"
+            )
+        except Exception as e:
+            print(f"Warning: Could not generate wait time histogram: {e}")
+        
+        try:
+            plot_files['arrival_curves'] = self.plot_arrival_curves(
+                filename=f"{base_prefix}_arrival_curves.png"
+            )
+        except Exception as e:
+            print(f"Warning: Could not generate arrival curves: {e}")
+        
+        try:
+            plot_files['triage_distribution'] = self.plot_triage_distribution(
+                filename=f"{base_prefix}_triage_distribution.png"
+            )
+        except Exception as e:
+            print(f"Warning: Could not generate triage distribution: {e}")
+        
+        try:
+            plot_files['resource_utilization'] = self.plot_resource_utilization(
+                filename=f"{base_prefix}_resource_utilization.png"
+            )
+        except Exception as e:
+            print(f"Warning: Could not generate resource utilization: {e}")
+        
+        try:
+            plot_files['flowchart_usage'] = self.plot_flowchart_usage(
+                filename=f"{base_prefix}_flowchart_usage.png"
+            )
+        except Exception as e:
+            print(f"Warning: Could not generate flowchart usage: {e}")
+        
+        try:
+            plot_files['dashboard'] = self.create_dashboard(
+                filename=f"{base_prefix}_dashboard.png"
+            )
+        except Exception as e:
+            print(f"Warning: Could not generate dashboard: {e}")
+        
+        return plot_files
+    
+    def get_plotting_service(self):
+        """Get the plotting service instance
+        
+        Returns:
+            PlottingService instance
+        """
+        return self._plotting_service
+    
+    def get_available_plot_types(self) -> List[str]:
+        """Get list of available plot types
+        
+        Returns:
+            List of available plotting methods
+        """
+        return self._plotting_service.get_available_plot_types()
