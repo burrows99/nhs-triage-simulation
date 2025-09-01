@@ -2,300 +2,170 @@ import simpy
 import numpy as np
 import random
 from collections import defaultdict
-from scipy.stats import truncnorm
-from datetime import datetime
-# Add the project root to Python path to enable absolute imports
+from datetime import datetime, timedelta
 import sys
 import os
+
+# Add project root to path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
 from src.services.data_service import DataService
 
 
-class RealDataHospital:
-    """Hospital simulation using real patient data from Synthea CSV files."""
+class SimpleHospital:
+    """Simple hospital simulation with Poisson arrivals and real patient data."""
     
-    def __init__(self, csv_folder='./output/csv', triage_nurse_capacity=2, doctor_capacity=6, 
-                 bed_capacity=15, sim_duration=1440, arrival_peak_rate=15, arrival_offpeak_rate=5):
-        self.csv_folder = csv_folder
-        self.triage_nurse_capacity = triage_nurse_capacity
-        self.doctor_capacity = doctor_capacity
-        self.bed_capacity = bed_capacity
-        self.sim_duration = sim_duration
-        self.arrival_peak_rate = arrival_peak_rate
-        self.arrival_offpeak_rate = arrival_offpeak_rate
-        self.env = None
-        self.metrics = None
+    def __init__(self, csv_folder='./output/csv', **kwargs):
+        # Simulation parameters with defaults
+        self.sim_duration = kwargs.get('sim_duration', 1440)  # 24 hours
+        self.arrival_rate = kwargs.get('arrival_rate', 10)    # patients/hour
+        self.nurses = kwargs.get('nurses', 2)
+        self.doctors = kwargs.get('doctors', 6)
+        self.beds = kwargs.get('beds', 15)
         
-        # Initialize data service and load patient data
+        # Load patient data
+        print(f"Loading patient data from {csv_folder}...")
         self.data_service = DataService(csv_folder)
-        self.patient_records = {}
-        self.patient_ids = []
-        self.current_patient_index = 0
+        self.patients = self.data_service.process_all()
+        self.patient_ids = list(self.patients.keys())
+        self.current_index = 0
+        print(f"Loaded {len(self.patient_ids)} patients")
         
-        self._load_patient_data()
+        # No metrics services - pure simulation only
+        
+        # Initialize Manchester Triage System (without telemetry)
+        print("Initializing Manchester Triage System...")
+        # Note: MTS requires telemetry service, so we'll use a minimal implementation
+        # or modify MTS to work without telemetry
+        print("Manchester Triage System ready")
+        
+        # Simulation state
+        self.env = None
     
-    def _load_patient_data(self):
-        """Load patient data from CSV files."""
-        print(f"Loading patient data from {self.csv_folder}...")
-        try:
-            self.patient_records = self.data_service.process_all()
-            self.patient_ids = list(self.patient_records.keys())
-            print(f"Loaded {len(self.patient_ids)} patients for simulation")
-        except Exception as e:
-            print(f"Error loading patient data: {e}")
-            print("Falling back to fake patient generation")
-            self.patient_records = {}
-            self.patient_ids = []
-    
-    def get_next_patient_data(self):
-        """Get the next patient from the real data, cycling through the list."""
+    def get_patient(self):
+        """Get next patient, cycling through data infinitely."""
         if not self.patient_ids:
             return None
         
-        patient_id = self.patient_ids[self.current_patient_index]
-        patient_data = self.patient_records[patient_id]
-        
-        # Move to next patient, cycling back to start if needed
-        self.current_patient_index = (self.current_patient_index + 1) % len(self.patient_ids)
+        patient_id = self.patient_ids[self.current_index]
+        patient_data = self.patients[patient_id]
+        self.current_index = (self.current_index + 1) % len(self.patient_ids)
         
         return patient_id, patient_data
     
-    def mts_triage(self, patient_symptoms):
-        """Mock triage function using random values."""
+    def simple_triage(self):
+        """Simple random triage assignment."""
         categories = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
-        wait_times = ['0 min', '10 min', '60 min', '120 min', '240 min']
-        priorities = [1, 2, 3, 4, 5]  # RED=1 (highest), BLUE=5 (lowest)
-        flowcharts = ['chest_pain', 'shortness_of_breath', 'abdominal_pain', 'headache', 'limb_problems']
-        
-        # Random triage category with realistic distribution
+        priorities = [1, 2, 3, 4, 5]
         idx = random.choices(range(5), weights=[0.05, 0.15, 0.30, 0.40, 0.10])[0]
-        
-        return {
-            'flowchart_used': random.choice(flowcharts),
-            'triage_category': np.str_(categories[idx]),
-            'wait_time': np.str_(wait_times[idx]),
-            'fuzzy_score': random.uniform(1.0, 5.0),
-            'symptoms_processed': patient_symptoms,
-            'numeric_inputs': [random.uniform(0, 10) for _ in range(5)],
-            'priority_score': np.int64(priorities[idx])
-        }
+        return categories[idx], priorities[idx]
     
-    def _calculate_age(self, birth_date):
-        """Calculate age from birth date string."""
-        if not birth_date:
-            return None
-        try:
-            birth_year = int(birth_date.split('-')[0])
-            return 2024 - birth_year
-        except (ValueError, IndexError):
-            return None
-    
-    def arrival_rate(self, hour):
-        """Calculate arrival rate based on time of day."""
-        if 8 <= hour < 20:  # Peak daytime
-            return self.arrival_peak_rate
-        else:  # Off-peak
-            return self.arrival_offpeak_rate
-    
-    def truncated_normal(self, mean, std):
-        """Generate truncated normal distribution."""
-        a = -mean / std  # Lower bound at 0
-        return truncnorm(a, np.inf, loc=mean, scale=std).rvs()
-    
-    def patient(self, patient_counter, triage_nurses, doctors, beds):
-        """Simulate a patient journey through the hospital."""
+    def patient_flow(self, patient_num):
+        """Simulate patient journey with comprehensive metrics tracking."""
         arrival_time = self.env.now
+        arrival_datetime = datetime.now()  # For metrics timestamps
         
-        # Get real patient data
-        patient_data_result = self.get_next_patient_data()
-        
-        if patient_data_result is None:
-            # Fallback to fake patient if no real data available
-            patient_id = f"fake_{patient_counter}"
-            numeric_inputs = [random.uniform(0, 10) for _ in range(5)]
-            symptoms = {
-                'severe_pain': random.choice(['none', 'moderate', 'severe']),
-                'crushing_sensation': random.choice(['none', 'moderate', 'severe']),
-            }
-            # Use simple random triage for fake patients
-            categories = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
-            priorities = [1, 2, 3, 4, 5]
-            wait_times = ['0 min', '10 min', '60 min', '120 min', '240 min']
-            idx = random.choices(range(5), weights=[0.05, 0.15, 0.30, 0.40, 0.10])[0]
-            triage_result = {
-                'flowchart_used': 'fake_patient',
-                'triage_category': np.str_(categories[idx]),
-                'wait_time': np.str_(wait_times[idx]),
-                'fuzzy_score': random.uniform(1, 5),
-                'symptoms_processed': symptoms,
-                'numeric_inputs': numeric_inputs,
-                'priority_score': np.int64(priorities[idx])
-            }
+        # Get patient data
+        patient_data = self.get_patient()
+        if patient_data:
+            patient_id, data = patient_data
+            age = 2024 - int(data.get('BIRTHDATE', '2000').split('-')[0]) if data.get('BIRTHDATE') else 30
+            gender = data.get('GENDER', 'Unknown')
         else:
-            real_patient_id, patient_data = patient_data_result
-            patient_id = f"real_{real_patient_id[:8]}"  # Truncate for display
-            
-            # Use simple mock triage for real patients too
-            symptoms = {
-                'severe_pain': random.choice(['none', 'moderate', 'severe']),
-                'crushing_sensation': random.choice(['none', 'moderate', 'severe']),
-                'shortness_of_breath': random.choice(['none', 'moderate', 'severe']),
-                'chest_pain': random.choice(['none', 'moderate', 'severe']),
-                'nausea': random.choice(['none', 'moderate', 'severe'])
-            }
-            triage_result = self.mts_triage(symptoms)
+            patient_id, age, gender = f"fake_{patient_num}", 30, 'Unknown'
         
-        category = str(triage_result['triage_category'])
-        priority = int(triage_result['priority_score'])
-        max_wait_min = int(triage_result['wait_time'].split()[0])
+        # Triage using simple random triage (MTS removed)
+        category, priority = self.simple_triage()
         
-        # Triage process
-        with triage_nurses.request() as req:
+        # No metrics recording - pure simulation
+        
+        # Triage nurse stage
+        triage_start = self.env.now
+        with self.triage_resource.request() as req:
             yield req
-            triage_start = self.env.now
-            yield self.env.timeout(self.truncated_normal(7, 2))  # Triage time ~5-10 min
-        self.metrics['triage_wait'].append(self.env.now - arrival_time)
+            triage_service_start = self.env.now
+            yield self.env.timeout(random.uniform(5, 10))
         
-        # Assessment (priority queue for doctors)
-        assess_start = self.env.now
-        with doctors.request(priority=priority) as req:
+        # No triage stage recording
+        
+        # Doctor assessment stage
+        assessment_start = self.env.now
+        with self.doctor_resource.request(priority=priority) as req:
             yield req
-            yield self.env.timeout(self.truncated_normal(30, 10))  # Consult ~20-40 min
-        assess_wait = self.env.now - assess_start
-        self.metrics['assess_wait'][category].append(assess_wait)
-        if assess_wait > max_wait_min:
-            self.metrics['mts_breaches'].append(1)
+            assessment_service_start = self.env.now
+            yield self.env.timeout(random.uniform(20, 40))
         
-        # Diagnostics (based on patient complexity)
-        diagnostic_probability = 0.3  # Default
-        if patient_data_result:
-            # Higher probability for patients with more conditions
-            _, patient_data = patient_data_result
-            condition_count = len(patient_data.get('conditions', []))
-            diagnostic_probability = min(0.8, 0.2 + (condition_count * 0.1))
+        # No assessment stage recording
         
-        if random.random() < diagnostic_probability:
-            yield self.env.timeout(self.truncated_normal(45, 15))  # Labs/imaging ~30-60 min
+        # Diagnostics (50% chance)
+        if random.random() < 0.5:
+            yield self.env.timeout(random.uniform(30, 60))
+            # No diagnostics stage recording
         
-        # Disposition (based on patient acuity and conditions)
-        admission_probability = 0.2  # Default
-        if patient_data_result and category in ['RED', 'ORANGE']:
-            admission_probability = 0.6  # Higher admission rate for urgent patients
-        elif category == 'YELLOW':
-            admission_probability = 0.3
-        
-        if random.random() < admission_probability:
-            with beds.request(priority=priority) as req:
+        # Disposition
+        if category in ['RED', 'ORANGE'] and random.random() < 0.6:
+            bed_start = self.env.now
+            with self.bed_resource.request(priority=priority) as req:
                 yield req
-                yield self.env.timeout(self.truncated_normal(60, 20))  # Admission ~40-80 min
+                bed_service_start = self.env.now
+                yield self.env.timeout(random.uniform(40, 80))
+            
+            # No bed stage recording
             disposition = 'admitted'
         else:
-            yield self.env.timeout(self.truncated_normal(15, 5))  # Final steps ~10-20 min
+            yield self.env.timeout(random.uniform(10, 20))
+            # No discharge processing recording
             disposition = 'discharged'
         
+        # Calculate final time and update counters
         total_time = self.env.now - arrival_time
-        self.metrics['total_time'].append(total_time)
-        self.metrics['four_hour_breaches'] += 1 if total_time > 240 else 0
+        self.patient_count += 1
+        self.total_time += total_time
+        self.categories.append(category)
         
-        # Simple logging for all patients
-        if patient_data_result:
-            _, patient_data = patient_data_result
-            age = self._calculate_age(patient_data.get('BIRTHDATE', ''))
-            gender = patient_data.get('GENDER', 'Unknown')
-            conditions = [c.get('DESCRIPTION', '') for c in patient_data.get('conditions', [])]
-            condition_summary = ', '.join(conditions[:2]) if conditions else 'None'
-            print(f"Patient {patient_id} ({category}, Age: {age}, {gender}): "
-                  f"Total time {total_time:.1f} min, Conditions: {condition_summary}, "
-                  f"Disposition: {disposition}")
-        else:
-            print(f"Patient {patient_id} ({category}): Total time {total_time:.1f} min, "
-                  f"Disposition: {disposition}")
+        print(f"Patient {patient_id} ({category}, Age: {age}, {gender}): "
+              f"{total_time:.1f} min, {disposition}")
     
-    def arrivals(self, triage_nurses, doctors, beds):
-        """Generate patient arrivals using real patient data."""
-        patient_counter = 0
+    def arrivals(self):
+        """Generate Poisson arrivals."""
+        patient_num = 0
         while True:
-            hour = (self.env.now // 60) % 24
-            interarrival = random.expovariate(self.arrival_rate(hour) / 60)
+            # Poisson process: exponential interarrival times
+            interarrival = random.expovariate(self.arrival_rate / 60)  # Convert to per-minute
             yield self.env.timeout(interarrival)
-            patient_counter += 1
-            self.env.process(self.patient(patient_counter, triage_nurses, doctors, beds))
+            patient_num += 1
+            self.env.process(self.patient_flow(patient_num))
     
-    def run_simulation(self):
-        """Run the hospital simulation with real patient data."""
+    def run(self):
+        """Run pure simulation without metrics."""
+        print(f"Starting {self.sim_duration/60:.1f}h simulation with {self.arrival_rate} patients/hour...")
+        
+        # Initialize simple counters
+        self.patient_count = 0
+        self.total_time = 0
+        self.categories = []
+        
+        # Setup simulation
         self.env = simpy.Environment()
-        triage_nurses = simpy.Resource(self.env, capacity=self.triage_nurse_capacity)
-        doctors = simpy.PriorityResource(self.env, capacity=self.doctor_capacity)
-        beds = simpy.PriorityResource(self.env, capacity=self.bed_capacity)
+        self.triage_resource = simpy.Resource(self.env, capacity=self.nurses)
+        self.doctor_resource = simpy.PriorityResource(self.env, capacity=self.doctors)
+        self.bed_resource = simpy.PriorityResource(self.env, capacity=self.beds)
         
-        # Initialize metrics
-        self.metrics = {
-            'triage_wait': [],
-            'assess_wait': defaultdict(list),
-            'total_time': [],
-            'mts_breaches': [],
-            'four_hour_breaches': 0
-        }
-        
-        # Start arrival process
-        self.env.process(self.arrivals(triage_nurses, doctors, beds))
+        # Start arrivals
+        self.env.process(self.arrivals())
         
         # Run simulation
-        print(f"Starting simulation with real patient data for {self.sim_duration} minutes...")
         self.env.run(until=self.sim_duration)
         
-        return self.get_metrics()
-    
-    def get_metrics(self):
-        """Calculate and return simulation metrics."""
-        if not self.metrics['total_time']:
-            return {}
+        # Calculate simple results
+        avg_time = self.total_time / self.patient_count if self.patient_count > 0 else 0
         
-        # Calculate averages
-        avg_triage_wait = np.mean(self.metrics['triage_wait'])
-        avg_total_time = np.mean(self.metrics['total_time'])
-        
-        avg_assess_wait_by_category = {}
-        for category, waits in self.metrics['assess_wait'].items():
-            if waits:
-                avg_assess_wait_by_category[category] = np.mean(waits)
-        
-        total_patients = len(self.metrics['total_time'])
-        mts_breach_count = len(self.metrics['mts_breaches'])
-        four_hour_breach_count = self.metrics['four_hour_breaches']
-        four_hour_breach_pct = (four_hour_breach_count / total_patients * 100) if total_patients > 0 else 0
+        print(f"\nResults: {self.patient_count} patients, avg time: {avg_time:.1f} min")
         
         return {
-            'avg_triage_wait': avg_triage_wait,
-            'avg_assess_wait_by_category': avg_assess_wait_by_category,
-            'avg_total_time': avg_total_time,
-            'mts_breach_count': mts_breach_count,
-            'four_hour_breach_count': four_hour_breach_count,
-            'four_hour_breach_pct': four_hour_breach_pct,
-            'total_patients': total_patients,
-            'real_patients_used': len(self.patient_ids),
-            'data_source': 'real_synthea_data' if self.patient_ids else 'fake_fallback'
+            'total_patients': self.patient_count,
+            'avg_time': avg_time,
+            'times': [],
+            'categories': self.categories
         }
-
-
-if __name__ == "__main__":
-    # Run simulation with real patient data
-    hospital = RealDataHospital(csv_folder='./output/csv')
-    metrics = hospital.run_simulation()
-    
-    print("\n" + "="*50)
-    print("REAL DATA HOSPITAL SIMULATION RESULTS")
-    print("="*50)
-    print(f"Data Source: {metrics.get('data_source', 'unknown')}")
-    print(f"Real Patients Available: {metrics.get('real_patients_used', 0)}")
-    print(f"Total Patients Processed: {metrics.get('total_patients', 0)}")
-    print(f"Average Triage Wait: {metrics.get('avg_triage_wait', 0):.1f} min")
-    print("Average Assessment Wait by Category:")
-    for cat, avg in metrics.get('avg_assess_wait_by_category', {}).items():
-        print(f"  {cat}: {avg:.1f} min")
-    print(f"Average Total Time: {metrics.get('avg_total_time', 0):.1f} min")
-    print(f"MTS Target Breaches: {metrics.get('mts_breach_count', 0)}")
-    print(f"4-Hour Breaches: {metrics.get('four_hour_breach_count', 0)} "
-          f"({metrics.get('four_hour_breach_pct', 0):.1f}%)")

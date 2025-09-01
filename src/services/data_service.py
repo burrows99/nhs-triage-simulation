@@ -234,28 +234,3 @@ class DataService:
         
         print("Data processing complete!")
         return self.patient_data
-
-
-# Example usage
-if __name__ == "__main__":
-    # Initialize service
-    data_service = DataService(csv_folder="./output")
-    
-    try:
-        # Process all data
-        patient_records = data_service.process_all()
-        
-        # Print summary
-        stats = data_service.get_summary_stats()
-        print("\nSummary Statistics:")
-        print(json.dumps(stats, indent=2))
-        
-        # Export sample patient
-        if patient_records:
-            sample_patient_id = next(iter(patient_records.keys()))
-            print(f"\nSample patient record ({sample_patient_id}):")
-            sample_record = data_service.get_patient_record(sample_patient_id)
-            print(json.dumps(sample_record, indent=2, default=str)[:1000] + "...")
-            
-    except Exception as e:
-        print(f"Error: {e}")

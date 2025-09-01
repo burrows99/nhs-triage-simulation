@@ -216,7 +216,7 @@ $RECYCLE.BIN/
 # Project-specific ignores
 # Output files
 output/csv/
-output/manchester_triage_system/telemetry/*.json
+# Removed telemetry directory - telemetry data is now integrated into metrics
 
 # Test files
 test/

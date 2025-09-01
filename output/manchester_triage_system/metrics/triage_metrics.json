@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "service_name": "triage_metrics",
+    "start_time": "2025-09-01T20:18:53.717613",
+    "version": "1.0.0"
+  },
+  "metrics": {},
+  "counters": {
+    "total_triage_decisions": 0,
+    "fuzzy_inferences": 0,
+    "flowchart_lookups": 0
+  },
+  "timers": {
+    "triage_processing": []
+  },
+  "summary": {
+    "service_name": "triage_metrics",
+    "uptime_seconds": 0.016389,
+    "total_metrics": 0,
+    "total_counters": 3,
+    "total_timers": 1,
+    "start_time": "2025-09-01T20:18:53.717613",
+    "current_time": "2025-09-01T20:18:53.734009",
+    "total_decisions": 0,
+    "category_distribution": {
+      "RED": 0.0,
+      "ORANGE": 0.0,
+      "YELLOW": 0.0,
+      "GREEN": 0.0,
+      "BLUE": 0.0
+    },
+    "fuzzy_score_stats": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "processing_time_stats": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "top_flowcharts": [],
+    "average_processing_time_ms": 0.0,
+    "total_processing_time_ms": 0,
+    "fuzzy_inferences": 0,
+    "flowchart_lookups": 0,
+    "lookup_success_rate": 0.0
+  }
+}
