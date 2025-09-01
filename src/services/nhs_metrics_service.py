@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 import json
+from .plotting_service import PlottingService
 
 
 @dataclass
@@ -95,6 +96,9 @@ class NHSMetricsService:
         self.lwbs_count = 0
         self.reattendance_count = 0
         self.admissions_count = 0
+        
+        # Initialize plotting service
+        self.plotting_service = PlottingService()
     
     def add_patient_arrival(self, patient_id: str, arrival_time: float, 
                            age: int = 30, gender: str = "Unknown", 
@@ -432,6 +436,162 @@ class NHSMetricsService:
             df = pd.DataFrame(data)
             df.to_csv(csv_filepath, index=False)
             print(f"Patient data exported to {csv_filepath}")
+    
+    def plot_compliance_chart(self, save_path: Optional[str] = None):
+        """Generate NHS 4-hour compliance chart.
+        
+        Args:
+            save_path: Optional path to save the chart
+        """
+        metrics = self.calculate_nhs_metrics()
+        return self.plotting_service.create_compliance_chart(metrics, save_path=save_path)
+    
+    def plot_triage_distribution(self, save_path: Optional[str] = None):
+        """Generate triage category distribution chart.
+        
+        Args:
+            save_path: Optional path to save the chart
+        """
+        # Get triage distribution data
+        triage_counts = defaultdict(int)
+        for patient in self.patients:
+            if patient.triage_category:
+                triage_counts[patient.triage_category] += 1
+        
+        return self.plotting_service.create_triage_distribution_chart(
+            dict(triage_counts), save_path=save_path)
+    
+    def plot_time_distribution(self, save_path: Optional[str] = None):
+        """Generate patient time distribution histogram.
+        
+        Args:
+            save_path: Optional path to save the chart
+        """
+        times = [p.total_time_in_ae() for p in self.patients if p.total_time_in_ae() > 0]
+        return self.plotting_service.create_time_distribution_chart(times, save_path=save_path)
+    
+    def plot_age_group_analysis(self, save_path: Optional[str] = None):
+        """Generate age group analysis chart.
+        
+        Args:
+            save_path: Optional path to save the chart
+        """
+        # Calculate age group data
+        age_groups = {
+            '0-17': {'patients': [], 'count': 0, 'avg_time': 0, 'compliance_pct': 0},
+            '18-64': {'patients': [], 'count': 0, 'avg_time': 0, 'compliance_pct': 0},
+            '65+': {'patients': [], 'count': 0, 'avg_time': 0, 'compliance_pct': 0}
+        }
+        
+        for patient in self.patients:
+            if patient.age < 18:
+                group = '0-17'
+            elif patient.age < 65:
+                group = '18-64'
+            else:
+                group = '65+'
+            
+            age_groups[group]['patients'].append(patient)
+            age_groups[group]['count'] += 1
+        
+        # Calculate averages and compliance
+        for group_data in age_groups.values():
+            if group_data['count'] > 0:
+                times = [p.total_time_in_ae() for p in group_data['patients']]
+                group_data['avg_time'] = np.mean(times)
+                compliant = sum(1 for p in group_data['patients'] if p.meets_4hour_standard())
+                group_data['compliance_pct'] = (compliant / group_data['count']) * 100
+        
+        # Remove empty groups and format for plotting
+        plot_data = {group: data for group, data in age_groups.items() if data['count'] > 0}
+        
+        return self.plotting_service.create_age_group_analysis_chart(plot_data, save_path=save_path)
+    
+    def plot_performance_dashboard(self, save_path: Optional[str] = None):
+        """Generate comprehensive NHS performance dashboard.
+        
+        Args:
+            save_path: Optional path to save the dashboard
+        """
+        metrics = self.calculate_nhs_metrics()
+        
+        # Prepare dashboard data
+        dashboard_data = metrics.copy()
+        
+        # Add triage distribution
+        triage_counts = defaultdict(int)
+        for patient in self.patients:
+            if patient.triage_category:
+                triage_counts[patient.triage_category] += 1
+        dashboard_data['triage_distribution'] = dict(triage_counts)
+        
+        # Add patient times
+        dashboard_data['patient_times'] = [p.total_time_in_ae() for p in self.patients if p.total_time_in_ae() > 0]
+        
+        # Add age group data
+        age_groups = {
+            '0-17': {'patients': [], 'count': 0},
+            '18-64': {'patients': [], 'count': 0},
+            '65+': {'patients': [], 'count': 0}
+        }
+        
+        for patient in self.patients:
+            if patient.age < 18:
+                group = '0-17'
+            elif patient.age < 65:
+                group = '18-64'
+            else:
+                group = '65+'
+            
+            age_groups[group]['patients'].append(patient)
+            age_groups[group]['count'] += 1
+        
+        dashboard_data['age_groups'] = {group: data for group, data in age_groups.items() if data['count'] > 0}
+        
+        return self.plotting_service.create_performance_dashboard(dashboard_data, save_path=save_path)
+    
+    def generate_all_plots(self, output_dir: str = "./output/nhs_metrics/plots"):
+        """Generate all available NHS metrics plots.
+        
+        Args:
+            output_dir: Directory to save all plots
+        """
+        import os
+        os.makedirs(output_dir, exist_ok=True)
+        
+        plots_generated = []
+        
+        try:
+            # Generate individual plots
+            self.plot_compliance_chart(f"{output_dir}/compliance_chart.png")
+            plots_generated.append("compliance_chart.png")
+            
+            self.plot_triage_distribution(f"{output_dir}/triage_distribution.png")
+            plots_generated.append("triage_distribution.png")
+            
+            self.plot_time_distribution(f"{output_dir}/time_distribution.png")
+            plots_generated.append("time_distribution.png")
+            
+            if len(self.patients) > 0:  # Only if we have patient data
+                self.plot_age_group_analysis(f"{output_dir}/age_group_analysis.png")
+                plots_generated.append("age_group_analysis.png")
+            
+            # Generate comprehensive dashboard
+            self.plot_performance_dashboard(f"{output_dir}/performance_dashboard.png")
+            plots_generated.append("performance_dashboard.png")
+            
+            print(f"Generated {len(plots_generated)} NHS metrics plots in {output_dir}:")
+            for plot in plots_generated:
+                print(f"  - {plot}")
+                
+        except Exception as e:
+            print(f"Error generating plots: {e}")
+        
+        return plots_generated
+    
+    def close_plots(self):
+        """Close all matplotlib figures to free memory."""
+        self.plotting_service.close_all_figures()
     
     def reset(self):
         """Reset all metrics and patient data"""
