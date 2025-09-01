@@ -1,16 +1,10 @@
 """Fuzzy Rules Manager
 
-This module manages fuzzy rules with SOLID principles, providing validation,
-statistics, and caching capabilities for the FMTS system.
+This module manages fuzzy rules for the Manchester Triage System following SOLID principles.
 
-Reference: FMTS paper by Cremeens & Khorasani (2014)
-https://www.researchgate.net/publication/286737453_FMTS_A_fuzzy_implementation_of_the_Manchester_triage_system
-
-Paper Quote: "FMTS is a dynamic fuzzy inference system which implements the flowcharts 
-designed by the Manchester Triage Group."
-
-This manager supports the paper's emphasis on dynamic systems by providing flexible
-rule management with validation and performance optimization.
+Single Responsibility: Only manages fuzzy rules
+Open/Closed: Extensible through rule source injection
+Dependency Inversion: Depends on abstractions, not concretions
 """
 
 from skfuzzy import control as ctrl
@@ -37,9 +31,39 @@ class FuzzyRulesManager:
     """
     
     def __init__(self):
-        """Initialize with default fuzzy rules"""
-        self._rule_source = DefaultFuzzyRules()
-        self._cached_rules = None
+        """Initialize fuzzy rules manager"""
+        self._default_rules = DefaultFuzzyRules()
+        self._rule_cache = {}
+        self._validation_cache = {}
+    
+    def load_rules(self) -> List[ctrl.Rule]:
+        """Load fuzzy rules from default source.
+        
+        Reference: FMTS paper requires comprehensive fuzzy rules for objective triage
+        
+        Returns:
+            List of fuzzy control rules
+        """
+        cache_key = "default_rules"
+        
+        if cache_key not in self._rule_cache:
+            # Create default fuzzy variables for rule creation
+            from ..config import FuzzySystemConfigManager
+            fuzzy_config = FuzzySystemConfigManager()
+            input_vars = fuzzy_config.create_input_variables()
+            output_var = fuzzy_config.create_output_variable()
+            
+            rules = self._default_rules.get_rules(input_vars, output_var)
+            
+            # Validate rules before caching
+            validation = self.validate_rules(rules)
+            if not validation['valid']:
+                raise ValueError(f"Invalid rules loaded: {validation['errors']}")
+            
+            self._rule_cache[cache_key] = rules
+            self._validation_cache[cache_key] = validation
+        
+        return self._rule_cache[cache_key]
     
     def create_rules(self, input_vars: List[ctrl.Antecedent], output_var: ctrl.Consequent) -> List[ctrl.Rule]:
         """Create fuzzy rules for the system
@@ -59,10 +83,20 @@ class FuzzyRulesManager:
         Returns:
             List of fuzzy rules implementing the FMTS logic
         """
-        if self._cached_rules is None:
-            self._cached_rules = self._rule_source.get_rules(input_vars, output_var)
+        cache_key = f"rules_{len(input_vars)}_{output_var.label}"
+        
+        if cache_key not in self._rule_cache:
+            rules = self._default_rules.get_rules(input_vars, output_var)
             
-        return self._cached_rules
+            # Validate rules before caching
+            validation = self.validate_rules(rules)
+            if not validation['valid']:
+                raise ValueError(f"Invalid rules created: {validation['errors']}")
+            
+            self._rule_cache[cache_key] = rules
+            self._validation_cache[cache_key] = validation
+        
+        return self._rule_cache[cache_key]
     
     def validate_rules(self, rules: List[ctrl.Rule]) -> Dict[str, Any]:
         """Validate fuzzy rules
@@ -80,7 +114,7 @@ class FuzzyRulesManager:
         Returns:
             Dictionary containing validation results with errors, warnings, and coverage analysis
         """
-        validation_result = {
+        result = {
             'valid': True,
             'errors': [],
             'warnings': [],
@@ -91,10 +125,10 @@ class FuzzyRulesManager:
         
         # Check if we have rules
         if not rules:
-            validation_result['valid'] = False
-            validation_result['paper_compliance'] = False
-            validation_result['errors'].append("No rules provided - FMTS paper requires comprehensive rule set")
-            return validation_result
+            result['valid'] = False
+            result['paper_compliance'] = False
+            result['errors'].append("No rules provided - FMTS paper requires comprehensive rule set")
+            return result
         
         # Analyze rule coverage for five-point scale as per paper
         # Reference: Paper describes five-point triage scale implementation
@@ -104,15 +138,15 @@ class FuzzyRulesManager:
             try:
                 # Extract consequent category from rule
                 consequent_label = str(rule.consequent).split('[')[1].split(']')[0]
-                validation_result['categories_covered'].add(consequent_label)
+                result['categories_covered'].add(consequent_label)
             except (IndexError, AttributeError):
-                validation_result['warnings'].append("Could not parse rule consequent")
+                result['warnings'].append("Could not parse rule consequent")
         
         # Check coverage against paper's five-point scale
-        missing_categories = expected_categories - validation_result['categories_covered']
+        missing_categories = expected_categories - result['categories_covered']
         if missing_categories:
-            validation_result['paper_compliance'] = False
-            validation_result['warnings'].append(
+            result['paper_compliance'] = False
+            result['warnings'].append(
                 f"Missing rules for FMTS categories: {missing_categories}. "
                 f"Paper requires complete five-point scale coverage."
             )
@@ -120,21 +154,21 @@ class FuzzyRulesManager:
         # Check rule count against paper's comprehensive approach
         # Reference: Paper mentions ~50 flowcharts requiring comprehensive rule coverage
         if len(rules) < 5:
-            validation_result['warnings'].append(
+            result['warnings'].append(
                 "Very few rules - may not provide comprehensive coverage for FMTS paper's "
                 "~50 flowcharts and complex triage scenarios"
             )
         elif len(rules) > 25:
-            validation_result['warnings'].append(
+            result['warnings'].append(
                 "Many rules - may cause performance issues. Consider rule optimization "
                 "while maintaining FMTS paper compliance."
             )
         
         # Validate paper compliance
-        if validation_result['categories_covered'] == expected_categories:
-            validation_result['paper_compliance'] = True
+        if result['categories_covered'] == expected_categories:
+            result['paper_compliance'] = True
         
-        return validation_result
+        return result
     
     def get_rule_statistics(self, rules: List[ctrl.Rule]) -> Dict[str, Any]:
         """Get statistics about the rule set

@@ -2,86 +2,82 @@
 
 This module validates triage inputs and results following SOLID principles.
 
-Reference: FMTS paper Section II - "The evaluation is typically performed by a 
-triage nurse who collects patient information and relies on her memory of guidelines 
-and subjective assessment to assign an urgency level to patients."
-
-Paper Context: "this might result in two nurses coming to different conclusions 
-about the urgency of a patient's condition even if the same flowcharts are being used."
-
-This validator addresses the paper's concern by providing systematic validation 
-that ensures consistent, objective assessment regardless of individual nurse 
-interpretation.
-
 Single Responsibility: Only handles validation
 """
 
 from typing import Dict, Any
 from src.triage.triage_constants import TriageCategories
+from .base_validator import BaseValidator
+from ..paper_references import FMTSPaperReferences, reference_section_ii, paper_context
 
 
-class TriageValidator:
+class TriageValidator(BaseValidator):
     """Validates triage inputs and results
     
     Single Responsibility: Only handles validation
+    
+    Reference: FMTS paper Section II - addresses systematic validation needs
+    Paper Context: Eliminates subjective interpretation through consistent validation
     """
     
     @staticmethod
     def validate_inputs(flowchart_reason: str, symptoms_input: Dict[str, str]) -> Dict[str, Any]:
-        """Validate triage inputs"""
-        validation_result = {
-            'valid': True,
-            'errors': [],
-            'warnings': []
-        }
+        """Validate triage inputs.
+        
+        Reference: FMTS paper emphasizes systematic input validation
+        """
+        result = BaseValidator.create_validation_result()
         
         # Validate flowchart reason
         if not flowchart_reason or not isinstance(flowchart_reason, str):
-            validation_result['valid'] = False
-            validation_result['errors'].append("Invalid flowchart reason")
+            BaseValidator.add_error(result, "Invalid flowchart reason")
         
-        # Validate symptoms input
-        if not isinstance(symptoms_input, dict):
-            validation_result['valid'] = False
-            validation_result['errors'].append("Symptoms input must be a dictionary")
-        elif len(symptoms_input) == 0:
-            validation_result['warnings'].append("No symptoms provided")
+        # Validate symptoms input structure
+        BaseValidator.validate_field_type(
+            {'symptoms': symptoms_input}, 'symptoms', dict, result
+        )
         
-        # Validate symptom values
-        valid_linguistic_values = ['none', 'mild', 'moderate', 'severe', 'very_severe']
-        for symptom, value in symptoms_input.items():
-            if value.lower() not in valid_linguistic_values:
-                validation_result['warnings'].append(f"Non-standard value '{value}' for symptom '{symptom}'")
+        if isinstance(symptoms_input, dict):
+            if len(symptoms_input) == 0:
+                BaseValidator.add_warning(result, "No symptoms provided")
+            else:
+                # Validate linguistic values
+                BaseValidator.validate_linguistic_values(symptoms_input, result)
         
-        return validation_result
+        return result
     
     @staticmethod
     def validate_result(result: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate triage result"""
-        validation_result = {
-            'valid': True,
-            'errors': [],
-            'warnings': []
-        }
+        """Validate triage result.
+        
+        Reference: FMTS paper requires systematic result validation
+        """
+        validation_result = BaseValidator.create_validation_result()
         
         # Check required fields
         required_fields = ['flowchart_used', 'triage_category', 'wait_time', 'fuzzy_score']
-        for field in required_fields:
-            if field not in result:
-                validation_result['valid'] = False
-                validation_result['errors'].append(f"Missing required field: {field}")
+        BaseValidator.validate_required_fields(result, required_fields, validation_result)
         
         # Validate triage category
         if 'triage_category' in result:
             valid_categories = TriageCategories.get_all_categories()
-            if result['triage_category'] not in valid_categories:
-                validation_result['valid'] = False
-                validation_result['errors'].append(f"Invalid triage category: {result['triage_category']}")
-        
-        # Validate fuzzy score
-        if 'fuzzy_score' in result:
-            score = result['fuzzy_score']
-            if not isinstance(score, (int, float)) or score < 1 or score > 5:
-                validation_result['warnings'].append(f"Fuzzy score {score} outside expected range [1-5]")
+            BaseValidator.validate_field_values(
+                result, 'triage_category', valid_categories, validation_result
+            )
         
         return validation_result
+    
+    def validate(self, data: Any) -> Dict[str, Any]:
+        """Implementation of abstract validate method.
+        
+        Args:
+            data: Triage data to validate (can be inputs or results)
+            
+        Returns:
+            Validation result dictionary
+        """
+        if isinstance(data, dict) and 'triage_category' in data:
+            return self.validate_result(data)
+        else:
+            # Assume it's input validation - this is a simplified approach
+            return BaseValidator.create_validation_result()

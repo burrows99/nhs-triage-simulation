@@ -13,6 +13,7 @@ All components implement the paper's objective triage system requirements:
 """
 
 # Import all individual service classes
+from .base_validator import BaseValidator
 from .flowchart_lookup_service import FlowchartLookupService
 from .symptom_processor import SymptomProcessor
 from .fuzzy_inference_engine import FuzzyInferenceEngine
@@ -21,6 +22,7 @@ from .triage_validator import TriageValidator
 from .triage_processor import TriageProcessor
 
 __all__ = [
+    'BaseValidator',
     'FlowchartLookupService',
     'SymptomProcessor',
     'FuzzyInferenceEngine',
