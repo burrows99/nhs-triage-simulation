@@ -91,6 +91,31 @@ class RandomService:
         """
         return random.uniform(10, 20)
     
+    def determine_patient_disposition(self, category: str) -> tuple[str, bool, float]:
+        """Determine patient disposition (admission or discharge) with processing time.
+        
+        Args:
+            category: Triage category
+            
+        Returns:
+            Tuple of (disposition, admitted, processing_time)
+            - disposition: 'admitted' or 'discharged'
+            - admitted: Boolean indicating admission status
+            - processing_time: Time in minutes for disposition processing
+        """
+        if self.should_admit_patient(category):
+            # High priority patients have 60% chance of admission
+            disposition = 'admitted'
+            admitted = True
+            processing_time = self.get_admission_time()
+        else:
+            # Discharge process
+            disposition = 'discharged'
+            admitted = False
+            processing_time = self.get_discharge_time()
+        
+        return disposition, admitted, processing_time
+    
     def get_patient_arrival_interval(self, arrival_rate: float) -> float:
         """Get random patient arrival interval using Poisson process.
         

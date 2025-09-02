@@ -249,25 +249,19 @@ class SimpleHospital:
     
     def _process_disposition(self, category, priority):
         """Process patient disposition (admission or discharge)."""
-        admitted = False
+        # Get disposition decision and processing time from random service
+        disposition, admitted, processing_time = self.random_service.determine_patient_disposition(category)
         
-        if self.random_service.should_admit_patient(category):
-            # High priority patients have 60% chance of admission
+        if admitted:
+            # Admission process - requires bed allocation
             bed_start = self.env.now
             with self.bed_resource.request(priority=priority) as req:
                 yield req
                 bed_service_start = self.env.now
-                admission_time = self.random_service.get_admission_time()
-                yield self.env.timeout(admission_time)
-            
-            disposition = 'admitted'
-            admitted = True
+                yield self.env.timeout(processing_time)
         else:
-            # Discharge process
-            discharge_time = self.random_service.get_discharge_time()
-            yield self.env.timeout(discharge_time)
-            disposition = 'discharged'
-            admitted = False
+            # Discharge process - no bed required
+            yield self.env.timeout(processing_time)
         
         return disposition, admitted
     
