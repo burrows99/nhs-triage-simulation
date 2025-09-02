@@ -1,87 +1,87 @@
 {
-  "total_attendances": 58,
-  "active_patients_in_system": 35,
+  "total_attendances": 57,
+  "active_patients_in_system": 20,
   "1_left_before_being_seen_rate_pct": 0.0,
   "2_reattendance_rate_pct": 0.0,
-  "3_time_to_initial_assessment_avg_minutes": 0.0004863097749911928,
-  "4_time_to_treatment_avg_minutes": 4.704731703922441,
-  "5_total_time_in_ae_avg_minutes": 140.18903290943382,
-  "4hour_standard_compliance_pct": 91.37931034482759,
-  "attendances_within_4hours": 53,
-  "attendances_over_4hours": 5,
-  "95pct_target_achieved": false,
+  "3_time_to_initial_assessment_avg_minutes": 0.00042809352540204034,
+  "4_time_to_treatment_avg_minutes": 4.660325857393862,
+  "5_total_time_in_ae_avg_minutes": 113.35244600513535,
+  "4hour_standard_compliance_pct": 96.49122807017544,
+  "attendances_within_4hours": 55,
+  "attendances_over_4hours": 2,
+  "95pct_target_achieved": true,
   "76pct_interim_target_achieved": true,
-  "median_total_time_minutes": 134.22101599005418,
-  "95th_percentile_time_minutes": 244.2733628839051,
-  "admission_rate_pct": 0.0,
+  "median_total_time_minutes": 99.07308496511638,
+  "95th_percentile_time_minutes": 183.70003243608417,
+  "admission_rate_pct": 1.7543859649122806,
   "triage_category_distribution": {
-    "BLUE": "45",
-    "GREEN": "9",
-    "YELLOW": "3",
-    "ORANGE": "1"
+    "BLUE": "47",
+    "GREEN": "8",
+    "ORANGE": "1",
+    "YELLOW": "1"
   },
   "age_group_analysis": {
     "0-17": {
       "count": 12,
-      "avg_time_minutes": 160.778237132658,
-      "4hour_compliance_pct": 75.0,
+      "avg_time_minutes": 100.41034927485164,
+      "4hour_compliance_pct": 100.0,
       "admission_rate_pct": 0.0
     },
     "18-64": {
       "count": 36,
-      "avg_time_minutes": 137.7597616655617,
+      "avg_time_minutes": 119.58897618149255,
       "4hour_compliance_pct": 94.44444444444444,
       "admission_rate_pct": 0.0
     },
     "65+": {
-      "count": 10,
-      "avg_time_minutes": 124.22736431950455,
+      "count": 9,
+      "avg_time_minutes": 105.66245427341806,
       "4hour_compliance_pct": 100.0,
-      "admission_rate_pct": 0.0
+      "admission_rate_pct": 11.11111111111111
     }
   },
   "gender_analysis": {
-    "F": {
-      "count": 33,
-      "avg_time_minutes": 129.88524378538253,
-      "4hour_compliance_pct": 93.93939393939394,
+    "M": {
+      "count": 24,
+      "avg_time_minutes": 113.93638090529593,
+      "4hour_compliance_pct": 95.83333333333334,
       "admission_rate_pct": 0.0
     },
-    "M": {
-      "count": 25,
-      "avg_time_minutes": 153.79003455318156,
-      "4hour_compliance_pct": 88.0,
-      "admission_rate_pct": 0.0
+    "F": {
+      "count": 33,
+      "avg_time_minutes": 112.92776607774583,
+      "4hour_compliance_pct": 96.96969696969697,
+      "admission_rate_pct": 3.0303030303030303
     }
   },
   "time_distribution_analysis": {
-    "min_time_minutes": 55.67772063638262,
-    "max_time_minutes": 275.38141979822547,
-    "std_dev_minutes": 53.428013009953,
+    "min_time_minutes": 74.17434508520122,
+    "max_time_minutes": 266.46283470327717,
+    "std_dev_minutes": 38.43170285191415,
     "quartiles": {
-      "25th_percentile": 95.74624105381204,
-      "50th_percentile": 134.22101599005418,
-      "75th_percentile": 172.34558162011962
+      "25th_percentile": 92.33406202813569,
+      "50th_percentile": 99.07308496511638,
+      "75th_percentile": 118.22040591391627
     },
     "distribution_bins": {
-      "0-60min": 2,
-      "60-120min": 22,
-      "120-240min": 29,
-      "240-360min": 5,
+      "0-60min": 0,
+      "60-120min": 45,
+      "120-240min": 10,
+      "240-360min": 2,
       "360+min": 0
     }
   },
   "service_name": "NHSMetrics",
-  "total_records": 58,
-  "active_records": 35,
-  "total_duration_minutes": 467.9400425389774,
-  "start_time": 5.4920810258050565,
-  "end_time": 473.4321235647825,
+  "total_records": 57,
+  "active_records": 20,
+  "total_duration_minutes": 469.57271510805924,
+  "start_time": 5.677168985082591,
+  "end_time": 475.2498840931418,
   "counters": {
     "lwbs_count": 0,
     "reattendance_count": 0,
-    "admissions_count": 0,
-    "total_records": 93,
-    "completed_records": 58
+    "admissions_count": 1,
+    "total_records": 77,
+    "completed_records": 57
   }
 }

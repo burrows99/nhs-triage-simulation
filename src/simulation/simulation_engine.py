@@ -1,0 +1,307 @@
+"""Simulation Engine for Hospital Simulation
+
+This module contains the core simulation engine functionality extracted from SimpleHospital
+to provide better separation of concerns and reusability.
+"""
+
+import simpy
+import logging
+from typing import Dict, List, Any, Callable, Optional
+from src.logger import logger
+
+
+class SimulationEngine:
+    """Core simulation engine for discrete event simulation.
+    
+    This class handles the fundamental simulation mechanics including:
+    - SimPy environment management
+    - Resource initialization and management
+    - Process scheduling and execution
+    - Monitoring and data collection
+    - Simulation time management
+    """
+    
+    def __init__(self, duration: float, arrival_rate: float, resources: Dict[str, int]):
+        """Initialize the simulation engine.
+        
+        Args:
+            duration: Simulation duration in minutes
+            arrival_rate: Patient arrival rate per hour
+            resources: Dictionary of resource types and capacities
+        """
+        self.duration = duration
+        self.arrival_rate = arrival_rate
+        self.resources = resources
+        
+        # Simulation state
+        self.env = None
+        self.simpy_resources = {}
+        self.monitoring_data = []
+        self.resource_usage_log = []
+        
+        # Counters
+        self.patient_count = 0
+        self.total_time = 0
+        self.categories = []
+        
+        # Callbacks
+        self.arrival_callback = None
+        self.monitoring_callback = None
+        
+    def initialize_environment(self):
+        """Initialize the SimPy environment and resources."""
+        self.env = simpy.Environment()
+        
+        # Initialize resources based on configuration
+        for resource_name, capacity in self.resources.items():
+            if resource_name == 'doctors':
+                # Doctors use priority resource for triage categories
+                self.simpy_resources[resource_name] = simpy.PriorityResource(self.env, capacity=capacity)
+            elif resource_name == 'beds':
+                # Beds also use priority resource
+                self.simpy_resources[resource_name] = simpy.PriorityResource(self.env, capacity=capacity)
+            else:
+                # Regular resources (nurses, etc.)
+                self.simpy_resources[resource_name] = simpy.Resource(self.env, capacity=capacity)
+        
+        logger.info(f"🏗️  Resources initialized: {', '.join([f'{k}: {v}' for k, v in self.resources.items()])}")
+    
+    def get_resource(self, resource_name: str):
+        """Get a SimPy resource by name.
+        
+        Args:
+            resource_name: Name of the resource
+            
+        Returns:
+            SimPy resource object
+        """
+        return self.simpy_resources.get(resource_name)
+    
+    def schedule_arrivals(self, arrival_process_func: Callable):
+        """Schedule the patient arrival process.
+        
+        Args:
+            arrival_process_func: Function that generates patient arrivals
+        """
+        self.arrival_callback = arrival_process_func
+        self.env.process(arrival_process_func())
+    
+    def schedule_monitoring(self, monitoring_process_func: Callable):
+        """Schedule the monitoring process.
+        
+        Args:
+            monitoring_process_func: Function that monitors simulation state
+        """
+        self.monitoring_callback = monitoring_process_func
+        self.env.process(monitoring_process_func())
+    
+    def run_simulation(self):
+        """Execute the simulation with progress tracking.
+        
+        Returns:
+            Dictionary with simulation results
+        """
+        if not self.env:
+            raise RuntimeError("Simulation environment not initialized. Call initialize_environment() first.")
+        
+        logger.info(f"🚀 STARTING SIMULATION: {self.duration/60:.1f}h duration with {self.arrival_rate} arrivals/hour")
+        logger.info(f"▶️  Simulation started at {self.format_sim_time(self.env.now)}")
+        logger.info(f"📊 Real-time monitoring enabled (5-minute intervals)")
+        
+        # Run simulation with periodic progress updates
+        start_time = self.env.now
+        progress_interval = self.duration / 10  # Log progress every 10% of simulation
+        next_progress = progress_interval
+        
+        while self.env.now < self.duration:
+            # Run until next progress point or end
+            run_until = min(next_progress, self.duration)
+            
+            # Only run if we haven't reached the end yet
+            if self.env.now < run_until:
+                self.env.run(until=run_until)
+            
+            # Log progress if we hit a progress milestone
+            if self.env.now >= next_progress and self.env.now < self.duration:
+                progress_pct = (self.env.now / self.duration) * 100
+                logger.info(f"📊 PROGRESS: {progress_pct:.0f}% complete at {self.format_sim_time(self.env.now)} | Entities processed: {self.patient_count}")
+                
+                # Log resource utilization
+                resource_status = []
+                for name, resource in self.simpy_resources.items():
+                    queue_len = len(resource.queue)
+                    resource_status.append(f"{name.title()} queue: {queue_len}")
+                logger.info(f"📈 Resource utilization: {', '.join(resource_status)}")
+                
+                next_progress += progress_interval
+            
+            # Break if we've reached the end
+            if self.env.now >= self.duration:
+                break
+        
+        # Calculate results
+        avg_time = self.total_time / self.patient_count if self.patient_count > 0 else 0
+        
+        logger.info(f"🏁 SIMULATION COMPLETE at {self.format_sim_time(self.env.now)}!")
+        logger.info(f"📊 Final Results: {self.patient_count} entities processed, average time: {avg_time:.1f}min")
+        
+        # Log final resource state
+        resource_states = []
+        for name, resource in self.simpy_resources.items():
+            resource_states.append(f"{name.title()}: {resource.count}/{resource.capacity}")
+        logger.info(f"🏭 Final resource state: {', '.join(resource_states)}")
+        
+        return {
+            'total_entities': self.patient_count,
+            'avg_time': avg_time,
+            'times': [],
+            'categories': self.categories,
+            'simulation_duration': self.env.now,
+            'final_resource_state': {name: {'count': res.count, 'capacity': res.capacity} 
+                                   for name, res in self.simpy_resources.items()}
+        }
+    
+    def update_entity_completion(self, total_time: float, category: str = None):
+        """Update counters when an entity completes its journey.
+        
+        Args:
+            total_time: Total time spent in system
+            category: Optional category for tracking
+        """
+        self.patient_count += 1
+        self.total_time += total_time
+        if category:
+            self.categories.append(category)
+    
+    def collect_monitoring_data(self):
+        """Collect current simulation state for monitoring.
+        
+        Returns:
+            Dictionary with current simulation state
+        """
+        current_state = {
+            'time': self.env.now,
+            'patients_processed': self.patient_count,
+            'total_queue_length': sum(len(res.queue) for res in self.simpy_resources.values())
+        }
+        
+        # Add resource-specific data
+        for name, resource in self.simpy_resources.items():
+            current_state[f'{name}_usage'] = resource.count
+            current_state[f'{name}_capacity'] = resource.capacity
+            current_state[f'{name}_queue'] = len(resource.queue)
+        
+        # Store monitoring data
+        self.monitoring_data.append(current_state)
+        
+        return current_state
+    
+    def log_with_sim_time(self, level: int, message: str):
+        """Log message with simulation time prefix.
+        
+        Args:
+            level: Logging level (e.g., logging.INFO)
+            message: Message to log
+        """
+        if self.env:
+            sim_time_str = self.format_sim_time(self.env.now)
+        else:
+            sim_time_str = "00:00 (0.0min)"
+        
+        # Format message with simulation time
+        formatted_message = f"{message} [Sim Time: {sim_time_str}]"
+        
+        # Use centralized logger with proper level handling
+        if level == logging.INFO:
+            logger.info(formatted_message)
+        elif level == logging.DEBUG:
+            logger.debug(formatted_message)
+        elif level == logging.WARNING:
+            logger.warning(formatted_message)
+        elif level == logging.ERROR:
+            logger.error(formatted_message)
+        else:
+            logger.log(level, formatted_message)
+    
+    def format_sim_time(self, sim_time: float) -> str:
+        """Format simulation time as HH:MM (XXX.Xmin).
+        
+        Args:
+            sim_time: Simulation time in minutes
+            
+        Returns:
+            Formatted time string
+        """
+        hours = int(sim_time // 60)
+        minutes = int(sim_time % 60)
+        return f"{hours:02d}:{minutes:02d} ({sim_time:.1f}min)"
+    
+    def get_current_time(self) -> float:
+        """Get current simulation time.
+        
+        Returns:
+            Current simulation time in minutes
+        """
+        return self.env.now if self.env else 0.0
+    
+    def timeout(self, delay: float):
+        """Create a SimPy timeout event.
+        
+        Args:
+            delay: Delay time in minutes
+            
+        Returns:
+            SimPy timeout event
+        """
+        return self.env.timeout(delay)
+    
+    def process(self, generator):
+        """Schedule a process in the simulation.
+        
+        Args:
+            generator: Generator function representing the process
+            
+        Returns:
+            SimPy process
+        """
+        return self.env.process(generator)
+    
+    def get_monitoring_summary(self) -> Dict[str, Any]:
+        """Get summary of monitoring data collected during simulation.
+        
+        Returns:
+            Dictionary containing monitoring statistics
+        """
+        if not self.monitoring_data:
+            return {'error': 'No monitoring data collected'}
+        
+        # Calculate average utilization rates for each resource
+        summary = {
+            'monitoring_points': len(self.monitoring_data),
+            'simulation_duration': self.monitoring_data[-1]['time'] if self.monitoring_data else 0,
+            'average_utilization': {},
+            'average_queue_lengths': {},
+            'peak_utilization': {},
+            'total_resource_events': len(self.resource_usage_log)
+        }
+        
+        # Calculate statistics for each resource type
+        for resource_name in self.resources.keys():
+            usage_key = f'{resource_name}_usage'
+            capacity_key = f'{resource_name}_capacity'
+            queue_key = f'{resource_name}_queue'
+            
+            if usage_key in self.monitoring_data[0]:  # Check if data exists
+                # Average utilization
+                avg_util = sum(d[usage_key] / d[capacity_key] for d in self.monitoring_data) / len(self.monitoring_data) * 100
+                summary['average_utilization'][resource_name] = avg_util
+                
+                # Average queue length
+                avg_queue = sum(d[queue_key] for d in self.monitoring_data) / len(self.monitoring_data)
+                summary['average_queue_lengths'][resource_name] = avg_queue
+                
+                # Peak utilization
+                peak_util = max(d[usage_key] / d[capacity_key] for d in self.monitoring_data) * 100
+                summary['peak_utilization'][resource_name] = peak_util
+        
+        return summary
