@@ -168,9 +168,7 @@ class RandomService:
             Interarrival time in minutes
         """
         return random.expovariate(arrival_rate / 60)  # Convert to per-minute
-    
-    # Note: get_random_flowchart method removed - simulation now uses real chief complaints for flowchart selection
-    
+        
     def get_triage_process_time(self, complexity: str = "standard") -> float:
         """Get realistic time for complete MTS triage process.
         
@@ -199,8 +197,6 @@ class RandomService:
         
         min_time, max_time = complexity_times.get(complexity, complexity_times['standard'])
         return random.uniform(min_time, max_time)
-    
-    # Note: get_random_symptom_value method removed - simulation now uses only real patient symptoms
     
     def set_seed(self, seed: int) -> None:
         """Set random seed for reproducible results.
