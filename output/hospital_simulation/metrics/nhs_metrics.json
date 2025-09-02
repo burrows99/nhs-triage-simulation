@@ -1,66 +1,65 @@
 {
-  "total_attendances": 63,
-  "active_patients_in_system": 30,
+  "total_attendances": 51,
+  "active_patients_in_system": 32,
   "1_left_before_being_seen_rate_pct": 0.0,
   "2_reattendance_rate_pct": 0.0,
   "3_time_to_initial_assessment_avg_minutes": 0.0,
-  "4_time_to_treatment_avg_minutes": 4.6770778548218015,
-  "5_total_time_in_ae_avg_minutes": 121.38432418483913,
-  "4hour_standard_compliance_pct": 92.06349206349206,
-  "attendances_within_4hours": 58,
-  "attendances_over_4hours": 5,
+  "4_time_to_treatment_avg_minutes": 4.709644821858688,
+  "5_total_time_in_ae_avg_minutes": 130.9601733312237,
+  "4hour_standard_compliance_pct": 88.23529411764706,
+  "attendances_within_4hours": 45,
+  "attendances_over_4hours": 6,
   "95pct_target_achieved": false,
   "76pct_interim_target_achieved": true,
-  "median_total_time_minutes": 105.25998563560165,
-  "95th_percentile_time_minutes": 275.05905556718517,
+  "median_total_time_minutes": 103.23058535850367,
+  "95th_percentile_time_minutes": 306.183523957862,
   "admission_rate_pct": 0.0,
   "triage_category_distribution": {
-    "BLUE": "50",
-    "GREEN": "9",
-    "YELLOW": "3",
+    "BLUE": "44",
+    "GREEN": "6",
     "ORANGE": "1"
   },
   "age_group_analysis": {
     "0-17": {
       "count": 14,
-      "avg_time_minutes": 133.2954290972991,
-      "4hour_compliance_pct": 85.71428571428571,
+      "avg_time_minutes": 125.53875395980423,
+      "4hour_compliance_pct": 92.85714285714286,
       "admission_rate_pct": 0.0
     },
     "18-64": {
-      "count": 39,
-      "avg_time_minutes": 118.376616423034,
-      "4hour_compliance_pct": 94.87179487179486,
+      "count": 31,
+      "avg_time_minutes": 130.02139066793086,
+      "4hour_compliance_pct": 87.09677419354838,
       "admission_rate_pct": 0.0
     },
     "65+": {
-      "count": 10,
-      "avg_time_minutes": 116.43883757843514,
-      "4hour_compliance_pct": 90.0,
+      "count": 6,
+      "avg_time_minutes": 148.4605289582156,
+      "4hour_compliance_pct": 83.33333333333334,
       "admission_rate_pct": 0.0
     }
   },
   "gender_analysis": {
     "F": {
-      "count": 37,
-      "avg_time_minutes": 112.48768803544206,
-      "4hour_compliance_pct": 94.5945945945946,
+      "count": 29,
+      "avg_time_minutes": 133.78566071504616,
+      "4hour_compliance_pct": 86.20689655172413,
       "admission_rate_pct": 0.0
     },
     "M": {
-      "count": 26,
-      "avg_time_minutes": 134.044921782058,
-      "4hour_compliance_pct": 88.46153846153845,
+      "count": 22,
+      "avg_time_minutes": 127.23566723436684,
+      "4hour_compliance_pct": 90.9090909090909,
       "admission_rate_pct": 0.0
     }
   },
   "time_distribution_analysis": {
-    "min_time_minutes": 41.24324794676406,
-    "max_time_minutes": 347.14703968527,
-    "std_dev_minutes": 55.316143093867225,
-    "25th_percentile_minutes": 92.90975227009413,
-    "75th_percentile_minutes": 125.0268652957751,
-    "90th_percentile_minutes": 166.2654693708866,
-    "99th_percentile_minutes": 314.1156139755782
+    "min_time_minutes": 75.28566791790792,
+    "max_time_minutes": 322.4118310136426,
+    "std_dev_minutes": 67.00561764990714,
+    "25th_percentile_minutes": 94.24744523015922,
+    "75th_percentile_minutes": 123.36180106278465,
+    "90th_percentile_minutes": 263.05252936808995,
+    "99th_percentile_minutes": 318.94215495826467
   }
 }

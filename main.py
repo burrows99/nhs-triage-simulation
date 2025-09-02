@@ -11,6 +11,7 @@ Usage:
 
 import sys
 import os
+import logging
 
 # Add the src directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -24,14 +25,15 @@ def run_hospital_simulation():
     print("\n🏥 Hospital Simulation with Manchester Triage System")
     print("=" * 60)
     
-    # Create hospital simulation
+    # Create hospital simulation with detailed logging
     hospital = SimpleHospital(
         csv_folder='./output/csv',
         sim_duration=480,    # 8 hours
         arrival_rate=12,     # 12 patients/hour
         nurses=3,
         doctors=8,
-        beds=20
+        beds=20,
+        log_level=logging.INFO  # Enable detailed logging
     )
     
     print(f"\nSimulation Parameters:")
