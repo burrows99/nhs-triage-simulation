@@ -1,0 +1,478 @@
+"""Operation Metrics Service
+
+Tracks operational metrics for hospital simulation including resource utilization,
+queue lengths, throughput, and system performance indicators.
+"""
+
+import numpy as np
+import pandas as pd
+from collections import defaultdict, deque
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime, timedelta
+
+from .base_metrics import BaseMetrics, BaseRecord
+from src.logger import logger
+
+
+class ResourceEvent(BaseRecord):
+    """Record for tracking resource usage events"""
+    
+    def __init__(self, event_id: str, timestamp: float, event_type: str, 
+                 resource_name: str, entity_id: str, queue_length: int = 0,
+                 wait_time: float = 0.0, service_time: float = 0.0, priority: int = 5):
+        """Initialize ResourceEvent with proper inheritance"""
+        # Call parent constructor with base record fields
+        super().__init__(record_id=event_id, timestamp=timestamp)
+        
+        # Set resource event specific fields
+        self.event_id = event_id
+        self.event_type = event_type  # 'request', 'acquire', 'release'
+        self.resource_name = resource_name  # 'triage', 'doctor', 'bed'
+        self.entity_id = entity_id  # patient_id or other entity
+        self.queue_length = queue_length
+        self.wait_time = wait_time
+        self.service_time = service_time
+        self.priority = priority
+
+
+class SystemSnapshot(BaseRecord):
+    """Snapshot of system state at a point in time"""
+    
+    def __init__(self, snapshot_id: str, timestamp: float, resource_usage: Dict[str, int],
+                 resource_capacity: Dict[str, int], queue_lengths: Dict[str, int],
+                 entities_processed: int = 0):
+        """Initialize SystemSnapshot with proper inheritance"""
+        # Call parent constructor with base record fields
+        super().__init__(record_id=snapshot_id, timestamp=timestamp)
+        
+        # Set system snapshot specific fields
+        self.snapshot_id = snapshot_id
+        self.resource_usage = resource_usage  # resource_name -> current usage
+        self.resource_capacity = resource_capacity  # resource_name -> total capacity
+        self.queue_lengths = queue_lengths  # resource_name -> queue length
+        self.entities_processed = entities_processed
+    
+    def get_utilization(self, resource_name: str) -> float:
+        """Get utilization percentage for a resource"""
+        if resource_name not in self.resource_capacity or self.resource_capacity[resource_name] == 0:
+            return 0.0
+        usage = self.resource_usage.get(resource_name, 0)
+        capacity = self.resource_capacity[resource_name]
+        return (usage / capacity) * 100
+
+
+class OperationMetrics(BaseMetrics):
+    """Operational metrics tracking service
+    
+    Tracks resource utilization, queue performance, throughput, and system efficiency.
+    """
+    
+    def __init__(self, snapshot_interval: float = 5.0):
+        """Initialize Operation Metrics Service
+        
+        Args:
+            snapshot_interval: Time interval between system snapshots (minutes)
+        """
+        super().__init__("OperationMetrics")
+        
+        self.snapshot_interval = snapshot_interval
+        self.last_snapshot_time = 0.0
+        
+        # Resource tracking
+        self.resource_events: List[ResourceEvent] = []
+        self.system_snapshots: List[SystemSnapshot] = []
+        
+        # Performance tracking
+        self.throughput_data: Dict[str, List[Tuple[float, int]]] = defaultdict(list)  # time -> count
+        self.wait_times: Dict[str, List[float]] = defaultdict(list)  # resource -> wait_times
+        self.service_times: Dict[str, List[float]] = defaultdict(list)  # resource -> service_times
+        
+        # Real-time metrics
+        self.current_utilization: Dict[str, float] = {}
+        self.peak_utilization: Dict[str, float] = {}
+        self.average_queue_length: Dict[str, float] = defaultdict(float)
+        
+        logger.info("Operation metrics service initialized")
+    
+    def record_resource_event(self, event_type: str, resource_name: str, 
+                            entity_id: str, timestamp: float, **kwargs) -> ResourceEvent:
+        """Record a resource usage event
+        
+        Args:
+            event_type: Type of event ('request', 'acquire', 'release')
+            resource_name: Name of the resource ('triage', 'doctor', 'bed')
+            entity_id: ID of entity using resource (usually patient_id)
+            timestamp: Time of the event
+            **kwargs: Additional event data (queue_length, wait_time, etc.)
+            
+        Returns:
+            Created ResourceEvent
+        """
+        event_id = f"{resource_name}_{event_type}_{entity_id}_{timestamp}"
+        
+        event = ResourceEvent(
+            event_id=event_id,
+            timestamp=timestamp,
+            event_type=event_type,
+            resource_name=resource_name,
+            entity_id=entity_id,
+            queue_length=kwargs.get('queue_length', 0),
+            wait_time=kwargs.get('wait_time', 0.0),
+            service_time=kwargs.get('service_time', 0.0),
+            priority=kwargs.get('priority', 5)
+        )
+        
+        self.resource_events.append(event)
+        self.add_record(event)
+        
+        # Update performance tracking
+        if event_type == 'acquire' and event.wait_time > 0:
+            self.wait_times[resource_name].append(event.wait_time)
+        
+        if event_type == 'release' and event.service_time > 0:
+            self.service_times[resource_name].append(event.service_time)
+        
+        return event
+    
+    def record_system_snapshot(self, timestamp: float, resource_usage: Dict[str, int],
+                             resource_capacity: Dict[str, int], queue_lengths: Dict[str, int],
+                             entities_processed: int = 0) -> SystemSnapshot:
+        """Record a system state snapshot
+        
+        Args:
+            timestamp: Time of snapshot
+            resource_usage: Current usage for each resource
+            resource_capacity: Total capacity for each resource
+            queue_lengths: Current queue length for each resource
+            entities_processed: Total entities processed so far
+            
+        Returns:
+            Created SystemSnapshot
+        """
+        snapshot_id = f"snapshot_{timestamp}"
+        
+        snapshot = SystemSnapshot(
+            snapshot_id=snapshot_id,
+            timestamp=timestamp,
+            resource_usage=resource_usage.copy(),
+            resource_capacity=resource_capacity.copy(),
+            queue_lengths=queue_lengths.copy(),
+            entities_processed=entities_processed
+        )
+        
+        self.system_snapshots.append(snapshot)
+        self.add_record(snapshot)
+        
+        # Update real-time metrics
+        for resource_name in resource_usage:
+            utilization = snapshot.get_utilization(resource_name)
+            self.current_utilization[resource_name] = utilization
+            
+            # Track peak utilization
+            if resource_name not in self.peak_utilization or utilization > self.peak_utilization[resource_name]:
+                self.peak_utilization[resource_name] = utilization
+        
+        self.last_snapshot_time = timestamp
+        return snapshot
+    
+    def should_take_snapshot(self, current_time: float) -> bool:
+        """Check if it's time to take a system snapshot
+        
+        Args:
+            current_time: Current simulation time
+            
+        Returns:
+            True if snapshot should be taken
+        """
+        return current_time - self.last_snapshot_time >= self.snapshot_interval
+    
+    def record_throughput(self, resource_name: str, timestamp: float, count: int = 1):
+        """Record throughput data for a resource
+        
+        Args:
+            resource_name: Name of the resource
+            timestamp: Time of throughput measurement
+            count: Number of entities processed
+        """
+        self.throughput_data[resource_name].append((timestamp, count))
+    
+    def calculate_metrics(self) -> Dict[str, Any]:
+        """Calculate operational metrics
+        
+        Returns:
+            Dictionary containing operational performance metrics
+        """
+        if not self.system_snapshots:
+            return {
+                'error': 'No system snapshots available',
+                **self.get_basic_statistics()
+            }
+        
+        # Calculate utilization metrics
+        utilization_metrics = self._calculate_utilization_metrics()
+        
+        # Calculate queue metrics
+        queue_metrics = self._calculate_queue_metrics()
+        
+        # Calculate throughput metrics
+        throughput_metrics = self._calculate_throughput_metrics()
+        
+        # Calculate wait time metrics
+        wait_time_metrics = self._calculate_wait_time_metrics()
+        
+        # Calculate service time metrics
+        service_time_metrics = self._calculate_service_time_metrics()
+        
+        # System performance metrics
+        system_metrics = self._calculate_system_metrics()
+        
+        metrics = {
+            'utilization': utilization_metrics,
+            'queues': queue_metrics,
+            'throughput': throughput_metrics,
+            'wait_times': wait_time_metrics,
+            'service_times': service_time_metrics,
+            'system_performance': system_metrics,
+            'monitoring_points': len(self.system_snapshots),
+            'total_resource_events': len(self.resource_events)
+        }
+        
+        # Add base statistics
+        metrics.update(self.get_basic_statistics())
+        
+        return metrics
+    
+    def _calculate_utilization_metrics(self) -> Dict[str, Any]:
+        """Calculate resource utilization metrics"""
+        if not self.system_snapshots:
+            return {}
+        
+        # Get all resource names
+        all_resources = set()
+        for snapshot in self.system_snapshots:
+            all_resources.update(snapshot.resource_usage.keys())
+        
+        utilization_metrics = {}
+        
+        for resource in all_resources:
+            utilizations = []
+            for snapshot in self.system_snapshots:
+                if resource in snapshot.resource_usage:
+                    utilizations.append(snapshot.get_utilization(resource))
+            
+            if utilizations:
+                utilization_metrics[resource] = {
+                    'average_utilization_pct': np.mean(utilizations),
+                    'peak_utilization_pct': np.max(utilizations),
+                    'min_utilization_pct': np.min(utilizations),
+                    'current_utilization_pct': self.current_utilization.get(resource, 0),
+                    'utilization_std_dev': np.std(utilizations)
+                }
+        
+        return utilization_metrics
+    
+    def _calculate_queue_metrics(self) -> Dict[str, Any]:
+        """Calculate queue performance metrics"""
+        if not self.system_snapshots:
+            return {}
+        
+        # Get all resource names
+        all_resources = set()
+        for snapshot in self.system_snapshots:
+            all_resources.update(snapshot.queue_lengths.keys())
+        
+        queue_metrics = {}
+        
+        for resource in all_resources:
+            queue_lengths = []
+            for snapshot in self.system_snapshots:
+                if resource in snapshot.queue_lengths:
+                    queue_lengths.append(snapshot.queue_lengths[resource])
+            
+            if queue_lengths:
+                queue_metrics[resource] = {
+                    'average_queue_length': np.mean(queue_lengths),
+                    'peak_queue_length': np.max(queue_lengths),
+                    'min_queue_length': np.min(queue_lengths),
+                    'queue_length_std_dev': np.std(queue_lengths),
+                    'time_with_queue': sum(1 for q in queue_lengths if q > 0) / len(queue_lengths) * 100
+                }
+        
+        return queue_metrics
+    
+    def _calculate_throughput_metrics(self) -> Dict[str, Any]:
+        """Calculate throughput metrics"""
+        throughput_metrics = {}
+        
+        for resource, data in self.throughput_data.items():
+            if data:
+                times, counts = zip(*data)
+                total_time = max(times) - min(times) if len(times) > 1 else 1
+                total_count = sum(counts)
+                
+                throughput_metrics[resource] = {
+                    'total_processed': total_count,
+                    'throughput_per_hour': (total_count / total_time) * 60 if total_time > 0 else 0,
+                    'average_processing_rate': total_count / len(data) if data else 0
+                }
+        
+        return throughput_metrics
+    
+    def _calculate_wait_time_metrics(self) -> Dict[str, Any]:
+        """Calculate wait time metrics"""
+        wait_time_metrics = {}
+        
+        for resource, wait_times in self.wait_times.items():
+            if wait_times:
+                wait_time_metrics[resource] = {
+                    'average_wait_time_minutes': np.mean(wait_times),
+                    'max_wait_time_minutes': np.max(wait_times),
+                    'min_wait_time_minutes': np.min(wait_times),
+                    'wait_time_std_dev': np.std(wait_times),
+                    '95th_percentile_wait_time': np.percentile(wait_times, 95),
+                    'total_wait_events': len(wait_times)
+                }
+        
+        return wait_time_metrics
+    
+    def _calculate_service_time_metrics(self) -> Dict[str, Any]:
+        """Calculate service time metrics"""
+        service_time_metrics = {}
+        
+        for resource, service_times in self.service_times.items():
+            if service_times:
+                service_time_metrics[resource] = {
+                    'average_service_time_minutes': np.mean(service_times),
+                    'max_service_time_minutes': np.max(service_times),
+                    'min_service_time_minutes': np.min(service_times),
+                    'service_time_std_dev': np.std(service_times),
+                    '95th_percentile_service_time': np.percentile(service_times, 95),
+                    'total_service_events': len(service_times)
+                }
+        
+        return service_time_metrics
+    
+    def _calculate_system_metrics(self) -> Dict[str, Any]:
+        """Calculate overall system performance metrics"""
+        if not self.system_snapshots:
+            return {}
+        
+        # System efficiency metrics
+        total_entities = [s.entities_processed for s in self.system_snapshots if s.entities_processed > 0]
+        
+        # Calculate system load over time
+        total_queue_lengths = []
+        total_utilizations = []
+        
+        for snapshot in self.system_snapshots:
+            total_queue = sum(snapshot.queue_lengths.values())
+            total_queue_lengths.append(total_queue)
+            
+            # Calculate average utilization across all resources
+            utilizations = [snapshot.get_utilization(resource) for resource in snapshot.resource_usage]
+            if utilizations:
+                total_utilizations.append(np.mean(utilizations))
+        
+        system_metrics = {
+            'simulation_duration_minutes': self.end_time - self.start_time if self.end_time and self.start_time else 0,
+            'total_snapshots': len(self.system_snapshots),
+            'snapshot_interval_minutes': self.snapshot_interval
+        }
+        
+        if total_queue_lengths:
+            system_metrics.update({
+                'average_system_queue_length': np.mean(total_queue_lengths),
+                'peak_system_queue_length': np.max(total_queue_lengths),
+                'system_congestion_pct': sum(1 for q in total_queue_lengths if q > 0) / len(total_queue_lengths) * 100
+            })
+        
+        if total_utilizations:
+            system_metrics.update({
+                'average_system_utilization_pct': np.mean(total_utilizations),
+                'peak_system_utilization_pct': np.max(total_utilizations)
+            })
+        
+        if total_entities:
+            system_metrics.update({
+                'final_entities_processed': max(total_entities),
+                'processing_rate_per_hour': (max(total_entities) / system_metrics['simulation_duration_minutes']) * 60 if system_metrics['simulation_duration_minutes'] > 0 else 0
+            })
+        
+        return system_metrics
+    
+    def get_resource_summary(self, resource_name: str) -> Dict[str, Any]:
+        """Get detailed summary for a specific resource
+        
+        Args:
+            resource_name: Name of the resource to analyze
+            
+        Returns:
+            Dictionary with resource-specific metrics
+        """
+        # Filter events for this resource
+        resource_events = [e for e in self.resource_events if e.resource_name == resource_name]
+        
+        if not resource_events:
+            return {'error': f'No events found for resource {resource_name}'}
+        
+        # Calculate resource-specific metrics
+        request_events = [e for e in resource_events if e.event_type == 'request']
+        acquire_events = [e for e in resource_events if e.event_type == 'acquire']
+        release_events = [e for e in resource_events if e.event_type == 'release']
+        
+        summary = {
+            'resource_name': resource_name,
+            'total_events': len(resource_events),
+            'request_events': len(request_events),
+            'acquire_events': len(acquire_events),
+            'release_events': len(release_events),
+            'current_utilization_pct': self.current_utilization.get(resource_name, 0),
+            'peak_utilization_pct': self.peak_utilization.get(resource_name, 0)
+        }
+        
+        # Add wait time analysis
+        if resource_name in self.wait_times and self.wait_times[resource_name]:
+            wait_times = self.wait_times[resource_name]
+            summary['wait_time_analysis'] = {
+                'average_wait_minutes': np.mean(wait_times),
+                'max_wait_minutes': np.max(wait_times),
+                'total_wait_events': len(wait_times)
+            }
+        
+        # Add service time analysis
+        if resource_name in self.service_times and self.service_times[resource_name]:
+            service_times = self.service_times[resource_name]
+            summary['service_time_analysis'] = {
+                'average_service_minutes': np.mean(service_times),
+                'max_service_minutes': np.max(service_times),
+                'total_service_events': len(service_times)
+            }
+        
+        return summary
+    
+    def _record_to_dict(self, record: BaseRecord) -> Dict[str, Any]:
+        """Convert record to dictionary for export"""
+        if isinstance(record, ResourceEvent):
+            return {
+                'event_id': record.event_id,
+                'timestamp': record.timestamp,
+                'event_type': record.event_type,
+                'resource_name': record.resource_name,
+                'entity_id': record.entity_id,
+                'queue_length': record.queue_length,
+                'wait_time': record.wait_time,
+                'service_time': record.service_time,
+                'priority': record.priority
+            }
+        elif isinstance(record, SystemSnapshot):
+            return {
+                'snapshot_id': record.snapshot_id,
+                'timestamp': record.timestamp,
+                'resource_usage': record.resource_usage,
+                'resource_capacity': record.resource_capacity,
+                'queue_lengths': record.queue_lengths,
+                'entities_processed': record.entities_processed
+            }
+        else:
+            return super()._record_to_dict(record)

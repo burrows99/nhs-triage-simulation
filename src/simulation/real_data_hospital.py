@@ -17,7 +17,9 @@ from src.logger import logger
 
 from src.services.data_service import DataService
 from src.services.data_cleanup_service import DataCleanupService
-from src.services.nhs_metrics_service import NHSMetricsService
+from src.services.nhs_metrics import NHSMetrics
+from src.services.operation_metrics import OperationMetrics
+from src.services.plotting_service import PlottingService
 from src.services.random_service import RandomService
 from src.triage.base_triage_system import TriageSystemFactory
 from src.triage.triage_constants import (
@@ -147,8 +149,20 @@ class SimpleHospital:
         """Initialize all required services for the simulation."""
         # Initialize NHS Metrics Service
         logger.info("Initializing NHS Metrics Service...")
-        self.nhs_metrics = NHSMetricsService(reattendance_window_hours=72)
+        self.nhs_metrics = NHSMetrics(reattendance_window_hours=72)
         logger.info("NHS Metrics Service ready")
+        
+        # Initialize Operation Metrics Service
+        logger.info("Initializing Operation Metrics Service...")
+        self.operation_metrics = OperationMetrics(snapshot_interval=5.0)
+        logger.info("Operation Metrics Service ready")
+        
+        # Initialize Plotting Service and register metric services
+        logger.info("Initializing Plotting Service...")
+        self.plotting_service = PlottingService()
+        self.plotting_service.register_metric_service('nhs', self.nhs_metrics)
+        self.plotting_service.register_metric_service('operations', self.operation_metrics)
+        logger.info("Plotting Service ready with registered metrics")
         
         # Initialize Data Cleanup Service for patient data processing
         logger.info("Initializing Data Cleanup Service...")
@@ -225,9 +239,9 @@ class SimpleHospital:
         
         # Use triage system with patient-based inputs
         result = self.triage_system.triage_patient(
-            presenting_complaint=patient_data.get('presenting_complaint', ''),
-            symptoms=symptoms_input,
-            flowchart_reason=flowchart_reason
+            flowchart_reason=flowchart_reason,
+            symptoms_input=symptoms_input,
+            patient_id=patient_data.get('patient_id')
         )
         
         # Calculate processing delay
@@ -235,10 +249,15 @@ class SimpleHospital:
         processing_delay = triage_end_time - triage_start_time
         
         # Extract category from MTS result - no fallback, must be present
-        if 'triage_category' not in result:
-            raise ValueError(f"MTS result missing required 'triage_category' field: {result}")
+        # Check for both possible field names for compatibility
+        if 'category' in result:
+            category = result['category']
+        elif 'triage_category' in result:
+            category = result['triage_category']
+        else:
+            raise ValueError(f"MTS result missing required 'category' or 'triage_category' field: {result}")
         
-        category = result['triage_category']
+        # Ensure category is properly formatted
         if hasattr(category, 'item'):  # Handle numpy types
             category = category.item()
         category = str(category).strip()
@@ -536,9 +555,15 @@ class SimpleHospital:
         self._update_triage_system_resources()
         
         with self.triage_resource.request() as req:
+            # Record resource request event
+            self.record_resource_event('request', 'triage', patient_id, queue_length=len(self.triage_resource.queue))
+            
             yield req
             triage_service_start = self.env.now
             wait_time = triage_service_start - triage_start
+            
+            # Record resource acquisition event
+            self.record_resource_event('acquire', 'triage', patient_id, wait_time=wait_time)
             
             self._log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient {patient_id}: Started triage assessment at {self._format_sim_time(triage_service_start)} (Waited: {wait_time:.1f}min)")
             
@@ -549,6 +574,10 @@ class SimpleHospital:
             yield self.env.timeout(triage_time)
             
             triage_end = self.env.now
+            
+            # Record resource release event
+            self.record_resource_event('release', 'triage', patient_id, service_time=triage_time)
+            
             self._log_with_sim_time(logging.INFO, f"✅ Patient {patient_id}: Completed triage assessment at {self._format_sim_time(triage_end)} (Total triage time: {triage_end - triage_start:.1f}min)")
     
     def _calculate_triage_time(self, category, triage_result):
@@ -581,9 +610,15 @@ class SimpleHospital:
         self._update_triage_system_resources()
         
         with self.doctor_resource.request(priority=priority) as req:
+            # Record resource request event
+            self.record_resource_event('request', 'doctor', patient_id, priority=priority, queue_length=len(self.doctor_resource.queue))
+            
             yield req
             assessment_service_start = self.env.now
             wait_time = assessment_service_start - assessment_start
+            
+            # Record resource acquisition event
+            self.record_resource_event('acquire', 'doctor', patient_id, wait_time=wait_time, priority=priority)
             
             self._log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient {patient_id}: Started doctor assessment at {self._format_sim_time(assessment_service_start)} (Waited: {wait_time:.1f}min)")
             
@@ -594,6 +629,10 @@ class SimpleHospital:
             yield self.env.timeout(assessment_time)
             
             assessment_end = self.env.now
+            
+            # Record resource release event
+            self.record_resource_event('release', 'doctor', patient_id, service_time=assessment_time, priority=priority)
+            
             self._log_with_sim_time(logging.INFO, f"✅ Patient {patient_id}: Completed doctor assessment at {self._format_sim_time(assessment_end)} (Total assessment time: {assessment_end - assessment_start:.1f}min)")
     
     def _calculate_assessment_time(self, category, triage_result):
@@ -738,17 +777,23 @@ class SimpleHospital:
         self.total_time = 0
         self.categories = []
         
-        # Setup simulation
+        # Setup simulation with monitoring
         self.env = simpy.Environment()
         self.triage_resource = simpy.Resource(self.env, capacity=self.nurses)
         self.doctor_resource = simpy.PriorityResource(self.env, capacity=self.doctors)
         self.bed_resource = simpy.PriorityResource(self.env, capacity=self.beds)
         
+        # Initialize monitoring data collection (legacy for backward compatibility)
+        self.monitoring_data = []
+        self.resource_usage_log = []
+        
         self._log_with_sim_time(logging.INFO, f"🏗️  Resources initialized: {self.nurses} nurses, {self.doctors} doctors, {self.beds} beds")
         
-        # Start arrivals
+        # Start arrivals and monitoring (following SimPy documentation pattern)
         self.env.process(self.arrivals())
+        self.env.process(self.monitor_simulation())
         self._log_with_sim_time(logging.INFO, f"▶️  Simulation started at {self._format_sim_time(self.env.now)}")
+        self._log_with_sim_time(logging.INFO, f"📊 Real-time monitoring enabled (5-minute intervals)")
         
         # Run simulation with periodic progress updates
         start_time = self.env.now
@@ -790,6 +835,102 @@ class SimpleHospital:
         logger.info("=" * 50)
         nhs_metrics = self.nhs_metrics.print_nhs_dashboard()
         
+        # === OPERATIONAL METRICS: Display operational performance ===
+        logger.info("=" * 50)
+        logger.info("OPERATIONAL METRICS SUMMARY")
+        logger.info("=" * 50)
+        operation_metrics = self.operation_metrics.calculate_metrics()
+        
+        if 'error' not in operation_metrics:
+            logger.info(f"📊 Monitoring Data Points: {operation_metrics.get('monitoring_points', 0)}")
+            logger.info(f"⏱️  Simulation Duration: {operation_metrics.get('total_duration_minutes', 0):.1f} minutes")
+            
+            # Resource Utilization
+            if 'utilization' in operation_metrics:
+                logger.info(f"📈 Average Resource Utilization:")
+                for resource, data in operation_metrics['utilization'].items():
+                    avg_util = data.get('average_utilization_pct', 0)
+                    peak_util = data.get('peak_utilization_pct', 0)
+                    logger.info(f"   {resource.title()}: {avg_util:.1f}% avg, {peak_util:.1f}% peak")
+            
+            # Queue Performance
+            if 'queues' in operation_metrics:
+                logger.info(f"📋 Queue Performance:")
+                for resource, data in operation_metrics['queues'].items():
+                    avg_queue = data.get('average_queue_length', 0)
+                    peak_queue = data.get('peak_queue_length', 0)
+                    logger.info(f"   {resource.title()}: {avg_queue:.1f} avg, {peak_queue} peak queue length")
+            
+            # Wait Times
+            if 'wait_times' in operation_metrics:
+                logger.info(f"⏰ Wait Time Analysis:")
+                for resource, data in operation_metrics['wait_times'].items():
+                    avg_wait = data.get('average_wait_time_minutes', 0)
+                    max_wait = data.get('max_wait_time_minutes', 0)
+                    logger.info(f"   {resource.title()}: {avg_wait:.1f} min avg, {max_wait:.1f} min max")
+        
+        # === LEGACY MONITORING SUMMARY: Display SimPy monitoring results ===
+        logger.info("=" * 50)
+        logger.info("LEGACY SIMPY MONITORING SUMMARY (Documentation Pattern)")
+        logger.info("=" * 50)
+        monitoring_summary = self.get_monitoring_summary()
+        
+        if 'error' not in monitoring_summary:
+            logger.info(f"📊 Legacy Monitoring Data Points: {monitoring_summary['monitoring_points']}")
+            logger.info(f"⏱️  Legacy Simulation Duration: {monitoring_summary['simulation_duration']:.1f} minutes")
+            logger.info(f"📈 Legacy Average Resource Utilization:")
+            logger.info(f"   Triage: {monitoring_summary['average_utilization']['triage']:.1f}%")
+            logger.info(f"   Doctors: {monitoring_summary['average_utilization']['doctors']:.1f}%")
+            logger.info(f"   Beds: {monitoring_summary['average_utilization']['beds']:.1f}%")
+        
+        # === GENERATE CHARTS AND PLOTS ===
+        logger.info("=" * 50)
+        logger.info("GENERATING CHARTS AND VISUALIZATIONS...")
+        logger.info("=" * 50)
+        
+        try:
+            # Generate all charts using the plotting service
+            plots_dir = os.path.join(self.output_dir, 'plots')
+            generated_charts = self.plotting_service.generate_all_charts(output_dir=plots_dir)
+            
+            logger.info(f"📊 Generated {len(generated_charts)} charts:")
+            for chart_name, file_path in generated_charts.items():
+                logger.info(f"   {chart_name}: {file_path}")
+        except Exception as e:
+            logger.error(f"Error generating charts: {e}")
+        
+        # === EXPORT DATA ===
+        logger.info("=" * 50)
+        logger.info("EXPORTING METRICS DATA...")
+        logger.info("=" * 50)
+        
+        try:
+            # Export NHS metrics
+            nhs_json_path = os.path.join(self.output_dir, 'metrics', 'nhs_metrics.json')
+            nhs_csv_path = os.path.join(self.output_dir, 'metrics', 'nhs_patient_data.csv')
+            os.makedirs(os.path.dirname(nhs_json_path), exist_ok=True)
+            self.nhs_metrics.export_data(json_filepath=nhs_json_path, csv_filepath=nhs_csv_path)
+            
+            # Export operational metrics
+            op_json_path = os.path.join(self.output_dir, 'metrics', 'operational_metrics.json')
+            op_csv_path = os.path.join(self.output_dir, 'metrics', 'operational_events.csv')
+            self.operation_metrics.export_data(json_filepath=op_json_path, csv_filepath=op_csv_path)
+            
+            logger.info(f"📁 Metrics data exported to {os.path.join(self.output_dir, 'metrics')}")
+        except Exception as e:
+            logger.error(f"Error exporting metrics data: {e}")
+            logger.info(f"🚦 Average Queue Lengths:")
+            logger.info(f"   Triage: {monitoring_summary['average_queue_lengths']['triage']:.1f}")
+            logger.info(f"   Doctors: {monitoring_summary['average_queue_lengths']['doctors']:.1f}")
+            logger.info(f"   Beds: {monitoring_summary['average_queue_lengths']['beds']:.1f}")
+            logger.info(f"⚡ Peak Utilization:")
+            logger.info(f"   Triage: {monitoring_summary['peak_utilization']['triage']:.1f}%")
+            logger.info(f"   Doctors: {monitoring_summary['peak_utilization']['doctors']:.1f}%")
+            logger.info(f"   Beds: {monitoring_summary['peak_utilization']['beds']:.1f}%")
+            logger.info(f"📝 Total Resource Events: {monitoring_summary['total_resource_events']}")
+        else:
+            logger.warning(f"⚠️  {monitoring_summary.get('error', 'Unknown monitoring error')}")
+        
         # Return both legacy and NHS metrics for compatibility
         return {
             # Legacy format for backwards compatibility
@@ -805,6 +946,148 @@ class SimpleHospital:
     def get_nhs_metrics(self):
         """Get NHS metrics directly"""
         return self.nhs_metrics.calculate_nhs_metrics()
+    
+    def monitor_simulation(self):
+        """Official SimPy monitoring process pattern for real-time tracking.
+        
+        This follows the SimPy documentation approach for continuous monitoring
+        of resource utilization and system state during simulation.
+        """
+        while True:
+            # Collect current simulation state
+            current_state = {
+                'time': self.env.now,
+                'triage_usage': self.triage_resource.count,
+                'triage_capacity': self.triage_resource.capacity,
+                'triage_queue': len(self.triage_resource.queue),
+                'doctor_usage': self.doctor_resource.count,
+                'doctor_capacity': self.doctor_resource.capacity,
+                'doctor_queue': len(self.doctor_resource.queue),
+                'bed_usage': self.bed_resource.count,
+                'bed_capacity': self.bed_resource.capacity,
+                'bed_queue': len(self.bed_resource.queue),
+                'patients_processed': self.patient_count,
+                'total_queue_length': len(self.triage_resource.queue) + len(self.doctor_resource.queue) + len(self.bed_resource.queue)
+            }
+            
+            # Store monitoring data (legacy)
+            self.monitoring_data.append(current_state)
+            
+            # Record system snapshot in operation metrics
+            resource_usage = {
+                'triage': self.triage_resource.count,
+                'doctor': self.doctor_resource.count,
+                'bed': self.bed_resource.count
+            }
+            resource_capacity = {
+                'triage': self.nurses,
+                'doctor': self.doctors,
+                'bed': self.beds
+            }
+            queue_lengths = {
+                'triage': len(self.triage_resource.queue),
+                'doctor': len(self.doctor_resource.queue),
+                'bed': len(self.bed_resource.queue)
+            }
+            
+            self.operation_metrics.record_system_snapshot(
+                timestamp=self.env.now,
+                resource_usage=resource_usage,
+                resource_capacity=resource_capacity,
+                queue_lengths=queue_lengths,
+                entities_processed=self.patient_count
+            )
+            
+            # Log current state (following SimPy documentation pattern)
+            logger.info(f"Monitor | Time: {self.env.now:6.1f} | "
+                       f"Triage: {self.triage_resource.count}/{self.nurses} (Q:{len(self.triage_resource.queue)}) | "
+                       f"Doctors: {self.doctor_resource.count}/{self.doctors} (Q:{len(self.doctor_resource.queue)}) | "
+                       f"Beds: {self.bed_resource.count}/{self.beds} (Q:{len(self.bed_resource.queue)}) | "
+                       f"Patients: {self.patient_count}")
+            
+            # Calculate and log utilization rates
+            triage_util = (self.triage_resource.count / self.nurses) * 100
+            doctor_util = (self.doctor_resource.count / self.doctors) * 100
+            bed_util = (self.bed_resource.count / self.beds) * 100
+            
+            logger.debug(f"Utilization | Triage: {triage_util:.1f}% | "
+                        f"Doctors: {doctor_util:.1f}% | Beds: {bed_util:.1f}%")
+            
+            # Wait before next monitoring cycle (every 5 simulation minutes)
+            yield self.env.timeout(5)
+    
+    def record_resource_event(self, event_type: str, resource_name: str, patient_id: str = None, **kwargs):
+        """Record resource usage events for detailed analysis.
+        
+        Args:
+            event_type: Type of event ('request', 'acquire', 'release')
+            resource_name: Name of the resource ('triage', 'doctor', 'bed')
+            patient_id: Optional patient identifier
+            **kwargs: Additional event data
+        """
+        # Legacy event recording
+        event_record = {
+            'time': self.env.now,
+            'event_type': event_type,
+            'resource': resource_name,
+            'patient_id': patient_id,
+            **kwargs
+        }
+        self.resource_usage_log.append(event_record)
+        
+        # Record in operation metrics
+        self.operation_metrics.record_resource_event(
+            event_type=event_type,
+            resource_name=resource_name,
+            entity_id=patient_id or 'unknown',
+            timestamp=self.env.now,
+            **kwargs
+        )
+        
+        # Log significant events
+        if event_type in ['acquire', 'release']:
+            logger.debug(f"Resource Event | {event_type.upper()} {resource_name} | "
+                        f"Patient: {patient_id} | Time: {self.env.now}")
+    
+    def get_monitoring_summary(self):
+        """Get summary of monitoring data collected during simulation.
+        
+        Returns:
+            Dict containing monitoring statistics and utilization data
+        """
+        if not self.monitoring_data:
+            return {'error': 'No monitoring data collected'}
+        
+        # Calculate average utilization rates
+        avg_triage_util = sum(d['triage_usage'] / d['triage_capacity'] for d in self.monitoring_data) / len(self.monitoring_data) * 100
+        avg_doctor_util = sum(d['doctor_usage'] / d['doctor_capacity'] for d in self.monitoring_data) / len(self.monitoring_data) * 100
+        avg_bed_util = sum(d['bed_usage'] / d['bed_capacity'] for d in self.monitoring_data) / len(self.monitoring_data) * 100
+        
+        # Calculate average queue lengths
+        avg_triage_queue = sum(d['triage_queue'] for d in self.monitoring_data) / len(self.monitoring_data)
+        avg_doctor_queue = sum(d['doctor_queue'] for d in self.monitoring_data) / len(self.monitoring_data)
+        avg_bed_queue = sum(d['bed_queue'] for d in self.monitoring_data) / len(self.monitoring_data)
+        
+        return {
+            'monitoring_points': len(self.monitoring_data),
+            'simulation_duration': self.monitoring_data[-1]['time'] if self.monitoring_data else 0,
+            'average_utilization': {
+                'triage': avg_triage_util,
+                'doctors': avg_doctor_util,
+                'beds': avg_bed_util
+            },
+            'average_queue_lengths': {
+                'triage': avg_triage_queue,
+                'doctors': avg_doctor_queue,
+                'beds': avg_bed_queue
+            },
+            'peak_utilization': {
+                'triage': max(d['triage_usage'] / d['triage_capacity'] for d in self.monitoring_data) * 100,
+                'doctors': max(d['doctor_usage'] / d['doctor_capacity'] for d in self.monitoring_data) * 100,
+                'beds': max(d['bed_usage'] / d['bed_capacity'] for d in self.monitoring_data) * 100
+            },
+            'total_resource_events': len(self.resource_usage_log)
+        }
     
     def export_nhs_data(self, json_filepath: str = None, csv_filepath: str = None):
         """Export NHS metrics and patient data to configured output directory

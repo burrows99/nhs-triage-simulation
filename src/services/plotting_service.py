@@ -1,7 +1,7 @@
-"""Plotting Service for NHS Metrics Visualization
+"""Plotting Service for Metrics Visualization
 
-This service provides comprehensive plotting capabilities for NHS metrics,
-including various chart types and customization options.
+This service provides comprehensive plotting capabilities for all types of metrics,
+including NHS metrics, operational metrics, and custom visualizations.
 
 Single Responsibility: Only handles data visualization and plotting
 """
@@ -10,13 +10,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Union
 from pathlib import Path
 import os
 
+# Import centralized logger
+from src.logger import logger
+
 
 class PlottingService:
-    """Centralized plotting service for NHS metrics visualization."""
+    """Centralized plotting service for all metrics visualization."""
     
     def __init__(self, style: str = 'seaborn-v0_8', figsize: Tuple[int, int] = (12, 8)):
         """Initialize plotting service with style and default figure size.
@@ -38,6 +41,42 @@ class PlottingService:
             'nhs_green': '#009639',
             'nhs_red': '#DA020E'
         }
+        
+        # Registry for metric services
+        self.metric_services: Dict[str, Any] = {}
+        
+        logger.info("Plotting service initialized")
+    
+    def register_metric_service(self, name: str, service: Any) -> None:
+        """Register a metric service for plotting
+        
+        Args:
+            name: Name identifier for the service
+            service: Metric service instance
+        """
+        self.metric_services[name] = service
+        logger.info(f"Registered metric service: {name}")
+    
+    def unregister_metric_service(self, name: str) -> None:
+        """Unregister a metric service
+        
+        Args:
+            name: Name of service to unregister
+        """
+        if name in self.metric_services:
+            del self.metric_services[name]
+            logger.info(f"Unregistered metric service: {name}")
+    
+    def get_metric_service(self, name: str) -> Optional[Any]:
+        """Get a registered metric service
+        
+        Args:
+            name: Name of service to retrieve
+            
+        Returns:
+            Metric service instance or None
+        """
+        return self.metric_services.get(name)
     
     def create_compliance_chart(self, compliance_data: Dict[str, float], 
                               title: str = "NHS 4-Hour A&E Standard Compliance",
@@ -96,6 +135,316 @@ class PlottingService:
             self._save_figure(fig, save_path)
         
         return fig
+    
+    def create_utilization_chart(self, utilization_data: Dict[str, Dict[str, float]],
+                               title: str = "Resource Utilization Analysis",
+                               save_path: Optional[str] = None) -> plt.Figure:
+        """Create a resource utilization chart.
+        
+        Args:
+            utilization_data: Dictionary with utilization metrics per resource
+            title: Chart title
+            save_path: Optional path to save the chart
+            
+        Returns:
+            Matplotlib figure object
+        """
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+        
+        # Extract data for plotting
+        resources = list(utilization_data.keys())
+        avg_utilizations = [utilization_data[r].get('average_utilization_pct', 0) for r in resources]
+        peak_utilizations = [utilization_data[r].get('peak_utilization_pct', 0) for r in resources]
+        
+        # Bar chart for average vs peak utilization
+        x = np.arange(len(resources))
+        width = 0.35
+        
+        bars1 = ax1.bar(x - width/2, avg_utilizations, width, label='Average Utilization', 
+                        color=self.colors['primary'], alpha=0.8)
+        bars2 = ax1.bar(x + width/2, peak_utilizations, width, label='Peak Utilization', 
+                        color=self.colors['warning'], alpha=0.8)
+        
+        ax1.set_xlabel('Resources')
+        ax1.set_ylabel('Utilization (%)')
+        ax1.set_title('Average vs Peak Utilization')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(resources)
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Add value labels on bars
+        for bar in bars1:
+            height = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width()/2., height + 1,
+                    f'{height:.1f}%', ha='center', va='bottom')
+        
+        for bar in bars2:
+            height = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width()/2., height + 1,
+                    f'{height:.1f}%', ha='center', va='bottom')
+        
+        # Pie chart for resource distribution
+        if avg_utilizations:
+            ax2.pie(avg_utilizations, labels=resources, autopct='%1.1f%%',
+                   colors=[self.colors['primary'], self.colors['secondary'], self.colors['success']][:len(resources)])
+            ax2.set_title('Utilization Distribution')
+        
+        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.tight_layout()
+        
+        if save_path:
+            self._save_figure(fig, save_path)
+        
+        return fig
+    
+    def create_queue_analysis_chart(self, queue_data: Dict[str, Dict[str, float]],
+                                  title: str = "Queue Performance Analysis",
+                                  save_path: Optional[str] = None) -> plt.Figure:
+        """Create a queue performance analysis chart.
+        
+        Args:
+            queue_data: Dictionary with queue metrics per resource
+            title: Chart title
+            save_path: Optional path to save the chart
+            
+        Returns:
+            Matplotlib figure object
+        """
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+        
+        resources = list(queue_data.keys())
+        
+        if not resources:
+            ax1.text(0.5, 0.5, 'No queue data available', ha='center', va='center')
+            return fig
+        
+        # Average queue lengths
+        avg_queues = [queue_data[r].get('average_queue_length', 0) for r in resources]
+        ax1.bar(resources, avg_queues, color=self.colors['info'], alpha=0.8)
+        ax1.set_title('Average Queue Length')
+        ax1.set_ylabel('Queue Length')
+        ax1.grid(True, alpha=0.3)
+        
+        # Peak queue lengths
+        peak_queues = [queue_data[r].get('peak_queue_length', 0) for r in resources]
+        ax2.bar(resources, peak_queues, color=self.colors['warning'], alpha=0.8)
+        ax2.set_title('Peak Queue Length')
+        ax2.set_ylabel('Queue Length')
+        ax2.grid(True, alpha=0.3)
+        
+        # Time with queue percentage
+        time_with_queue = [queue_data[r].get('time_with_queue', 0) for r in resources]
+        ax3.bar(resources, time_with_queue, color=self.colors['secondary'], alpha=0.8)
+        ax3.set_title('Time with Queue (%)')
+        ax3.set_ylabel('Percentage of Time')
+        ax3.grid(True, alpha=0.3)
+        
+        # Queue length distribution (if we have std dev data)
+        if all('queue_length_std_dev' in queue_data[r] for r in resources):
+            std_devs = [queue_data[r]['queue_length_std_dev'] for r in resources]
+            ax4.bar(resources, std_devs, color=self.colors['success'], alpha=0.8)
+            ax4.set_title('Queue Length Variability (Std Dev)')
+            ax4.set_ylabel('Standard Deviation')
+            ax4.grid(True, alpha=0.3)
+        else:
+            ax4.text(0.5, 0.5, 'No variability data available', ha='center', va='center')
+        
+        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.tight_layout()
+        
+        if save_path:
+            self._save_figure(fig, save_path)
+        
+        return fig
+    
+    def create_combined_dashboard(self, nhs_metrics: Optional[Dict] = None,
+                                operation_metrics: Optional[Dict] = None,
+                                title: str = "Hospital Performance Dashboard",
+                                save_path: Optional[str] = None) -> plt.Figure:
+        """Create a combined dashboard with both NHS and operational metrics.
+        
+        Args:
+            nhs_metrics: NHS metrics data
+            operation_metrics: Operational metrics data
+            title: Dashboard title
+            save_path: Optional path to save the dashboard
+            
+        Returns:
+            Matplotlib figure object
+        """
+        fig = plt.figure(figsize=(20, 16))
+        
+        # Create a grid layout
+        gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
+        
+        # NHS Compliance (top left)
+        if nhs_metrics:
+            ax1 = fig.add_subplot(gs[0, 0])
+            compliance_rate = nhs_metrics.get('4hour_standard_compliance_pct', 0)
+            ax1.pie([compliance_rate, 100-compliance_rate], 
+                   labels=['Within 4hrs', 'Over 4hrs'],
+                   colors=[self.colors['nhs_green'], self.colors['nhs_red']],
+                   autopct='%1.1f%%')
+            ax1.set_title(f'NHS 4-Hour Standard\n{compliance_rate:.1f}% Compliance')
+        
+        # Resource Utilization (top middle)
+        if operation_metrics and 'utilization' in operation_metrics:
+            ax2 = fig.add_subplot(gs[0, 1])
+            util_data = operation_metrics['utilization']
+            resources = list(util_data.keys())
+            utilizations = [util_data[r].get('average_utilization_pct', 0) for r in resources]
+            
+            bars = ax2.bar(resources, utilizations, 
+                          color=[self.colors['primary'], self.colors['secondary'], self.colors['success']][:len(resources)])
+            ax2.set_title('Average Resource Utilization')
+            ax2.set_ylabel('Utilization (%)')
+            ax2.grid(True, alpha=0.3)
+            
+            # Add value labels
+            for bar in bars:
+                height = bar.get_height()
+                ax2.text(bar.get_x() + bar.get_width()/2., height + 1,
+                        f'{height:.1f}%', ha='center', va='bottom')
+        
+        # Queue Performance (top right)
+        if operation_metrics and 'queues' in operation_metrics:
+            ax3 = fig.add_subplot(gs[0, 2])
+            queue_data = operation_metrics['queues']
+            resources = list(queue_data.keys())
+            avg_queues = [queue_data[r].get('average_queue_length', 0) for r in resources]
+            
+            ax3.bar(resources, avg_queues, color=self.colors['info'])
+            ax3.set_title('Average Queue Lengths')
+            ax3.set_ylabel('Queue Length')
+            ax3.grid(True, alpha=0.3)
+        
+        # NHS Triage Distribution (middle left)
+        if nhs_metrics and 'triage_category_distribution' in nhs_metrics:
+            ax4 = fig.add_subplot(gs[1, 0])
+            triage_dist = nhs_metrics['triage_category_distribution']
+            if triage_dist:
+                categories = list(triage_dist.keys())
+                counts = list(triage_dist.values())
+                ax4.pie(counts, labels=categories, autopct='%1.1f%%')
+                ax4.set_title('Triage Category Distribution')
+        
+        # Wait Times (middle center)
+        if operation_metrics and 'wait_times' in operation_metrics:
+            ax5 = fig.add_subplot(gs[1, 1])
+            wait_data = operation_metrics['wait_times']
+            resources = list(wait_data.keys())
+            avg_waits = [wait_data[r].get('average_wait_time_minutes', 0) for r in resources]
+            
+            ax5.bar(resources, avg_waits, color=self.colors['warning'])
+            ax5.set_title('Average Wait Times')
+            ax5.set_ylabel('Wait Time (minutes)')
+            ax5.grid(True, alpha=0.3)
+        
+        # System Performance Summary (bottom span)
+        ax6 = fig.add_subplot(gs[2, :])
+        
+        # Create summary text
+        summary_text = "System Performance Summary\n\n"
+        
+        if nhs_metrics:
+            summary_text += f"NHS Metrics:\n"
+            summary_text += f"• Total Patients: {nhs_metrics.get('total_attendances', 0)}\n"
+            summary_text += f"• 4-Hour Compliance: {nhs_metrics.get('4hour_standard_compliance_pct', 0):.1f}%\n"
+            summary_text += f"• Average Time in A&E: {nhs_metrics.get('5_total_time_in_ae_avg_minutes', 0):.1f} minutes\n"
+            summary_text += f"• Admission Rate: {nhs_metrics.get('admission_rate_pct', 0):.1f}%\n\n"
+        
+        if operation_metrics:
+            summary_text += f"Operational Metrics:\n"
+            if 'system_performance' in operation_metrics:
+                sys_perf = operation_metrics['system_performance']
+                summary_text += f"• Simulation Duration: {sys_perf.get('simulation_duration_minutes', 0):.1f} minutes\n"
+                summary_text += f"• Total Snapshots: {sys_perf.get('total_snapshots', 0)}\n"
+                summary_text += f"• Processing Rate: {sys_perf.get('processing_rate_per_hour', 0):.1f} patients/hour\n"
+        
+        ax6.text(0.05, 0.95, summary_text, transform=ax6.transAxes, 
+                fontsize=12, verticalalignment='top', fontfamily='monospace')
+        ax6.set_xlim(0, 1)
+        ax6.set_ylim(0, 1)
+        ax6.axis('off')
+        
+        plt.suptitle(title, fontsize=20, fontweight='bold')
+        
+        if save_path:
+            self._save_figure(fig, save_path)
+        
+        return fig
+    
+    def generate_all_charts(self, output_dir: str = "./output/plots") -> Dict[str, str]:
+        """Generate all available charts for registered metric services.
+        
+        Args:
+            output_dir: Directory to save charts
+            
+        Returns:
+            Dictionary mapping chart names to file paths
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        generated_charts = {}
+        
+        # Generate NHS charts if NHS metrics service is registered
+        nhs_service = self.get_metric_service('nhs')
+        if nhs_service:
+            try:
+                nhs_metrics = nhs_service.calculate_metrics()
+                
+                # Compliance chart
+                compliance_path = os.path.join(output_dir, 'nhs_compliance.png')
+                self.create_compliance_chart(nhs_metrics, save_path=compliance_path)
+                generated_charts['nhs_compliance'] = compliance_path
+                
+                # Triage distribution
+                if 'triage_category_distribution' in nhs_metrics:
+                    triage_path = os.path.join(output_dir, 'triage_distribution.png')
+                    self.create_triage_distribution_chart(nhs_metrics['triage_category_distribution'], save_path=triage_path)
+                    generated_charts['triage_distribution'] = triage_path
+                
+                logger.info("Generated NHS charts")
+            except Exception as e:
+                logger.error(f"Error generating NHS charts: {e}")
+        
+        # Generate operational charts if operation metrics service is registered
+        op_service = self.get_metric_service('operations')
+        if op_service:
+            try:
+                op_metrics = op_service.calculate_metrics()
+                
+                # Utilization chart
+                if 'utilization' in op_metrics:
+                    util_path = os.path.join(output_dir, 'resource_utilization.png')
+                    self.create_utilization_chart(op_metrics['utilization'], save_path=util_path)
+                    generated_charts['resource_utilization'] = util_path
+                
+                # Queue analysis
+                if 'queues' in op_metrics:
+                    queue_path = os.path.join(output_dir, 'queue_analysis.png')
+                    self.create_queue_analysis_chart(op_metrics['queues'], save_path=queue_path)
+                    generated_charts['queue_analysis'] = queue_path
+                
+                logger.info("Generated operational charts")
+            except Exception as e:
+                logger.error(f"Error generating operational charts: {e}")
+        
+        # Generate combined dashboard if both services are available
+        if nhs_service and op_service:
+            try:
+                nhs_metrics = nhs_service.calculate_metrics()
+                op_metrics = op_service.calculate_metrics()
+                
+                dashboard_path = os.path.join(output_dir, 'combined_dashboard.png')
+                self.create_combined_dashboard(nhs_metrics, op_metrics, save_path=dashboard_path)
+                generated_charts['combined_dashboard'] = dashboard_path
+                
+                logger.info("Generated combined dashboard")
+            except Exception as e:
+                logger.error(f"Error generating combined dashboard: {e}")
+        
+        return generated_charts
     
     def create_triage_distribution_chart(self, triage_data: Dict[str, int],
                                        title: str = "Manchester Triage System (MTS) Category Distribution",

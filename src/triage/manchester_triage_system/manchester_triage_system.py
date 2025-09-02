@@ -94,7 +94,7 @@ class ManchesterTriageSystem:
         # MOCK DELAY: Adding 5-second delay to test SimPy disruption
         import time
         logger.debug(f"[MOCK DELAY] Starting 5-second delay for triage processing...")
-        time.sleep(5)  # This will block the entire simulation!
+        # time.sleep(5)  # This will block the entire simulation!
         logger.debug(f"[MOCK DELAY] Delay complete, proceeding with triage...")
         
         # Perform the actual triage
@@ -136,3 +136,34 @@ class ManchesterTriageSystem:
         """
         converter = self._fuzzy_manager.get_linguistic_converter()
         return converter.convert_to_numeric(linguistic_value)
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Get system information for compatibility with simulation framework.
+        
+        Returns:
+            Dict containing system information
+        """
+        return {
+            'system_name': 'Manchester Triage System',
+            'type': 'manchester',
+            'status': 'active',
+            'flowcharts_available': len(self.get_available_flowcharts()),
+            'version': '1.0'
+        }
+    
+    def validate_connection(self) -> bool:
+        """Validate system connection/readiness.
+        
+        Returns:
+            bool: True if system is ready, False otherwise
+        """
+        try:
+            # Check if core components are initialized
+            if (self._triage_processor is not None and 
+                self._flowchart_manager is not None and 
+                self._fuzzy_manager is not None):
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Manchester Triage System validation failed: {e}")
+            return False

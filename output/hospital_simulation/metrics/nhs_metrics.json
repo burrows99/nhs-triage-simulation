@@ -1,66 +1,87 @@
 {
-  "total_attendances": 55,
-  "active_patients_in_system": 47,
+  "total_attendances": 64,
+  "active_patients_in_system": 36,
   "1_left_before_being_seen_rate_pct": 0.0,
   "2_reattendance_rate_pct": 0.0,
-  "3_time_to_initial_assessment_avg_minutes": 5.010663296959617,
-  "4_time_to_treatment_avg_minutes": 10.002326673036194,
-  "5_total_time_in_ae_avg_minutes": 145.81874683714713,
-  "4hour_standard_compliance_pct": 92.72727272727272,
-  "attendances_within_4hours": 51,
-  "attendances_over_4hours": 4,
+  "3_time_to_initial_assessment_avg_minutes": 0.0004326537251475998,
+  "4_time_to_treatment_avg_minutes": 4.876949602889663,
+  "5_total_time_in_ae_avg_minutes": 149.87634342953572,
+  "4hour_standard_compliance_pct": 89.0625,
+  "attendances_within_4hours": 57,
+  "attendances_over_4hours": 7,
   "95pct_target_achieved": false,
   "76pct_interim_target_achieved": true,
-  "median_total_time_minutes": 143.72787872729063,
-  "95th_percentile_time_minutes": 261.1926390528774,
-  "admission_rate_pct": 1.8181818181818181,
+  "median_total_time_minutes": 126.04231060289072,
+  "95th_percentile_time_minutes": 286.0235391932848,
+  "admission_rate_pct": 0.0,
   "triage_category_distribution": {
-    "BLUE": "43",
-    "GREEN": "8",
-    "YELLOW": "3",
+    "BLUE": "47",
+    "GREEN": "12",
+    "YELLOW": "4",
     "ORANGE": "1"
   },
   "age_group_analysis": {
     "0-17": {
-      "count": 13,
-      "avg_time_minutes": 166.74693408926916,
-      "4hour_compliance_pct": 84.61538461538461,
+      "count": 14,
+      "avg_time_minutes": 154.32192760832768,
+      "4hour_compliance_pct": 92.85714285714286,
       "admission_rate_pct": 0.0
     },
     "18-64": {
-      "count": 31,
-      "avg_time_minutes": 136.1357015679875,
-      "4hour_compliance_pct": 93.54838709677419,
+      "count": 39,
+      "avg_time_minutes": 148.8459124419528,
+      "4hour_compliance_pct": 87.17948717948718,
       "admission_rate_pct": 0.0
     },
     "65+": {
       "count": 11,
-      "avg_time_minutes": 148.37401675227105,
-      "4hour_compliance_pct": 100.0,
-      "admission_rate_pct": 9.090909090909092
+      "avg_time_minutes": 147.87167343068558,
+      "4hour_compliance_pct": 90.9090909090909,
+      "admission_rate_pct": 0.0
     }
   },
   "gender_analysis": {
-    "F": {
-      "count": 33,
-      "avg_time_minutes": 141.81983868648598,
-      "4hour_compliance_pct": 90.9090909090909,
-      "admission_rate_pct": 3.0303030303030303
-    },
     "M": {
-      "count": 22,
-      "avg_time_minutes": 151.8171090631389,
-      "4hour_compliance_pct": 95.45454545454545,
+      "count": 28,
+      "avg_time_minutes": 171.48489916645306,
+      "4hour_compliance_pct": 89.28571428571429,
+      "admission_rate_pct": 0.0
+    },
+    "F": {
+      "count": 36,
+      "avg_time_minutes": 133.06968896748893,
+      "4hour_compliance_pct": 88.88888888888889,
       "admission_rate_pct": 0.0
     }
   },
   "time_distribution_analysis": {
-    "min_time_minutes": 78.41344354116578,
-    "max_time_minutes": 324.3909098787958,
-    "std_dev_minutes": 50.645110018278906,
-    "25th_percentile_minutes": 104.45779183086265,
-    "75th_percentile_minutes": 173.83811011787395,
-    "90th_percentile_minutes": 188.7239565614603,
-    "99th_percentile_minutes": 294.05602692610006
+    "min_time_minutes": 57.73441910822963,
+    "max_time_minutes": 338.17391816746385,
+    "std_dev_minutes": 66.0302286873934,
+    "quartiles": {
+      "25th_percentile": 98.31171595792416,
+      "50th_percentile": 126.04231060289072,
+      "75th_percentile": 190.83781575789442
+    },
+    "distribution_bins": {
+      "0-60min": 1,
+      "60-120min": 28,
+      "120-240min": 28,
+      "240-360min": 7,
+      "360+min": 0
+    }
+  },
+  "service_name": "NHSMetrics",
+  "total_records": 64,
+  "active_records": 36,
+  "total_duration_minutes": 473.2340632742513,
+  "start_time": 3.208663553998252,
+  "end_time": 476.44272682824953,
+  "counters": {
+    "lwbs_count": 0,
+    "reattendance_count": 0,
+    "admissions_count": 0,
+    "total_records": 100,
+    "completed_records": 64
   }
 }

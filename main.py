@@ -67,28 +67,10 @@ def run_hospital_simulation():
     # Export NHS metrics and generate plots
     logger.info(f"📊 Generating Output Files...")
     
-    # Create output directories
-    os.makedirs('./output/hospital_simulation/metrics', exist_ok=True)
-    os.makedirs('./output/hospital_simulation/plots', exist_ok=True)
-    
-    # Export NHS metrics data
-    hospital.export_nhs_data(
-        json_filepath='./output/hospital_simulation/metrics/nhs_metrics.json',
-        csv_filepath='./output/hospital_simulation/metrics/patient_data.csv'
-    )
-    
-    # Generate NHS metrics plots
-    plots_generated = hospital.nhs_metrics.generate_all_plots('./output/hospital_simulation/plots')
-    
-    logger.info(f"📁 Files Generated:")
-    logger.info(f"  📊 NHS Metrics JSON: ./output/hospital_simulation/metrics/nhs_metrics.json")
-    logger.info(f"  📋 Patient Data CSV: ./output/hospital_simulation/metrics/patient_data.csv")
-    logger.info(f"  📈 Plots Generated: {len(plots_generated)} files in ./output/hospital_simulation/plots/")
-    for plot in plots_generated:
-        logger.info(f"    - {plot}")
-    
-    # Clean up matplotlib resources
-    hospital.nhs_metrics.close_plots()
+    # All data export and chart generation is handled by the simulation's run method
+    logger.info(f"✅ Simulation completed successfully!")
+    logger.info(f"📋 Summary: {results['total_patients']} patients processed")
+    logger.info(f"⏱️  Average patient time: {results['avg_time']:.1f} minutes")
     
     return results
 

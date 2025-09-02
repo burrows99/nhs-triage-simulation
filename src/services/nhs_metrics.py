@@ -16,37 +16,46 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
-import json
-from .plotting_service import PlottingService
 
-# Import centralized logger
+from .base_metrics import BaseMetrics, BaseRecord
 from src.logger import logger
 
 
-@dataclass
-class PatientRecord:
+class PatientRecord(BaseRecord):
     """Official NHS patient record for A&E Quality Indicators tracking"""
-    patient_id: str
-    arrival_time: float
-    age: int = 30
-    gender: str = "Unknown"
-    triage_category: str = ""
     
-    # Official NHS timestamps for quality indicators
-    initial_assessment_start: float = 0  # Time to initial assessment
-    treatment_start: float = 0           # Time to treatment  
-    departure_time: float = 0            # Total time in A&E
-    
-    # Status flags for NHS indicators
-    left_without_being_seen: bool = False
-    is_reattendance: bool = False
-    admitted: bool = False
-    
-    # Additional clinical data
-    presenting_complaint: str = ""
-    disposal: str = ""  # discharged/admitted/transferred
+    def __init__(self, patient_id: str, arrival_time: float, age: int = 30, 
+                 gender: str = "Unknown", triage_category: str = "",
+                 initial_assessment_start: float = 0, treatment_start: float = 0,
+                 departure_time: float = 0, left_without_being_seen: bool = False,
+                 is_reattendance: bool = False, admitted: bool = False,
+                 presenting_complaint: str = "", disposal: str = ""):
+        """Initialize PatientRecord with proper inheritance"""
+        # Call parent constructor with base record fields
+        super().__init__(record_id=patient_id, timestamp=arrival_time)
+        
+        # Set NHS-specific fields
+        self.patient_id = patient_id
+        self.arrival_time = arrival_time
+        self.age = age
+        self.gender = gender
+        self.triage_category = triage_category
+        
+        # Official NHS timestamps for quality indicators
+        self.initial_assessment_start = initial_assessment_start  # Time to initial assessment
+        self.treatment_start = treatment_start                   # Time to treatment  
+        self.departure_time = departure_time                     # Total time in A&E
+        
+        # Status flags for NHS indicators
+        self.left_without_being_seen = left_without_being_seen
+        self.is_reattendance = is_reattendance
+        self.admitted = admitted
+        
+        # Additional clinical data
+        self.presenting_complaint = presenting_complaint
+        self.disposal = disposal  # discharged/admitted/transferred
     
     def total_time_in_ae(self) -> float:
         """Total time in A&E (minutes) - Official NHS Quality Indicator"""
@@ -71,43 +80,35 @@ class PatientRecord:
         return self.total_time_in_ae() <= 240
 
 
-class NHSMetricsService:
-    """
-    Official NHS A&E Quality Indicators Service
+class NHSMetrics(BaseMetrics):
+    """NHS A&E Quality Indicators Service
     
-    Provides a clean interface for tracking and calculating NHS A&E Quality Indicators
-    from patient data. Can be integrated into any hospital simulation or real system.
+    Provides NHS-specific metrics tracking and calculation capabilities.
     """
     
     def __init__(self, reattendance_window_hours: int = 72):
-        """
-        Initialize NHS Metrics Service
+        """Initialize NHS Metrics Service
         
         Args:
             reattendance_window_hours: Time window for re-attendance tracking (default: 72 hours)
         """
-        # Patient data storage
-        self.patients: List[PatientRecord] = []
-        self.active_patients: Dict[str, PatientRecord] = {}
+        super().__init__("NHSMetrics")
         
-        # Re-attendance tracking
+        # NHS-specific tracking
         self.reattendance_window = reattendance_window_hours
         self.patient_history: Dict[str, List[float]] = defaultdict(list)
         
-        # Real-time counters
-        self.total_attendances = 0
-        self.lwbs_count = 0
-        self.reattendance_count = 0
-        self.admissions_count = 0
-        
-        # Initialize plotting service
-        self.plotting_service = PlottingService()
+        # NHS-specific counters
+        self.counters.update({
+            'lwbs_count': 0,
+            'reattendance_count': 0,
+            'admissions_count': 0
+        })
     
     def add_patient_arrival(self, patient_id: str, arrival_time: float, 
                            age: int = 30, gender: str = "Unknown", 
                            presenting_complaint: str = "") -> PatientRecord:
-        """
-        Record patient arrival and return patient record
+        """Record patient arrival and return patient record
         
         Args:
             patient_id: Unique patient identifier
@@ -131,12 +132,11 @@ class NHSMetricsService:
             presenting_complaint=presenting_complaint
         )
         
-        # Store patient
-        self.active_patients[patient_id] = patient
-        self.total_attendances += 1
+        # Add to base metrics
+        self.add_record(patient)
         
         if is_reattendance:
-            self.reattendance_count += 1
+            self.counters['reattendance_count'] += 1
         
         # Track arrival time for re-attendance checking
         self.patient_history[patient_id].append(arrival_time)
@@ -145,24 +145,26 @@ class NHSMetricsService:
     
     def record_initial_assessment(self, patient_id: str, assessment_time: float):
         """Record start of initial assessment (triage/nursing assessment)"""
-        if patient_id in self.active_patients:
-            self.active_patients[patient_id].initial_assessment_start = assessment_time
+        patient = self.get_record(patient_id)
+        if isinstance(patient, PatientRecord):
+            patient.initial_assessment_start = assessment_time
     
     def record_treatment_start(self, patient_id: str, treatment_time: float):
         """Record start of treatment (usually doctor consultation)"""
-        if patient_id in self.active_patients:
-            self.active_patients[patient_id].treatment_start = treatment_time
+        patient = self.get_record(patient_id)
+        if isinstance(patient, PatientRecord):
+            patient.treatment_start = treatment_time
     
     def record_triage_category(self, patient_id: str, category: str):
         """Record Manchester Triage System category"""
-        if patient_id in self.active_patients:
-            self.active_patients[patient_id].triage_category = category
+        patient = self.get_record(patient_id)
+        if isinstance(patient, PatientRecord):
+            patient.triage_category = category
     
     def record_patient_departure(self, patient_id: str, departure_time: float, 
                                disposal: str = "discharged", admitted: bool = False,
                                left_without_being_seen: bool = False):
-        """
-        Record patient departure with disposal information
+        """Record patient departure with disposal information
         
         Args:
             patient_id: Patient identifier
@@ -171,24 +173,23 @@ class NHSMetricsService:
             admitted: Whether patient was admitted
             left_without_being_seen: Whether patient left before being seen
         """
-        if patient_id not in self.active_patients:
+        patient = self.get_record(patient_id)
+        if not isinstance(patient, PatientRecord):
             return
         
-        patient = self.active_patients[patient_id]
         patient.departure_time = departure_time
         patient.disposal = disposal
         patient.admitted = admitted
         patient.left_without_being_seen = left_without_being_seen
         
         if admitted:
-            self.admissions_count += 1
+            self.counters['admissions_count'] += 1
         
         if left_without_being_seen:
-            self.lwbs_count += 1
+            self.counters['lwbs_count'] += 1
         
-        # Move to completed patients
-        self.patients.append(patient)
-        del self.active_patients[patient_id]
+        # Complete the record
+        self.complete_record(patient_id, departure_time)
     
     def _check_reattendance(self, patient_id: str, arrival_time: float) -> bool:
         """Check if patient is a re-attendance within the specified window"""
@@ -204,20 +205,19 @@ class NHSMetricsService:
         
         return False
     
-    def calculate_nhs_metrics(self) -> Dict:
-        """
-        Calculate official NHS A&E Quality Indicators
+    def calculate_metrics(self) -> Dict[str, Any]:
+        """Calculate official NHS A&E Quality Indicators
         
         Returns:
             Dictionary containing all official NHS metrics and performance indicators
         """
-        completed_patients = [p for p in self.patients if p.departure_time > 0]
+        completed_patients = [p for p in self.records if isinstance(p, PatientRecord) and p.departure_time > 0]
         
         if not completed_patients:
             return {
                 'error': 'No completed patients to analyze',
-                'total_attendances': self.total_attendances,
-                'active_patients': len(self.active_patients)
+                'total_attendances': self.counters['total_records'],
+                'active_patients': len(self.active_records)
             }
         
         # Calculate official NHS metrics
@@ -232,11 +232,11 @@ class NHSMetricsService:
         metrics = {
             # ATTENDANCE SUMMARY
             'total_attendances': len(completed_patients),
-            'active_patients_in_system': len(self.active_patients),
+            'active_patients_in_system': len(self.active_records),
             
             # OFFICIAL NHS A&E QUALITY INDICATORS
-            '1_left_before_being_seen_rate_pct': (self.lwbs_count / len(completed_patients)) * 100 if completed_patients else 0,
-            '2_reattendance_rate_pct': (self.reattendance_count / len(completed_patients)) * 100 if completed_patients else 0,
+            '1_left_before_being_seen_rate_pct': (self.counters['lwbs_count'] / len(completed_patients)) * 100 if completed_patients else 0,
+            '2_reattendance_rate_pct': (self.counters['reattendance_count'] / len(completed_patients)) * 100 if completed_patients else 0,
             '3_time_to_initial_assessment_avg_minutes': np.mean(initial_assessment_times) if initial_assessment_times else 0,
             '4_time_to_treatment_avg_minutes': np.mean(treatment_times) if treatment_times else 0,
             '5_total_time_in_ae_avg_minutes': np.mean(total_times) if total_times else 0,
@@ -251,7 +251,7 @@ class NHSMetricsService:
             # ADDITIONAL PERFORMANCE METRICS
             'median_total_time_minutes': np.median(total_times) if total_times else 0,
             '95th_percentile_time_minutes': np.percentile(total_times, 95) if total_times else 0,
-            'admission_rate_pct': (self.admissions_count / len(completed_patients)) * 100 if completed_patients else 0,
+            'admission_rate_pct': (self.counters['admissions_count'] / len(completed_patients)) * 100 if completed_patients else 0,
             
             # TRIAGE BREAKDOWN
             'triage_category_distribution': self._get_triage_distribution(completed_patients),
@@ -261,6 +261,9 @@ class NHSMetricsService:
             'gender_analysis': self._get_gender_analysis(completed_patients),
             'time_distribution_analysis': self._get_time_distribution_analysis(total_times),
         }
+        
+        # Add base statistics
+        metrics.update(self.get_basic_statistics())
         
         return metrics
     
@@ -311,8 +314,8 @@ class NHSMetricsService:
         
         return analysis
     
-    def _get_time_distribution_analysis(self, times: List[float]) -> Dict[str, float]:
-        """Analyze time distribution statistics"""
+    def _get_time_distribution_analysis(self, times: List[float]) -> Dict[str, Any]:
+        """Analyze time distribution patterns"""
         if not times:
             return {}
         
@@ -320,20 +323,45 @@ class NHSMetricsService:
             'min_time_minutes': np.min(times),
             'max_time_minutes': np.max(times),
             'std_dev_minutes': np.std(times),
-            '25th_percentile_minutes': np.percentile(times, 25),
-            '75th_percentile_minutes': np.percentile(times, 75),
-            '90th_percentile_minutes': np.percentile(times, 90),
-            '99th_percentile_minutes': np.percentile(times, 99)
+            'quartiles': {
+                '25th_percentile': np.percentile(times, 25),
+                '50th_percentile': np.percentile(times, 50),
+                '75th_percentile': np.percentile(times, 75)
+            },
+            'distribution_bins': self._create_time_bins(times)
         }
     
+    def _create_time_bins(self, times: List[float]) -> Dict[str, int]:
+        """Create time distribution bins for analysis"""
+        bins = {
+            '0-60min': 0,
+            '60-120min': 0,
+            '120-240min': 0,
+            '240-360min': 0,
+            '360+min': 0
+        }
+        
+        for time in times:
+            if time <= 60:
+                bins['0-60min'] += 1
+            elif time <= 120:
+                bins['60-120min'] += 1
+            elif time <= 240:
+                bins['120-240min'] += 1
+            elif time <= 360:
+                bins['240-360min'] += 1
+            else:
+                bins['360+min'] += 1
+        
+        return bins
+    
     def print_nhs_dashboard(self) -> Dict:
-        """
-        Print comprehensive NHS-style dashboard
+        """Print comprehensive NHS-style dashboard
         
         Returns:
             Dictionary containing all calculated metrics
         """
-        metrics = self.calculate_nhs_metrics()
+        metrics = self.calculate_metrics()
         
         if 'error' in metrics:
             logger.warning(f"⚠️  {metrics['error']}")
@@ -395,221 +423,27 @@ class NHSMetricsService:
         
         return metrics
     
-    def export_data(self, json_filepath: str = None, csv_filepath: str = None):
-        """
-        Export NHS metrics and patient data
+    def _record_to_dict(self, record: BaseRecord) -> Dict[str, Any]:
+        """Convert a PatientRecord to dictionary for export"""
+        if not isinstance(record, PatientRecord):
+            return super()._record_to_dict(record)
         
-        Args:
-            json_filepath: Path to export metrics as JSON
-            csv_filepath: Path to export patient data as CSV
-        """
-        if json_filepath:
-            metrics = self.calculate_nhs_metrics()
-            with open(json_filepath, 'w') as f:
-                json.dump(metrics, f, indent=2, default=str)
-            logger.info(f"NHS metrics exported to {json_filepath}")
-        
-        if csv_filepath:
-            if not self.patients:
-                logger.info("No patient data to export")
-                return
-            
-            data = []
-            for p in self.patients:
-                data.append({
-                    'patient_id': p.patient_id,
-                    'arrival_time': p.arrival_time,
-                    'age': p.age,
-                    'gender': p.gender,
-                    'triage_category': p.triage_category,
-                    'initial_assessment_start': p.initial_assessment_start,
-                    'treatment_start': p.treatment_start,
-                    'departure_time': p.departure_time,
-                    'total_time_minutes': p.total_time_in_ae(),
-                    'time_to_assessment_minutes': p.time_to_initial_assessment(),
-                    'time_to_treatment_minutes': p.time_to_treatment(),
-                    'meets_4hour_standard': p.meets_4hour_standard(),
-                    'is_reattendance': p.is_reattendance,
-                    'admitted': p.admitted,
-                    'disposal': p.disposal,
-                    'presenting_complaint': p.presenting_complaint,
-                    'left_without_being_seen': p.left_without_being_seen
-                })
-            
-            df = pd.DataFrame(data)
-            df.to_csv(csv_filepath, index=False)
-            logger.info(f"Patient data exported to {csv_filepath}")
-    
-    def plot_compliance_chart(self, save_path: Optional[str] = None):
-        """Generate NHS 4-hour compliance chart.
-        
-        Args:
-            save_path: Optional path to save the chart
-        """
-        metrics = self.calculate_nhs_metrics()
-        return self.plotting_service.create_compliance_chart(metrics, save_path=save_path)
-    
-    def plot_triage_distribution(self, save_path: Optional[str] = None):
-        """Generate triage category distribution chart.
-        
-        Args:
-            save_path: Optional path to save the chart
-        """
-        # Get triage distribution data
-        triage_counts = defaultdict(int)
-        for patient in self.patients:
-            if patient.triage_category:
-                triage_counts[patient.triage_category] += 1
-        
-        return self.plotting_service.create_triage_distribution_chart(
-            dict(triage_counts), save_path=save_path)
-    
-    def plot_time_distribution(self, save_path: Optional[str] = None):
-        """Generate patient time distribution histogram.
-        
-        Args:
-            save_path: Optional path to save the chart
-        """
-        times = [p.total_time_in_ae() for p in self.patients if p.total_time_in_ae() > 0]
-        return self.plotting_service.create_time_distribution_chart(times, save_path=save_path)
-    
-    def plot_age_group_analysis(self, save_path: Optional[str] = None):
-        """Generate age group analysis chart.
-        
-        Args:
-            save_path: Optional path to save the chart
-        """
-        # Calculate age group data
-        age_groups = {
-            '0-17': {'patients': [], 'count': 0, 'avg_time_minutes': 0, '4hour_compliance_pct': 0},
-            '18-64': {'patients': [], 'count': 0, 'avg_time_minutes': 0, '4hour_compliance_pct': 0},
-            '65+': {'patients': [], 'count': 0, 'avg_time_minutes': 0, '4hour_compliance_pct': 0}
-        }
-        
-        for patient in self.patients:
-            if patient.age < 18:
-                group = '0-17'
-            elif patient.age < 65:
-                group = '18-64'
-            else:
-                group = '65+'
-            
-            age_groups[group]['patients'].append(patient)
-            age_groups[group]['count'] += 1
-        
-        # Calculate averages and compliance
-        for group_data in age_groups.values():
-            if group_data['count'] > 0:
-                times = [p.total_time_in_ae() for p in group_data['patients']]
-                group_data['avg_time_minutes'] = np.mean(times)
-                compliant = sum(1 for p in group_data['patients'] if p.meets_4hour_standard())
-                group_data['4hour_compliance_pct'] = (compliant / group_data['count']) * 100
-        
-        # Remove empty groups and format for plotting
-        plot_data = {group: data for group, data in age_groups.items() if data['count'] > 0}
-        
-        return self.plotting_service.create_age_group_analysis_chart(plot_data, save_path=save_path)
-    
-    def plot_performance_dashboard(self, save_path: Optional[str] = None):
-        """Generate comprehensive NHS performance dashboard.
-        
-        Args:
-            save_path: Optional path to save the dashboard
-        """
-        metrics = self.calculate_nhs_metrics()
-        
-        # Prepare dashboard data
-        dashboard_data = metrics.copy()
-        
-        # Add triage distribution
-        triage_counts = defaultdict(int)
-        for patient in self.patients:
-            if patient.triage_category:
-                triage_counts[patient.triage_category] += 1
-        dashboard_data['triage_distribution'] = dict(triage_counts)
-        
-        # Add patient times
-        dashboard_data['patient_times'] = [p.total_time_in_ae() for p in self.patients if p.total_time_in_ae() > 0]
-        
-        # Add age group data
-        age_groups = {
-            '0-17': {'patients': [], 'count': 0},
-            '18-64': {'patients': [], 'count': 0},
-            '65+': {'patients': [], 'count': 0}
-        }
-        
-        for patient in self.patients:
-            if patient.age < 18:
-                group = '0-17'
-            elif patient.age < 65:
-                group = '18-64'
-            else:
-                group = '65+'
-            
-            age_groups[group]['patients'].append(patient)
-            age_groups[group]['count'] += 1
-        
-        dashboard_data['age_groups'] = {group: data for group, data in age_groups.items() if data['count'] > 0}
-        
-        return self.plotting_service.create_performance_dashboard(dashboard_data, save_path=save_path)
-    
-    def generate_all_plots(self, output_dir: str = "./output/nhs_metrics/plots"):
-        """Generate all available NHS metrics plots.
-        
-        Args:
-            output_dir: Directory to save all plots
-        """
-        import os
-        os.makedirs(output_dir, exist_ok=True)
-        
-        plots_generated = []
-        
-        try:
-            # Generate individual plots
-            self.plot_compliance_chart(f"{output_dir}/compliance_chart.png")
-            plots_generated.append("compliance_chart.png")
-            
-            self.plot_triage_distribution(f"{output_dir}/triage_distribution.png")
-            plots_generated.append("triage_distribution.png")
-            
-            self.plot_time_distribution(f"{output_dir}/time_distribution.png")
-            plots_generated.append("time_distribution.png")
-            
-            if len(self.patients) > 0:  # Only if we have patient data
-                self.plot_age_group_analysis(f"{output_dir}/age_group_analysis.png")
-                plots_generated.append("age_group_analysis.png")
-            
-            # Generate comprehensive dashboard
-            self.plot_performance_dashboard(f"{output_dir}/performance_dashboard.png")
-            plots_generated.append("performance_dashboard.png")
-            
-            logger.info(f"Generated {len(plots_generated)} NHS metrics plots in {output_dir}:")
-            for plot in plots_generated:
-                logger.info(f"  - {plot}")
-                
-        except Exception as e:
-            logger.error(f"Error generating plots: {e}")
-        
-        return plots_generated
-    
-    def close_plots(self):
-        """Close all matplotlib figures to free memory."""
-        self.plotting_service.close_all_figures()
-    
-    def reset(self):
-        """Reset all metrics and patient data"""
-        self.patients.clear()
-        self.active_patients.clear()
-        self.patient_history.clear()
-        self.total_attendances = 0
-        self.lwbs_count = 0
-        self.reattendance_count = 0
-        self.admissions_count = 0
-    
-    def get_patient_count(self) -> Dict[str, int]:
-        """Get current patient counts"""
         return {
-            'completed_patients': len(self.patients),
-            'active_patients': len(self.active_patients),
-            'total_attendances': self.total_attendances
+            'patient_id': record.patient_id,
+            'arrival_time': record.arrival_time,
+            'age': record.age,
+            'gender': record.gender,
+            'triage_category': record.triage_category,
+            'initial_assessment_start': record.initial_assessment_start,
+            'treatment_start': record.treatment_start,
+            'departure_time': record.departure_time,
+            'total_time_minutes': record.total_time_in_ae(),
+            'time_to_assessment_minutes': record.time_to_initial_assessment(),
+            'time_to_treatment_minutes': record.time_to_treatment(),
+            'meets_4hour_standard': record.meets_4hour_standard(),
+            'is_reattendance': record.is_reattendance,
+            'admitted': record.admitted,
+            'disposal': record.disposal,
+            'presenting_complaint': record.presenting_complaint,
+            'left_without_being_seen': record.left_without_being_seen
         }
