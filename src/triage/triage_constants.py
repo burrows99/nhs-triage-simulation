@@ -218,9 +218,6 @@ class FlowchartSymptomMapping:
             TriageFlowcharts.LIMB_INJURIES.value: cls.LIMB_INJURIES_SYMPTOMS
         }
         return mapping.get(flowchart, cls.CHEST_PAIN_SYMPTOMS)  # Default to chest pain
-    
-    # Note: Random symptom generation removed - simulation now uses only real patient symptoms
-
 
 class MedicalConditions:
     """Standardized medical condition names"""
@@ -614,6 +611,67 @@ class CommonStrings:
     def get_wait_times(cls) -> List[str]:
         """Get all wait time strings in order"""
         return [cls.WAIT_0_MIN, cls.WAIT_10_MIN, cls.WAIT_60_MIN, cls.WAIT_120_MIN, cls.WAIT_240_MIN]
+
+
+class ComplaintToFlowchartMapping:
+    """Mapping of chief complaints to appropriate MTS flowcharts"""
+    
+    COMPLAINT_MAPPING = {
+        MedicalConditions.CHEST_PAIN: TriageFlowcharts.CHEST_PAIN.value,
+        'chest': TriageFlowcharts.CHEST_PAIN.value,
+        CommonStrings.CARDIAC_KEYWORD: TriageFlowcharts.CHEST_PAIN.value,
+        'heart': TriageFlowcharts.CHEST_PAIN.value,
+        MedicalConditions.SHORTNESS_OF_BREATH: TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+        SymptomNames.BREATHING: TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+        SymptomNames.BREATHLESS: TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+        CommonStrings.RESPIRATORY_KEYWORD: TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+        MedicalConditions.ASTHMA: TriageFlowcharts.ASTHMA.value,
+        SymptomNames.ABDOMINAL_PAIN: TriageFlowcharts.ABDOMINAL_PAIN.value,
+        'abdominal': TriageFlowcharts.ABDOMINAL_PAIN.value,
+        'stomach': TriageFlowcharts.ABDOMINAL_PAIN.value,
+        MedicalConditions.APPENDICITIS: TriageFlowcharts.ABDOMINAL_PAIN.value,
+        MedicalConditions.HEADACHE: TriageFlowcharts.HEADACHE.value,
+        'head': TriageFlowcharts.HEADACHE.value,
+        MedicalConditions.MIGRAINE: TriageFlowcharts.HEADACHE.value,
+        CommonStrings.NEUROLOGICAL_KEYWORD: TriageFlowcharts.HEADACHE.value,
+        MedicalConditions.NAUSEA: TriageFlowcharts.VOMITING.value,
+        MedicalConditions.VOMITING: TriageFlowcharts.VOMITING.value,
+        SymptomNames.INJURY: TriageFlowcharts.LIMB_INJURIES.value,
+        CommonStrings.TRAUMA_TERM: TriageFlowcharts.LIMB_INJURIES.value,
+        MedicalConditions.FRACTURE: TriageFlowcharts.LIMB_INJURIES.value,
+        'wound': TriageFlowcharts.WOUNDS.value,
+        'cut': TriageFlowcharts.WOUNDS.value,
+        'burn': TriageFlowcharts.BURNS.value,
+        MedicalConditions.STROKE: TriageFlowcharts.STROKE.value,
+        MedicalConditions.SEIZURE: TriageFlowcharts.FITS.value,
+        SymptomNames.CONFUSION: TriageFlowcharts.CONFUSION.value,
+        SymptomNames.UNCONSCIOUS: TriageFlowcharts.UNCONSCIOUS_ADULT.value,
+        CommonStrings.FEVER_TERM: TriageFlowcharts.CHILD_FEVER.value,
+        CommonStrings.INFECTION_TERM: TriageFlowcharts.CHILD_FEVER.value
+    }
+    
+    @classmethod
+    def get_flowchart_for_complaint(cls, complaint: str) -> str:
+        """Get appropriate flowchart for a chief complaint.
+        
+        Args:
+            complaint: Patient's chief complaint (case-insensitive)
+            
+        Returns:
+            Appropriate flowchart identifier, defaults to chest_pain if no match
+        """
+        if not complaint:
+            return TriageFlowcharts.CHEST_PAIN.value
+        
+        complaint_lower = complaint.lower()
+        
+        # Find matching flowchart
+        for keyword, flowchart in cls.COMPLAINT_MAPPING.items():
+            if keyword in complaint_lower:
+                return flowchart
+        
+        # Default to chest pain if no match found
+        return TriageFlowcharts.CHEST_PAIN.value
 
 
 class FlowchartNames:

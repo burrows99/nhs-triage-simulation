@@ -18,7 +18,8 @@ from src.services.random_service import RandomService
 from src.triage.manchester_triage_system import ManchesterTriageSystem
 from src.triage.triage_constants import (
     TriageFlowcharts, FlowchartSymptomMapping, TriageCategories,
-    SymptomKeys, MedicalConditions, CommonStrings, DiagnosticTestTypes, SymptomNames
+    SymptomKeys, MedicalConditions, CommonStrings, DiagnosticTestTypes, SymptomNames,
+    ComplaintToFlowchartMapping
 )
 
 
@@ -156,53 +157,7 @@ class SimpleHospital:
         Returns:
             Appropriate flowchart identifier for the complaint
         """
-        if not chief_complaint:
-            return TriageFlowcharts.CHEST_PAIN.value  # Default to most common presentation
-        
-        complaint_lower = chief_complaint.lower()
-        
-        # Map common complaints to flowcharts
-        complaint_mapping = {
-            'chest pain': TriageFlowcharts.CHEST_PAIN.value,
-            'chest': TriageFlowcharts.CHEST_PAIN.value,
-            'cardiac': TriageFlowcharts.CHEST_PAIN.value,
-            'heart': TriageFlowcharts.CHEST_PAIN.value,
-            'shortness of breath': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
-            'breathing': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
-            'breathless': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
-            'respiratory': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
-            'asthma': TriageFlowcharts.ASTHMA.value,
-            'abdominal pain': TriageFlowcharts.ABDOMINAL_PAIN.value,
-            'abdominal': TriageFlowcharts.ABDOMINAL_PAIN.value,
-            'stomach': TriageFlowcharts.ABDOMINAL_PAIN.value,
-            'appendicitis': TriageFlowcharts.ABDOMINAL_PAIN.value,
-            'headache': TriageFlowcharts.HEADACHE.value,
-            'head': TriageFlowcharts.HEADACHE.value,
-            'migraine': TriageFlowcharts.HEADACHE.value,
-            'neurological': TriageFlowcharts.HEADACHE.value,
-            'nausea': TriageFlowcharts.VOMITING.value,
-            'vomiting': TriageFlowcharts.VOMITING.value,
-            'injury': TriageFlowcharts.LIMB_INJURIES.value,
-            'trauma': TriageFlowcharts.LIMB_INJURIES.value,
-            'fracture': TriageFlowcharts.LIMB_INJURIES.value,
-            'wound': TriageFlowcharts.WOUNDS.value,
-            'cut': TriageFlowcharts.WOUNDS.value,
-            'burn': TriageFlowcharts.BURNS.value,
-            'stroke': TriageFlowcharts.STROKE.value,
-            'seizure': TriageFlowcharts.FITS.value,
-            'confusion': TriageFlowcharts.CONFUSION.value,
-            'unconscious': TriageFlowcharts.UNCONSCIOUS_ADULT.value,
-            'fever': TriageFlowcharts.CHILD_FEVER.value,
-            'infection': TriageFlowcharts.CHILD_FEVER.value
-        }
-        
-        # Find matching flowchart
-        for keyword, flowchart in complaint_mapping.items():
-            if keyword in complaint_lower:
-                return flowchart
-        
-        # Default to chest pain if no match found (most common presentation)
-        return TriageFlowcharts.CHEST_PAIN.value
+        return ComplaintToFlowchartMapping.get_flowchart_for_complaint(chief_complaint)
     
     def _convert_symptoms_to_mts_format(self, raw_symptoms: Dict[str, str], flowchart_reason: str) -> Dict[str, str]:
         """Convert real patient symptoms to MTS flowchart format.
