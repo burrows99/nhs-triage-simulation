@@ -152,7 +152,7 @@ class SimpleHospital:
         yield from self._process_doctor_assessment(patient_id, category, priority, mts_result)
         
         # Diagnostics stage (optional)
-        yield from self._process_diagnostics()
+        yield from self._process_diagnostics(category)
         
         # Disposition stage
         disposition, admitted = yield from self._process_disposition(category, priority)
@@ -194,16 +194,23 @@ class SimpleHospital:
             yield self.env.timeout(triage_time)
     
     def _calculate_triage_time(self, category, mts_result):
-        """Calculate triage assessment time based on MTS result."""
+        """Calculate triage assessment time using evidence-based NHS timing.
+        
+        Uses official MTS research and NHS sources for realistic triage duration.
+        """
         if not mts_result:
             raise ValueError("MTS result is required for triage time calculation")
         
-        if 'wait_time' not in mts_result:
-            raise ValueError(f"MTS result missing required 'wait_time' field: {mts_result}")
+        # Determine complexity based on triage category
+        if category in [TriageCategories.RED]:
+            complexity = "complex"  # Immediate cases are complex
+        elif category in [TriageCategories.ORANGE, TriageCategories.YELLOW]:
+            complexity = "standard"  # Urgent cases are standard
+        else:
+            complexity = "simple"  # Less urgent cases are simpler
         
-        # Use MTS wait time (10% for triage assessment, max 15 min)
-        mts_wait_minutes = self.data_cleanup.convert_wait_time_to_minutes(mts_result['wait_time'], self.random_service)
-        return min(mts_wait_minutes * 0.1, 15)
+        # Use evidence-based triage process time (NHS official sources)
+        return self.random_service.get_triage_process_time(complexity)
     
     def _process_doctor_assessment(self, patient_id, category, priority, mts_result):
         """Process doctor assessment stage."""
@@ -235,26 +242,58 @@ class SimpleHospital:
         else:
             return min(mts_wait_minutes * 0.5, 50)
     
-    def _process_diagnostics(self):
-        """Process optional diagnostics stage."""
+    def _process_diagnostics(self, category):
+        """Process optional diagnostics stage with specific test types.
+        
+        Uses NHS official timing data for different diagnostic procedures.
+        """
         if self.random_service.should_perform_diagnostics():
-            diagnostics_time = self.random_service.get_diagnostics_time()
+            # Determine diagnostic type based on triage category and clinical needs
+            diagnostic_type = self._determine_diagnostic_type(category)
+            diagnostics_time = self.random_service.get_diagnostics_time(diagnostic_type)
             yield self.env.timeout(diagnostics_time)
     
+    def _determine_diagnostic_type(self, category):
+        """Determine appropriate diagnostic test type based on triage category.
+        
+        Returns specific test type for NHS evidence-based timing.
+        """
+        if category == TriageCategories.RED:
+            # Critical patients often need immediate ECG and blood work
+            return random.choice(["ecg", "blood", "mixed"])
+        elif category == TriageCategories.ORANGE:
+            # Very urgent patients may need various diagnostics
+            return random.choice(["blood", "xray", "mixed"])
+        elif category == TriageCategories.YELLOW:
+            # Urgent patients typically need standard diagnostics
+            return random.choice(["xray", "blood"])
+        else:
+            # Less urgent patients usually need simple diagnostics
+            return random.choice(["xray", "ecg"])
+    
     def _process_disposition(self, category, priority):
-        """Process patient disposition (admission or discharge)."""
-        # Get disposition decision and processing time from random service
-        disposition, admitted, processing_time = self.random_service.determine_patient_disposition(category)
+        """Process patient disposition using NHS evidence-based timing.
+        
+        Uses official NHS sources for admission and discharge processing times.
+        """
+        # Determine admission decision using NHS-based logic
+        admitted = self.random_service.should_admit_patient(category)
         
         if admitted:
-            # Admission process - requires bed allocation
+            # Admission process with NHS evidence-based timing
+            disposition = 'admitted'
+            processing_time = self.random_service.get_admission_processing_time()
+            
+            # Bed allocation process
             bed_start = self.env.now
             with self.bed_resource.request(priority=priority) as req:
                 yield req
                 bed_service_start = self.env.now
                 yield self.env.timeout(processing_time)
         else:
-            # Discharge process - no bed required
+            # Discharge process with NHS evidence-based timing
+            disposition = 'discharged'
+            processing_time = self.random_service.get_discharge_processing_time()
             yield self.env.timeout(processing_time)
         
         return disposition, admitted
