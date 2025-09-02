@@ -21,17 +21,19 @@ class SimulationEngine:
     - Simulation time management
     """
     
-    def __init__(self, duration: float, arrival_rate: float, resources: Dict[str, int]):
+    def __init__(self, duration: float, arrival_rate: float, resources: Dict[str, int], priority_resources: List[str] = None):
         """Initialize the simulation engine.
         
         Args:
             duration: Simulation duration in minutes
-            arrival_rate: Patient arrival rate per hour
+            arrival_rate: Entity arrival rate per hour
             resources: Dictionary of resource types and capacities
+            priority_resources: List of resource names that should use PriorityResource
         """
         self.duration = duration
         self.arrival_rate = arrival_rate
         self.resources = resources
+        self.priority_resources = priority_resources or []
         
         # Simulation state
         self.env = None
@@ -40,7 +42,7 @@ class SimulationEngine:
         self.resource_usage_log = []
         
         # Counters
-        self.patient_count = 0
+        self.entity_count = 0
         self.total_time = 0
         self.categories = []
         
@@ -54,14 +56,11 @@ class SimulationEngine:
         
         # Initialize resources based on configuration
         for resource_name, capacity in self.resources.items():
-            if resource_name == 'doctors':
-                # Doctors use priority resource for triage categories
-                self.simpy_resources[resource_name] = simpy.PriorityResource(self.env, capacity=capacity)
-            elif resource_name == 'beds':
-                # Beds also use priority resource
+            if resource_name in self.priority_resources:
+                # Priority resources for entities with different priorities
                 self.simpy_resources[resource_name] = simpy.PriorityResource(self.env, capacity=capacity)
             else:
-                # Regular resources (nurses, etc.)
+                # Regular resources
                 self.simpy_resources[resource_name] = simpy.Resource(self.env, capacity=capacity)
         
         logger.info(f"🏗️  Resources initialized: {', '.join([f'{k}: {v}' for k, v in self.resources.items()])}")
@@ -124,7 +123,7 @@ class SimulationEngine:
             # Log progress if we hit a progress milestone
             if self.env.now >= next_progress and self.env.now < self.duration:
                 progress_pct = (self.env.now / self.duration) * 100
-                logger.info(f"📊 PROGRESS: {progress_pct:.0f}% complete at {self.format_sim_time(self.env.now)} | Entities processed: {self.patient_count}")
+                logger.info(f"📊 PROGRESS: {progress_pct:.0f}% complete at {self.format_sim_time(self.env.now)} | Entities processed: {self.entity_count}")
                 
                 # Log resource utilization
                 resource_status = []
@@ -140,10 +139,10 @@ class SimulationEngine:
                 break
         
         # Calculate results
-        avg_time = self.total_time / self.patient_count if self.patient_count > 0 else 0
+        avg_time = self.total_time / self.entity_count if self.entity_count > 0 else 0
         
         logger.info(f"🏁 SIMULATION COMPLETE at {self.format_sim_time(self.env.now)}!")
-        logger.info(f"📊 Final Results: {self.patient_count} entities processed, average time: {avg_time:.1f}min")
+        logger.info(f"📊 Final Results: {self.entity_count} entities processed, average time: {avg_time:.1f}min")
         
         # Log final resource state
         resource_states = []
@@ -152,7 +151,7 @@ class SimulationEngine:
         logger.info(f"🏭 Final resource state: {', '.join(resource_states)}")
         
         return {
-            'total_entities': self.patient_count,
+            'total_entities': self.entity_count,
             'avg_time': avg_time,
             'times': [],
             'categories': self.categories,
@@ -168,7 +167,7 @@ class SimulationEngine:
             total_time: Total time spent in system
             category: Optional category for tracking
         """
-        self.patient_count += 1
+        self.entity_count += 1
         self.total_time += total_time
         if category:
             self.categories.append(category)
@@ -181,7 +180,7 @@ class SimulationEngine:
         """
         current_state = {
             'time': self.env.now,
-            'patients_processed': self.patient_count,
+            'entities_processed': self.entity_count,
             'total_queue_length': sum(len(res.queue) for res in self.simpy_resources.values())
         }
         
@@ -209,7 +208,7 @@ class SimulationEngine:
             sim_time_str = "00:00 (0.0min)"
         
         # Format message with simulation time
-        formatted_message = f"{message} [Sim Time: {sim_time_str}]"
+        formatted_message = f"{message} [{sim_time_str}]"
         
         # Use centralized logger with proper level handling
         if level == logging.INFO:
@@ -224,7 +223,7 @@ class SimulationEngine:
             logger.log(level, formatted_message)
     
     def format_sim_time(self, sim_time: float) -> str:
-        """Format simulation time as HH:MM (XXX.Xmin).
+        """Format simulation time as HH:MM.
         
         Args:
             sim_time: Simulation time in minutes
@@ -234,7 +233,7 @@ class SimulationEngine:
         """
         hours = int(sim_time // 60)
         minutes = int(sim_time % 60)
-        return f"{hours:02d}:{minutes:02d} ({sim_time:.1f}min)"
+        return f"{hours:02d}:{minutes:02d}"
     
     def get_current_time(self) -> float:
         """Get current simulation time.

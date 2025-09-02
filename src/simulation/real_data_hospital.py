@@ -53,19 +53,14 @@ class SimpleHospital:
             'doctors': self.doctors,
             'beds': self.beds
         }
+        # Specify which resources should use priority queues (for triage categories)
+        priority_resources = ['doctors', 'beds']
         self.simulation_engine = SimulationEngine(
             duration=self.sim_duration,
             arrival_rate=self.arrival_rate,
-            resources=resources
+            resources=resources,
+            priority_resources=priority_resources
         )
-        
-        # Legacy simulation state for backward compatibility
-        self.env = None
-        self.triage_resource = None
-        self.doctor_resource = None
-        self.bed_resource = None
-        self.monitoring_data = []
-        self.resource_usage_log = []
         
         self.simulation_engine.log_with_sim_time(logging.INFO, "Hospital simulation initialized successfully")
         self.simulation_engine.log_with_sim_time(logging.INFO, f"Parameters: duration={self.sim_duration}min, arrival_rate={self.arrival_rate}/hr, nurses={self.nurses}, doctors={self.doctors}, beds={self.beds}")
@@ -452,7 +447,7 @@ class SimpleHospital:
     
     def patient_flow(self, patient_num):
         """Simulate patient journey with NHS metrics tracking."""
-        arrival_time = self.env.now
+        arrival_time = self.simulation_engine.env.now
         
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🚶 Patient #{patient_num} ARRIVED at {self.simulation_engine.format_sim_time(arrival_time)}")
         
@@ -460,51 +455,40 @@ class SimpleHospital:
         patient_data = self._setup_patient_arrival(arrival_time)
         patient_id = patient_data['patient_id']
         
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"👤 Patient {patient_id}: Age {patient_data['age']}, {patient_data['gender']}, Complaint: '{patient_data['presenting_complaint']}'")
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"👤 Patient #{patient_num}: Age {patient_data['age']}, {patient_data['gender']}, Complaint: '{patient_data['presenting_complaint']}'")
         
-        # Perform triage and get category/priority with processing delay handled internally
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🔍 Patient {patient_id}: Starting triage assessment at {self.simulation_engine.format_sim_time(self.env.now)}")
-        
-        # Get triage result with processing delay from perform_triage method
-        category, priority, triage_result, processing_delay_seconds = self.perform_triage(patient_data)
-        
-        # Apply the delay using general-purpose scaling (delay measurement handled in perform_triage)
-        triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient {patient_id}: Triage processing took {processing_delay_seconds:.1f} real seconds, converting to {triage_processing_delay:.1f} simulation minutes")
-        yield self.env.timeout(triage_processing_delay)
+        # Triage nurse assessment stage - this is where triage category/priority is determined
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient #{patient_num}: Entering triage nurse assessment at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
+        category, priority, triage_result = yield from self._process_triage_stage(patient_data['patient_id'], patient_data, patient_num)
         
         # Record triage result and log completion
         self.nhs_metrics.record_triage_category(patient_data['patient_id'], category)
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏷️  Patient {patient_id}: Triaged as {category} (Priority: {priority}) at {self.simulation_engine.format_sim_time(self.env.now)} (Processing delay: {triage_processing_delay:.1f}min)")
-        
-        # Triage nurse stage
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient {patient_id}: Entering triage nurse stage at {self.simulation_engine.format_sim_time(self.env.now)}")
-        yield from self._process_triage_stage(patient_data['patient_id'], category, triage_result)
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏷️  Patient #{patient_num}: Triaged as {category} (Priority: {priority}) at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
         
         # Doctor assessment stage
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient {patient_id}: Entering doctor assessment stage at {self.simulation_engine.format_sim_time(self.env.now)}")
-        yield from self._process_doctor_assessment(patient_data['patient_id'], category, priority, triage_result)
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient #{patient_num}: Entering doctor assessment stage at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
+        yield from self._process_doctor_assessment(patient_data['patient_id'], category, priority, triage_result, patient_num)
         
         # Diagnostics stage (optional)
-        diagnostics_start = self.env.now
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🔬 Patient {patient_id}: Checking for diagnostics at {self.simulation_engine.format_sim_time(diagnostics_start)}")
+        diagnostics_start = self.simulation_engine.env.now
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"🔬 Patient #{patient_num}: Checking for diagnostics at {self.simulation_engine.format_sim_time(diagnostics_start)}")
         yield from self._process_diagnostics(category)
         
-        if self.env.now > diagnostics_start:
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"🧪 Patient {patient_id}: Completed diagnostics at {self.simulation_engine.format_sim_time(self.env.now)} (Duration: {self.env.now - diagnostics_start:.1f}min)")
+        if self.simulation_engine.env.now > diagnostics_start:
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"🧪 Patient #{patient_num}: Completed diagnostics at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)} (Duration: {self.simulation_engine.env.now - diagnostics_start:.1f}min)")
         else:
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"⏭️  Patient {patient_id}: No diagnostics required")
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"⏭️  Patient #{patient_num}: No diagnostics required")
         
         # Disposition stage
-        disposition_start = self.env.now
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"📋 Patient {patient_id}: Starting disposition at {self.simulation_engine.format_sim_time(disposition_start)}")
+        disposition_start = self.simulation_engine.env.now
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"📋 Patient #{patient_num}: Starting disposition at {self.simulation_engine.format_sim_time(disposition_start)}")
         disposition, admitted = yield from self._process_disposition(category, priority)
         
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient {patient_id}: Disposition decided - {disposition.upper()} at {self.simulation_engine.format_sim_time(self.env.now)}")
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient #{patient_num}: Disposition decided - {disposition.upper()} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
         
         # Complete patient journey
         self._complete_patient_journey(patient_data['patient_id'], arrival_time, disposition, admitted, 
-                                     category, patient_data['age'], patient_data['gender'])
+                                     category, patient_data['age'], patient_data['gender'], patient_num)
     
     def _setup_patient_arrival(self, arrival_time):
         """Setup patient data and record arrival metrics."""
@@ -521,41 +505,51 @@ class SimpleHospital:
         
         return patient_data
     
-    def _process_triage_stage(self, patient_id, category, triage_result):
-        """Process triage nurse assessment stage."""
-        triage_start = self.env.now
+    def _process_triage_stage(self, patient_id, patient_data, patient_num):
+        """Process triage nurse assessment stage and determine category/priority."""
+        triage_start = self.simulation_engine.env.now
         self.nhs_metrics.record_initial_assessment(patient_id, triage_start)
         
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient {patient_id}: Waiting for triage nurse at {self.simulation_engine.format_sim_time(triage_start)} (Queue: {len(self.triage_resource.queue)} waiting)")
+        triage_resource = self.simulation_engine.get_resource('nurses')
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Waiting for triage nurse at {self.simulation_engine.format_sim_time(triage_start)} (Queue: {len(triage_resource.queue)} waiting)")
         
         # Update triage system with current resource availability (including real queue lengths)
         self._update_triage_system_resources()
         
-        with self.triage_resource.request() as req:
+        with triage_resource.request() as req:
             # Record resource request event
-            self.record_resource_event('request', 'triage', patient_id, queue_length=len(self.triage_resource.queue))
+            self.record_resource_event('request', 'triage', patient_id, queue_length=len(triage_resource.queue))
             
             yield req
-            triage_service_start = self.env.now
+            triage_service_start = self.simulation_engine.env.now
             wait_time = triage_service_start - triage_start
             
             # Record resource acquisition event
             self.record_resource_event('acquire', 'triage', patient_id, wait_time=wait_time)
             
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient {patient_id}: Started triage assessment at {self.simulation_engine.format_sim_time(triage_service_start)} (Waited: {wait_time:.1f}min)")
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient #{patient_num}: Started triage assessment at {self.simulation_engine.format_sim_time(triage_service_start)} (Waited: {wait_time:.1f}min)")
             
-            # Calculate triage time using triage system result or fallback
-            triage_time = self._calculate_triage_time(category, triage_result)
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient {patient_id}: Triage assessment will take {triage_time:.1f}min")
+            # Perform triage assessment during nurse consultation
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"🔍 Patient #{patient_num}: Nurse performing triage assessment")
+            category, priority, triage_result, processing_delay_seconds = self.perform_triage(patient_data)
             
-            yield self.env.timeout(triage_time)
+            # Apply processing delay and calculate total triage time
+            triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
+            base_triage_time = self._calculate_triage_time(category, triage_result)
+            total_triage_time = base_triage_time + triage_processing_delay
             
-            triage_end = self.env.now
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient #{patient_num}: Triage assessment will take {total_triage_time:.1f}min (assessment: {base_triage_time:.1f}min + processing: {triage_processing_delay:.1f}min)")
+            
+            yield self.simulation_engine.env.timeout(total_triage_time)
+            
+            triage_end = self.simulation_engine.env.now
             
             # Record resource release event
-            self.record_resource_event('release', 'triage', patient_id, service_time=triage_time)
+            self.record_resource_event('release', 'triage', patient_id, service_time=total_triage_time)
             
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient {patient_id}: Completed triage assessment at {self.simulation_engine.format_sim_time(triage_end)} (Total triage time: {triage_end - triage_start:.1f}min)")
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient #{patient_num}: Completed triage assessment at {self.simulation_engine.format_sim_time(triage_end)} (Total triage time: {triage_end - triage_start:.1f}min)")
+            
+            return category, priority, triage_result
     
     def _calculate_triage_time(self, category, triage_result):
         """Calculate triage assessment time using evidence-based NHS timing.
@@ -576,58 +570,44 @@ class SimpleHospital:
         # Use evidence-based triage process time (NHS official sources)
         return self.random_service.get_triage_process_time(complexity)
     
-    def _process_doctor_assessment(self, patient_id, category, priority, triage_result):
+    def _process_doctor_assessment(self, patient_id, category, priority, triage_result, patient_num):
         """Process doctor assessment stage."""
-        assessment_start = self.env.now
+        assessment_start = self.simulation_engine.env.now
         self.nhs_metrics.record_treatment_start(patient_id, assessment_start)
         
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient {patient_id}: Waiting for doctor at {self.simulation_engine.format_sim_time(assessment_start)} (Priority: {priority}, Queue: {len(self.doctor_resource.queue)} waiting)")
+        doctor_resource = self.simulation_engine.get_resource('doctors')
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Waiting for doctor at {self.simulation_engine.format_sim_time(assessment_start)} (Priority: {priority}, Queue: {len(doctor_resource.queue)} waiting)")
         
         # Update triage system with current resource availability (including doctor queue lengths)
         self._update_triage_system_resources()
         
-        with self.doctor_resource.request(priority=priority) as req:
+        with doctor_resource.request(priority=priority) as req:
             # Record resource request event
-            self.record_resource_event('request', 'doctor', patient_id, priority=priority, queue_length=len(self.doctor_resource.queue))
+            self.record_resource_event('request', 'doctor', patient_id, priority=priority, queue_length=len(doctor_resource.queue))
             
             yield req
-            assessment_service_start = self.env.now
+            assessment_service_start = self.simulation_engine.env.now
             wait_time = assessment_service_start - assessment_start
             
             # Record resource acquisition event
             self.record_resource_event('acquire', 'doctor', patient_id, wait_time=wait_time, priority=priority)
             
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient {patient_id}: Started doctor assessment at {self.simulation_engine.format_sim_time(assessment_service_start)} (Waited: {wait_time:.1f}min)")
-            
-            # Calculate assessment time using MTS or fallback
-            assessment_time = self._calculate_assessment_time(category, triage_result)
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient {patient_id}: Doctor assessment will take {assessment_time:.1f}min")
-            
-            yield self.env.timeout(assessment_time)
-            
-            assessment_end = self.env.now
-            
-            # Record resource release event
-            self.record_resource_event('release', 'doctor', patient_id, service_time=assessment_time, priority=priority)
-            
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient {patient_id}: Completed doctor assessment at {self.simulation_engine.format_sim_time(assessment_end)} (Total assessment time: {assessment_end - assessment_start:.1f}min)")
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient #{patient_num}: Started doctor assessment at {self.simulation_engine.format_sim_time(assessment_service_start)} (Waited: {wait_time:.1f}min)")
+        
+        # Calculate assessment time using NHS evidence-based ranges
+        assessment_time = self.random_service.get_doctor_assessment_time(category)
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient #{patient_num}: Doctor assessment will take {assessment_time:.1f}min")
+        
+        yield self.simulation_engine.env.timeout(assessment_time)
+        
+        assessment_end = self.simulation_engine.env.now
+        
+        # Record resource release event
+        self.record_resource_event('release', 'doctor', patient_id, service_time=assessment_time, priority=priority)
+        
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient #{patient_num}: Completed doctor assessment at {self.simulation_engine.format_sim_time(assessment_end)} (Total assessment time: {assessment_end - assessment_start:.1f}min)")
     
-    def _calculate_assessment_time(self, category, triage_result):
-        """Calculate doctor assessment time based on MTS result."""
-        if not triage_result:
-            raise ValueError("Triage result is required for assessment time calculation")
-        
-        if 'wait_time' not in triage_result:
-            raise ValueError(f"Triage result missing required 'wait_time' field: {triage_result}")
-        
-        # Use triage system wait time as basis for assessment duration
-        triage_wait_minutes = self.data_cleanup.convert_wait_time_to_minutes(triage_result['wait_time'], self.random_service)
-        if category == TriageCategories.RED:
-            return min(triage_wait_minutes * 0.3, 30)
-        elif category == TriageCategories.ORANGE:
-            return min(triage_wait_minutes * 0.4, 40)
-        else:
-            return min(triage_wait_minutes * 0.5, 50)
+
     
     def _process_diagnostics(self, category):
         """Process optional diagnostics stage with specific test types.
@@ -640,7 +620,7 @@ class SimpleHospital:
             diagnostics_time = self.random_service.get_diagnostics_time(diagnostic_type)
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🔬 Performing {diagnostic_type} diagnostics (Duration: {diagnostics_time:.1f}min)")
-            yield self.env.timeout(diagnostics_time)
+            yield self.simulation_engine.env.timeout(diagnostics_time)
     
     def _determine_diagnostic_type(self, category):
         """Determine appropriate diagnostic test type based on triage category.
@@ -676,19 +656,20 @@ class SimpleHospital:
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient requires admission - processing time: {processing_time:.1f}min")
             
             # Bed allocation process
-            bed_start = self.env.now
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"🛏️  Waiting for bed at {self.simulation_engine.format_sim_time(bed_start)} (Priority: {priority}, Available beds: {self.bed_resource.capacity - self.bed_resource.count})")
+            bed_start = self.simulation_engine.env.now
+            bed_resource = self.simulation_engine.get_resource('beds')
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"🛏️  Waiting for bed at {self.simulation_engine.format_sim_time(bed_start)} (Priority: {priority}, Available beds: {bed_resource.capacity - bed_resource.count})")
             
-            with self.bed_resource.request(priority=priority) as req:
+            with bed_resource.request(priority=priority) as req:
                 yield req
-                bed_service_start = self.env.now
+                bed_service_start = self.simulation_engine.env.now
                 bed_wait_time = bed_service_start - bed_start
                 
                 self.simulation_engine.log_with_sim_time(logging.INFO, f"🛏️  Bed allocated at {self.simulation_engine.format_sim_time(bed_service_start)} (Waited: {bed_wait_time:.1f}min)")
                 
-                yield self.env.timeout(processing_time)
+                yield self.simulation_engine.env.timeout(processing_time)
                 
-                bed_end = self.env.now
+                bed_end = self.simulation_engine.env.now
                 self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Admission processing completed at {self.simulation_engine.format_sim_time(bed_end)} (Total bed process: {bed_end - bed_start:.1f}min)")
         else:
             # Discharge process with NHS evidence-based timing
@@ -696,17 +677,17 @@ class SimpleHospital:
             processing_time = self.random_service.get_discharge_processing_time()
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🚪 Patient being discharged - processing time: {processing_time:.1f}min")
-            yield self.env.timeout(processing_time)
+            yield self.simulation_engine.env.timeout(processing_time)
             
-            discharge_end = self.env.now
+            discharge_end = self.simulation_engine.env.now
             self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Discharge processing completed at {self.simulation_engine.format_sim_time(discharge_end)}")
         
         return disposition, admitted
     
     def _complete_patient_journey(self, patient_id, arrival_time, disposition, admitted, 
-                                category, age, gender):
+                                category, age, gender, patient_num):
         """Complete patient journey with metrics and logging."""
-        departure_time = self.env.now
+        departure_time = self.simulation_engine.env.now
         
         # Record patient departure in NHS metrics
         self.nhs_metrics.record_patient_departure(
@@ -727,37 +708,31 @@ class SimpleHospital:
         self.simulation_engine.update_entity_completion(total_time, category)
         
         # Log patient completion with detailed summary
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🎯 Patient {patient_id} COMPLETED JOURNEY at {self.simulation_engine.format_sim_time(departure_time)}")
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"📊 Patient {patient_id} Summary: {category} | Age {age} | {gender} | Total time: {total_time:.1f}min | {disposition.upper()}")
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"🎯 Patient #{patient_num} COMPLETED JOURNEY at {self.simulation_engine.format_sim_time(departure_time)}")
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"📊 Patient #{patient_num} Summary: {category} | Age {age} | {gender} | Total time: {total_time:.1f}min | {disposition.upper()}")
         self.simulation_engine.log_with_sim_time(logging.INFO, f"📈 Running totals: {self.patient_count} patients processed, avg time: {self.total_time/self.patient_count:.1f}min")
         self.simulation_engine.log_with_sim_time(logging.INFO, f"{'='*80}")
     
     def arrivals(self):
         """Generate Poisson arrivals."""
         patient_num = 0
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🚀 Starting patient arrivals process at {self.simulation_engine.format_sim_time(self.env.now)}")
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"🚀 Starting patient arrivals process at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
         
         while True:
             # Poisson process: exponential interarrival times
             interarrival = self.random_service.get_patient_arrival_interval(self.arrival_rate)
             
-            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"⏰ Next patient arrival in {interarrival:.1f}min (at {self.simulation_engine.format_sim_time(self.env.now + interarrival)})")
-            yield self.env.timeout(interarrival)
+            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"⏰ Next patient arrival in {interarrival:.1f}min (at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now + interarrival)})")
+            yield self.simulation_engine.env.timeout(interarrival)
             
             patient_num += 1
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"🆕 Generating patient #{patient_num} at {self.simulation_engine.format_sim_time(self.env.now)}")
-            self.env.process(self.patient_flow(patient_num))
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"🆕 Generating patient #{patient_num} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
+            self.simulation_engine.env.process(self.patient_flow(patient_num))
     
     def run(self):
         """Run simulation using the simulation engine."""
         # Initialize the simulation engine
         self.simulation_engine.initialize_environment()
-        
-        # Set up legacy references for backward compatibility
-        self.env = self.simulation_engine.env
-        self.triage_resource = self.simulation_engine.get_resource('nurses')
-        self.doctor_resource = self.simulation_engine.get_resource('doctors')
-        self.bed_resource = self.simulation_engine.get_resource('beds')
         
         # Initialize counters
         self.patient_count = 0
@@ -771,10 +746,6 @@ class SimpleHospital:
         # Run the simulation
         results = self.simulation_engine.run_simulation()
         
-        # Update legacy data for backward compatibility
-        self.monitoring_data = self.simulation_engine.monitoring_data
-        self.resource_usage_log = self.simulation_engine.resource_usage_log
-        
         # Update counters from simulation engine results
         if 'total_entities' in results:
             self.patient_count = results['total_entities']
@@ -783,9 +754,14 @@ class SimpleHospital:
         else:
             avg_time = self.total_time / self.patient_count if self.patient_count > 0 else 0
         
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏁 SIMULATION COMPLETE at {self.simulation_engine.format_sim_time(self.env.now)}!")
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏁 SIMULATION COMPLETE at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}!")
         self.simulation_engine.log_with_sim_time(logging.INFO, f"📊 Final Results: {self.patient_count} patients processed, average time: {avg_time:.1f}min")
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Final resource state: Triage: {self.triage_resource.count}/{self.nurses}, Doctors: {self.doctor_resource.count}/{self.doctors}, Beds: {self.bed_resource.count}/{self.beds}")
+        
+        # Get final resource states from simulation engine
+        triage_resource = self.simulation_engine.get_resource('nurses')
+        doctor_resource = self.simulation_engine.get_resource('doctors')
+        bed_resource = self.simulation_engine.get_resource('beds')
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Final resource state: Triage: {triage_resource.count}/{self.nurses}, Doctors: {doctor_resource.count}/{self.doctors}, Beds: {bed_resource.count}/{self.beds}")
         
         logger.info(f"Simulation Complete!")
         logger.info(f"Legacy Results: {self.patient_count} patients, avg time: {avg_time:.1f} min")
@@ -937,30 +913,35 @@ class SimpleHospital:
             }
             
             self.operation_metrics.record_system_snapshot(
-                timestamp=self.env.now,
+                timestamp=self.simulation_engine.env.now,
                 resource_usage=resource_usage,
                 resource_capacity=resource_capacity,
                 queue_lengths=queue_lengths,
                 entities_processed=self.patient_count
             )
             
+            # Get current resource states from simulation engine
+            triage_resource = self.simulation_engine.get_resource('nurses')
+            doctor_resource = self.simulation_engine.get_resource('doctors')
+            bed_resource = self.simulation_engine.get_resource('beds')
+            
             # Log current state (following SimPy documentation pattern)
-            logger.info(f"Monitor | Time: {self.env.now:6.1f} | "
-                       f"Triage: {self.triage_resource.count}/{self.nurses} (Q:{len(self.triage_resource.queue)}) | "
-                       f"Doctors: {self.doctor_resource.count}/{self.doctors} (Q:{len(self.doctor_resource.queue)}) | "
-                       f"Beds: {self.bed_resource.count}/{self.beds} (Q:{len(self.bed_resource.queue)}) | "
+            logger.info(f"Monitor | Time: {self.simulation_engine.env.now:6.1f} | "
+                       f"Triage: {triage_resource.count}/{self.nurses} (Q:{len(triage_resource.queue)}) | "
+                       f"Doctors: {doctor_resource.count}/{self.doctors} (Q:{len(doctor_resource.queue)}) | "
+                       f"Beds: {bed_resource.count}/{self.beds} (Q:{len(bed_resource.queue)}) | "
                        f"Patients: {self.patient_count}")
             
             # Calculate and log utilization rates
-            triage_util = (self.triage_resource.count / self.nurses) * 100
-            doctor_util = (self.doctor_resource.count / self.doctors) * 100
-            bed_util = (self.bed_resource.count / self.beds) * 100
+            triage_util = (triage_resource.count / self.nurses) * 100
+            doctor_util = (doctor_resource.count / self.doctors) * 100
+            bed_util = (bed_resource.count / self.beds) * 100
             
             logger.debug(f"Utilization | Triage: {triage_util:.1f}% | "
                         f"Doctors: {doctor_util:.1f}% | Beds: {bed_util:.1f}%")
             
             # Wait before next monitoring cycle (every 5 simulation minutes)
-            yield self.env.timeout(5)
+            yield self.simulation_engine.env.timeout(5)
     
     def record_resource_event(self, event_type: str, resource_name: str, patient_id: str = None, **kwargs):
         """Record resource usage events for detailed analysis.
@@ -971,29 +952,29 @@ class SimpleHospital:
             patient_id: Optional patient identifier
             **kwargs: Additional event data
         """
-        # Legacy event recording
+        # Modern event recording using simulation engine
         event_record = {
-            'time': self.env.now,
+            'time': self.simulation_engine.env.now,
             'event_type': event_type,
             'resource': resource_name,
             'patient_id': patient_id,
             **kwargs
         }
-        self.resource_usage_log.append(event_record)
+        self.simulation_engine.resource_usage_log.append(event_record)
         
         # Record in operation metrics
         self.operation_metrics.record_resource_event(
             event_type=event_type,
             resource_name=resource_name,
             entity_id=patient_id or 'unknown',
-            timestamp=self.env.now,
+            timestamp=self.simulation_engine.env.now,
             **kwargs
         )
         
         # Log significant events
         if event_type in ['acquire', 'release']:
             logger.debug(f"Resource Event | {event_type.upper()} {resource_name} | "
-                        f"Patient: {patient_id} | Time: {self.env.now}")
+                        f"Patient: {patient_id} | Time: {self.simulation_engine.env.now}")
     
     def get_monitoring_summary(self):
         """Get summary of monitoring data collected during simulation.
