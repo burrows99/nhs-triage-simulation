@@ -23,15 +23,13 @@ class OperationMetrics(BaseMetrics):
     Tracks resource utilization, queue performance, throughput, and system efficiency.
     """
     
-    def __init__(self, snapshot_interval: float = 5.0):
+    def __init__(self):
         """Initialize Operation Metrics Service
         
-        Args:
-            snapshot_interval: Time interval between system snapshots (minutes)
+        Uses synchronized monitoring instead of time-based intervals.
         """
         super().__init__("OperationMetrics")
         
-        self.snapshot_interval = snapshot_interval
         self.last_snapshot_time = 0.0
         
         # Resource tracking
@@ -131,26 +129,9 @@ class OperationMetrics(BaseMetrics):
         self.last_snapshot_time = timestamp
         return snapshot
     
-    def should_take_snapshot(self, current_time: float) -> bool:
-        """Check if it's time to take a system snapshot
-        
-        Args:
-            current_time: Current simulation time
-            
-        Returns:
-            True if snapshot should be taken
-        """
-        return current_time - self.last_snapshot_time >= self.snapshot_interval
+    # Removed should_take_snapshot method - using synchronized monitoring instead
     
-    def record_throughput(self, resource_name: str, timestamp: float, count: int = 1):
-        """Record throughput data for a resource
-        
-        Args:
-            resource_name: Name of the resource
-            timestamp: Time of throughput measurement
-            count: Number of entities processed
-        """
-        self.throughput_data[resource_name].append((timestamp, count))
+    # Removed unused record_throughput method
     
     def calculate_metrics(self) -> Dict[str, Any]:
         """Calculate operational metrics
@@ -201,12 +182,17 @@ class OperationMetrics(BaseMetrics):
     def _calculate_utilization_metrics(self) -> Dict[str, Any]:
         """Calculate resource utilization metrics"""
         if not self.system_snapshots:
+            logger.warning("⚠️  No system snapshots available for utilization calculation")
             return {}
+        
+        logger.debug(f"🔍 UTILIZATION CALC | Processing {len(self.system_snapshots)} snapshots")
         
         # Get all resource names
         all_resources = set()
         for snapshot in self.system_snapshots:
             all_resources.update(snapshot.resource_usage.keys())
+        
+        logger.debug(f"📊 RESOURCES FOUND | {all_resources}")
         
         utilization_metrics = {}
         
@@ -214,16 +200,28 @@ class OperationMetrics(BaseMetrics):
             utilizations = []
             for snapshot in self.system_snapshots:
                 if resource in snapshot.resource_usage:
-                    utilizations.append(snapshot.get_utilization(resource))
+                    util = snapshot.get_utilization(resource)
+                    utilizations.append(util)
+            
+            logger.debug(f"📈 {resource.upper()} UTILIZATION | Samples: {len(utilizations)} | "
+                        f"Values: {utilizations[:5]}{'...' if len(utilizations) > 5 else ''}")
             
             if utilizations:
+                avg_util = float(np.mean(utilizations))
+                peak_util = float(np.max(utilizations))
+                min_util = float(np.min(utilizations))
+                
                 utilization_metrics[resource] = {
-                    'average_utilization_pct': np.mean(utilizations),
-                    'peak_utilization_pct': np.max(utilizations),
-                    'min_utilization_pct': np.min(utilizations),
-                    'current_utilization_pct': self.current_utilization.get(resource, 0),
-                    'utilization_std_dev': np.std(utilizations)
+                    'average_utilization_pct': avg_util,
+                    'peak_utilization_pct': peak_util,
+                    'min_utilization_pct': min_util,
+                    'current_utilization_pct': float(self.current_utilization.get(resource, 0)),
+                    'utilization_std_dev': float(np.std(utilizations))
                 }
+                
+                logger.debug(f"✅ {resource.upper()} METRICS | Avg: {avg_util:.1f}% | Peak: {peak_util:.1f}% | Min: {min_util:.1f}%")
+            else:
+                logger.warning(f"⚠️  No utilization data for resource: {resource}")
         
         return utilization_metrics
     
@@ -247,11 +245,11 @@ class OperationMetrics(BaseMetrics):
             
             if queue_lengths:
                 queue_metrics[resource] = {
-                    'average_queue_length': np.mean(queue_lengths),
-                    'peak_queue_length': np.max(queue_lengths),
-                    'min_queue_length': np.min(queue_lengths),
-                    'queue_length_std_dev': np.std(queue_lengths),
-                    'time_with_queue': sum(1 for q in queue_lengths if q > 0) / len(queue_lengths) * 100
+                    'average_queue_length': float(np.mean(queue_lengths)),
+                    'peak_queue_length': int(np.max(queue_lengths)),
+                    'min_queue_length': int(np.min(queue_lengths)),
+                    'queue_length_std_dev': float(np.std(queue_lengths)),
+                    'time_with_queue': float(sum(1 for q in queue_lengths if q > 0) / len(queue_lengths) * 100)
                 }
         
         return queue_metrics
@@ -331,8 +329,7 @@ class OperationMetrics(BaseMetrics):
         
         system_metrics = {
             'simulation_duration_minutes': self.end_time - self.start_time if self.end_time and self.start_time else 0,
-            'total_snapshots': len(self.system_snapshots),
-            'snapshot_interval_minutes': self.snapshot_interval
+            'total_snapshots': len(self.system_snapshots)
         }
         
         if total_queue_lengths:
@@ -356,55 +353,7 @@ class OperationMetrics(BaseMetrics):
         
         return system_metrics
     
-    def get_resource_summary(self, resource_name: str) -> Dict[str, Any]:
-        """Get detailed summary for a specific resource
-        
-        Args:
-            resource_name: Name of the resource to analyze
-            
-        Returns:
-            Dictionary with resource-specific metrics
-        """
-        # Filter events for this resource
-        resource_events = [e for e in self.resource_events if e.resource_name == resource_name]
-        
-        if not resource_events:
-            return {'error': f'No events found for resource {resource_name}'}
-        
-        # Calculate resource-specific metrics
-        request_events = [e for e in resource_events if e.event_type == 'request']
-        acquire_events = [e for e in resource_events if e.event_type == 'acquire']
-        release_events = [e for e in resource_events if e.event_type == 'release']
-        
-        summary = {
-            'resource_name': resource_name,
-            'total_events': len(resource_events),
-            'request_events': len(request_events),
-            'acquire_events': len(acquire_events),
-            'release_events': len(release_events),
-            'current_utilization_pct': self.current_utilization.get(resource_name, 0),
-            'peak_utilization_pct': self.peak_utilization.get(resource_name, 0)
-        }
-        
-        # Add wait time analysis
-        if resource_name in self.wait_times and self.wait_times[resource_name]:
-            wait_times = self.wait_times[resource_name]
-            summary['wait_time_analysis'] = {
-                'average_wait_minutes': np.mean(wait_times),
-                'max_wait_minutes': np.max(wait_times),
-                'total_wait_events': len(wait_times)
-            }
-        
-        # Add service time analysis
-        if resource_name in self.service_times and self.service_times[resource_name]:
-            service_times = self.service_times[resource_name]
-            summary['service_time_analysis'] = {
-                'average_service_minutes': np.mean(service_times),
-                'max_service_minutes': np.max(service_times),
-                'total_service_events': len(service_times)
-            }
-        
-        return summary
+    # Removed unused get_resource_summary method
     
     def _record_to_dict(self, record: BaseRecord) -> Dict[str, Any]:
         """Convert record to dictionary for export"""

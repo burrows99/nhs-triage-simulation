@@ -115,21 +115,7 @@ class KnowledgeAcquisitionSystem:
         
         return {}
     
-    def get_expert_session(self, session_id: str) -> Dict[str, Any]:
-        """Get details of a specific expert session"""
-        for session in self.expert_sessions:
-            if session['session_id'] == session_id:
-                return session
-        return {}
-    
-    def get_all_expert_sessions(self) -> List[Dict[str, Any]]:
-        """Get all expert sessions"""
-        return self.expert_sessions
-    
-    def get_rules_by_expert(self, expert_id: str) -> List[Dict[str, Any]]:
-        """Get all rules created by a specific expert"""
-        expert_sessions = [s['session_id'] for s in self.expert_sessions if s['expert_id'] == expert_id]
-        return [r for r in self.rule_base if r['session_id'] in expert_sessions]
+    # Removed unused expert session query methods
     
     def validate_expert_rule(self, rule: Dict[str, Any]) -> Dict[str, Any]:
         """Validate an expert rule before adding to the system

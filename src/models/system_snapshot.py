@@ -26,8 +26,15 @@ class SystemSnapshot(BaseRecord):
     
     def get_utilization(self, resource_name: str) -> float:
         """Get utilization percentage for a resource"""
+        from src.logger import logger
+        
         if resource_name not in self.resource_capacity or self.resource_capacity[resource_name] == 0:
+            logger.debug(f"🔍 UTIL CALC | {resource_name} | No capacity data or zero capacity")
             return 0.0
+        
         usage = self.resource_usage.get(resource_name, 0)
         capacity = self.resource_capacity[resource_name]
-        return (usage / capacity) * 100
+        utilization = (usage / capacity) * 100
+        
+        logger.debug(f"🔍 UTIL CALC | {resource_name} | Usage: {usage}/{capacity} = {utilization:.1f}%")
+        return utilization

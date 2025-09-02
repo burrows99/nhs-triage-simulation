@@ -38,8 +38,6 @@ class SimulationEngine:
         # Simulation state
         self.env = None
         self.simpy_resources = {}
-        self.monitoring_data = []
-        self.resource_usage_log = []
         
         # Counters
         self.entity_count = 0
@@ -48,7 +46,6 @@ class SimulationEngine:
         
         # Callbacks
         self.arrival_callback = None
-        self.monitoring_callback = None
         
     def initialize_environment(self):
         """Initialize the SimPy environment and resources."""
@@ -85,14 +82,7 @@ class SimulationEngine:
         self.arrival_callback = arrival_process_func
         self.env.process(arrival_process_func())
     
-    def schedule_monitoring(self, monitoring_process_func: Callable):
-        """Schedule the monitoring process.
-        
-        Args:
-            monitoring_process_func: Function that monitors simulation state
-        """
-        self.monitoring_callback = monitoring_process_func
-        self.env.process(monitoring_process_func())
+    # Removed schedule_monitoring method - using synchronized monitoring instead
     
     def run_simulation(self):
         """Execute the simulation with progress tracking.
@@ -172,28 +162,7 @@ class SimulationEngine:
         if category:
             self.categories.append(category)
     
-    def collect_monitoring_data(self):
-        """Collect current simulation state for monitoring.
-        
-        Returns:
-            Dictionary with current simulation state
-        """
-        current_state = {
-            'time': self.env.now,
-            'entities_processed': self.entity_count,
-            'total_queue_length': sum(len(res.queue) for res in self.simpy_resources.values())
-        }
-        
-        # Add resource-specific data
-        for name, resource in self.simpy_resources.items():
-            current_state[f'{name}_usage'] = resource.count
-            current_state[f'{name}_capacity'] = resource.capacity
-            current_state[f'{name}_queue'] = len(resource.queue)
-        
-        # Store monitoring data
-        self.monitoring_data.append(current_state)
-        
-        return current_state
+    # Removed collect_monitoring_data method - using synchronized monitoring instead
     
     def log_with_sim_time(self, level: int, message: str):
         """Log message with simulation time prefix.
@@ -235,35 +204,7 @@ class SimulationEngine:
         minutes = int(sim_time % 60)
         return f"{hours:02d}:{minutes:02d}"
     
-    def get_current_time(self) -> float:
-        """Get current simulation time.
-        
-        Returns:
-            Current simulation time in minutes
-        """
-        return self.env.now if self.env else 0.0
-    
-    def timeout(self, delay: float):
-        """Create a SimPy timeout event.
-        
-        Args:
-            delay: Delay time in minutes
-            
-        Returns:
-            SimPy timeout event
-        """
-        return self.env.timeout(delay)
-    
-    def process(self, generator):
-        """Schedule a process in the simulation.
-        
-        Args:
-            generator: Generator function representing the process
-            
-        Returns:
-            SimPy process
-        """
-        return self.env.process(generator)
+    # Removed simple wrapper methods - access env directly for timeout/process operations
     
     def get_monitoring_summary(self) -> Dict[str, Any]:
         """Get summary of monitoring data collected during simulation.
@@ -271,36 +212,5 @@ class SimulationEngine:
         Returns:
             Dictionary containing monitoring statistics
         """
-        if not self.monitoring_data:
-            return {'error': 'No monitoring data collected'}
-        
-        # Calculate average utilization rates for each resource
-        summary = {
-            'monitoring_points': len(self.monitoring_data),
-            'simulation_duration': self.monitoring_data[-1]['time'] if self.monitoring_data else 0,
-            'average_utilization': {},
-            'average_queue_lengths': {},
-            'peak_utilization': {},
-            'total_resource_events': len(self.resource_usage_log)
-        }
-        
-        # Calculate statistics for each resource type
-        for resource_name in self.resources.keys():
-            usage_key = f'{resource_name}_usage'
-            capacity_key = f'{resource_name}_capacity'
-            queue_key = f'{resource_name}_queue'
-            
-            if usage_key in self.monitoring_data[0]:  # Check if data exists
-                # Average utilization
-                avg_util = sum(d[usage_key] / d[capacity_key] for d in self.monitoring_data) / len(self.monitoring_data) * 100
-                summary['average_utilization'][resource_name] = avg_util
-                
-                # Average queue length
-                avg_queue = sum(d[queue_key] for d in self.monitoring_data) / len(self.monitoring_data)
-                summary['average_queue_lengths'][resource_name] = avg_queue
-                
-                # Peak utilization
-                peak_util = max(d[usage_key] / d[capacity_key] for d in self.monitoring_data) * 100
-                summary['peak_utilization'][resource_name] = peak_util
-        
-        return summary
+        # Legacy monitoring data no longer collected with synchronized monitoring
+        return {'error': 'No monitoring data collected'}

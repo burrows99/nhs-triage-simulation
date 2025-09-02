@@ -226,8 +226,17 @@ class PlottingService:
         ax1.set_ylabel('Queue Length')
         ax1.grid(True, alpha=0.3)
         
-        # Peak queue lengths
-        peak_queues = [queue_data[r].get('peak_queue_length', 0) for r in resources]
+        # Peak queue lengths (convert strings to numbers)
+        peak_queues = []
+        for r in resources:
+            peak_val = queue_data[r].get('peak_queue_length', 0)
+            # Convert string to number if needed
+            if isinstance(peak_val, str):
+                try:
+                    peak_val = float(peak_val)
+                except (ValueError, TypeError):
+                    peak_val = 0
+            peak_queues.append(peak_val)
         ax2.bar(resources, peak_queues, color=self.colors['warning'], alpha=0.8)
         ax2.set_title('Peak Queue Length')
         ax2.set_ylabel('Queue Length')

@@ -99,6 +99,35 @@ class RandomService:
             return random.random() < 0.5  # NHS England A&E Statistics: Conservative 50% admission rate for urgent cases
         return False  # NHS data: Lower acuity patients typically discharged
     
+    def should_escalate_to_emergency(self) -> bool:
+        """Determine if a patient should be escalated to RED priority (emergency).
+        
+        This simulates walk-in emergencies or patients who deteriorate during triage.
+        Based on clinical practice where ~2-3% of ED patients are true emergencies.
+        
+        Returns:
+            True if patient should be escalated to RED priority
+        """
+        return random.random() < 0.03  # 3% chance of emergency escalation
+    
+    def get_diagnostic_test_type(self, category: str) -> str:
+        """Get appropriate diagnostic test type based on triage category.
+        
+        Args:
+            category: Triage category (RED, ORANGE, YELLOW, GREEN, BLUE)
+            
+        Returns:
+            Diagnostic test type from DiagnosticTestTypes
+        """
+        if category == TriageCategories.RED:
+            return random.choice([DiagnosticTestTypes.ECG, DiagnosticTestTypes.BLOOD, DiagnosticTestTypes.MIXED])
+        elif category == TriageCategories.ORANGE:
+            return random.choice([DiagnosticTestTypes.BLOOD, DiagnosticTestTypes.XRAY, DiagnosticTestTypes.MIXED])
+        elif category == TriageCategories.YELLOW:
+            return random.choice([DiagnosticTestTypes.XRAY, DiagnosticTestTypes.BLOOD])
+        else:  # GREEN, BLUE
+            return random.choice([DiagnosticTestTypes.XRAY, DiagnosticTestTypes.ECG])
+    
     def get_admission_processing_time(self) -> float:
         """Get random admission processing time based on NHS data.
         

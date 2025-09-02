@@ -60,7 +60,7 @@ def setup_logger(log_level=logging.INFO, log_to_file=True):
 
 
 # Initialize the centralized logger
-logger = setup_logger()
+logger = setup_logger(log_level=logging.INFO)
 
 # Export the logger for import by other modules
 __all__ = ['logger']

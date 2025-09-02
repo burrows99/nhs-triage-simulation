@@ -245,8 +245,24 @@ class NHSMetrics(BaseMetrics):
     
     def _get_triage_distribution(self, patients: List[Patient]) -> Dict[str, int]:
         """Get distribution of triage categories"""
+        # Initialize all possible triage categories with 0
+        distribution = {
+            'RED': 0,
+            'ORANGE': 0, 
+            'YELLOW': 0,
+            'GREEN': 0,
+            'BLUE': 0
+        }
+        
+        # Count actual categories
         categories = [p.triage_category for p in patients if p.triage_category]
-        return dict(pd.Series(categories).value_counts()) if categories else {}
+        if categories:
+            counts = pd.Series(categories).value_counts()
+            for category, count in counts.items():
+                if category in distribution:
+                    distribution[category] = int(count)  # Convert to regular Python int
+        
+        return distribution
     
     def _get_age_group_analysis(self, patients: List[Patient]) -> Dict[str, Dict]:
         """Analyze performance by age groups"""

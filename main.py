@@ -21,6 +21,7 @@ from src.logger import logger
 
 from src.simulation.real_data_hospital import SimpleHospital
 from src.triage.triage_constants import TriageCategories
+from src.triage.manchester_triage_system import ManchesterTriageSystem
 
 
 def main():
@@ -32,14 +33,18 @@ def main():
     
     try:
         # Create hospital simulation with detailed logging
+        # Initialize Manchester Triage System
+        manchester_triage = ManchesterTriageSystem()
+        
         hospital = SimpleHospital(
             csv_folder='./output/csv',
+            triage_system=manchester_triage,  # Using actual triage system object
             sim_duration=480,    # 8 hours
-            arrival_rate=12,     # 12 patients/hour
+            arrival_rate=20,     # 20 patients/hour (realistic rate)
             delay_scaling=0.2,  # 1 real second = 0.2 simulation minutes
-            nurses=3,
-            doctors=8,
-            beds=20,
+            nurses=3,            # Increased to 3 for realistic triage capacity
+            doctors=4,           # Increased to 4 for better doctor utilization
+            beds=8,              # Increased to 8 for realistic bed capacity
             log_level=logging.INFO  # Enable detailed logging
         )
         

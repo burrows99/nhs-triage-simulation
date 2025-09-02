@@ -105,20 +105,7 @@ class FMTSPaperReferences:
         "systematic validation to ensure the objective nature of the triage system"
     )
     
-    @classmethod
-    def get_paper_info(cls) -> Dict[str, Any]:
-        """Get complete paper information.
-        
-        Returns:
-            Dictionary containing paper citation details
-        """
-        return {
-            'title': cls.PAPER_TITLE,
-            'authors': cls.AUTHORS,
-            'year': cls.YEAR,
-            'institution': cls.INSTITUTION,
-            'url': cls.URL
-        }
+    # Removed unused get_paper_info method
     
     @classmethod
     def get_reference_comment(cls, section: str, quote: str) -> str:
@@ -145,20 +132,7 @@ class FMTSPaperReferences:
         """
         return f"Paper Context: {context}"
     
-    @classmethod
-    def get_bibtex_citation(cls) -> str:
-        """Get BibTeX citation for the paper.
-        
-        Returns:
-            BibTeX formatted citation
-        """
-        return f"""@article{{cremeens2014fmts,
-  title={{{cls.PAPER_TITLE}}},
-  author={{{' and '.join(cls.AUTHORS)}}},
-  year={{{cls.YEAR}}},
-  institution={{{cls.INSTITUTION}}},
-  url={{{cls.URL}}}
-}}"""
+    # Removed unused get_bibtex_citation method
 
 
 # Convenience functions for common reference patterns

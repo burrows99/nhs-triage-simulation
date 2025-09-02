@@ -160,14 +160,7 @@ class BaseMetrics(ABC):
             'timestamp': record.timestamp
         }
     
-    def reset(self) -> None:
-        """Reset all metrics data"""
-        self.records.clear()
-        self.active_records.clear()
-        self.counters.clear()
-        self.start_time = None
-        self.end_time = None
-        logger.info(f"{self.name} metrics reset")
+    # Removed unused reset method
     
     @abstractmethod
     def calculate_metrics(self) -> Dict[str, Any]:
