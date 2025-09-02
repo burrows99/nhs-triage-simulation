@@ -83,8 +83,6 @@ class TriageFlowcharts(Enum):
         """Get all available flowcharts"""
         return [flowchart.value for flowchart in cls]
 
-
-
 class SymptomKeys:
     """Standardized symptom keys for different flowcharts"""
     
@@ -111,7 +109,6 @@ class SymptomKeys:
     # Trauma specific
     MECHANISM = "mechanism"
     DEFORMITY = "deformity"
-
 
 class LinguisticValues:
     """Standardized linguistic values for symptoms"""
@@ -165,7 +162,6 @@ class LinguisticValues:
     def get_temperature_levels(cls) -> List[str]:
         """Get temperature levels"""
         return [cls.NORMAL, cls.ELEVATED, cls.HIGH, cls.VERY_HIGH]
-
 
 class FlowchartSymptomMapping:
     """Mapping of flowcharts to their expected symptoms"""
@@ -280,7 +276,6 @@ class MedicalConditions:
         """Get neurological-related conditions"""
         return [cls.HEADACHE, cls.MIGRAINE, cls.SEIZURE, cls.STROKE]
 
-
 class VitalSignCategories:
     """Standardized vital sign category names"""
     
@@ -314,7 +309,6 @@ class VitalSignCategories:
     RESP_TACHYPNEIC = "tachypneic"
     RESP_BRADYPNEIC = "bradypneic"
 
-
 class MedicalCategories:
     """Medical category constants for flowchart organization"""
     
@@ -343,14 +337,40 @@ class MedicalCategories:
         ]
 
 
-class FuzzyCategories:
-    """Fuzzy triage category constants (lowercase for fuzzy logic)"""
+class TriageCategories:
+    """Triage category constants"""
+    RED = "RED"
+    ORANGE = "ORANGE"
+    YELLOW = "YELLOW"
+    GREEN = "GREEN"
+    BLUE = "BLUE"
     
-    RED = "red"
-    ORANGE = "orange"
-    YELLOW = "yellow"
-    GREEN = "green"
-    BLUE = "blue"
+    @classmethod
+    def get_all_categories(cls) -> List[str]:
+        """Get all triage categories"""
+        return [cls.RED, cls.ORANGE, cls.YELLOW, cls.GREEN, cls.BLUE]
+    
+    @classmethod
+    def get_priority_mapping(cls) -> Dict[str, int]:
+        """Get priority mapping (1=highest, 5=lowest)"""
+        return {
+            cls.RED: 1,
+            cls.ORANGE: 2,
+            cls.YELLOW: 3,
+            cls.GREEN: 4,
+            cls.BLUE: 5
+        }
+
+
+class FuzzyCategories:
+    """Fuzzy triage category constants (lowercase for fuzzy logic) - references TriageCategories"""
+    
+    # Reference TriageCategories for consistency, converted to lowercase for fuzzy logic
+    RED = TriageCategories.RED.lower()
+    ORANGE = TriageCategories.ORANGE.lower()
+    YELLOW = TriageCategories.YELLOW.lower()
+    GREEN = TriageCategories.GREEN.lower()
+    BLUE = TriageCategories.BLUE.lower()
     
     @classmethod
     def get_all_categories(cls) -> List[str]:
@@ -373,7 +393,6 @@ class FuzzyCategories:
             cls.BLUE: [4, 5, 5]
         }
 
-
 class WaitTimeDisplays:
     """Wait time display constants"""
     
@@ -392,7 +411,6 @@ class WaitTimeDisplays:
     def get_all_wait_times(cls) -> List[str]:
         """Alias for get_wait_time_displays for consistency"""
         return cls.get_wait_time_displays()
-
 
 class SymptomNames:
     """Comprehensive symptom name constants for flowcharts"""
@@ -548,21 +566,20 @@ class SymptomNames:
     BREATHING_DIFFICULTY = "breathing_difficulty"
     TONGUE_SWELLING = "tongue_swelling"
 
-
 class CommonSymptoms:
-    """Common symptom name constants"""
+    """Common symptom name constants - references SymptomNames for consistency"""
     
-    PAIN = "pain"
-    FEVER = "fever"
-    BLEEDING = "bleeding"
-    CHEST_PAIN = "chest_pain"
-    DIZZINESS = "dizziness"
+    # Reference SymptomNames for backward compatibility
+    PAIN = SymptomNames.PAIN
+    FEVER = SymptomNames.FEVER
+    BLEEDING = SymptomNames.BLEEDING
+    CHEST_PAIN = SymptomNames.CHEST_PAIN
+    DIZZINESS = SymptomNames.DIZZINESS
     
     # Symptom collections
     PAIN_RELATED = ["pain", "ache", "discomfort", "soreness"]
     BLEEDING_RELATED = ["bleeding", "blood_in_sputum", "blood_in_stool"]
     FEVER_RELATED = ["fever", "night_sweats", "temperature"]
-
 
 class DiagnosticTestTypes:
     """Diagnostic test type constants for hospital procedures"""
@@ -576,7 +593,6 @@ class DiagnosticTestTypes:
     def get_all_test_types(cls) -> List[str]:
         """Get all diagnostic test types"""
         return [cls.ECG, cls.BLOOD, cls.XRAY, cls.MIXED]
-
 
 class CommonStrings:
     """Common string constants used across the application"""
@@ -598,10 +614,10 @@ class CommonStrings:
     RESPIRATORY_KEYWORD = 'respiratory'
     NEUROLOGICAL_KEYWORD = 'neurological'
     
-    # Additional medical terms
-    CHEST_PAIN_SYMPTOM = 'chest_pain'
-    SHORTNESS_OF_BREATH_TERM = 'shortness of breath'
-    FEVER_TERM = 'fever'
+    # Additional medical terms - some reference other constants for consistency
+    CHEST_PAIN_SYMPTOM = SymptomNames.CHEST_PAIN  # Reference SymptomNames for consistency
+    SHORTNESS_OF_BREATH_TERM = MedicalConditions.SHORTNESS_OF_BREATH  # Reference MedicalConditions
+    FEVER_TERM = SymptomNames.FEVER  # Reference SymptomNames
     INFECTION_TERM = 'infection'
     TRAUMA_TERM = 'trauma'
     NEUROLOGICAL_TERM = 'Neurological'
@@ -611,7 +627,6 @@ class CommonStrings:
     def get_wait_times(cls) -> List[str]:
         """Get all wait time strings in order"""
         return [cls.WAIT_0_MIN, cls.WAIT_10_MIN, cls.WAIT_60_MIN, cls.WAIT_120_MIN, cls.WAIT_240_MIN]
-
 
 class ComplaintToFlowchartMapping:
     """Mapping of chief complaints to appropriate MTS flowcharts"""
@@ -673,7 +688,6 @@ class ComplaintToFlowchartMapping:
         # Default to chest pain if no match found
         return TriageFlowcharts.CHEST_PAIN.value
 
-
 class FlowchartNames:
     """Standardized flowchart display names"""
     
@@ -709,29 +723,4 @@ class FlowchartNames:
             MedicalConditions.APPENDICITIS: cls.ABDOMINAL_PAIN_DISPLAY,
             MedicalConditions.NAUSEA: cls.NAUSEA_VOMITING_DISPLAY,
             MedicalConditions.VOMITING: cls.NAUSEA_VOMITING_DISPLAY
-        }
-
-
-class TriageCategories:
-    """Triage category constants"""
-    RED = "RED"
-    ORANGE = "ORANGE"
-    YELLOW = "YELLOW"
-    GREEN = "GREEN"
-    BLUE = "BLUE"
-    
-    @classmethod
-    def get_all_categories(cls) -> List[str]:
-        """Get all triage categories"""
-        return [cls.RED, cls.ORANGE, cls.YELLOW, cls.GREEN, cls.BLUE]
-    
-    @classmethod
-    def get_priority_mapping(cls) -> Dict[str, int]:
-        """Get priority mapping (1=highest, 5=lowest)"""
-        return {
-            cls.RED: 1,
-            cls.ORANGE: 2,
-            cls.YELLOW: 3,
-            cls.GREEN: 4,
-            cls.BLUE: 5
         }
