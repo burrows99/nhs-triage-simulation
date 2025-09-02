@@ -4,8 +4,8 @@ import os
 import json
 from typing import Dict, Any, List, Optional
 
-# Import centralized logger
 from src.logger import logger
+from src.models.patient import Patient
 
 
 class DataService:
@@ -153,6 +153,33 @@ class DataService:
         logger.info(f"Built {len(self.patient_data)} patient records")
         return self.patient_data
     
+    def build_patient_objects(self, data_cleanup_service=None) -> Dict[str, Patient]:
+        """Build Patient objects from raw data.
+        
+        Args:
+            data_cleanup_service: Optional service to process raw patient data
+            
+        Returns:
+            Dictionary mapping patient_id to Patient objects
+        """
+        if not hasattr(self, 'patient_data') or not self.patient_data:
+            self.build_patient_records()
+        
+        patient_objects = {}
+        
+        logger.info(f"Building Patient objects for {len(self.patient_data)} patients...")
+        
+        for patient_id, raw_data in self.patient_data.items():
+            patient = Patient.from_raw_data(
+                patient_id=patient_id,
+                raw_data=raw_data,
+                data_cleanup_service=data_cleanup_service
+            )
+            patient_objects[patient_id] = patient
+        
+        logger.info(f"Built {len(patient_objects)} Patient objects")
+        return patient_objects
+    
     def get_patient_record(self, patient_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific patient's complete record.
         
@@ -163,6 +190,26 @@ class DataService:
             Complete patient record or None if not found
         """
         return self.patient_data.get(str(patient_id))
+    
+    def get_patient_object(self, patient_id: str, data_cleanup_service=None) -> Optional[Patient]:
+        """Get a specific patient as a Patient object.
+        
+        Args:
+            patient_id: ID of the patient
+            data_cleanup_service: Optional service to process raw patient data
+            
+        Returns:
+            Patient object or None if not found
+        """
+        raw_data = self.get_patient_record(patient_id)
+        if raw_data is None:
+            return None
+        
+        return Patient.from_raw_data(
+            patient_id=patient_id,
+            raw_data=raw_data,
+            data_cleanup_service=data_cleanup_service
+        )
     
     def get_all_patient_ids(self) -> List[str]:
         """Get list of all patient IDs.

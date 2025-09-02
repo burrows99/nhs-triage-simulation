@@ -13,53 +13,8 @@ from datetime import datetime, timedelta
 
 from .base_metrics import BaseMetrics, BaseRecord
 from src.logger import logger
-
-
-class ResourceEvent(BaseRecord):
-    """Record for tracking resource usage events"""
-    
-    def __init__(self, event_id: str, timestamp: float, event_type: str, 
-                 resource_name: str, entity_id: str, queue_length: int = 0,
-                 wait_time: float = 0.0, service_time: float = 0.0, priority: int = 5):
-        """Initialize ResourceEvent with proper inheritance"""
-        # Call parent constructor with base record fields
-        super().__init__(record_id=event_id, timestamp=timestamp)
-        
-        # Set resource event specific fields
-        self.event_id = event_id
-        self.event_type = event_type  # 'request', 'acquire', 'release'
-        self.resource_name = resource_name  # 'triage', 'doctor', 'bed'
-        self.entity_id = entity_id  # patient_id or other entity
-        self.queue_length = queue_length
-        self.wait_time = wait_time
-        self.service_time = service_time
-        self.priority = priority
-
-
-class SystemSnapshot(BaseRecord):
-    """Snapshot of system state at a point in time"""
-    
-    def __init__(self, snapshot_id: str, timestamp: float, resource_usage: Dict[str, int],
-                 resource_capacity: Dict[str, int], queue_lengths: Dict[str, int],
-                 entities_processed: int = 0):
-        """Initialize SystemSnapshot with proper inheritance"""
-        # Call parent constructor with base record fields
-        super().__init__(record_id=snapshot_id, timestamp=timestamp)
-        
-        # Set system snapshot specific fields
-        self.snapshot_id = snapshot_id
-        self.resource_usage = resource_usage  # resource_name -> current usage
-        self.resource_capacity = resource_capacity  # resource_name -> total capacity
-        self.queue_lengths = queue_lengths  # resource_name -> queue length
-        self.entities_processed = entities_processed
-    
-    def get_utilization(self, resource_name: str) -> float:
-        """Get utilization percentage for a resource"""
-        if resource_name not in self.resource_capacity or self.resource_capacity[resource_name] == 0:
-            return 0.0
-        usage = self.resource_usage.get(resource_name, 0)
-        capacity = self.resource_capacity[resource_name]
-        return (usage / capacity) * 100
+from src.models.resource_event import ResourceEvent
+from src.models.system_snapshot import SystemSnapshot
 
 
 class OperationMetrics(BaseMetrics):

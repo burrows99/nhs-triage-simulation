@@ -21,8 +21,9 @@ from src.services.nhs_metrics import NHSMetrics
 from src.services.operation_metrics import OperationMetrics
 from src.services.plotting_service import PlottingService
 from src.services.random_service import RandomService
-from src.triage.base_triage_system import TriageSystemFactory
+from src.triage.manchester_triage_system import ManchesterTriageSystem
 from .simulation_engine import SimulationEngine
+from src.models.patient import Patient
 from src.triage.triage_constants import (
     TriageFlowcharts, FlowchartSymptomMapping, TriageCategories,
     SymptomKeys, MedicalConditions, CommonStrings, DiagnosticTestTypes, SymptomNames,
@@ -160,23 +161,16 @@ class SimpleHospital:
         raw_patient_data = self.patients[patient_id]
         self.current_index = (self.current_index + 1) % len(self.patient_ids)
         
-        # Process patient data using DataCleanupService
-        patient_summary = self.data_cleanup.get_patient_summary(raw_patient_data)
+        # Create Patient object using the from_raw_data class method
+        patient = Patient.from_raw_data(
+            patient_id=patient_id,
+            raw_data=raw_patient_data,
+            data_cleanup_service=self.data_cleanup
+        )
         
-        # Return processed patient information
-        processed_data = {
-            'patient_id': patient_id,
-            'age': patient_summary['age'],
-            'gender': patient_summary['gender'],
-            'presenting_complaint': patient_summary['chief_complaint'],
-            'symptoms': patient_summary['symptoms'],  # Include extracted symptoms
-            'vital_signs': patient_summary['vital_signs'],  # Include vital signs
-            'raw_data': raw_patient_data  # Keep raw data for other uses if needed
-        }
-        
-        return processed_data
+        return patient
     
-    def perform_triage(self, patient_data=None):
+    def perform_triage(self, patient=None):
         """Perform triage using paper-based Manchester Triage System approach with real patient data.
         
         Returns:
@@ -188,8 +182,8 @@ class SimpleHospital:
         # Paper-based approach: Nurse selects appropriate flowchart based on patient presentation
         # FMTS paper: "decision aid system for the ER nurses to properly categorize patients based on their symptoms"
         
-        if patient_data is None:
-            raise ValueError("Patient data is required for triage. Cannot perform triage without real patient information.")
+        if patient is None:
+            raise ValueError("Patient object is required for triage. Cannot perform triage without real patient information.")
         
         # Measure actual triage processing time
         import time
@@ -197,23 +191,23 @@ class SimpleHospital:
         
         # Use real patient data for triage
         # Map chief complaint to appropriate flowchart
-        flowchart_reason = ComplaintToFlowchartMapping.get_flowchart_for_complaint(patient_data.get('presenting_complaint', ''))
+        flowchart_reason = ComplaintToFlowchartMapping.get_flowchart_for_complaint(patient.presenting_complaint)
         
         # Use real patient symptoms from the processed data
-        raw_symptoms = patient_data.get('symptoms', {})
+        raw_symptoms = patient.symptoms
         
         # Convert real patient symptoms to MTS format
         symptoms_input = self._convert_symptoms_to_mts_format(raw_symptoms, flowchart_reason)
         
         # Ensure we have real patient symptoms - no random fallback
         if not symptoms_input:
-            raise ValueError(f"No real patient symptoms available for flowchart '{flowchart_reason}'. Patient ID: {patient_data.get('patient_id', 'Unknown')}")
+            raise ValueError(f"No real patient symptoms available for flowchart '{flowchart_reason}'. Patient ID: {patient.patient_id}")
         
         # Use triage system with patient-based inputs
         result = self.triage_system.triage_patient(
             flowchart_reason=flowchart_reason,
             symptoms_input=symptoms_input,
-            patient_id=patient_data.get('patient_id')
+            patient_id=patient.patient_id
         )
         
         # Calculate processing delay
@@ -324,9 +318,8 @@ class SimpleHospital:
         if not self._validate_ollama_connection(llm_params['ollama_url'], llm_params['model']):
             logger.warning("⚠️  Warning: Ollama validation failed, but continuing with LLM system creation")
         
-        triage_system = TriageSystemFactory.create_llm_triage_system(**llm_params)
-        logger.info(f"{triage_system.get_system_info()['system_name']} ready")
-        return triage_system
+        logger.warning("LLM Triage System not implemented, falling back to Manchester Triage System")
+        return self._create_manchester_triage_system(**kwargs)
     
     def _create_manchester_triage_system(self, **kwargs):
         """Create and configure Manchester Triage System
@@ -337,8 +330,8 @@ class SimpleHospital:
         Returns:
             Configured Manchester triage system
         """
-        triage_system = TriageSystemFactory.create_manchester_triage_system()
-        logger.info(f"{triage_system.get_system_info()['system_name']} ready")
+        triage_system = ManchesterTriageSystem()
+        logger.info("Manchester Triage System ready")
         return triage_system
     
     def _validate_ollama_connection(self, ollama_url: str, model: str) -> bool:
@@ -452,22 +445,22 @@ class SimpleHospital:
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🚶 Patient #{patient_num} ARRIVED at {self.simulation_engine.format_sim_time(arrival_time)}")
         
         # Setup patient and record arrival
-        patient_data = self._setup_patient_arrival(arrival_time)
-        patient_id = patient_data['patient_id']
+        patient = self._setup_patient_arrival(arrival_time)
         
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"👤 Patient #{patient_num}: Age {patient_data['age']}, {patient_data['gender']}, Complaint: '{patient_data['presenting_complaint']}'")
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"👤 Patient #{patient_num}: Age {patient.age}, {patient.gender}, Complaint: '{patient.presenting_complaint}'")
         
         # Triage nurse assessment stage - this is where triage category/priority is determined
         self.simulation_engine.log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient #{patient_num}: Entering triage nurse assessment at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
-        category, priority, triage_result = yield from self._process_triage_stage(patient_data['patient_id'], patient_data, patient_num)
+        category, priority, triage_result = yield from self._process_triage_stage(patient.patient_id, patient, patient_num)
         
-        # Record triage result and log completion
-        self.nhs_metrics.record_triage_category(patient_data['patient_id'], category)
+        # Record triage result in patient object and NHS metrics
+        patient.set_triage_result(category, priority, triage_result)
+        self.nhs_metrics.record_triage_category(patient.patient_id, category)
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🏷️  Patient #{patient_num}: Triaged as {category} (Priority: {priority}) at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
         
         # Doctor assessment stage
         self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient #{patient_num}: Entering doctor assessment stage at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
-        yield from self._process_doctor_assessment(patient_data['patient_id'], category, priority, triage_result, patient_num)
+        yield from self._process_doctor_assessment(patient, category, priority, triage_result, patient_num)
         
         # Diagnostics stage (optional)
         diagnostics_start = self.simulation_engine.env.now
@@ -487,27 +480,30 @@ class SimpleHospital:
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient #{patient_num}: Disposition decided - {disposition.upper()} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
         
         # Complete patient journey
-        self._complete_patient_journey(patient_data['patient_id'], arrival_time, disposition, admitted, 
-                                     category, patient_data['age'], patient_data['gender'], patient_num)
+        patient.record_departure(self.simulation_engine.env.now, disposition, admitted)
+        
+        # Update NHS metrics with final patient data
+        self.nhs_metrics.update_patient_record_from_object(patient)
+        
+        self._complete_patient_journey(patient.patient_id, arrival_time, disposition, admitted, 
+                                     category, patient.age, patient.gender, patient_num)
     
     def _setup_patient_arrival(self, arrival_time):
         """Setup patient data and record arrival metrics."""
-        patient_data = self.get_patient()
+        patient = self.get_patient()
         
-        # Record patient arrival in NHS metrics
-        self.nhs_metrics.add_patient_arrival(
-            patient_id=patient_data['patient_id'],
-            arrival_time=arrival_time,
-            age=patient_data['age'],
-            gender=patient_data['gender'],
-            presenting_complaint=patient_data['presenting_complaint']
-        )
+        # Record arrival time in patient object
+        patient.record_arrival(arrival_time)
         
-        return patient_data
+        # Record patient arrival in NHS metrics using Patient object
+        self.nhs_metrics.add_patient_object(patient)
+        
+        return patient
     
-    def _process_triage_stage(self, patient_id, patient_data, patient_num):
+    def _process_triage_stage(self, patient_id, patient, patient_num):
         """Process triage nurse assessment stage and determine category/priority."""
         triage_start = self.simulation_engine.env.now
+        patient.record_initial_assessment(triage_start)
         self.nhs_metrics.record_initial_assessment(patient_id, triage_start)
         
         triage_resource = self.simulation_engine.get_resource('nurses')
@@ -531,7 +527,7 @@ class SimpleHospital:
             
             # Perform triage assessment during nurse consultation
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🔍 Patient #{patient_num}: Nurse performing triage assessment")
-            category, priority, triage_result, processing_delay_seconds = self.perform_triage(patient_data)
+            category, priority, triage_result, processing_delay_seconds = self.perform_triage(patient)
             
             # Apply processing delay and calculate total triage time
             triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
@@ -570,10 +566,11 @@ class SimpleHospital:
         # Use evidence-based triage process time (NHS official sources)
         return self.random_service.get_triage_process_time(complexity)
     
-    def _process_doctor_assessment(self, patient_id, category, priority, triage_result, patient_num):
+    def _process_doctor_assessment(self, patient, category, priority, triage_result, patient_num):
         """Process doctor assessment stage."""
         assessment_start = self.simulation_engine.env.now
-        self.nhs_metrics.record_treatment_start(patient_id, assessment_start)
+        patient.record_treatment_start(assessment_start)
+        self.nhs_metrics.record_treatment_start(patient.patient_id, assessment_start)
         
         doctor_resource = self.simulation_engine.get_resource('doctors')
         self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Waiting for doctor at {self.simulation_engine.format_sim_time(assessment_start)} (Priority: {priority}, Queue: {len(doctor_resource.queue)} waiting)")
@@ -583,14 +580,14 @@ class SimpleHospital:
         
         with doctor_resource.request(priority=priority) as req:
             # Record resource request event
-            self.record_resource_event('request', 'doctor', patient_id, priority=priority, queue_length=len(doctor_resource.queue))
+            self.record_resource_event('request', 'doctor', patient.patient_id, priority=priority, queue_length=len(doctor_resource.queue))
             
             yield req
             assessment_service_start = self.simulation_engine.env.now
             wait_time = assessment_service_start - assessment_start
             
             # Record resource acquisition event
-            self.record_resource_event('acquire', 'doctor', patient_id, wait_time=wait_time, priority=priority)
+            self.record_resource_event('acquire', 'doctor', patient.patient_id, wait_time=wait_time, priority=priority)
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient #{patient_num}: Started doctor assessment at {self.simulation_engine.format_sim_time(assessment_service_start)} (Waited: {wait_time:.1f}min)")
         
@@ -603,7 +600,7 @@ class SimpleHospital:
         assessment_end = self.simulation_engine.env.now
         
         # Record resource release event
-        self.record_resource_event('release', 'doctor', patient_id, service_time=assessment_time, priority=priority)
+        self.record_resource_event('release', 'doctor', patient.patient_id, service_time=assessment_time, priority=priority)
         
         self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient #{patient_num}: Completed doctor assessment at {self.simulation_engine.format_sim_time(assessment_end)} (Total assessment time: {assessment_end - assessment_start:.1f}min)")
     
