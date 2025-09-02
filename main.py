@@ -16,14 +16,17 @@ import logging
 # Add the src directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
+# Import centralized logger
+from src.logger import logger
+
 from src.simulation.real_data_hospital import SimpleHospital
 from src.triage.triage_constants import TriageCategories
 
 
 def run_hospital_simulation():
     """Run hospital simulation with Manchester Triage System"""
-    print("\n🏥 Hospital Simulation with Manchester Triage System")
-    print("=" * 60)
+    logger.info("🏥 Hospital Simulation with Manchester Triage System")
+    logger.info("=" * 60)
     
     # Create hospital simulation with detailed logging
     hospital = SimpleHospital(
@@ -37,32 +40,32 @@ def run_hospital_simulation():
         log_level=logging.INFO  # Enable detailed logging
     )
     
-    print(f"\nSimulation Parameters:")
-    print(f"  Duration: {hospital.sim_duration/60:.1f} hours")
-    print(f"  Arrival Rate: {hospital.arrival_rate} patients/hour")
-    print(f"  Staff: {hospital.nurses} nurses, {hospital.doctors} doctors")
-    print(f"  Beds: {hospital.beds}")
-    print(f"  Patient Data: {len(hospital.patient_ids)} real patients available")
+    logger.info(f"Simulation Parameters:")
+    logger.info(f"  Duration: {hospital.sim_duration/60:.1f} hours")
+    logger.info(f"  Arrival Rate: {hospital.arrival_rate} patients/hour")
+    logger.info(f"  Staff: {hospital.nurses} nurses, {hospital.doctors} doctors")
+    logger.info(f"  Beds: {hospital.beds}")
+    logger.info(f"  Patient Data: {len(hospital.patient_ids)} real patients available")
     
     # Run simulation
     results = hospital.run()
     
     # Display results
-    print("\n📊 Simulation Results:")
-    print(f"  Total Patients Processed: {results['total_patients']}")
-    print(f"  Average Time in Hospital: {results['avg_time']:.1f} minutes")
+    logger.info("📊 Simulation Results:")
+    logger.info(f"  Total Patients Processed: {results['total_patients']}")
+    logger.info(f"  Average Time in Hospital: {results['avg_time']:.1f} minutes")
     
     # Category breakdown
     from collections import Counter
     category_counts = Counter(results['categories'])
-    print(f"\n🏷️  Triage Category Distribution:")
+    logger.info(f"🏷️  Triage Category Distribution:")
     for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
         count = category_counts.get(category, 0)
         percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
-        print(f"    {category}: {count} patients ({percentage:.1f}%)")
+        logger.info(f"    {category}: {count} patients ({percentage:.1f}%)")
     
     # Export NHS metrics and generate plots
-    print(f"\n📊 Generating Output Files...")
+    logger.info(f"📊 Generating Output Files...")
     
     # Create output directories
     os.makedirs('./output/hospital_simulation/metrics', exist_ok=True)
@@ -77,12 +80,12 @@ def run_hospital_simulation():
     # Generate NHS metrics plots
     plots_generated = hospital.nhs_metrics.generate_all_plots('./output/hospital_simulation/plots')
     
-    print(f"\n📁 Files Generated:")
-    print(f"  📊 NHS Metrics JSON: ./output/hospital_simulation/metrics/nhs_metrics.json")
-    print(f"  📋 Patient Data CSV: ./output/hospital_simulation/metrics/patient_data.csv")
-    print(f"  📈 Plots Generated: {len(plots_generated)} files in ./output/hospital_simulation/plots/")
+    logger.info(f"📁 Files Generated:")
+    logger.info(f"  📊 NHS Metrics JSON: ./output/hospital_simulation/metrics/nhs_metrics.json")
+    logger.info(f"  📋 Patient Data CSV: ./output/hospital_simulation/metrics/patient_data.csv")
+    logger.info(f"  📈 Plots Generated: {len(plots_generated)} files in ./output/hospital_simulation/plots/")
     for plot in plots_generated:
-        print(f"    - {plot}")
+        logger.info(f"    - {plot}")
     
     # Clean up matplotlib resources
     hospital.nhs_metrics.close_plots()
@@ -92,21 +95,21 @@ def run_hospital_simulation():
 
 def main():
     """Main function to run the hospital simulation"""
-    print("🚀 Starting Hospital Simulation with Manchester Triage System")
-    print("This simulation uses real Synthea patient data with MTS triage")
+    logger.info("🚀 Starting Hospital Simulation with Manchester Triage System")
+    logger.info("This simulation uses real Synthea patient data with MTS triage")
     
     try:
         results = run_hospital_simulation()
-        print("\n✅ Simulation completed successfully!")
-        print(f"📋 Summary: {results['total_patients']} patients processed")
-        print(f"⏱️  Average patient time: {results['avg_time']:.1f} minutes")
+        logger.info("✅ Simulation completed successfully!")
+        logger.info(f"📋 Summary: {results['total_patients']} patients processed")
+        logger.info(f"⏱️  Average patient time: {results['avg_time']:.1f} minutes")
         
     except KeyboardInterrupt:
-        print("\n⏹️  Simulation interrupted by user")
+        logger.info("⏹️  Simulation interrupted by user")
     except Exception as e:
-        print(f"\n❌ Simulation failed: {e}")
+        logger.error(f"❌ Simulation failed: {e}")
         import traceback
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
 
 
 if __name__ == "__main__":

@@ -4,6 +4,9 @@ import os
 import json
 from typing import Dict, Any, List, Optional
 
+# Import centralized logger
+from src.logger import logger
+
 
 class DataService:
     """Generic data service for loading and processing Synthea CSV files.
@@ -42,9 +45,9 @@ class DataService:
             name = os.path.basename(csv_file).replace(".csv", "")
             try:
                 self.dataframes[name] = pd.read_csv(csv_file)
-                print(f"Loaded {name}: {len(self.dataframes[name])} rows")
+                logger.info(f"Loaded {name}: {len(self.dataframes[name])} rows")
             except Exception as e:
-                print(f"Error loading {csv_file}: {e}")
+                logger.error(f"Error loading {csv_file}: {e}")
         
         return self.dataframes
     
@@ -77,7 +80,7 @@ class DataService:
         """Apply reference normalization to all loaded DataFrames."""
         for name, df in self.dataframes.items():
             self.dataframes[name] = self.clean_references(df)
-            print(f"Normalized references for {name}")
+            logger.info(f"Normalized references for {name}")
     
     def build_patient_records(self) -> Dict[str, Dict[str, Any]]:
         """Build patient-centric records by merging all related data.
@@ -100,7 +103,7 @@ class DataService:
         
         self.patient_data = {}
         
-        print(f"Building records for {len(patients)} patients...")
+        logger.info(f"Building records for {len(patients)} patients...")
         
         # Find the correct ID column name (case-insensitive)
         id_column = None
@@ -147,7 +150,7 @@ class DataService:
             
             self.patient_data[patient_id] = patient_record
         
-        print(f"Built {len(self.patient_data)} patient records")
+        logger.info(f"Built {len(self.patient_data)} patient records")
         return self.patient_data
     
     def get_patient_record(self, patient_id: str) -> Optional[Dict[str, Any]]:
@@ -183,7 +186,7 @@ class DataService:
         with open(output_file, 'w') as f:
             json.dump(record, f, indent=2, default=str)
         
-        print(f"Exported patient {patient_id} to {output_file}")
+        logger.info(f"Exported patient {patient_id} to {output_file}")
     
     def export_all_patients(self, output_file: str) -> None:
         """Export all patient records to JSON file.
@@ -194,7 +197,7 @@ class DataService:
         with open(output_file, 'w') as f:
             json.dump(self.patient_data, f, indent=2, default=str)
         
-        print(f"Exported {len(self.patient_data)} patients to {output_file}")
+        logger.info(f"Exported {len(self.patient_data)} patients to {output_file}")
     
     def get_summary_stats(self) -> Dict[str, Any]:
         """Get summary statistics about the loaded data.
@@ -221,7 +224,7 @@ class DataService:
         Returns:
             Dictionary of patient records
         """
-        print("Starting data processing pipeline...")
+        logger.info("Starting data processing pipeline...")
         
         # Step 1: Load all CSVs
         self.load_csvs()
@@ -232,5 +235,5 @@ class DataService:
         # Step 3: Build patient-centric records
         self.build_patient_records()
         
-        print("Data processing complete!")
+        logger.info("Data processing complete!")
         return self.patient_data

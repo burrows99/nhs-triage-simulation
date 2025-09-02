@@ -21,6 +21,9 @@ from datetime import datetime, timedelta
 import json
 from .plotting_service import PlottingService
 
+# Import centralized logger
+from src.logger import logger
+
 
 @dataclass
 class PatientRecord:
@@ -333,62 +336,62 @@ class NHSMetricsService:
         metrics = self.calculate_nhs_metrics()
         
         if 'error' in metrics:
-            print(f"⚠️  {metrics['error']}")
-            print(f"Total attendances recorded: {metrics.get('total_attendances', 0)}")
-            print(f"Active patients in system: {metrics.get('active_patients', 0)}")
+            logger.warning(f"⚠️  {metrics['error']}")
+            logger.info(f"Total attendances recorded: {metrics.get('total_attendances', 0)}")
+            logger.info(f"Active patients in system: {metrics.get('active_patients', 0)}")
             return metrics
         
-        print("\n" + "="*70)
-        print("OFFICIAL NHS A&E QUALITY INDICATORS DASHBOARD")
-        print("Based on NHS Digital/NHS England Standards")
-        print("="*70)
+        logger.info("=" * 70)
+        logger.info("OFFICIAL NHS A&E QUALITY INDICATORS DASHBOARD")
+        logger.info("Based on NHS Digital/NHS England Standards")
+        logger.info("=" * 70)
         
         # Attendance Overview
-        print(f"\n📊 ATTENDANCE SUMMARY:")
-        print(f"   Total Attendances: {metrics['total_attendances']:,}")
-        print(f"   Active Patients in System: {metrics['active_patients_in_system']:,}")
+        logger.info(f"📊 ATTENDANCE SUMMARY:")
+        logger.info(f"   Total Attendances: {metrics['total_attendances']:,}")
+        logger.info(f"   Active Patients in System: {metrics['active_patients_in_system']:,}")
         
         # Official NHS Quality Indicators
-        print(f"\n🏥 OFFICIAL NHS A&E QUALITY INDICATORS:")
-        print(f"   1️⃣  Left Before Being Seen Rate: {metrics['1_left_before_being_seen_rate_pct']:.2f}%")
-        print(f"   2️⃣  Re-attendance Rate ({self.reattendance_window}h): {metrics['2_reattendance_rate_pct']:.2f}%")
-        print(f"   3️⃣  Time to Initial Assessment: {metrics['3_time_to_initial_assessment_avg_minutes']:.1f} min (avg)")
-        print(f"   4️⃣  Time to Treatment: {metrics['4_time_to_treatment_avg_minutes']:.1f} min (avg)")
-        print(f"   5️⃣  Total Time in A&E: {metrics['5_total_time_in_ae_avg_minutes']:.1f} min (avg)")
+        logger.info(f"🏥 OFFICIAL NHS A&E QUALITY INDICATORS:")
+        logger.info(f"   1️⃣  Left Before Being Seen Rate: {metrics['1_left_before_being_seen_rate_pct']:.2f}%")
+        logger.info(f"   2️⃣  Re-attendance Rate ({self.reattendance_window}h): {metrics['2_reattendance_rate_pct']:.2f}%")
+        logger.info(f"   3️⃣  Time to Initial Assessment: {metrics['3_time_to_initial_assessment_avg_minutes']:.1f} min (avg)")
+        logger.info(f"   4️⃣  Time to Treatment: {metrics['4_time_to_treatment_avg_minutes']:.1f} min (avg)")
+        logger.info(f"   5️⃣  Total Time in A&E: {metrics['5_total_time_in_ae_avg_minutes']:.1f} min (avg)")
         
         # 4-Hour Standard
         compliance = metrics['4hour_standard_compliance_pct']
         target_95_status = "✅ ACHIEVED" if metrics['95pct_target_achieved'] else "❌ MISSED"
         target_76_status = "✅ MET" if metrics['76pct_interim_target_achieved'] else "❌ MISSED"
         
-        print(f"\n🎯 NHS 4-HOUR STANDARD:")
-        print(f"   Compliance Rate: {compliance:.1f}%")
-        print(f"   95% Target (Official): {target_95_status}")
-        print(f"   76% Interim Target: {target_76_status}")
-        print(f"   Within 4 Hours: {metrics['attendances_within_4hours']:,}")
-        print(f"   Over 4 Hours: {metrics['attendances_over_4hours']:,}")
+        logger.info(f"🎯 NHS 4-HOUR STANDARD:")
+        logger.info(f"   Compliance Rate: {compliance:.1f}%")
+        logger.info(f"   95% Target (Official): {target_95_status}")
+        logger.info(f"   76% Interim Target: {target_76_status}")
+        logger.info(f"   Within 4 Hours: {metrics['attendances_within_4hours']:,}")
+        logger.info(f"   Over 4 Hours: {metrics['attendances_over_4hours']:,}")
         
         # Performance Distribution  
-        print(f"\n📈 PERFORMANCE DISTRIBUTION:")
-        print(f"   Median Total Time: {metrics['median_total_time_minutes']:.1f} min")
-        print(f"   95th Percentile: {metrics['95th_percentile_time_minutes']:.1f} min")
+        logger.info(f"📈 PERFORMANCE DISTRIBUTION:")
+        logger.info(f"   Median Total Time: {metrics['median_total_time_minutes']:.1f} min")
+        logger.info(f"   95th Percentile: {metrics['95th_percentile_time_minutes']:.1f} min")
         
         # Clinical Outcomes
-        print(f"\n🏥 CLINICAL OUTCOMES:")
-        print(f"   Admission Rate: {metrics['admission_rate_pct']:.1f}%")
+        logger.info(f"🏥 CLINICAL OUTCOMES:")
+        logger.info(f"   Admission Rate: {metrics['admission_rate_pct']:.1f}%")
         
         # Triage Distribution
         if metrics['triage_category_distribution']:
-            print(f"\n🚦 TRIAGE CATEGORY DISTRIBUTION:")
+            logger.info(f"🚦 TRIAGE CATEGORY DISTRIBUTION:")
             for category, count in sorted(metrics['triage_category_distribution'].items()):
                 pct = (count / metrics['total_attendances']) * 100
-                print(f"   {category}: {count:,} ({pct:.1f}%)")
+                logger.info(f"   {category}: {count:,} ({pct:.1f}%)")
         
         # Age Group Analysis
         if metrics['age_group_analysis']:
-            print(f"\n👥 AGE GROUP ANALYSIS:")
+            logger.info(f"👥 AGE GROUP ANALYSIS:")
             for age_group, data in metrics['age_group_analysis'].items():
-                print(f"   {age_group}: {data['count']:,} patients, {data['avg_time_minutes']:.1f} min avg, {data['4hour_compliance_pct']:.1f}% compliant")
+                logger.info(f"   {age_group}: {data['count']:,} patients, {data['avg_time_minutes']:.1f} min avg, {data['4hour_compliance_pct']:.1f}% compliant")
         
         return metrics
     
@@ -404,11 +407,11 @@ class NHSMetricsService:
             metrics = self.calculate_nhs_metrics()
             with open(json_filepath, 'w') as f:
                 json.dump(metrics, f, indent=2, default=str)
-            print(f"NHS metrics exported to {json_filepath}")
+            logger.info(f"NHS metrics exported to {json_filepath}")
         
         if csv_filepath:
             if not self.patients:
-                print("No patient data to export")
+                logger.info("No patient data to export")
                 return
             
             data = []
@@ -435,7 +438,7 @@ class NHSMetricsService:
             
             df = pd.DataFrame(data)
             df.to_csv(csv_filepath, index=False)
-            print(f"Patient data exported to {csv_filepath}")
+            logger.info(f"Patient data exported to {csv_filepath}")
     
     def plot_compliance_chart(self, save_path: Optional[str] = None):
         """Generate NHS 4-hour compliance chart.
@@ -580,12 +583,12 @@ class NHSMetricsService:
             self.plot_performance_dashboard(f"{output_dir}/performance_dashboard.png")
             plots_generated.append("performance_dashboard.png")
             
-            print(f"Generated {len(plots_generated)} NHS metrics plots in {output_dir}:")
+            logger.info(f"Generated {len(plots_generated)} NHS metrics plots in {output_dir}:")
             for plot in plots_generated:
-                print(f"  - {plot}")
+                logger.info(f"  - {plot}")
                 
         except Exception as e:
-            print(f"Error generating plots: {e}")
+            logger.error(f"Error generating plots: {e}")
         
         return plots_generated
     

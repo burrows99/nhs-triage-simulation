@@ -21,6 +21,9 @@ from .config import FlowchartConfigManager, FuzzySystemConfigManager
 from .rules import FuzzyRulesManager
 from .core import TriageProcessor
 
+# Import centralized logger
+from src.logger import logger
+
 
 class ManchesterTriageSystem:
     """Fuzzy Manchester Triage System - SOLID Compliant Implementation
@@ -90,9 +93,9 @@ class ManchesterTriageSystem:
         """
         # MOCK DELAY: Adding 5-second delay to test SimPy disruption
         import time
-        print(f"[MOCK DELAY] Starting 5-second delay for triage processing...")
+        logger.debug(f"[MOCK DELAY] Starting 5-second delay for triage processing...")
         time.sleep(5)  # This will block the entire simulation!
-        print(f"[MOCK DELAY] Delay complete, proceeding with triage...")
+        logger.debug(f"[MOCK DELAY] Delay complete, proceeding with triage...")
         
         # Perform the actual triage
         result = self._triage_processor.process_triage(flowchart_reason, symptoms_input)

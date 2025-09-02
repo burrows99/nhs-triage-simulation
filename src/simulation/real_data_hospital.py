@@ -12,11 +12,14 @@ import logging
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
+# Import centralized logger
+from src.logger import logger
+
 from src.services.data_service import DataService
 from src.services.data_cleanup_service import DataCleanupService
 from src.services.nhs_metrics_service import NHSMetricsService
 from src.services.random_service import RandomService
-from src.triage.manchester_triage_system import ManchesterTriageSystem
+from src.triage.base_triage_system import TriageSystemFactory
 from src.triage.triage_constants import (
     TriageFlowcharts, FlowchartSymptomMapping, TriageCategories,
     SymptomKeys, MedicalConditions, CommonStrings, DiagnosticTestTypes, SymptomNames,
@@ -27,14 +30,16 @@ from src.triage.triage_constants import (
 class SimpleHospital:
     """Simple hospital simulation with Poisson arrivals and real patient data."""
     
-    def __init__(self, csv_folder='./output/csv', **kwargs):
+    def __init__(self, csv_folder='./output/csv', output_dir='./output/hospital_simulation', **kwargs):
         """Initialize hospital simulation with all required services and data.
         
         Args:
             csv_folder: Path to CSV data files
+            output_dir: Directory for simulation outputs (metrics, plots, etc.)
             **kwargs: Simulation parameters (sim_duration, arrival_rate, etc.)
         """
-        self._setup_logging(**kwargs)
+        self.output_dir = output_dir
+        self._ensure_output_directory()
         self._setup_simulation_parameters(**kwargs)
         self._load_patient_data(csv_folder)
         self._initialize_services(**kwargs)
@@ -44,42 +49,46 @@ class SimpleHospital:
         
         self._log_with_sim_time(logging.INFO, "Hospital simulation initialized successfully")
         self._log_with_sim_time(logging.INFO, f"Parameters: duration={self.sim_duration}min, arrival_rate={self.arrival_rate}/hr, nurses={self.nurses}, doctors={self.doctors}, beds={self.beds}")
+        self._log_with_sim_time(logging.INFO, f"Output directory: {self.output_dir}")
     
-    def _setup_logging(self, **kwargs):
-        """Setup logging configuration for detailed simulation tracking."""
-        log_level = kwargs.get('log_level', logging.INFO)
-        
-        # Create logger for this simulation instance
-        self.logger = logging.getLogger(f'HospitalSim_{id(self)}')
-        self.logger.setLevel(log_level)
-        
-        # Avoid duplicate handlers if logger already exists
-        if not self.logger.handlers:
-            # Create console handler with formatting
-            handler = logging.StreamHandler()
-            handler.setLevel(log_level)
-            
-            # Create detailed formatter with real time and simulation time
-            formatter = logging.Formatter(
-                '%(message)s at simulation %(sim_time)s and real time %(asctime)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+    def _ensure_output_directory(self):
+        """Ensure output directory exists, create if necessary"""
+        try:
+            os.makedirs(self.output_dir, exist_ok=True)
+            os.makedirs(os.path.join(self.output_dir, 'metrics'), exist_ok=True)
+            os.makedirs(os.path.join(self.output_dir, 'plots'), exist_ok=True)
+            logger.info(f"📁 Output directory ready: {self.output_dir}")
+        except Exception as e:
+            logger.warning(f"⚠️  Warning: Could not create output directory {self.output_dir}: {str(e)}")
+            logger.info(f"📁 Using default directory: ./output/hospital_simulation")
+            self.output_dir = './output/hospital_simulation'
+            os.makedirs(self.output_dir, exist_ok=True)
+            os.makedirs(os.path.join(self.output_dir, 'metrics'), exist_ok=True)
+            os.makedirs(os.path.join(self.output_dir, 'plots'), exist_ok=True)
+    
+
     
     def _log_with_sim_time(self, level, message):
-        """Log message with simulation time included in the record."""
+        """Log message with simulation time included."""
         if self.env is not None:
             sim_time_str = self._format_sim_time(self.env.now)
         else:
             sim_time_str = "00:00 (0.0min)"
         
-        # Create log record with simulation time
-        record = self.logger.makeRecord(
-            self.logger.name, level, __file__, 0, message, (), None
-        )
-        record.sim_time = sim_time_str
-        self.logger.handle(record)
+        # Format message with simulation time
+        formatted_message = f"{message} [Sim Time: {sim_time_str}]"
+        
+        # Use centralized logger
+        if level == logging.INFO:
+            logger.info(formatted_message)
+        elif level == logging.DEBUG:
+            logger.debug(formatted_message)
+        elif level == logging.WARNING:
+            logger.warning(formatted_message)
+        elif level == logging.ERROR:
+            logger.error(formatted_message)
+        else:
+            logger.log(level, formatted_message)
     
     def _format_sim_time(self, sim_time: float) -> str:
         """Format simulation time for logging.
@@ -127,34 +136,34 @@ class SimpleHospital:
     
     def _load_patient_data(self, csv_folder: str):
         """Load and process patient data from CSV files."""
-        print(f"Loading patient data from {csv_folder}...")
+        logger.info(f"Loading patient data from {csv_folder}...")
         self.data_service = DataService(csv_folder)
         self.patients = self.data_service.process_all()
         self.patient_ids = list(self.patients.keys())
         self.current_index = 0
-        print(f"Loaded {len(self.patient_ids)} patients")
+        logger.info(f"Loaded {len(self.patient_ids)} patients")
     
     def _initialize_services(self, **kwargs):
         """Initialize all required services for the simulation."""
         # Initialize NHS Metrics Service
-        print("Initializing NHS Metrics Service...")
+        logger.info("Initializing NHS Metrics Service...")
         self.nhs_metrics = NHSMetricsService(reattendance_window_hours=72)
-        print("NHS Metrics Service ready")
+        logger.info("NHS Metrics Service ready")
         
         # Initialize Data Cleanup Service for patient data processing
-        print("Initializing Data Cleanup Service...")
+        logger.info("Initializing Data Cleanup Service...")
         self.data_cleanup = DataCleanupService()
-        print("Data Cleanup Service ready")
+        logger.info("Data Cleanup Service ready")
         
-        # Initialize Manchester Triage System
-        print("Initializing Manchester Triage System...")
-        self.mts = ManchesterTriageSystem()
-        print("Manchester Triage System ready")
+        # Initialize Triage System (configurable)
+        triage_type = kwargs.get('triage_system', 'manchester')  # Default to Manchester
+        self.triage_system = self._initialize_triage_system(triage_type, **kwargs)
+        self._validate_triage_system_connection()
         
         # Initialize Random Service for centralized random data generation
-        print("Initializing Random Service...")
+        logger.info("Initializing Random Service...")
         self.random_service = RandomService(seed=kwargs.get('random_seed'))
-        print("Random Service ready")
+        logger.info("Random Service ready")
     
     def get_patient(self):
         """Get next patient with processed data, cycling through data infinitely."""
@@ -185,7 +194,7 @@ class SimpleHospital:
         """Perform triage using paper-based Manchester Triage System approach with real patient data.
         
         Returns:
-            tuple: (category, priority, mts_result, processing_delay_seconds)
+            tuple: (category, priority, triage_result, processing_delay_seconds)
         
         Note: This method now measures and returns the actual processing time for 
         integration with SimPy's discrete event simulation.
@@ -214,8 +223,12 @@ class SimpleHospital:
         if not symptoms_input:
             raise ValueError(f"No real patient symptoms available for flowchart '{flowchart_reason}'. Patient ID: {patient_data.get('patient_id', 'Unknown')}")
         
-        # Use MTS directly with patient-based inputs
-        result = self.mts.triage_patient(flowchart_reason, symptoms_input)
+        # Use triage system with patient-based inputs
+        result = self.triage_system.triage_patient(
+            presenting_complaint=patient_data.get('presenting_complaint', ''),
+            symptoms=symptoms_input,
+            flowchart_reason=flowchart_reason
+        )
         
         # Calculate processing delay
         triage_end_time = time.time()
@@ -239,6 +252,156 @@ class SimpleHospital:
         
         # Return full MTS result for timing information
         return category, priority, result, processing_delay
+    
+    def _update_triage_system_resources(self):
+        """Update triage system with comprehensive current SimPy resource availability and status"""
+        try:
+            # Create HospitalResources object from current SimPy resource state
+            from src.triage.llm_triage_system import HospitalResources
+            
+            # Calculate detailed queue information
+            triage_queue_length = len(self.triage_resource.queue)
+            doctor_queue_length = len(self.doctor_resource.queue)
+            bed_queue_length = len(self.bed_resource.queue) if hasattr(self.bed_resource, 'queue') else 0
+            total_queue_length = triage_queue_length + doctor_queue_length + bed_queue_length
+            
+            # Calculate resource utilization
+            doctors_in_use = self.doctor_resource.count
+            nurses_in_use = self.triage_resource.count
+            beds_in_use = self.bed_resource.count
+            
+            current_resources = HospitalResources(
+                doctors_available=self.doctor_resource.capacity - doctors_in_use,
+                nurses_available=self.triage_resource.capacity - nurses_in_use,
+                beds_available=self.bed_resource.capacity - beds_in_use,
+                total_doctors=self.doctor_resource.capacity,
+                total_nurses=self.triage_resource.capacity,
+                total_beds=self.bed_resource.capacity,
+                current_queue_length=total_queue_length
+            )
+            
+            # Add additional queue status information as attributes
+            current_resources.triage_queue_length = triage_queue_length
+            current_resources.doctor_queue_length = doctor_queue_length
+            current_resources.bed_queue_length = bed_queue_length
+            current_resources.doctors_in_use = doctors_in_use
+            current_resources.nurses_in_use = nurses_in_use
+            current_resources.beds_in_use = beds_in_use
+            current_resources.simulation_time = self.env.now if self.env else 0
+            
+            # Update triage system with current resources
+            self.triage_system.update_resources(current_resources)
+            
+        except Exception as e:
+             # Silently continue if resource update fails (e.g., for Manchester system)
+             pass
+    
+    def _initialize_triage_system(self, triage_type: str, **kwargs):
+        """Initialize the appropriate triage system based on configuration
+        
+        Args:
+            triage_type: Type of triage system ('manchester' or 'llm')
+            **kwargs: Configuration parameters
+            
+        Returns:
+            Configured triage system instance
+        """
+        logger.info(f"Initializing {triage_type.title()} Triage System...")
+        
+        if triage_type.lower() == 'llm':
+            return self._create_llm_triage_system(**kwargs)
+        else:
+            return self._create_manchester_triage_system(**kwargs)
+    
+    def _create_llm_triage_system(self, **kwargs):
+        """Create and configure LLM Triage System
+        
+        Args:
+            **kwargs: Configuration parameters
+            
+        Returns:
+            Configured LLM triage system
+        """
+        # Configure LLM system parameters
+        llm_params = {
+            'num_agents_per_type': kwargs.get('num_agents_per_type', 2),
+            'model': kwargs.get('llm_model', 'llama3.2:1b'),
+            'ollama_url': kwargs.get('ollama_url', 'http://localhost:11434')
+        }
+        
+        # Validate Ollama connection before creating system
+        if not self._validate_ollama_connection(llm_params['ollama_url'], llm_params['model']):
+            logger.warning("⚠️  Warning: Ollama validation failed, but continuing with LLM system creation")
+        
+        triage_system = TriageSystemFactory.create_llm_triage_system(**llm_params)
+        logger.info(f"{triage_system.get_system_info()['system_name']} ready")
+        return triage_system
+    
+    def _create_manchester_triage_system(self, **kwargs):
+        """Create and configure Manchester Triage System
+        
+        Args:
+            **kwargs: Configuration parameters
+            
+        Returns:
+            Configured Manchester triage system
+        """
+        triage_system = TriageSystemFactory.create_manchester_triage_system()
+        logger.info(f"{triage_system.get_system_info()['system_name']} ready")
+        return triage_system
+    
+    def _validate_ollama_connection(self, ollama_url: str, model: str) -> bool:
+        """Validate Ollama service connection and model availability
+        
+        Args:
+            ollama_url: Ollama service URL
+            model: Model name to validate
+            
+        Returns:
+            True if connection and model are valid, False otherwise
+        """
+        try:
+            from src.services.ollama_service import OllamaService
+            
+            logger.info(f"🔌 Validating Ollama connection to {ollama_url}...")
+            ollama = OllamaService(base_url=ollama_url)
+            
+            # Test health check
+            if not ollama.health_check():
+                logger.error(f"❌ Ollama service at {ollama_url} is not responding")
+                return False
+            
+            logger.info(f"✅ Ollama service is running")
+            
+            # Test model availability
+            models = ollama.list_models()
+            if 'models' in models:
+                available_models = [m.get('name', '') for m in models['models']]
+                if model in available_models:
+                    logger.info(f"✅ Model '{model}' is available")
+                    return True
+                else:
+                    logger.warning(f"⚠️  Model '{model}' not found. Available: {available_models}")
+                    return False
+            else:
+                logger.warning(f"⚠️  Could not retrieve model list from Ollama")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Ollama validation failed: {str(e)}")
+            return False
+    
+    def _validate_triage_system_connection(self):
+        """Validate the initialized triage system connection"""
+        logger.info("🔍 Validating triage system connection...")
+        
+        try:
+            if self.triage_system.validate_connection():
+                logger.info("✅ Triage system validated successfully")
+            else:
+                logger.warning("⚠️  Warning: Triage system connection validation failed")
+        except Exception as e:
+            logger.warning(f"⚠️  Warning: Triage system validation error: {str(e)}")
     
     def _convert_symptoms_to_mts_format(self, raw_symptoms: Dict[str, str], flowchart_reason: str) -> Dict[str, str]:
         """Convert real patient symptoms to MTS flowchart format.
@@ -307,7 +470,7 @@ class SimpleHospital:
         self._log_with_sim_time(logging.INFO, f"🔍 Patient {patient_id}: Starting triage assessment at {self._format_sim_time(self.env.now)}")
         
         # Get triage result with processing delay from perform_triage method
-        category, priority, mts_result, processing_delay_seconds = self.perform_triage(patient_data)
+        category, priority, triage_result, processing_delay_seconds = self.perform_triage(patient_data)
         
         # Apply the delay using general-purpose scaling (delay measurement handled in perform_triage)
         triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
@@ -320,11 +483,11 @@ class SimpleHospital:
         
         # Triage nurse stage
         self._log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient {patient_id}: Entering triage nurse stage at {self._format_sim_time(self.env.now)}")
-        yield from self._process_triage_stage(patient_data['patient_id'], category, mts_result)
+        yield from self._process_triage_stage(patient_data['patient_id'], category, triage_result)
         
         # Doctor assessment stage
         self._log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient {patient_id}: Entering doctor assessment stage at {self._format_sim_time(self.env.now)}")
-        yield from self._process_doctor_assessment(patient_data['patient_id'], category, priority, mts_result)
+        yield from self._process_doctor_assessment(patient_data['patient_id'], category, priority, triage_result)
         
         # Diagnostics stage (optional)
         diagnostics_start = self.env.now
@@ -362,12 +525,15 @@ class SimpleHospital:
         
         return patient_data
     
-    def _process_triage_stage(self, patient_id, category, mts_result):
+    def _process_triage_stage(self, patient_id, category, triage_result):
         """Process triage nurse assessment stage."""
         triage_start = self.env.now
         self.nhs_metrics.record_initial_assessment(patient_id, triage_start)
         
         self._log_with_sim_time(logging.INFO, f"⏳ Patient {patient_id}: Waiting for triage nurse at {self._format_sim_time(triage_start)} (Queue: {len(self.triage_resource.queue)} waiting)")
+        
+        # Update triage system with current resource availability (including real queue lengths)
+        self._update_triage_system_resources()
         
         with self.triage_resource.request() as req:
             yield req
@@ -376,8 +542,8 @@ class SimpleHospital:
             
             self._log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient {patient_id}: Started triage assessment at {self._format_sim_time(triage_service_start)} (Waited: {wait_time:.1f}min)")
             
-            # Calculate triage time using MTS or fallback
-            triage_time = self._calculate_triage_time(category, mts_result)
+            # Calculate triage time using triage system result or fallback
+            triage_time = self._calculate_triage_time(category, triage_result)
             self._log_with_sim_time(logging.INFO, f"⏱️  Patient {patient_id}: Triage assessment will take {triage_time:.1f}min")
             
             yield self.env.timeout(triage_time)
@@ -385,12 +551,12 @@ class SimpleHospital:
             triage_end = self.env.now
             self._log_with_sim_time(logging.INFO, f"✅ Patient {patient_id}: Completed triage assessment at {self._format_sim_time(triage_end)} (Total triage time: {triage_end - triage_start:.1f}min)")
     
-    def _calculate_triage_time(self, category, mts_result):
+    def _calculate_triage_time(self, category, triage_result):
         """Calculate triage assessment time using evidence-based NHS timing.
         
         Uses official MTS research and NHS sources for realistic triage duration.
         """
-        if not mts_result:
+        if not triage_result:
             raise ValueError("MTS result is required for triage time calculation")
         
         # Determine complexity based on triage category
@@ -404,12 +570,15 @@ class SimpleHospital:
         # Use evidence-based triage process time (NHS official sources)
         return self.random_service.get_triage_process_time(complexity)
     
-    def _process_doctor_assessment(self, patient_id, category, priority, mts_result):
+    def _process_doctor_assessment(self, patient_id, category, priority, triage_result):
         """Process doctor assessment stage."""
         assessment_start = self.env.now
         self.nhs_metrics.record_treatment_start(patient_id, assessment_start)
         
         self._log_with_sim_time(logging.INFO, f"⏳ Patient {patient_id}: Waiting for doctor at {self._format_sim_time(assessment_start)} (Priority: {priority}, Queue: {len(self.doctor_resource.queue)} waiting)")
+        
+        # Update triage system with current resource availability (including doctor queue lengths)
+        self._update_triage_system_resources()
         
         with self.doctor_resource.request(priority=priority) as req:
             yield req
@@ -419,7 +588,7 @@ class SimpleHospital:
             self._log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient {patient_id}: Started doctor assessment at {self._format_sim_time(assessment_service_start)} (Waited: {wait_time:.1f}min)")
             
             # Calculate assessment time using MTS or fallback
-            assessment_time = self._calculate_assessment_time(category, mts_result)
+            assessment_time = self._calculate_assessment_time(category, triage_result)
             self._log_with_sim_time(logging.INFO, f"⏱️  Patient {patient_id}: Doctor assessment will take {assessment_time:.1f}min")
             
             yield self.env.timeout(assessment_time)
@@ -427,22 +596,22 @@ class SimpleHospital:
             assessment_end = self.env.now
             self._log_with_sim_time(logging.INFO, f"✅ Patient {patient_id}: Completed doctor assessment at {self._format_sim_time(assessment_end)} (Total assessment time: {assessment_end - assessment_start:.1f}min)")
     
-    def _calculate_assessment_time(self, category, mts_result):
+    def _calculate_assessment_time(self, category, triage_result):
         """Calculate doctor assessment time based on MTS result."""
-        if not mts_result:
-            raise ValueError("MTS result is required for assessment time calculation")
+        if not triage_result:
+            raise ValueError("Triage result is required for assessment time calculation")
         
-        if 'wait_time' not in mts_result:
-            raise ValueError(f"MTS result missing required 'wait_time' field: {mts_result}")
+        if 'wait_time' not in triage_result:
+            raise ValueError(f"Triage result missing required 'wait_time' field: {triage_result}")
         
-        # Use MTS wait time with category-specific percentages
-        mts_wait_minutes = self.data_cleanup.convert_wait_time_to_minutes(mts_result['wait_time'], self.random_service)
+        # Use triage system wait time as basis for assessment duration
+        triage_wait_minutes = self.data_cleanup.convert_wait_time_to_minutes(triage_result['wait_time'], self.random_service)
         if category == TriageCategories.RED:
-            return min(mts_wait_minutes * 0.3, 30)
+            return min(triage_wait_minutes * 0.3, 30)
         elif category == TriageCategories.ORANGE:
-            return min(mts_wait_minutes * 0.4, 40)
+            return min(triage_wait_minutes * 0.4, 40)
         else:
-            return min(mts_wait_minutes * 0.5, 50)
+            return min(triage_wait_minutes * 0.5, 50)
     
     def _process_diagnostics(self, category):
         """Process optional diagnostics stage with specific test types.
@@ -612,13 +781,13 @@ class SimpleHospital:
         self._log_with_sim_time(logging.INFO, f"📊 Final Results: {self.patient_count} patients processed, average time: {avg_time:.1f}min")
         self._log_with_sim_time(logging.INFO, f"🏥 Final resource state: Triage: {self.triage_resource.count}/{self.nurses}, Doctors: {self.doctor_resource.count}/{self.doctors}, Beds: {self.bed_resource.count}/{self.beds}")
         
-        print(f"\nSimulation Complete!")
-        print(f"Legacy Results: {self.patient_count} patients, avg time: {avg_time:.1f} min")
+        logger.info(f"Simulation Complete!")
+        logger.info(f"Legacy Results: {self.patient_count} patients, avg time: {avg_time:.1f} min")
         
         # === NHS METRICS: Generate Dashboard ===
-        print("\n" + "="*50)
-        print("GENERATING NHS QUALITY INDICATORS REPORT...")
-        print("="*50)
+        logger.info("=" * 50)
+        logger.info("GENERATING NHS QUALITY INDICATORS REPORT...")
+        logger.info("=" * 50)
         nhs_metrics = self.nhs_metrics.print_nhs_dashboard()
         
         # Return both legacy and NHS metrics for compatibility
@@ -638,5 +807,16 @@ class SimpleHospital:
         return self.nhs_metrics.calculate_nhs_metrics()
     
     def export_nhs_data(self, json_filepath: str = None, csv_filepath: str = None):
-        """Export NHS metrics and patient data"""
+        """Export NHS metrics and patient data to configured output directory
+        
+        Args:
+            json_filepath: Custom JSON file path (optional)
+            csv_filepath: Custom CSV file path (optional)
+        """
+        # Use configured output directory if no custom paths provided
+        if json_filepath is None:
+            json_filepath = os.path.join(self.output_dir, 'metrics', 'nhs_metrics.json')
+        if csv_filepath is None:
+            csv_filepath = os.path.join(self.output_dir, 'metrics', 'patient_data.csv')
+            
         self.nhs_metrics.export_data(json_filepath=json_filepath, csv_filepath=csv_filepath)
