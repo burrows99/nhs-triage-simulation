@@ -71,6 +71,11 @@ class Patient:
         """Compatibility property for BaseMetrics system."""
         return self.arrival_time
     
+    @timestamp.setter
+    def timestamp(self, value: float) -> None:
+        """Setter for timestamp property - updates arrival_time."""
+        self.arrival_time = value
+    
     def record_arrival(self, arrival_time: float) -> None:
         """Record patient arrival time."""
         self.arrival_time = arrival_time
