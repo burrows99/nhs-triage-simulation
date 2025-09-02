@@ -8,7 +8,7 @@ Single Responsibility: Only handles random data generation
 
 import random
 from typing import Tuple
-from src.triage.triage_constants import TriageCategories
+from src.triage.triage_constants import TriageCategories, DiagnosticTestTypes
 
 
 class RandomService:
@@ -54,7 +54,7 @@ class RandomService:
         """
         return random.random() < 0.5
     
-    def get_diagnostics_time(self, test_type: str = "mixed") -> float:
+    def get_diagnostics_time(self, test_type: str = DiagnosticTestTypes.MIXED) -> float:
         """Get random diagnostics time based on official NHS sources.
         
         Official Sources:
@@ -64,16 +64,16 @@ class RandomService:
         - UPMC Emergency Medicine: Blood work 1-2 hours, X-rays 1 hour
         
         Args:
-            test_type: Type of diagnostic (ecg, blood, xray, mixed)
+            test_type: Type of diagnostic from DiagnosticTestTypes constants
             
         Returns:
             Diagnostics time in minutes based on official NHS data
         """
-        if test_type == "ecg":
+        if test_type == DiagnosticTestTypes.ECG:
             return random.uniform(5, 10)  # NHS: "about 5 minutes"
-        elif test_type == "blood":
+        elif test_type == DiagnosticTestTypes.BLOOD:
             return random.uniform(60, 120)  # UPMC/NHS: 1-2 hours
-        elif test_type == "xray":
+        elif test_type == DiagnosticTestTypes.XRAY:
             return random.uniform(30, 240)  # NHS England: <4 hours for ED
         else:  # mixed diagnostics
             return random.uniform(45, 150)  # Combined average range

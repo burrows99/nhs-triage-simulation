@@ -2,7 +2,7 @@ import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
 from src.triage.triage_constants import (
     TriageFlowcharts, SymptomKeys, LinguisticValues, TriageCategories,
-    MedicalConditions, VitalSignCategories, FlowchartNames, CommonStrings
+    MedicalConditions, VitalSignCategories, FlowchartNames, CommonStrings, SymptomNames
 )
 
 
@@ -54,10 +54,10 @@ class DataCleanupService:
             SymptomKeys.PAIN_LEVEL: LinguisticValues.NONE,
             SymptomKeys.CRUSHING_SENSATION: LinguisticValues.NONE,
             SymptomKeys.BREATHING_DIFFICULTY: LinguisticValues.NONE,
-            CommonStrings.CHEST_PAIN_SYMPTOM: LinguisticValues.NONE,
-            MedicalConditions.NAUSEA: LinguisticValues.NONE,
-            MedicalConditions.HEADACHE: LinguisticValues.NONE,
-            MedicalConditions.DIZZINESS: LinguisticValues.NONE
+            SymptomNames.CHEST_PAIN: LinguisticValues.NONE,
+            SymptomNames.NAUSEA: LinguisticValues.NONE,
+            SymptomNames.HEADACHE: LinguisticValues.NONE,
+            SymptomNames.DIZZINESS: LinguisticValues.NONE
         }
         
         numeric_inputs = [0.0] * 5  # Default values: [pain_score, systolic_bp, heart_rate, temperature, resp_rate]
@@ -119,9 +119,9 @@ class DataCleanupService:
             
             # Cardiac symptoms
             if MedicalConditions.CHEST_PAIN in description or MedicalConditions.ANGINA in description:
-                symptoms[CommonStrings.CHEST_PAIN_SYMPTOM] = LinguisticValues.MODERATE
+                symptoms[SymptomNames.CHEST_PAIN] = LinguisticValues.MODERATE
             elif MedicalConditions.MYOCARDIAL_INFARCTION in description or MedicalConditions.HEART_ATTACK in description:
-                symptoms[CommonStrings.CHEST_PAIN_SYMPTOM] = LinguisticValues.SEVERE
+                symptoms[SymptomNames.CHEST_PAIN] = LinguisticValues.SEVERE
                 symptoms[SymptomKeys.CRUSHING_SENSATION] = LinguisticValues.SEVERE
             
             # Respiratory symptoms
@@ -132,17 +132,17 @@ class DataCleanupService:
             
             # Neurological symptoms
             elif MedicalConditions.HEADACHE in description or MedicalConditions.MIGRAINE in description:
-                symptoms[MedicalConditions.HEADACHE] = LinguisticValues.MODERATE
+                symptoms[SymptomNames.HEADACHE] = LinguisticValues.MODERATE
             elif MedicalConditions.STROKE in description or MedicalConditions.SEIZURE in description:
-                symptoms[MedicalConditions.HEADACHE] = LinguisticValues.SEVERE
-                symptoms[MedicalConditions.DIZZINESS] = LinguisticValues.SEVERE
+                symptoms[SymptomNames.HEADACHE] = LinguisticValues.SEVERE
+                symptoms[SymptomNames.DIZZINESS] = LinguisticValues.SEVERE
             
             # Gastrointestinal symptoms
             elif MedicalConditions.NAUSEA in description or MedicalConditions.VOMITING in description:
-                symptoms[MedicalConditions.NAUSEA] = LinguisticValues.MODERATE
+                symptoms[SymptomNames.NAUSEA] = LinguisticValues.MODERATE
             elif MedicalConditions.APPENDICITIS in description:
                 symptoms[SymptomKeys.PAIN_LEVEL] = LinguisticValues.SEVERE
-                symptoms[MedicalConditions.NAUSEA] = LinguisticValues.MODERATE
+                symptoms[SymptomNames.NAUSEA] = LinguisticValues.MODERATE
         
         return numeric_inputs, symptoms
     

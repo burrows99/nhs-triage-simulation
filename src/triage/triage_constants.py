@@ -567,6 +567,20 @@ class CommonSymptoms:
     FEVER_RELATED = ["fever", "night_sweats", "temperature"]
 
 
+class DiagnosticTestTypes:
+    """Diagnostic test type constants for hospital procedures"""
+    
+    ECG = "ecg"
+    BLOOD = "blood"
+    XRAY = "xray"
+    MIXED = "mixed"
+    
+    @classmethod
+    def get_all_test_types(cls) -> List[str]:
+        """Get all diagnostic test types"""
+        return [cls.ECG, cls.BLOOD, cls.XRAY, cls.MIXED]
+
+
 class CommonStrings:
     """Common string constants used across the application"""
     

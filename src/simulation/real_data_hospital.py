@@ -18,7 +18,7 @@ from src.services.random_service import RandomService
 from src.triage.manchester_triage_system import ManchesterTriageSystem
 from src.triage.triage_constants import (
     TriageFlowcharts, FlowchartSymptomMapping, TriageCategories,
-    SymptomKeys, MedicalConditions, CommonStrings
+    SymptomKeys, MedicalConditions, CommonStrings, DiagnosticTestTypes, SymptomNames
 )
 
 
@@ -237,12 +237,11 @@ class SimpleHospital:
             SymptomKeys.CONFUSION_LEVEL: 'confusion',
             SymptomKeys.DEFORMITY: 'deformity',
             SymptomKeys.MECHANISM: 'mechanism',
-            # From MedicalConditions to MTS symptoms
-            MedicalConditions.NAUSEA: 'nausea',
-            MedicalConditions.HEADACHE: 'pain_severity',
-            MedicalConditions.DIZZINESS: 'dizziness',
-            # From CommonStrings
-            CommonStrings.CHEST_PAIN_SYMPTOM: 'chest_pain'
+            # From SymptomNames to MTS symptoms
+            SymptomNames.NAUSEA: 'nausea',
+            SymptomNames.HEADACHE: 'pain_severity',
+            SymptomNames.DIZZINESS: 'dizziness',
+            SymptomNames.CHEST_PAIN: 'chest_pain'
         }
         
         # Convert symptoms that exist in both raw_symptoms and expected_symptoms
@@ -382,16 +381,16 @@ class SimpleHospital:
         """
         if category == TriageCategories.RED:
             # Critical patients often need immediate ECG and blood work
-            return random.choice(["ecg", "blood", "mixed"])
+            return random.choice([DiagnosticTestTypes.ECG, DiagnosticTestTypes.BLOOD, DiagnosticTestTypes.MIXED])
         elif category == TriageCategories.ORANGE:
             # Very urgent patients may need various diagnostics
-            return random.choice(["blood", "xray", "mixed"])
+            return random.choice([DiagnosticTestTypes.BLOOD, DiagnosticTestTypes.XRAY, DiagnosticTestTypes.MIXED])
         elif category == TriageCategories.YELLOW:
             # Urgent patients typically need standard diagnostics
-            return random.choice(["xray", "blood"])
+            return random.choice([DiagnosticTestTypes.XRAY, DiagnosticTestTypes.BLOOD])
         else:
             # Less urgent patients usually need simple diagnostics
-            return random.choice(["xray", "ecg"])
+            return random.choice([DiagnosticTestTypes.XRAY, DiagnosticTestTypes.ECG])
     
     def _process_disposition(self, category, priority):
         """Process patient disposition using NHS evidence-based timing.
