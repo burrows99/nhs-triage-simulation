@@ -107,6 +107,23 @@ class SimpleHospital:
         self.nurses = kwargs.get('nurses', 2)
         self.doctors = kwargs.get('doctors', 6)
         self.beds = kwargs.get('beds', 15)
+        self.delay_scaling = kwargs.get('delay_scaling', 0.2)  # Default: 1 real second = 0.2 simulation minutes
+    
+    def _scale_delay(self, real_time_seconds: float, delay_type: str = 'triage') -> float:
+        """General-purpose method to scale real-world delays to simulation time.
+        
+        Args:
+            real_time_seconds: Real-world processing time in seconds
+            delay_type: Type of delay for future extensibility (currently only 'triage' is used)
+            
+        Returns:
+            Scaled delay in simulation minutes
+        """
+        if delay_type == 'triage':
+            return real_time_seconds * self.delay_scaling
+        else:
+            # For future delay types, can add different scaling factors
+            return real_time_seconds * self.delay_scaling
     
     def _load_patient_data(self, csv_folder: str):
         """Load and process patient data from CSV files."""
@@ -165,16 +182,27 @@ class SimpleHospital:
         return processed_data
     
     def perform_triage(self, patient_data=None):
-        """Perform triage using paper-based Manchester Triage System approach with real patient data."""
+        """Perform triage using paper-based Manchester Triage System approach with real patient data.
+        
+        Returns:
+            tuple: (category, priority, mts_result, processing_delay_seconds)
+        
+        Note: This method now measures and returns the actual processing time for 
+        integration with SimPy's discrete event simulation.
+        """
         # Paper-based approach: Nurse selects appropriate flowchart based on patient presentation
         # FMTS paper: "decision aid system for the ER nurses to properly categorize patients based on their symptoms"
         
         if patient_data is None:
             raise ValueError("Patient data is required for triage. Cannot perform triage without real patient information.")
         
+        # Measure actual triage processing time
+        import time
+        triage_start_time = time.time()
+        
         # Use real patient data for triage
         # Map chief complaint to appropriate flowchart
-        flowchart_reason = self._map_complaint_to_flowchart(patient_data.get('presenting_complaint', ''))
+        flowchart_reason = ComplaintToFlowchartMapping.get_flowchart_for_complaint(patient_data.get('presenting_complaint', ''))
         
         # Use real patient symptoms from the processed data
         raw_symptoms = patient_data.get('symptoms', {})
@@ -188,6 +216,10 @@ class SimpleHospital:
         
         # Use MTS directly with patient-based inputs
         result = self.mts.triage_patient(flowchart_reason, symptoms_input)
+        
+        # Calculate processing delay
+        triage_end_time = time.time()
+        processing_delay = triage_end_time - triage_start_time
         
         # Extract category from MTS result - no fallback, must be present
         if 'triage_category' not in result:
@@ -206,18 +238,7 @@ class SimpleHospital:
         priority = priority_map[category]
         
         # Return full MTS result for timing information
-        return category, priority, result
-    
-    def _map_complaint_to_flowchart(self, chief_complaint: str) -> str:
-        """Map chief complaint to appropriate MTS flowchart.
-        
-        Args:
-            chief_complaint: Patient's presenting complaint
-            
-        Returns:
-            Appropriate flowchart identifier for the complaint
-        """
-        return ComplaintToFlowchartMapping.get_flowchart_for_complaint(chief_complaint)
+        return category, priority, result, processing_delay
     
     def _convert_symptoms_to_mts_format(self, raw_symptoms: Dict[str, str], flowchart_reason: str) -> Dict[str, str]:
         """Convert real patient symptoms to MTS flowchart format.
@@ -282,14 +303,20 @@ class SimpleHospital:
         
         self._log_with_sim_time(logging.INFO, f"👤 Patient {patient_id}: Age {patient_data['age']}, {patient_data['gender']}, Complaint: '{patient_data['presenting_complaint']}'")
         
-        # Perform triage and get category/priority
-        triage_decision_time = self.env.now
-        self._log_with_sim_time(logging.INFO, f"🔍 Patient {patient_id}: Starting triage assessment at {self._format_sim_time(triage_decision_time)}")
+        # Perform triage and get category/priority with processing delay handled internally
+        self._log_with_sim_time(logging.INFO, f"🔍 Patient {patient_id}: Starting triage assessment at {self._format_sim_time(self.env.now)}")
         
-        category, priority, mts_result = self.perform_triage(patient_data)
+        # Get triage result with processing delay from perform_triage method
+        category, priority, mts_result, processing_delay_seconds = self.perform_triage(patient_data)
+        
+        # Apply the delay using general-purpose scaling (delay measurement handled in perform_triage)
+        triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
+        self._log_with_sim_time(logging.INFO, f"⏳ Patient {patient_id}: Triage processing took {processing_delay_seconds:.1f} real seconds, converting to {triage_processing_delay:.1f} simulation minutes")
+        yield self.env.timeout(triage_processing_delay)
+        
+        # Record triage result and log completion
         self.nhs_metrics.record_triage_category(patient_data['patient_id'], category)
-        
-        self._log_with_sim_time(logging.INFO, f"🏷️  Patient {patient_id}: Triaged as {category} (Priority: {priority}) at {self._format_sim_time(self.env.now)}")
+        self._log_with_sim_time(logging.INFO, f"🏷️  Patient {patient_id}: Triaged as {category} (Priority: {priority}) at {self._format_sim_time(self.env.now)} (Processing delay: {triage_processing_delay:.1f}min)")
         
         # Triage nurse stage
         self._log_with_sim_time(logging.INFO, f"👩‍⚕️ Patient {patient_id}: Entering triage nurse stage at {self._format_sim_time(self.env.now)}")

@@ -88,6 +88,12 @@ class ManchesterTriageSystem:
         Returns:
             Dict containing triage result with category, wait time, etc.
         """
+        # MOCK DELAY: Adding 5-second delay to test SimPy disruption
+        import time
+        print(f"[MOCK DELAY] Starting 5-second delay for triage processing...")
+        time.sleep(5)  # This will block the entire simulation!
+        print(f"[MOCK DELAY] Delay complete, proceeding with triage...")
+        
         # Perform the actual triage
         result = self._triage_processor.process_triage(flowchart_reason, symptoms_input)
         

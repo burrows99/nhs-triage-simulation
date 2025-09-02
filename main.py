@@ -30,6 +30,7 @@ def run_hospital_simulation():
         csv_folder='./output/csv',
         sim_duration=480,    # 8 hours
         arrival_rate=12,     # 12 patients/hour
+        delay_scaling=0.2,  # 1 real second = 0.2 simulation minutes
         nurses=3,
         doctors=8,
         beds=20,
