@@ -260,17 +260,17 @@ class SimpleHospital:
         arrival_time = self.env.now
         
         # Setup patient and record arrival
-        patient_data, patient_id, age, gender, presenting_complaint = self._setup_patient_arrival(arrival_time)
+        patient_data = self._setup_patient_arrival(arrival_time)
         
         # Perform triage and get category/priority
         category, priority, mts_result = self.perform_triage(patient_data)
-        self.nhs_metrics.record_triage_category(patient_id, category)
+        self.nhs_metrics.record_triage_category(patient_data['patient_id'], category)
         
         # Triage nurse stage
-        yield from self._process_triage_stage(patient_id, category, mts_result)
+        yield from self._process_triage_stage(patient_data['patient_id'], category, mts_result)
         
         # Doctor assessment stage
-        yield from self._process_doctor_assessment(patient_id, category, priority, mts_result)
+        yield from self._process_doctor_assessment(patient_data['patient_id'], category, priority, mts_result)
         
         # Diagnostics stage (optional)
         yield from self._process_diagnostics(category)
@@ -279,27 +279,23 @@ class SimpleHospital:
         disposition, admitted = yield from self._process_disposition(category, priority)
         
         # Complete patient journey
-        self._complete_patient_journey(patient_id, arrival_time, disposition, admitted, 
-                                     category, age, gender)
+        self._complete_patient_journey(patient_data['patient_id'], arrival_time, disposition, admitted, 
+                                     category, patient_data['age'], patient_data['gender'])
     
     def _setup_patient_arrival(self, arrival_time):
         """Setup patient data and record arrival metrics."""
         patient_data = self.get_patient()
-        patient_id = patient_data['patient_id']
-        age = patient_data['age']
-        gender = patient_data['gender']
-        presenting_complaint = patient_data['presenting_complaint']
         
         # Record patient arrival in NHS metrics
         self.nhs_metrics.add_patient_arrival(
-            patient_id=patient_id,
+            patient_id=patient_data['patient_id'],
             arrival_time=arrival_time,
-            age=age,
-            gender=gender,
-            presenting_complaint=presenting_complaint
+            age=patient_data['age'],
+            gender=patient_data['gender'],
+            presenting_complaint=patient_data['presenting_complaint']
         )
         
-        return patient_data, patient_id, age, gender, presenting_complaint
+        return patient_data
     
     def _process_triage_stage(self, patient_id, category, mts_result):
         """Process triage nurse assessment stage."""
