@@ -24,21 +24,38 @@ class SimpleHospital:
     """Simple hospital simulation with Poisson arrivals and real patient data."""
     
     def __init__(self, csv_folder='./output/csv', **kwargs):
-        # Simulation parameters with defaults
+        """Initialize hospital simulation with all required services and data.
+        
+        Args:
+            csv_folder: Path to CSV data files
+            **kwargs: Simulation parameters (sim_duration, arrival_rate, etc.)
+        """
+        self._setup_simulation_parameters(**kwargs)
+        self._load_patient_data(csv_folder)
+        self._initialize_services(**kwargs)
+        
+        # Simulation state
+        self.env = None
+    
+    def _setup_simulation_parameters(self, **kwargs):
+        """Setup simulation parameters with defaults."""
         self.sim_duration = kwargs.get('sim_duration', 1440)  # 24 hours
         self.arrival_rate = kwargs.get('arrival_rate', 10)    # patients/hour
         self.nurses = kwargs.get('nurses', 2)
         self.doctors = kwargs.get('doctors', 6)
         self.beds = kwargs.get('beds', 15)
-        
-        # Load patient data
+    
+    def _load_patient_data(self, csv_folder: str):
+        """Load and process patient data from CSV files."""
         print(f"Loading patient data from {csv_folder}...")
         self.data_service = DataService(csv_folder)
         self.patients = self.data_service.process_all()
         self.patient_ids = list(self.patients.keys())
         self.current_index = 0
         print(f"Loaded {len(self.patient_ids)} patients")
-        
+    
+    def _initialize_services(self, **kwargs):
+        """Initialize all required services for the simulation."""
         # Initialize NHS Metrics Service
         print("Initializing NHS Metrics Service...")
         self.nhs_metrics = NHSMetricsService(reattendance_window_hours=72)
@@ -49,7 +66,7 @@ class SimpleHospital:
         self.data_cleanup = DataCleanupService()
         print("Data Cleanup Service ready")
         
-        # Initialize Manchester Triage System (without telemetry)
+        # Initialize Manchester Triage System
         print("Initializing Manchester Triage System...")
         self.mts = ManchesterTriageSystem()
         print("Manchester Triage System ready")
@@ -58,9 +75,6 @@ class SimpleHospital:
         print("Initializing Random Service...")
         self.random_service = RandomService(seed=kwargs.get('random_seed'))
         print("Random Service ready")
-        
-        # Simulation state
-        self.env = None
     
     def get_patient(self):
         """Get next patient with processed data, cycling through data infinitely."""
