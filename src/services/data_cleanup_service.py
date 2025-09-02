@@ -260,7 +260,7 @@ class DataCleanupService:
         chief_complaint = self.extract_chief_complaint(patient_data)
         age = self.calculate_age(patient_data.get('BIRTHDATE', ''))
         
-        return {
+        summary = {
             'patient_id': patient_data.get('Id', CommonStrings.UNKNOWN),
             'age': age,
             'gender': patient_data.get('GENDER', CommonStrings.UNKNOWN),
@@ -274,3 +274,5 @@ class DataCleanupService:
             'condition_count': len(patient_data.get('conditions', [])),
             'observation_count': len(patient_data.get('observations', []))
         }
+        
+        return summary

@@ -169,14 +169,7 @@ class RandomService:
         """
         return random.expovariate(arrival_rate / 60)  # Convert to per-minute
     
-    def get_random_flowchart(self) -> str:
-        """Get a random flowchart for simulation purposes.
-        
-        Returns:
-            Random flowchart name from common flowcharts
-        """
-        from src.triage.triage_constants import TriageFlowcharts
-        return random.choice(TriageFlowcharts.get_common_flowcharts())
+    # Note: get_random_flowchart method removed - simulation now uses real chief complaints for flowchart selection
     
     def get_triage_process_time(self, complexity: str = "standard") -> float:
         """Get realistic time for complete MTS triage process.
@@ -207,16 +200,7 @@ class RandomService:
         min_time, max_time = complexity_times.get(complexity, complexity_times['standard'])
         return random.uniform(min_time, max_time)
     
-    def get_random_symptom_value(self, possible_values: list) -> str:
-        """Get a random symptom value from possible options.
-        
-        Args:
-            possible_values: List of possible symptom values
-            
-        Returns:
-            Random symptom value
-        """
-        return random.choice(possible_values)
+    # Note: get_random_symptom_value method removed - simulation now uses only real patient symptoms
     
     def set_seed(self, seed: int) -> None:
         """Set random seed for reproducible results.

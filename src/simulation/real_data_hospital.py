@@ -3,6 +3,7 @@ import numpy as np
 import random
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Dict, List, Tuple, Any
 import sys
 import os
 
@@ -16,7 +17,8 @@ from src.services.nhs_metrics_service import NHSMetricsService
 from src.services.random_service import RandomService
 from src.triage.manchester_triage_system import ManchesterTriageSystem
 from src.triage.triage_constants import (
-    TriageFlowcharts, FlowchartSymptomMapping, TriageCategories
+    TriageFlowcharts, FlowchartSymptomMapping, TriageCategories,
+    SymptomKeys, MedicalConditions, CommonStrings
 )
 
 
@@ -94,25 +96,36 @@ class SimpleHospital:
             'age': patient_summary['age'],
             'gender': patient_summary['gender'],
             'presenting_complaint': patient_summary['chief_complaint'],
+            'symptoms': patient_summary['symptoms'],  # Include extracted symptoms
+            'vital_signs': patient_summary['vital_signs'],  # Include vital signs
             'raw_data': raw_patient_data  # Keep raw data for other uses if needed
         }
         
         return processed_data
     
     def perform_triage(self, patient_data=None):
-        """Perform triage using paper-based Manchester Triage System approach."""
+        """Perform triage using paper-based Manchester Triage System approach with real patient data."""
         # Paper-based approach: Nurse selects appropriate flowchart based on patient presentation
         # FMTS paper: "decision aid system for the ER nurses to properly categorize patients based on their symptoms"
         
-        # For simulation purposes, use a representative flowchart from the ~50 available
-        # In real practice, nurse would select based on chief complaint/presentation
-        flowchart_reason = self.random_service.get_random_flowchart()  # Represents nurse's flowchart selection
+        if patient_data is None:
+            raise ValueError("Patient data is required for triage. Cannot perform triage without real patient information.")
         
-        # Generate symptoms appropriate for the selected flowchart
-        # Paper: "MTS flowcharts are full of imprecise linguistic terms"
-        symptoms_input = FlowchartSymptomMapping.generate_random_symptoms(flowchart_reason, self.random_service)
+        # Use real patient data for triage
+        # Map chief complaint to appropriate flowchart
+        flowchart_reason = self._map_complaint_to_flowchart(patient_data.get('presenting_complaint', ''))
         
-        # Use MTS directly with paper-based inputs
+        # Use real patient symptoms from the processed data
+        raw_symptoms = patient_data.get('symptoms', {})
+        
+        # Convert real patient symptoms to MTS format
+        symptoms_input = self._convert_symptoms_to_mts_format(raw_symptoms, flowchart_reason)
+        
+        # Ensure we have real patient symptoms - no random fallback
+        if not symptoms_input:
+            raise ValueError(f"No real patient symptoms available for flowchart '{flowchart_reason}'. Patient ID: {patient_data.get('patient_id', 'Unknown')}")
+        
+        # Use MTS directly with patient-based inputs
         result = self.mts.triage_patient(flowchart_reason, symptoms_input)
         
         # Extract category from MTS result - no fallback, must be present
@@ -133,6 +146,115 @@ class SimpleHospital:
         
         # Return full MTS result for timing information
         return category, priority, result
+    
+    def _map_complaint_to_flowchart(self, chief_complaint: str) -> str:
+        """Map chief complaint to appropriate MTS flowchart.
+        
+        Args:
+            chief_complaint: Patient's presenting complaint
+            
+        Returns:
+            Appropriate flowchart identifier for the complaint
+        """
+        if not chief_complaint:
+            return TriageFlowcharts.CHEST_PAIN.value  # Default to most common presentation
+        
+        complaint_lower = chief_complaint.lower()
+        
+        # Map common complaints to flowcharts
+        complaint_mapping = {
+            'chest pain': TriageFlowcharts.CHEST_PAIN.value,
+            'chest': TriageFlowcharts.CHEST_PAIN.value,
+            'cardiac': TriageFlowcharts.CHEST_PAIN.value,
+            'heart': TriageFlowcharts.CHEST_PAIN.value,
+            'shortness of breath': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+            'breathing': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+            'breathless': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+            'respiratory': TriageFlowcharts.SHORTNESS_OF_BREATH.value,
+            'asthma': TriageFlowcharts.ASTHMA.value,
+            'abdominal pain': TriageFlowcharts.ABDOMINAL_PAIN.value,
+            'abdominal': TriageFlowcharts.ABDOMINAL_PAIN.value,
+            'stomach': TriageFlowcharts.ABDOMINAL_PAIN.value,
+            'appendicitis': TriageFlowcharts.ABDOMINAL_PAIN.value,
+            'headache': TriageFlowcharts.HEADACHE.value,
+            'head': TriageFlowcharts.HEADACHE.value,
+            'migraine': TriageFlowcharts.HEADACHE.value,
+            'neurological': TriageFlowcharts.HEADACHE.value,
+            'nausea': TriageFlowcharts.VOMITING.value,
+            'vomiting': TriageFlowcharts.VOMITING.value,
+            'injury': TriageFlowcharts.LIMB_INJURIES.value,
+            'trauma': TriageFlowcharts.LIMB_INJURIES.value,
+            'fracture': TriageFlowcharts.LIMB_INJURIES.value,
+            'wound': TriageFlowcharts.WOUNDS.value,
+            'cut': TriageFlowcharts.WOUNDS.value,
+            'burn': TriageFlowcharts.BURNS.value,
+            'stroke': TriageFlowcharts.STROKE.value,
+            'seizure': TriageFlowcharts.FITS.value,
+            'confusion': TriageFlowcharts.CONFUSION.value,
+            'unconscious': TriageFlowcharts.UNCONSCIOUS_ADULT.value,
+            'fever': TriageFlowcharts.CHILD_FEVER.value,
+            'infection': TriageFlowcharts.CHILD_FEVER.value
+        }
+        
+        # Find matching flowchart
+        for keyword, flowchart in complaint_mapping.items():
+            if keyword in complaint_lower:
+                return flowchart
+        
+        # Default to chest pain if no match found (most common presentation)
+        return TriageFlowcharts.CHEST_PAIN.value
+    
+    def _convert_symptoms_to_mts_format(self, raw_symptoms: Dict[str, str], flowchart_reason: str) -> Dict[str, str]:
+        """Convert real patient symptoms to MTS flowchart format.
+        
+        Args:
+            raw_symptoms: Symptoms from extract_patient_symptoms
+            flowchart_reason: Selected flowchart identifier
+            
+        Returns:
+            Dictionary of symptoms in MTS format for the specific flowchart
+        """
+        if not raw_symptoms:
+            return {}
+        
+        # Get expected symptoms for this flowchart
+        expected_symptoms = FlowchartSymptomMapping.get_symptoms_for_flowchart(flowchart_reason)
+        mts_symptoms = {}
+        
+        # Map common symptom keys from extract_patient_symptoms to MTS format
+        symptom_mapping = {
+            # From SymptomKeys to MTS flowchart symptoms
+            SymptomKeys.PAIN_LEVEL: 'severe_pain',
+            SymptomKeys.CRUSHING_SENSATION: 'crushing_sensation', 
+            SymptomKeys.BREATHING_DIFFICULTY: 'breathless',
+            SymptomKeys.SWEATING: 'sweating',
+            SymptomKeys.RADIATION: 'radiation',
+            SymptomKeys.WHEEZE: 'wheeze',
+            SymptomKeys.CYANOSIS: 'cyanosis',
+            SymptomKeys.CONSCIOUSNESS: 'consciousness_level',
+            SymptomKeys.TEMPERATURE: 'temperature',
+            SymptomKeys.BLEEDING: 'bleeding',
+            SymptomKeys.CONFUSION_LEVEL: 'confusion',
+            SymptomKeys.DEFORMITY: 'deformity',
+            SymptomKeys.MECHANISM: 'mechanism',
+            # From MedicalConditions to MTS symptoms
+            MedicalConditions.NAUSEA: 'nausea',
+            MedicalConditions.HEADACHE: 'pain_severity',
+            MedicalConditions.DIZZINESS: 'dizziness',
+            # From CommonStrings
+            CommonStrings.CHEST_PAIN_SYMPTOM: 'chest_pain'
+        }
+        
+        # Convert symptoms that exist in both raw_symptoms and expected_symptoms
+        for raw_key, raw_value in raw_symptoms.items():
+            # Map the key to MTS format
+            mts_key = symptom_mapping.get(raw_key, raw_key)
+            
+            # Only include if this symptom is expected for the flowchart
+            if mts_key in expected_symptoms:
+                mts_symptoms[mts_key] = raw_value
+        
+        return mts_symptoms
     
     def patient_flow(self, patient_num):
         """Simulate patient journey with NHS metrics tracking."""

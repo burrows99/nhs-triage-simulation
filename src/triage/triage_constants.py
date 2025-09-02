@@ -219,31 +219,7 @@ class FlowchartSymptomMapping:
         }
         return mapping.get(flowchart, cls.CHEST_PAIN_SYMPTOMS)  # Default to chest pain
     
-    @classmethod
-    def generate_random_symptoms(cls, flowchart: str, random_service=None) -> Dict[str, str]:
-        """Generate random symptoms for a flowchart.
-        
-        Args:
-            flowchart: Flowchart name
-            random_service: RandomService instance for generating random values
-            
-        Returns:
-            Dictionary of symptom keys and random values
-        """
-        if random_service is None:
-            # Fallback to direct import if no service provided
-            import random
-            choice_func = random.choice
-        else:
-            choice_func = random_service.get_random_symptom_value
-        
-        symptom_mapping = cls.get_symptoms_for_flowchart(flowchart)
-        symptoms = {}
-        
-        for symptom_key, possible_values in symptom_mapping.items():
-            symptoms[symptom_key] = choice_func(possible_values)
-        
-        return symptoms
+    # Note: Random symptom generation removed - simulation now uses only real patient symptoms
 
 
 class MedicalConditions:
