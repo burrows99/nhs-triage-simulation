@@ -478,9 +478,9 @@ class NHSMetricsService:
         """
         # Calculate age group data
         age_groups = {
-            '0-17': {'patients': [], 'count': 0, 'avg_time': 0, 'compliance_pct': 0},
-            '18-64': {'patients': [], 'count': 0, 'avg_time': 0, 'compliance_pct': 0},
-            '65+': {'patients': [], 'count': 0, 'avg_time': 0, 'compliance_pct': 0}
+            '0-17': {'patients': [], 'count': 0, 'avg_time_minutes': 0, '4hour_compliance_pct': 0},
+            '18-64': {'patients': [], 'count': 0, 'avg_time_minutes': 0, '4hour_compliance_pct': 0},
+            '65+': {'patients': [], 'count': 0, 'avg_time_minutes': 0, '4hour_compliance_pct': 0}
         }
         
         for patient in self.patients:
@@ -498,9 +498,9 @@ class NHSMetricsService:
         for group_data in age_groups.values():
             if group_data['count'] > 0:
                 times = [p.total_time_in_ae() for p in group_data['patients']]
-                group_data['avg_time'] = np.mean(times)
+                group_data['avg_time_minutes'] = np.mean(times)
                 compliant = sum(1 for p in group_data['patients'] if p.meets_4hour_standard())
-                group_data['compliance_pct'] = (compliant / group_data['count']) * 100
+                group_data['4hour_compliance_pct'] = (compliant / group_data['count']) * 100
         
         # Remove empty groups and format for plotting
         plot_data = {group: data for group, data in age_groups.items() if data['count'] > 0}
