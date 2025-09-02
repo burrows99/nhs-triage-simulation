@@ -3,7 +3,7 @@
 Model for tracking resource usage events in hospital simulation.
 """
 
-from src.services.base_metrics import BaseRecord
+from src.models.base_record import BaseRecord
 
 
 class ResourceEvent(BaseRecord):

@@ -4,7 +4,7 @@ Model for capturing system state snapshots in hospital simulation.
 """
 
 from typing import Dict
-from src.services.base_metrics import BaseRecord
+from src.models.base_record import BaseRecord
 
 
 class SystemSnapshot(BaseRecord):
