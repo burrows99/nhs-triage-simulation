@@ -17,6 +17,37 @@ class DataCleanupService:
             'neurological_keywords': MedicalConditions.get_neurological_conditions() + [CommonStrings.NEUROLOGICAL_KEYWORD]
         }
     
+    def convert_wait_time_to_minutes(self, wait_time_str: str, random_service) -> float:
+        """Convert MTS wait time string to numeric minutes with random variation.
+        
+        Args:
+            wait_time_str: MTS wait time string (e.g., 'immediate', '10 min', etc.)
+            random_service: RandomService instance for generating variations
+            
+        Returns:
+            Wait time in minutes with appropriate random variation
+            
+        Raises:
+            ValueError: If wait_time_str format is not recognized
+        """
+        if not wait_time_str:
+            raise ValueError("Wait time string cannot be empty or None")
+        
+        wait_time_str = wait_time_str.lower().strip()
+        
+        if wait_time_str == "immediate":
+            return random_service.get_wait_time_variation('immediate')
+        elif "10 min" in wait_time_str:
+            return random_service.get_wait_time_variation('10_min')
+        elif "60 min" in wait_time_str:
+            return random_service.get_wait_time_variation('60_min')
+        elif "120 min" in wait_time_str:
+            return random_service.get_wait_time_variation('120_min')
+        elif "240 min" in wait_time_str:
+            return random_service.get_wait_time_variation('240_min')
+        else:
+            raise ValueError(f"Unknown wait time format: '{wait_time_str}'. Expected: 'immediate', '10 min', '60 min', '120 min', or '240 min'")
+    
     def extract_patient_symptoms(self, patient_data: Dict[str, Any]) -> Tuple[List[float], Dict[str, str]]:
         """Extract symptoms and medical history from real patient data."""
         symptoms = {

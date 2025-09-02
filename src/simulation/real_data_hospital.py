@@ -85,26 +85,6 @@ class SimpleHospital:
         
         return processed_data
     
-    def _convert_wait_time_to_minutes(self, wait_time_str: str) -> float:
-        """Convert MTS wait time string to numeric minutes."""
-        if not wait_time_str:
-            raise ValueError("Wait time string cannot be empty or None")
-        
-        wait_time_str = wait_time_str.lower().strip()
-        
-        if wait_time_str == "immediate":
-            return self.random_service.get_wait_time_variation('immediate')
-        elif "10 min" in wait_time_str:
-            return self.random_service.get_wait_time_variation('10_min')
-        elif "60 min" in wait_time_str:
-            return self.random_service.get_wait_time_variation('60_min')
-        elif "120 min" in wait_time_str:
-            return self.random_service.get_wait_time_variation('120_min')
-        elif "240 min" in wait_time_str:
-            return self.random_service.get_wait_time_variation('240_min')
-        else:
-            raise ValueError(f"Unknown wait time format: '{wait_time_str}'. Expected: 'immediate', '10 min', '60 min', '120 min', or '240 min'")
-    
     def perform_triage(self, patient_data=None):
         """Perform triage using paper-based Manchester Triage System approach."""
         # Paper-based approach: Nurse selects appropriate flowchart based on patient presentation
@@ -208,7 +188,7 @@ class SimpleHospital:
             raise ValueError(f"MTS result missing required 'wait_time' field: {mts_result}")
         
         # Use MTS wait time (10% for triage assessment, max 15 min)
-        mts_wait_minutes = self._convert_wait_time_to_minutes(mts_result['wait_time'])
+        mts_wait_minutes = self.data_cleanup.convert_wait_time_to_minutes(mts_result['wait_time'], self.random_service)
         return min(mts_wait_minutes * 0.1, 15)
     
     def _process_doctor_assessment(self, patient_id, category, priority, mts_result):
@@ -233,7 +213,7 @@ class SimpleHospital:
             raise ValueError(f"MTS result missing required 'wait_time' field: {mts_result}")
         
         # Use MTS wait time with category-specific percentages
-        mts_wait_minutes = self._convert_wait_time_to_minutes(mts_result['wait_time'])
+        mts_wait_minutes = self.data_cleanup.convert_wait_time_to_minutes(mts_result['wait_time'], self.random_service)
         if category == TriageCategories.RED:
             return min(mts_wait_minutes * 0.3, 30)
         elif category == TriageCategories.ORANGE:
