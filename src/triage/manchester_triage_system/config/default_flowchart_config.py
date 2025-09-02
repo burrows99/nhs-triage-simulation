@@ -14,7 +14,7 @@ of the objective triage system described in the paper.
 """
 
 from typing import Dict, List, Any
-from src.triage.triage_constants import MedicalCategories, LinguisticValues, SymptomNames
+from src.triage.triage_constants import MedicalCategories, LinguisticValues, SymptomNames, TriageFlowcharts
 
 
 class DefaultFlowchartConfig:
@@ -47,25 +47,25 @@ class DefaultFlowchartConfig:
             Dictionary of respiratory flowcharts with symptoms and linguistic values
         """
         return {
-            'shortness_of_breath': {
+            TriageFlowcharts.SHORTNESS_OF_BREATH.value: {
                 'symptoms': [SymptomNames.DIFFICULTY_BREATHING, SymptomNames.WHEEZE, SymptomNames.UNABLE_TO_SPEAK, SymptomNames.CYANOSIS, SymptomNames.EXHAUSTION],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.RESPIRATORY,
                 'paper_reference': 'Figure 1 example flowchart'
             },
-            'shortness_of_breath_child': {
+            TriageFlowcharts.SHORTNESS_OF_BREATH_CHILD.value: {
                 'symptoms': [SymptomNames.VERY_LOW_PEFR, SymptomNames.EXHAUSTION, SymptomNames.SIGNIFICANT_RESPIRATORY_HISTORY, SymptomNames.ACUTE_ONSET_AFTER_INJURY, SymptomNames.LOW_SAO2],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.RESPIRATORY,
                 'paper_reference': 'Paper mentions very low PEFR as example of imprecise term'
             },
-            'cough': {
+            TriageFlowcharts.COUGH.value: {
                 'symptoms': [SymptomNames.PRODUCTIVE_COUGH, SymptomNames.BLOOD_IN_SPUTUM, SymptomNames.CHEST_PAIN, SymptomNames.FEVER, SymptomNames.NIGHT_SWEATS],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.RESPIRATORY,
                 'paper_reference': 'Standard MTS respiratory presentation'
             },
-            'asthma': {
+            TriageFlowcharts.ASTHMA.value: {
                 'symptoms': [SymptomNames.PEAK_FLOW, SymptomNames.WHEEZE, SymptomNames.SPEECH_DIFFICULTY, SymptomNames.ACCESSORY_MUSCLES, SymptomNames.CYANOSIS],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.RESPIRATORY,
@@ -88,24 +88,24 @@ class DefaultFlowchartConfig:
             Dictionary of cardiovascular flowcharts with symptoms and linguistic values
         """
         return {
-            'chest_pain': {
-            'symptoms': [SymptomNames.SEVERE_PAIN, SymptomNames.CRUSHING_SENSATION, SymptomNames.RADIATION, SymptomNames.BREATHLESS, SymptomNames.SWEATING],
-            'linguistic_values': LinguisticValues.get_severity_levels(),
-            'category': MedicalCategories.CARDIOVASCULAR,
-            'paper_reference': 'Figure 1 example flowchart'
-        },
-        
-        'palpitations': {
-            'symptoms': [SymptomNames.IRREGULAR_PULSE, SymptomNames.CHEST_DISCOMFORT, SymptomNames.DIZZINESS, SymptomNames.SYNCOPE, SymptomNames.BREATHLESSNESS],
-            'linguistic_values': LinguisticValues.get_severity_levels(),
-            'category': MedicalCategories.CARDIOVASCULAR,
-            'paper_reference': 'Cardiac rhythm assessment'
-        },
-        
-        'cardiac_arrest': {
-            'symptoms': [SymptomNames.UNCONSCIOUS, SymptomNames.NO_PULSE, SymptomNames.NOT_BREATHING, SymptomNames.CYANOSIS, SymptomNames.COLLAPSE],
-            'linguistic_values': LinguisticValues.get_severity_levels(),
-            'category': MedicalCategories.CARDIOVASCULAR,
+            TriageFlowcharts.CHEST_PAIN.value: {
+                'symptoms': [SymptomNames.SEVERE_PAIN, SymptomNames.CRUSHING_SENSATION, SymptomNames.RADIATION, SymptomNames.BREATHLESS, SymptomNames.SWEATING],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.CARDIOVASCULAR,
+                'paper_reference': 'Figure 1 example flowchart'
+            },
+            
+            TriageFlowcharts.PALPITATIONS.value: {
+                'symptoms': [SymptomNames.IRREGULAR_PULSE, SymptomNames.CHEST_DISCOMFORT, SymptomNames.DIZZINESS, SymptomNames.SYNCOPE, SymptomNames.BREATHLESSNESS],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.CARDIOVASCULAR,
+                'paper_reference': 'Cardiac rhythm assessment'
+            },
+            
+            TriageFlowcharts.CARDIAC_ARREST.value: {
+                'symptoms': [SymptomNames.UNCONSCIOUS, SymptomNames.NO_PULSE, SymptomNames.NOT_BREATHING, SymptomNames.CYANOSIS, SymptomNames.COLLAPSE],
+                'linguistic_values': LinguisticValues.get_severity_levels(),
+                'category': MedicalCategories.CARDIOVASCULAR,
                 'paper_reference': 'Most critical cardiac emergency - immediate category'
             }
         }
@@ -121,31 +121,31 @@ class DefaultFlowchartConfig:
             Dictionary of neurological flowcharts with symptoms and linguistic values
         """
         return {
-            'headache': {
+            TriageFlowcharts.HEADACHE.value: {
                 'symptoms': [SymptomNames.PAIN_SEVERITY, SymptomNames.SUDDEN_ONSET, SymptomNames.NECK_STIFFNESS, SymptomNames.PHOTOPHOBIA, SymptomNames.CONFUSION],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Neurological assessment requiring objective severity evaluation'
             },
-            'confusion': {
+            TriageFlowcharts.CONFUSION.value: {
                 'symptoms': [SymptomNames.ALTERED_CONSCIOUSNESS, SymptomNames.DISORIENTATION, SymptomNames.AGITATION, SymptomNames.MEMORY_LOSS, SymptomNames.SPEECH_PROBLEMS],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Mental status changes requiring systematic evaluation'
             },
-            'fits': {
+            TriageFlowcharts.FITS.value: {
                 'symptoms': [SymptomNames.ACTIVE_SEIZURE, SymptomNames.POST_ICTAL, SymptomNames.TONGUE_BITING, SymptomNames.INCONTINENCE, SymptomNames.INJURY_DURING_FIT],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Seizure activity assessment'
             },
-            'stroke': {
+            TriageFlowcharts.STROKE.value: {
                 'symptoms': [SymptomNames.FACIAL_DROOP, SymptomNames.ARM_WEAKNESS, SymptomNames.SPEECH_PROBLEMS, SymptomNames.SUDDEN_ONSET, SymptomNames.HEADACHE],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.NEUROLOGICAL,
                 'paper_reference': 'Acute stroke requiring rapid objective assessment'
             },
-            'unconscious_adult': {
+            TriageFlowcharts.UNCONSCIOUS_ADULT.value: {
                 'symptoms': [SymptomNames.GCS_SCORE, SymptomNames.RESPONSE_TO_PAIN, SymptomNames.PUPIL_REACTION, SymptomNames.BREATHING_PATTERN, SymptomNames.PULSE_QUALITY],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.NEUROLOGICAL,
@@ -164,28 +164,28 @@ class DefaultFlowchartConfig:
             Dictionary of gastrointestinal flowcharts with symptoms and linguistic values
         """
         return {
-            'abdominal_pain': {
+            TriageFlowcharts.ABDOMINAL_PAIN.value: {
                 'symptoms': [SymptomNames.PAIN_INTENSITY, SymptomNames.VOMITING, SymptomNames.RIGIDITY, SymptomNames.DISTENSION, SymptomNames.TENDERNESS],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.GASTROINTESTINAL,
                 'paper_reference': 'Abdominal emergency assessment'
             },
             
-            'vomiting': {
+            TriageFlowcharts.VOMITING.value: {
                 'symptoms': [SymptomNames.BLOOD_IN_VOMIT, SymptomNames.DEHYDRATION, SymptomNames.ABDOMINAL_PAIN, SymptomNames.BILE_STAINED, SymptomNames.PROJECTILE],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.GASTROINTESTINAL,
                 'paper_reference': 'GI symptom evaluation'
             },
             
-            'diarrhoea': {
+            TriageFlowcharts.DIARRHOEA.value: {
                 'symptoms': [SymptomNames.BLOOD_IN_STOOL, SymptomNames.DEHYDRATION, SymptomNames.CRAMPING, SymptomNames.FEVER, SymptomNames.MUCUS],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.GASTROINTESTINAL,
                 'paper_reference': 'Gastrointestinal assessment'
             },
             
-            'gi_bleeding': {
+            TriageFlowcharts.GI_BLEEDING.value: {
                 'symptoms': [SymptomNames.HAEMATEMESIS, SymptomNames.MELAENA, SymptomNames.SHOCK, SymptomNames.PALLOR, SymptomNames.WEAKNESS],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.GASTROINTESTINAL,
@@ -204,37 +204,37 @@ class DefaultFlowchartConfig:
             Dictionary of trauma flowcharts with symptoms and linguistic values
         """
         return {
-            'limb_injuries': {
+            TriageFlowcharts.LIMB_INJURIES.value: {
                 'symptoms': [SymptomNames.DEFORMITY, SymptomNames.PAIN, SymptomNames.SWELLING, SymptomNames.LOSS_OF_FUNCTION, SymptomNames.BLEEDING],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Musculoskeletal trauma assessment'
             },
-            'head_injury': {
+            TriageFlowcharts.HEAD_INJURY.value: {
                 'symptoms': [SymptomNames.LOSS_OF_CONSCIOUSNESS, SymptomNames.CONFUSION, SymptomNames.VOMITING, SymptomNames.HEADACHE, SymptomNames.AMNESIA],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Critical head trauma requiring immediate evaluation'
             },
-            'neck_injury': {
+            TriageFlowcharts.NECK_INJURY.value: {
                 'symptoms': [SymptomNames.NECK_PAIN, SymptomNames.NEUROLOGICAL_DEFICIT, SymptomNames.MECHANISM_OF_INJURY, SymptomNames.TENDERNESS, SymptomNames.DEFORMITY],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Spinal injury requiring careful assessment'
             },
-            'back_injury': {
+            TriageFlowcharts.BACK_INJURY.value: {
                 'symptoms': [SymptomNames.BACK_PAIN, SymptomNames.LEG_WEAKNESS, SymptomNames.NUMBNESS, SymptomNames.BLADDER_PROBLEMS, SymptomNames.MECHANISM],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Spinal trauma with potential neurological involvement'
             },
-            'burns': {
+            TriageFlowcharts.BURNS.value: {
                 'symptoms': [SymptomNames.BURN_AREA, SymptomNames.DEPTH, SymptomNames.AIRWAY_INVOLVEMENT, SymptomNames.PAIN, SymptomNames.BLISTERING],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.TRAUMA,
                 'paper_reference': 'Thermal injury requiring systematic assessment'
             },
-            'wounds': {
+            TriageFlowcharts.WOUNDS.value: {
                 'symptoms': [SymptomNames.BLEEDING, SymptomNames.DEPTH, SymptomNames.CONTAMINATION, SymptomNames.PAIN, SymptomNames.LOCATION],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.TRAUMA,
@@ -254,13 +254,13 @@ class DefaultFlowchartConfig:
         """
         return {
             # Genitourinary
-            'urinary_problems': {
+            TriageFlowcharts.URINARY_PROBLEMS.value: {
                 'symptoms': [SymptomNames.DYSURIA, SymptomNames.FREQUENCY, SymptomNames.URGENCY, SymptomNames.HAEMATURIA, SymptomNames.RETENTION],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.GENITOURINARY,
                 'paper_reference': 'Urological conditions requiring assessment'
             },
-            'renal_colic': {
+            TriageFlowcharts.RENAL_COLIC.value: {
                 'symptoms': [SymptomNames.LOIN_PAIN, SymptomNames.HAEMATURIA, SymptomNames.NAUSEA, SymptomNames.RESTLESSNESS, SymptomNames.RADIATION],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.GENITOURINARY,
@@ -268,13 +268,13 @@ class DefaultFlowchartConfig:
             },
             
             # Obstetric and gynaecological
-            'pregnancy_problems': {
+            TriageFlowcharts.PREGNANCY_PROBLEMS.value: {
                 'symptoms': [SymptomNames.BLEEDING, SymptomNames.PAIN, SymptomNames.CONTRACTIONS, SymptomNames.FETAL_MOVEMENTS, SymptomNames.BLOOD_PRESSURE],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.OBSTETRIC,
                 'paper_reference': 'Obstetric emergency requiring rapid assessment'
             },
-            'vaginal_bleeding': {
+            TriageFlowcharts.VAGINAL_BLEEDING.value: {
                 'symptoms': [SymptomNames.AMOUNT, SymptomNames.PAIN, SymptomNames.PREGNANCY_TEST, SymptomNames.CLOTS, SymptomNames.SHOCK],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.OBSTETRIC,
@@ -282,19 +282,19 @@ class DefaultFlowchartConfig:
             },
             
             # Paediatric specific
-            'crying_baby': {
+            TriageFlowcharts.CRYING_BABY.value: {
                 'symptoms': [SymptomNames.INCONSOLABLE, SymptomNames.FEVER, SymptomNames.FEEDING_PROBLEMS, SymptomNames.RASH, SymptomNames.LETHARGY],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.PAEDIATRIC,
                 'paper_reference': 'Paediatric assessment requiring objective evaluation'
             },
-            'child_fever': {
+            TriageFlowcharts.CHILD_FEVER.value: {
                 'symptoms': [SymptomNames.TEMPERATURE, SymptomNames.RASH, SymptomNames.NECK_STIFFNESS, SymptomNames.LETHARGY, SymptomNames.FEEDING],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.PAEDIATRIC,
                 'paper_reference': 'Febrile child requiring systematic assessment'
             },
-            'child_vomiting': {
+            TriageFlowcharts.CHILD_VOMITING.value: {
                 'symptoms': [SymptomNames.DEHYDRATION, SymptomNames.BILE_STAINED, SymptomNames.BLOOD, SymptomNames.LETHARGY, SymptomNames.ABDOMINAL_PAIN],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.PAEDIATRIC,
@@ -302,13 +302,13 @@ class DefaultFlowchartConfig:
             },
             
             # Psychiatric presentations
-            'mental_illness': {
+            TriageFlowcharts.MENTAL_ILLNESS.value: {
                 'symptoms': [SymptomNames.RISK_TO_SELF, SymptomNames.RISK_TO_OTHERS, SymptomNames.PSYCHOSIS, SymptomNames.DEPRESSION, SymptomNames.AGITATION],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.PSYCHIATRIC,
                 'paper_reference': 'Mental health crisis requiring objective risk assessment'
             },
-            'overdose_poisoning': {
+            TriageFlowcharts.OVERDOSE_POISONING.value: {
                 'symptoms': [SymptomNames.CONSCIOUSNESS_LEVEL, SymptomNames.RESPIRATORY_DEPRESSION, SymptomNames.CARDIAC_EFFECTS, SymptomNames.SEIZURES, SymptomNames.ANTIDOTE_AVAILABLE],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.PSYCHIATRIC,
@@ -316,37 +316,37 @@ class DefaultFlowchartConfig:
             },
             
             # Additional categories
-            'rash': {
+            TriageFlowcharts.RASH.value: {
                 'symptoms': [SymptomNames.DISTRIBUTION, SymptomNames.FEVER, SymptomNames.ITCH, SymptomNames.BLISTERING, SymptomNames.SYSTEMIC_ILLNESS],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.DERMATOLOGICAL,
                 'paper_reference': 'Skin condition assessment'
             },
-            'eye_problems': {
+            TriageFlowcharts.EYE_PROBLEMS.value: {
                 'symptoms': [SymptomNames.PAIN, SymptomNames.VISION_LOSS, SymptomNames.DISCHARGE, SymptomNames.PHOTOPHOBIA, SymptomNames.INJURY],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.OPHTHALMOLOGICAL,
                 'paper_reference': 'Ocular emergency assessment'
             },
-            'ear_problems': {
+            TriageFlowcharts.EAR_PROBLEMS.value: {
                 'symptoms': [SymptomNames.PAIN, SymptomNames.DISCHARGE, SymptomNames.HEARING_LOSS, SymptomNames.DIZZINESS, SymptomNames.FEVER],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.ENT,
                 'paper_reference': 'ENT condition assessment'
             },
-            'sore_throat': {
+            TriageFlowcharts.SORE_THROAT.value: {
                 'symptoms': [SymptomNames.PAIN, SymptomNames.DIFFICULTY_SWALLOWING, SymptomNames.FEVER, SymptomNames.DROOLING, SymptomNames.STRIDOR],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.ENT,
                 'paper_reference': 'Throat condition with potential airway involvement'
             },
-            'diabetes': {
+            TriageFlowcharts.DIABETES.value: {
                 'symptoms': [SymptomNames.BLOOD_GLUCOSE, SymptomNames.KETONES, SymptomNames.DEHYDRATION, SymptomNames.CONSCIOUSNESS, SymptomNames.BREATHING],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.ENDOCRINE,
                 'paper_reference': 'Diabetic emergency requiring objective assessment'
             },
-            'allergy': {
+            TriageFlowcharts.ALLERGY.value: {
                 'symptoms': [SymptomNames.RASH, SymptomNames.SWELLING, SymptomNames.BREATHING_DIFFICULTY, SymptomNames.SHOCK, SymptomNames.TONGUE_SWELLING],
                 'linguistic_values': LinguisticValues.get_severity_levels(),
                 'category': MedicalCategories.ALLERGIC,

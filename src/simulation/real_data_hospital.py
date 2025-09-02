@@ -112,11 +112,11 @@ class SimpleHospital:
         
         # For simulation purposes, use a representative flowchart from the ~50 available
         # In real practice, nurse would select based on chief complaint/presentation
-        flowchart_reason = TriageFlowcharts.get_random_flowchart()  # Represents nurse's flowchart selection
+        flowchart_reason = self.random_service.get_random_flowchart()  # Represents nurse's flowchart selection
         
         # Generate symptoms appropriate for the selected flowchart
         # Paper: "MTS flowcharts are full of imprecise linguistic terms"
-        symptoms_input = FlowchartSymptomMapping.generate_random_symptoms(flowchart_reason)
+        symptoms_input = FlowchartSymptomMapping.generate_random_symptoms(flowchart_reason, self.random_service)
         
         # Use MTS directly with paper-based inputs
         result = self.mts.triage_patient(flowchart_reason, symptoms_input)

@@ -127,6 +127,26 @@ class RandomService:
         """
         return random.expovariate(arrival_rate / 60)  # Convert to per-minute
     
+    def get_random_flowchart(self) -> str:
+        """Get a random flowchart for simulation purposes.
+        
+        Returns:
+            Random flowchart name from common flowcharts
+        """
+        from src.triage.triage_constants import TriageFlowcharts
+        return random.choice(TriageFlowcharts.get_common_flowcharts())
+    
+    def get_random_symptom_value(self, possible_values: list) -> str:
+        """Get a random symptom value from possible options.
+        
+        Args:
+            possible_values: List of possible symptom values
+            
+        Returns:
+            Random symptom value
+        """
+        return random.choice(possible_values)
+    
     def set_seed(self, seed: int) -> None:
         """Set random seed for reproducible results.
         

@@ -25,15 +25,47 @@ class TriageFlowcharts(Enum):
     HEADACHE = "headache"
     CONFUSION = "confusion"
     FITS = "fits"
+    STROKE = "stroke"
+    UNCONSCIOUS_ADULT = "unconscious_adult"
     
-    # Pain/Trauma
+    # Gastrointestinal
     ABDOMINAL_PAIN = "abdominal_pain"
-    BACK_PAIN = "back_pain"
-    LIMB_INJURIES = "limb_injuries"
+    VOMITING = "vomiting"
+    DIARRHOEA = "diarrhoea"
+    GI_BLEEDING = "gi_bleeding"
     
-    # General
-    MENTAL_HEALTH = "mental_health"
-    TRAUMA = "trauma"
+    # Trauma
+    LIMB_INJURIES = "limb_injuries"
+    HEAD_INJURY = "head_injury"
+    NECK_INJURY = "neck_injury"
+    BACK_INJURY = "back_injury"
+    BURNS = "burns"
+    WOUNDS = "wounds"
+    
+    # Genitourinary
+    URINARY_PROBLEMS = "urinary_problems"
+    RENAL_COLIC = "renal_colic"
+    
+    # Obstetric
+    PREGNANCY_PROBLEMS = "pregnancy_problems"
+    VAGINAL_BLEEDING = "vaginal_bleeding"
+    
+    # Paediatric
+    CRYING_BABY = "crying_baby"
+    CHILD_FEVER = "child_fever"
+    CHILD_VOMITING = "child_vomiting"
+    
+    # Psychiatric
+    MENTAL_ILLNESS = "mental_illness"
+    OVERDOSE_POISONING = "overdose_poisoning"
+    
+    # Additional
+    RASH = "rash"
+    EYE_PROBLEMS = "eye_problems"
+    EAR_PROBLEMS = "ear_problems"
+    SORE_THROAT = "sore_throat"
+    DIABETES = "diabetes"
+    ALLERGY = "allergy"
     
     @classmethod
     def get_common_flowcharts(cls) -> List[str]:
@@ -47,10 +79,9 @@ class TriageFlowcharts(Enum):
         ]
     
     @classmethod
-    def get_random_flowchart(cls) -> str:
-        """Get a random flowchart for simulation purposes"""
-        import random
-        return random.choice(cls.get_common_flowcharts())
+    def get_all_flowcharts(cls) -> List[str]:
+        """Get all available flowcharts"""
+        return [flowchart.value for flowchart in cls]
 
 
 
@@ -189,15 +220,28 @@ class FlowchartSymptomMapping:
         return mapping.get(flowchart, cls.CHEST_PAIN_SYMPTOMS)  # Default to chest pain
     
     @classmethod
-    def generate_random_symptoms(cls, flowchart: str) -> Dict[str, str]:
-        """Generate random symptoms for a flowchart"""
-        import random
+    def generate_random_symptoms(cls, flowchart: str, random_service=None) -> Dict[str, str]:
+        """Generate random symptoms for a flowchart.
+        
+        Args:
+            flowchart: Flowchart name
+            random_service: RandomService instance for generating random values
+            
+        Returns:
+            Dictionary of symptom keys and random values
+        """
+        if random_service is None:
+            # Fallback to direct import if no service provided
+            import random
+            choice_func = random.choice
+        else:
+            choice_func = random_service.get_random_symptom_value
         
         symptom_mapping = cls.get_symptoms_for_flowchart(flowchart)
         symptoms = {}
         
         for symptom_key, possible_values in symptom_mapping.items():
-            symptoms[symptom_key] = random.choice(possible_values)
+            symptoms[symptom_key] = choice_func(possible_values)
         
         return symptoms
 
