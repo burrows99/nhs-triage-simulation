@@ -70,7 +70,7 @@ class TriageCategoryMapper:
     
     def __init__(self):
         self._categories = np.array(TriageCategories.get_all_categories())
-        self._wait_times = np.array(WaitTimeDisplays.get_all_wait_times())
+        self._wait_times = np.array(WaitTimeDisplays.get_wait_time_displays())
         self._priority_scores = np.array([1, 2, 3, 4, 5])
     
     def map_score_to_category(self, fuzzy_score: float) -> Dict[str, Any]:
@@ -136,7 +136,7 @@ class DefaultFuzzyConfig:
         
         Reference: FMTS paper - imprecise linguistic terms
         """
-        return LinguisticValues.get_all_values()
+        return LinguisticValues.get_severity_levels()
     
     @staticmethod
     def get_membership_functions_config() -> Dict[str, Any]:
@@ -262,7 +262,7 @@ class FuzzySystemConfigManager:
         # Validate linguistic terms
         if 'linguistic_terms' in config:
             terms = config['linguistic_terms']
-            expected_terms = LinguisticValues.get_all_values()
+            expected_terms = LinguisticValues.get_severity_levels()
             if terms != expected_terms:
                 validation_result['warnings'].append("Non-standard linguistic terms detected")
         

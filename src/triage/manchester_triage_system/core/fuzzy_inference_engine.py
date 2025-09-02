@@ -30,20 +30,17 @@ class FuzzyInferenceEngine:
         self._control_system = control_system
         self._simulation = ctrl.ControlSystemSimulation(control_system)
     
-    def set_inputs(self, symptom_values: List[float]) -> None:
-        """Set input values for fuzzy inference"""
+
+    
+    def perform_inference(self, symptom_values: List[float]) -> float:
+        """Perform complete fuzzy inference process"""
+        # Set input values for fuzzy inference
         input_names = ['symptom1', 'symptom2', 'symptom3', 'symptom4', 'symptom5']
         
         for i, value in enumerate(symptom_values[:5]):
             if i < len(input_names):
                 self._simulation.input[input_names[i]] = value
-    
-    def compute_result(self) -> float:
-        """Compute fuzzy inference result"""
+        
+        # Compute fuzzy inference result
         self._simulation.compute()
         return self._simulation.output['triage_category']
-    
-    def perform_inference(self, symptom_values: List[float]) -> float:
-        """Perform complete fuzzy inference process"""
-        self.set_inputs(symptom_values)
-        return self.compute_result()

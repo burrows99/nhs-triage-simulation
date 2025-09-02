@@ -882,6 +882,17 @@ class SimpleHospital:
             logger.info(f"   Triage: {monitoring_summary['average_utilization']['triage']:.1f}%")
             logger.info(f"   Doctors: {monitoring_summary['average_utilization']['doctors']:.1f}%")
             logger.info(f"   Beds: {monitoring_summary['average_utilization']['beds']:.1f}%")
+            logger.info(f"🚦 Average Queue Lengths:")
+            logger.info(f"   Triage: {monitoring_summary['average_queue_lengths']['triage']:.1f}")
+            logger.info(f"   Doctors: {monitoring_summary['average_queue_lengths']['doctors']:.1f}")
+            logger.info(f"   Beds: {monitoring_summary['average_queue_lengths']['beds']:.1f}")
+            logger.info(f"⚡ Peak Utilization:")
+            logger.info(f"   Triage: {monitoring_summary['peak_utilization']['triage']:.1f}%")
+            logger.info(f"   Doctors: {monitoring_summary['peak_utilization']['doctors']:.1f}%")
+            logger.info(f"   Beds: {monitoring_summary['peak_utilization']['beds']:.1f}%")
+            logger.info(f"📝 Total Resource Events: {monitoring_summary['total_resource_events']}")
+        else:
+            logger.warning(f"⚠️  {monitoring_summary.get('error', 'Unknown monitoring error')}")
         
         # === GENERATE CHARTS AND PLOTS ===
         logger.info("=" * 50)
@@ -919,17 +930,6 @@ class SimpleHospital:
             logger.info(f"📁 Metrics data exported to {os.path.join(self.output_dir, 'metrics')}")
         except Exception as e:
             logger.error(f"Error exporting metrics data: {e}")
-            logger.info(f"🚦 Average Queue Lengths:")
-            logger.info(f"   Triage: {monitoring_summary['average_queue_lengths']['triage']:.1f}")
-            logger.info(f"   Doctors: {monitoring_summary['average_queue_lengths']['doctors']:.1f}")
-            logger.info(f"   Beds: {monitoring_summary['average_queue_lengths']['beds']:.1f}")
-            logger.info(f"⚡ Peak Utilization:")
-            logger.info(f"   Triage: {monitoring_summary['peak_utilization']['triage']:.1f}%")
-            logger.info(f"   Doctors: {monitoring_summary['peak_utilization']['doctors']:.1f}%")
-            logger.info(f"   Beds: {monitoring_summary['peak_utilization']['beds']:.1f}%")
-            logger.info(f"📝 Total Resource Events: {monitoring_summary['total_resource_events']}")
-        else:
-            logger.warning(f"⚠️  {monitoring_summary.get('error', 'Unknown monitoring error')}")
         
         # Return both legacy and NHS metrics for compatibility
         return {
@@ -943,9 +943,7 @@ class SimpleHospital:
              'nhs_metrics': nhs_metrics
          }
     
-    def get_nhs_metrics(self):
-        """Get NHS metrics directly"""
-        return self.nhs_metrics.calculate_nhs_metrics()
+
     
     def monitor_simulation(self):
         """Official SimPy monitoring process pattern for real-time tracking.

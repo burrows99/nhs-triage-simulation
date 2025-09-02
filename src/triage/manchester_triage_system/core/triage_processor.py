@@ -29,7 +29,7 @@ from ..config import (
 from ..rules import FuzzyRulesManager
 
 # Import individual service classes
-from .flowchart_lookup_service import FlowchartLookupService
+
 from .symptom_processor import SymptomProcessor
 from .fuzzy_inference_engine import FuzzyInferenceEngine
 from .triage_result_builder import TriageResultBuilder
@@ -50,7 +50,7 @@ class TriageProcessor:
                  rules_manager: FuzzyRulesManager):
         
         # Initialize services
-        self._flowchart_lookup = FlowchartLookupService(flowchart_manager)
+        self._flowchart_manager = flowchart_manager
         self._symptom_processor = SymptomProcessor(fuzzy_manager.get_linguistic_converter())
         self._result_builder = TriageResultBuilder(fuzzy_manager.get_category_mapper())
         
@@ -87,9 +87,10 @@ class TriageProcessor:
             raise ValueError(f"Invalid inputs: {validation['errors']}")
         
         # Lookup flowchart
-        flowchart_config = self._flowchart_lookup.find_flowchart(flowchart_reason)
+        flowchart_config = self._flowchart_manager.get_flowchart(flowchart_reason)
         if flowchart_config is None:
-            flowchart_config = self._flowchart_lookup.get_default_flowchart()
+            # Default to chest_pain as per original implementation
+            flowchart_config = self._flowchart_manager.get_flowchart('chest_pain')
         
         # Process symptoms
         symptom_data = self._symptom_processor.process_symptoms(flowchart_config, symptoms_input)
@@ -106,11 +107,3 @@ class TriageProcessor:
             raise RuntimeError(f"Invalid result generated: {result_validation['errors']}")
         
         return result
-    
-    def get_available_flowcharts(self) -> List[str]:
-        """Get list of available flowcharts"""
-        return self._flowchart_lookup._flowchart_manager.get_available_flowcharts()
-    
-    def get_symptoms_for_flowchart(self, flowchart_reason: str) -> List[str]:
-        """Get symptoms for a specific flowchart"""
-        return self._flowchart_lookup.get_flowchart_symptoms(flowchart_reason)

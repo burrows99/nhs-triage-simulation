@@ -137,10 +137,7 @@ class LinguisticValues:
         """Get all severity levels in order"""
         return [cls.NONE, cls.MILD, cls.MODERATE, cls.SEVERE, cls.VERY_SEVERE]
     
-    @classmethod
-    def get_all_values(cls) -> List[str]:
-        """Alias for get_severity_levels for consistency"""
-        return cls.get_severity_levels()
+
     
     @classmethod
     def get_numeric_mapping(cls) -> Dict[str, float]:
@@ -407,10 +404,7 @@ class WaitTimeDisplays:
         """Get wait time displays in order"""
         return [cls.IMMEDIATE, cls.TEN_MIN, cls.SIXTY_MIN, cls.ONE_TWENTY_MIN, cls.TWO_FORTY_MIN]
     
-    @classmethod
-    def get_all_wait_times(cls) -> List[str]:
-        """Alias for get_wait_time_displays for consistency"""
-        return cls.get_wait_time_displays()
+
 
 class SymptomNames:
     """Comprehensive symptom name constants for flowcharts"""

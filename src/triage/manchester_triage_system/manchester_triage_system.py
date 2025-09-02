@@ -107,7 +107,7 @@ class ManchesterTriageSystem:
         
         Reference: FMTS paper mentions "around 50 flowcharts" in the system
         """
-        return self._triage_processor.get_available_flowcharts()
+        return self._flowchart_manager.get_available_flowcharts()
     
 
     
@@ -120,7 +120,7 @@ class ManchesterTriageSystem:
         Returns:
             List of symptoms for the specified flowchart
         """
-        return self._triage_processor.get_symptoms_for_flowchart(flowchart_reason)
+        return self._flowchart_manager.get_symptoms_for_flowchart(flowchart_reason)
     
     def convert_linguistic_to_numeric(self, linguistic_value: str) -> float:
         """Convert linguistic values to numeric representation
