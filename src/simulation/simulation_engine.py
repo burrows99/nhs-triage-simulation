@@ -323,12 +323,3 @@ class SimulationEngine:
                 resource_status.append(f"{logical_name.title()}: {resource.count}/{capacity} (Q:{len(resource.queue)})")
         
         logger.debug(f"Monitor | Time: {self.env.now:6.1f} | {context} | {' | '.join(resource_status)} | Entities: {entity_count}")
-    
-    def get_monitoring_summary(self) -> Dict[str, Any]:
-        """Get summary of monitoring data collected during simulation.
-        
-        Returns:
-            Dictionary containing monitoring statistics
-        """
-        # Legacy monitoring data no longer collected with synchronized monitoring
-        return {'error': 'No monitoring data collected'}

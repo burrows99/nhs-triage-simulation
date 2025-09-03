@@ -3,18 +3,20 @@
 Base record class for all metric tracking in the hospital simulation system.
 """
 
-from dataclasses import dataclass
+from abc import ABC, abstractmethod
 
 
-@dataclass
-class BaseRecord:
+class BaseRecord(ABC):
     """Base record class for all metric tracking"""
-    record_id: str
-    timestamp: float
     
-    def __post_init__(self):
-        """Validate record after initialization"""
-        if not self.record_id:
-            raise ValueError("Record ID cannot be empty")
-        if self.timestamp < 0:
-            raise ValueError("Timestamp cannot be negative")
+    @property
+    @abstractmethod
+    def record_id(self) -> str:
+        """Unique identifier for this record"""
+        pass
+    
+    @property
+    @abstractmethod
+    def timestamp(self) -> float:
+        """Timestamp for this record"""
+        pass

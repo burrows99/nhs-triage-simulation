@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Optional, List
+from .base_record import BaseRecord
 
 
 @dataclass
-class Allergy:
+class Allergy(BaseRecord):
     """Allergy model corresponding to allergies.csv"""
     START: str
     STOP: Optional[str]
@@ -19,10 +20,19 @@ class Allergy:
     ENCOUNTER: str
     CODE: str
     DESCRIPTION: str
+    
+    @property
+    def record_id(self) -> str:
+        return f"{self.PATIENT}_{self.CODE}"
+    
+    @property
+    def timestamp(self) -> float:
+        # Convert date string to timestamp if needed
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class CarePlan:
+class CarePlan(BaseRecord):
     """Care Plan model corresponding to careplans.csv"""
     Id: str
     START: str
@@ -33,10 +43,18 @@ class CarePlan:
     DESCRIPTION: str
     REASONCODE: Optional[str]
     REASONDESCRIPTION: Optional[str]
+    
+    @property
+    def record_id(self) -> str:
+        return self.Id
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class Condition:
+class Condition(BaseRecord):
     """Condition model corresponding to conditions.csv"""
     START: str
     STOP: Optional[str]
@@ -44,10 +62,18 @@ class Condition:
     ENCOUNTER: str
     CODE: str
     DESCRIPTION: str
+    
+    @property
+    def record_id(self) -> str:
+        return f"{self.PATIENT}_{self.CODE}_{self.START}"
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class Encounter:
+class Encounter(BaseRecord):
     """Encounter model corresponding to encounters.csv"""
     Id: str
     START: str
@@ -73,10 +99,18 @@ class Encounter:
     medications: List[Medication] = field(default_factory=list)
     observations: List[Observation] = field(default_factory=list)
     procedures: List[Procedure] = field(default_factory=list)
+    
+    @property
+    def record_id(self) -> str:
+        return self.Id
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class ImagingStudy:
+class ImagingStudy(BaseRecord):
     """Imaging Study model corresponding to imaging_studies.csv"""
     Id: str
     DATE: str
@@ -88,10 +122,18 @@ class ImagingStudy:
     MODALITY_DESCRIPTION: str
     SOP_CODE: str
     SOP_DESCRIPTION: str
+    
+    @property
+    def record_id(self) -> str:
+        return self.Id
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class Immunization:
+class Immunization(BaseRecord):
     """Immunization model corresponding to immunizations.csv"""
     DATE: str
     PATIENT: str
@@ -99,10 +141,18 @@ class Immunization:
     CODE: str
     DESCRIPTION: str
     BASE_COST: float
+    
+    @property
+    def record_id(self) -> str:
+        return f"{self.PATIENT}_{self.CODE}_{self.DATE}"
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class Medication:
+class Medication(BaseRecord):
     """Medication model corresponding to medications.csv"""
     START: str
     STOP: Optional[str]
@@ -117,10 +167,18 @@ class Medication:
     TOTALCOST: float
     REASONCODE: Optional[str]
     REASONDESCRIPTION: Optional[str]
+    
+    @property
+    def record_id(self) -> str:
+        return f"{self.PATIENT}_{self.CODE}_{self.START}"
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class Observation:
+class Observation(BaseRecord):
     """Observation model corresponding to observations.csv"""
     DATE: str
     PATIENT: str
@@ -130,10 +188,18 @@ class Observation:
     VALUE: Optional[str]
     UNITS: Optional[str]
     TYPE: str
+    
+    @property
+    def record_id(self) -> str:
+        return f"{self.PATIENT}_{self.CODE}_{self.DATE}"
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class Organization:
+class Organization(BaseRecord):
     """Organization model corresponding to organizations.csv"""
     Id: str
     NAME: str
@@ -146,10 +212,18 @@ class Organization:
     PHONE: Optional[str]
     REVENUE: float
     UTILIZATION: int
+    
+    @property
+    def record_id(self) -> str:
+        return self.Id
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder
 
 
 @dataclass
-class Patient:
+class Patient(BaseRecord):
     """Patient model corresponding to patients.csv"""
     Id: str
     BIRTHDATE: str
@@ -180,20 +254,96 @@ class Patient:
     # Related data
     payer_transitions: List[PayerTransition] = field(default_factory=list)
     encounters: List[Encounter] = field(default_factory=list)
+    
+    # NHS Metrics tracking fields
+    arrival_time: float = 0.0
+    departure_time: float = 0.0
+    initial_assessment_start: float = 0.0
+    treatment_start: float = 0.0
+    triage_category: str = ""
+    triage_priority: int = 0
+    is_reattendance: bool = False
+    admitted: bool = False
+    disposal: str = ""
+    presenting_complaint: str = ""
+    left_without_being_seen: bool = False
+    age: int = 0
+    gender: str = ""
+    _timestamp: float = 0.0  # Private field for timestamp storage
+    
+    def extract_symptoms_from_observations(self) -> dict:
+        """Extract symptoms from patient observations for triage.
+        
+        Returns:
+            Dictionary of symptoms extracted from observations
+        """
+        symptoms = {}
+        
+        # Extract symptoms from observations if available
+        if hasattr(self, 'observations') and self.observations:
+            for obs in self.observations:
+                # Map observation descriptions to symptom keys
+                if 'pain' in obs.DESCRIPTION.lower():
+                    symptoms['pain'] = True
+                if 'fever' in obs.DESCRIPTION.lower() or 'temperature' in obs.DESCRIPTION.lower():
+                    symptoms['fever'] = True
+                if 'nausea' in obs.DESCRIPTION.lower():
+                    symptoms['nausea'] = True
+                if 'vomit' in obs.DESCRIPTION.lower():
+                    symptoms['vomiting'] = True
+                if 'breath' in obs.DESCRIPTION.lower() or 'respiratory' in obs.DESCRIPTION.lower():
+                    symptoms['breathing_difficulty'] = True
+                if 'chest' in obs.DESCRIPTION.lower():
+                    symptoms['chest_pain'] = True
+                if 'head' in obs.DESCRIPTION.lower():
+                    symptoms['headache'] = True
+        
+        # If no observations available, extract from encounters
+        if not symptoms and self.encounters:
+            for encounter in self.encounters:
+                desc = encounter.DESCRIPTION.lower()
+                if 'pain' in desc:
+                    symptoms['pain'] = True
+                if 'fever' in desc:
+                    symptoms['fever'] = True
+                if 'emergency' in desc or 'urgent' in desc:
+                    symptoms['severe_symptoms'] = True
+        
+        return symptoms
+    
+    @property
+    def record_id(self) -> str:
+        return self.Id
+    
+    @property
+    def timestamp(self) -> float:
+        return self._timestamp
+    
+    @timestamp.setter
+    def timestamp(self, value: float) -> None:
+        self._timestamp = value
 
 
 @dataclass
-class PayerTransition:
+class PayerTransition(BaseRecord):
     """Payer Transition model corresponding to payer_transitions.csv"""
     PATIENT: str
     START_YEAR: int
     END_YEAR: Optional[int]
     PAYER: str
     OWNERSHIP: str
+    
+    @property
+    def record_id(self) -> str:
+        return f"{self.PATIENT}_{self.START_YEAR}"
+    
+    @property
+    def timestamp(self) -> float:
+        return float(self.START_YEAR)
 
 
 @dataclass
-class Payer:
+class Payer(BaseRecord):
     """Payer model corresponding to payers.csv"""
     Id: str
     NAME: str
@@ -216,10 +366,18 @@ class Payer:
     UNIQUE_CUSTOMERS: int
     QOLS_AVG: float
     MEMBER_MONTHS: int
+    
+    @property
+    def record_id(self) -> str:
+        return self.Id
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder
 
 
 @dataclass
-class Procedure:
+class Procedure(BaseRecord):
     """Procedure model corresponding to procedures.csv"""
     DATE: str
     PATIENT: str
@@ -229,10 +387,18 @@ class Procedure:
     BASE_COST: float
     REASONCODE: Optional[str]
     REASONDESCRIPTION: Optional[str]
+    
+    @property
+    def record_id(self) -> str:
+        return f"{self.PATIENT}_{self.CODE}_{self.DATE}"
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder - would need proper date parsing
 
 
 @dataclass
-class Provider:
+class Provider(BaseRecord):
     """Provider model corresponding to providers.csv"""
     Id: str
     ORGANIZATION: str
@@ -246,6 +412,14 @@ class Provider:
     LAT: float
     LON: float
     UTILIZATION: int
+    
+    @property
+    def record_id(self) -> str:
+        return self.Id
+    
+    @property
+    def timestamp(self) -> float:
+        return 0.0  # Placeholder
 
 
 # Export all models

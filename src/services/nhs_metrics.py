@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 
 from .base_metrics import BaseMetrics, BaseRecord
 from src.logger import logger
+from src.models.synthea_models import Patient
 # Patient models now come from Synthea data service
 
 
@@ -49,42 +50,28 @@ class NHSMetrics(BaseMetrics):
             'admissions_count': 0
         })
     
-    def add_patient_arrival(self, patient_id: str, arrival_time: float, 
-                           age: int = 30, gender: str = "Unknown", 
-                           presenting_complaint: str = ""):
-        """Record patient arrival and return patient object
+    def add_patient_arrival(self, patient, arrival_time: float):
+        """Record patient arrival using Synthea Patient object
         
         Args:
-            patient_id: Unique patient identifier
-            arrival_time: Arrival time in minutes from simulation start
-            age: Patient age
-            gender: Patient gender
-            presenting_complaint: Chief complaint or reason for visit
-            
-        Returns:
-            Patient object for tracking patient journey
+            patient: Synthea Patient object
+            arrival_time: Arrival time in minutes
         """
         # Check for re-attendance
-        is_reattendance = self._check_reattendance(patient_id, arrival_time)
+        is_reattendance = self._check_reattendance(patient.Id, arrival_time)
         
-        # Record arrival metrics directly (no Patient object needed)
-        arrival_record = {
-            'patient_id': patient_id,
-            'arrival_time': arrival_time,
-            'age': age,
-            'gender': gender,
-            'presenting_complaint': presenting_complaint,
-            'is_reattendance': is_reattendance
-        }
+        # Store arrival time and re-attendance status on patient object
+        patient.arrival_time = arrival_time
+        patient.is_reattendance = is_reattendance
         
-        # Add to base metrics
-        self.add_record(arrival_record)
+        # Add patient directly to base metrics (Patient now inherits from BaseRecord)
+        self.add_record(patient)
         
         if is_reattendance:
             self.counters['reattendance_count'] += 1
         
         # Track arrival time for re-attendance checking
-        self.patient_history[patient_id].append(arrival_time)
+        self.patient_history[patient.Id].append(arrival_time)
     
     def add_patient_object(self, patient) -> None:
         """Record patient arrival using Patient object
@@ -96,7 +83,7 @@ class NHSMetrics(BaseMetrics):
             Patient object for NHS metrics tracking
         """
         # Check for re-attendance
-        is_reattendance = self._check_reattendance(patient.patient_id, patient.arrival_time)
+        is_reattendance = self._check_reattendance(patient.Id, patient.arrival_time)
         patient.is_reattendance = is_reattendance
         
         # Add to base metrics
@@ -106,7 +93,7 @@ class NHSMetrics(BaseMetrics):
             self.counters['reattendance_count'] += 1
         
         # Track arrival time for re-attendance checking
-        self.patient_history[patient.patient_id].append(patient.arrival_time)
+        self.patient_history[patient.Id].append(patient.arrival_time)
         
         return patient
     
@@ -120,23 +107,20 @@ class NHSMetrics(BaseMetrics):
         # The Patient object is already updated in place
         pass
     
-    def record_initial_assessment(self, patient_id: str, assessment_time: float):
+    def record_initial_assessment(self, patient, assessment_time: float):
         """Record start of initial assessment (triage/nursing assessment)"""
-        patient = self.get_record(patient_id)
-        if isinstance(patient, Patient):
-            patient.record_initial_assessment(assessment_time)
+        # Store assessment time directly on patient object
+        patient.initial_assessment_time = assessment_time
     
-    def record_treatment_start(self, patient_id: str, treatment_time: float):
+    def record_treatment_start(self, patient, treatment_time: float):
         """Record start of treatment (usually doctor consultation)"""
-        patient = self.get_record(patient_id)
-        if isinstance(patient, Patient):
-            patient.record_treatment_start(treatment_time)
+        # Store treatment start time directly on patient object
+        patient.treatment_start_time = treatment_time
     
-    def record_triage_category(self, patient_id: str, category: str):
+    def record_triage_category(self, patient, category: str):
         """Record Manchester Triage System category"""
-        patient = self.get_record(patient_id)
-        if isinstance(patient, Patient):
-            patient.triage_category = category
+        # Store triage category directly on patient object
+        patient.triage_category = category
     
     def record_patient_departure(self, patient_id: str, departure_time: float, 
                                disposal: str = "discharged", admitted: bool = False,
@@ -150,12 +134,14 @@ class NHSMetrics(BaseMetrics):
             admitted: Whether patient was admitted
             left_without_being_seen: Whether patient left before being seen
         """
-        patient = self.get_record(patient_id)
-        if not isinstance(patient, Patient):
+        patient_record = self.get_record(patient_id)
+        if not patient_record:
             return
         
-        patient.record_departure(departure_time, disposal, admitted)
-        patient.left_without_being_seen = left_without_being_seen
+        patient_record.departure_time = departure_time
+        patient_record.disposal = disposal
+        patient_record.admitted = admitted
+        patient_record.left_without_being_seen = left_without_being_seen
         
         if admitted:
             self.counters['admissions_count'] += 1
@@ -186,7 +172,7 @@ class NHSMetrics(BaseMetrics):
         Returns:
             Dictionary containing all official NHS metrics and performance indicators
         """
-        completed_patients = [p for p in self.records if isinstance(p, Patient) and p.departure_time > 0]
+        completed_patients = [p for p in self.records if hasattr(p, 'departure_time') and p.departure_time > 0]
         
         if not completed_patients:
             return {
@@ -196,13 +182,13 @@ class NHSMetrics(BaseMetrics):
             }
         
         # Calculate official NHS metrics
-        total_times = [p.total_time_in_ae() for p in completed_patients]
-        initial_assessment_times = [p.time_to_initial_assessment() for p in completed_patients 
-                                  if p.initial_assessment_start > 0]
-        treatment_times = [p.time_to_treatment() for p in completed_patients 
-                          if p.treatment_start > 0]
+        total_times = [p.departure_time - p.arrival_time for p in completed_patients if hasattr(p, 'arrival_time')]
+        initial_assessment_times = [p.initial_assessment_start - p.arrival_time for p in completed_patients 
+                                  if hasattr(p, 'initial_assessment_start') and hasattr(p, 'arrival_time') and p.initial_assessment_start > 0]
+        treatment_times = [p.treatment_start - p.arrival_time for p in completed_patients 
+                          if hasattr(p, 'treatment_start') and hasattr(p, 'arrival_time') and p.treatment_start > 0]
         
-        four_hour_compliant = sum(1 for p in completed_patients if p.total_time_in_ae() <= 240)
+        four_hour_compliant = sum(1 for p in completed_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time') and (p.departure_time - p.arrival_time) <= 240)
         
         metrics = {
             # ATTENDANCE SUMMARY
@@ -274,8 +260,8 @@ class NHSMetrics(BaseMetrics):
         analysis = {}
         for group, group_patients in age_groups.items():
             if group_patients:
-                times = [p.total_time_in_ae() for p in group_patients]
-                compliant = sum(1 for p in group_patients if p.total_time_in_ae() <= 240)
+                times = [p.departure_time - p.arrival_time for p in group_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time')]
+                compliant = sum(1 for p in group_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time') and (p.departure_time - p.arrival_time) <= 240)
                 analysis[group] = {
                     'count': len(group_patients),
                     'avg_time_minutes': np.mean(times),
@@ -294,8 +280,8 @@ class NHSMetrics(BaseMetrics):
         analysis = {}
         for gender, gender_patients in genders.items():
             if gender_patients:
-                times = [p.total_time_in_ae() for p in gender_patients]
-                compliant = sum(1 for p in gender_patients if p.total_time_in_ae() <= 240)
+                times = [p.departure_time - p.arrival_time for p in gender_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time')]
+                compliant = sum(1 for p in gender_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time') and (p.departure_time - p.arrival_time) <= 240)
                 analysis[gender] = {
                     'count': len(gender_patients),
                     'avg_time_minutes': np.mean(times),
@@ -416,11 +402,11 @@ class NHSMetrics(BaseMetrics):
     
     def _record_to_dict(self, record: BaseRecord) -> Dict[str, Any]:
         """Convert a Patient to dictionary for export"""
-        if not isinstance(record, Patient):
+        if not hasattr(record, 'Id'):
             return super()._record_to_dict(record)
         
         return {
-            'patient_id': record.patient_id,
+            'patient_id': record.Id,
             'arrival_time': record.arrival_time,
             'age': record.age,
             'gender': record.gender,
@@ -428,10 +414,10 @@ class NHSMetrics(BaseMetrics):
             'initial_assessment_start': record.initial_assessment_start,
             'treatment_start': record.treatment_start,
             'departure_time': record.departure_time,
-            'total_time_minutes': record.total_time_in_ae(),
-            'time_to_assessment_minutes': record.time_to_initial_assessment(),
-            'time_to_treatment_minutes': record.time_to_treatment(),
-            'meets_4hour_standard': record.total_time_in_ae() <= 240,
+            'total_time_minutes': record.departure_time - record.arrival_time if hasattr(record, 'arrival_time') and hasattr(record, 'departure_time') else 0,
+            'time_to_assessment_minutes': record.initial_assessment_start - record.arrival_time if hasattr(record, 'initial_assessment_start') and hasattr(record, 'arrival_time') and record.initial_assessment_start > 0 else 0,
+            'time_to_treatment_minutes': record.treatment_start - record.arrival_time if hasattr(record, 'treatment_start') and hasattr(record, 'arrival_time') and record.treatment_start > 0 else 0,
+            'meets_4hour_standard': (record.departure_time - record.arrival_time) <= 240 if hasattr(record, 'arrival_time') and hasattr(record, 'departure_time') else False,
             'is_reattendance': getattr(record, 'is_reattendance', False),
             'admitted': record.admitted,
             'disposal': record.disposal,

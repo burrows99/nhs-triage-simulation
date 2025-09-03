@@ -14,15 +14,21 @@ class SystemSnapshot(BaseRecord):
                  resource_capacity: Dict[str, int], queue_lengths: Dict[str, int],
                  entities_processed: int = 0):
         """Initialize SystemSnapshot with proper inheritance"""
-        # Call parent constructor with base record fields
-        super().__init__(record_id=snapshot_id, timestamp=timestamp)
-        
         # Set system snapshot specific fields
         self.snapshot_id = snapshot_id
+        self._timestamp = timestamp
         self.resource_usage = resource_usage  # resource_name -> current usage
         self.resource_capacity = resource_capacity  # resource_name -> total capacity
         self.queue_lengths = queue_lengths  # resource_name -> queue length
         self.entities_processed = entities_processed
+    
+    @property
+    def record_id(self) -> str:
+        return self.snapshot_id
+    
+    @property
+    def timestamp(self) -> float:
+        return self._timestamp
     
     def get_utilization(self, resource_name: str) -> float:
         """Get utilization percentage for a resource"""
