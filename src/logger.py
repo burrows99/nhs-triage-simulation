@@ -9,6 +9,8 @@ and used across all modules in the application.
 import logging
 import os
 from datetime import datetime
+from typing import Optional, Callable, Any
+from functools import wraps
 
 
 def setup_logger(log_level=logging.DEBUG, log_to_file=True):
@@ -62,5 +64,48 @@ def setup_logger(log_level=logging.DEBUG, log_to_file=True):
 # Initialize the centralized logger
 logger = setup_logger(log_level=logging.INFO)
 
-# Export the logger for import by other modules
-__all__ = ['logger']
+# Logging decorators to reduce repetitive code
+def log_data_transfer(operation_name: str = None):
+    """Decorator to automatically log data transfer operations."""
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            op_name = operation_name or f"{func.__module__}.{func.__name__}"
+            logger.info(f"🔄 DATA_TRANSFER_START: {op_name} initiated")
+            
+            try:
+                result = func(*args, **kwargs)
+                if hasattr(result, '__len__'):
+                    logger.info(f"📊 TRANSFER_RESULT: {op_name} completed - count: {len(result)}")
+                else:
+                    logger.info(f"✅ TRANSFER_SUCCESS: {op_name} completed")
+                return result
+            except Exception as e:
+                logger.error(f"❌ TRANSFER_ERROR: {op_name} failed - {str(e)}")
+                raise
+        return wrapper
+    return decorator
+
+def log_calculation(calc_name: str = None):
+    """Decorator to automatically log calculation operations."""
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            name = calc_name or f"{func.__name__}"
+            logger.info(f"🔄 CALCULATION_START: {name} initiated")
+            
+            try:
+                result = func(*args, **kwargs)
+                if isinstance(result, dict) and 'mean' in result:
+                    logger.info(f"📊 CALCULATION_RESULT: {name} mean={result['mean']:.2f}")
+                else:
+                    logger.info(f"✅ CALCULATION_SUCCESS: {name} completed")
+                return result
+            except Exception as e:
+                logger.error(f"❌ CALCULATION_ERROR: {name} failed - {str(e)}")
+                raise
+        return wrapper
+    return decorator
+
+# Export the logger and decorators for use in other modules
+__all__ = ['logger', 'log_data_transfer', 'log_calculation']

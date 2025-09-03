@@ -183,8 +183,10 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
         logger.info(f"📊 TRANSFER_RESULT: Symptoms validation completed")
         
         if not LANGGRAPH_AVAILABLE or self.workflow is None:
-            logger.warning(f"⚠️ SYSTEM_FALLBACK: Multi-agent workflow not available - falling back to single agent")
-            return self._fallback_single_agent_triage(symptoms)
+            raise RuntimeError(
+                "Multi-agent workflow not available. LangGraph is required for MixtureLLMTriage. "
+                f"LANGGRAPH_AVAILABLE: {LANGGRAPH_AVAILABLE}, workflow initialized: {self.workflow is not None}"
+            )
         
         try:
             # Execute multi-agent workflow
@@ -196,30 +198,15 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             return result
             
         except Exception as e:
-            logger.error(f"❌ DATA_TRANSFER_ERROR: Multi-agent workflow failed: {e}")
-            logger.info(f"🔄 SYSTEM_FALLBACK: Falling back to single agent")
-            return self._fallback_single_agent_triage(symptoms)
+            logger.error(f"🚨 Multi-agent workflow failed: {str(e)}")
+            # No fallbacks - raise error for proper handling
+            raise RuntimeError(
+                f"Multi-agent triage workflow failed: {str(e)}. "
+                f"Symptoms: {symptoms[:100]}... "
+                "System requires functional multi-agent workflow."
+            ) from e
     
-    def _fallback_single_agent_triage(self, symptoms: str) -> TriageResult:
-        """
-        Fallback to single-agent triage when multi-agent is not available.
-        
-        Args:
-            symptoms (str): Patient symptoms
-            
-        Returns:
-            TriageResult: Single-agent triage result
-        """
-        from .single_llm_triage import SingleLLMTriage
-        
-        # Create single agent instance with same configuration
-        single_agent = SingleLLMTriage(
-            model_name=self.model_name,
-            operation_metrics=self.operation_metrics,
-            nhs_metrics=self.nhs_metrics
-        )
-        
-        return single_agent.triage_patient(symptoms)
+    # Removed fallback method - system now fails fast for proper error handling
     
     def _initialize_workflow(self) -> None:
         """

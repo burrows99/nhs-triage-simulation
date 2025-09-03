@@ -30,12 +30,15 @@ class Allergy(BaseRecord):
     
     @property
     def timestamp(self) -> float:
-        """Convert START date to timestamp using dateutil for robust parsing."""
+        """Convert START date to timestamp using dateutil - strict validation."""
         try:
             parsed_date = parse_date(self.START)
             return parsed_date.timestamp()
-        except (ParserError, ValueError, AttributeError):
-            return 0.0  # Fallback for invalid dates
+        except (ParserError, ValueError, AttributeError) as e:
+            raise ValueError(
+                f"Invalid date format in START field: '{self.START}'. "
+                f"Expected valid date string. Parse error: {str(e)}"
+            ) from e
 
 
 @attr.s(auto_attribs=True)
@@ -57,16 +60,23 @@ class CarePlan(BaseRecord):
     
     @property
     def timestamp(self) -> float:
-        """Convert date to timestamp using dateutil for robust parsing."""
+        """Convert date to timestamp using dateutil - strict validation."""
+        # Try to parse the START date field if available
+        date_field = getattr(self, 'START', None) or getattr(self, 'DATE', None) or getattr(self, 'BIRTHDATE', None)
+        if not date_field:
+            raise ValueError(
+                f"No valid date field found in {self.__class__.__name__}. "
+                "Expected START, DATE, or BIRTHDATE field."
+            )
+        
         try:
-            # Try to parse the START date field if available
-            date_field = getattr(self, 'START', None) or getattr(self, 'DATE', None) or getattr(self, 'BIRTHDATE', None)
-            if date_field:
-                parsed_date = parse_date(date_field)
-                return parsed_date.timestamp()
-            return 0.0
-        except (ParserError, ValueError, AttributeError):
-            return 0.0  # Fallback for invalid dates
+            parsed_date = parse_date(date_field)
+            return parsed_date.timestamp()
+        except (ParserError, ValueError, AttributeError) as e:
+            raise ValueError(
+                f"Invalid date format in {self.__class__.__name__}: '{date_field}'. "
+                f"Expected valid date string. Parse error: {str(e)}"
+            ) from e
 
 
 @attr.s(auto_attribs=True)

@@ -46,7 +46,9 @@ class FuzzyInferenceEngine:
             self._simulation.compute()
             return self._simulation.output['triage_category']
         except Exception as e:
-            # If fuzzy computation fails, return a default score
-            # This ensures the simulation continues running
-            print(f"Fuzzy inference failed: {e}, using default score")
-            return 5.0  # Default to BLUE category (score 5)
+            # No fallbacks - propagate error for proper handling
+            raise RuntimeError(
+                f"Fuzzy inference computation failed: {str(e)}. "
+                f"Symptom values: {symptom_values}. "
+                "System cannot proceed without valid fuzzy score."
+            ) from e

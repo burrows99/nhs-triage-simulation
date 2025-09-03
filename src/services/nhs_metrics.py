@@ -16,12 +16,15 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
+from collections import Counter, defaultdict
+from itertools import groupby
+from operator import attrgetter
 
 from .base_metrics import BaseMetrics, BaseRecord
 from .statistics_utils import StatisticsUtils
-from src.logger import logger
+from src.logger import logger, log_calculation
 from src.models.synthea_models import Patient
 # Patient models now come from Synthea data service
 
@@ -176,18 +179,14 @@ class NHSMetrics(BaseMetrics):
         
         return False
     
+    @log_calculation("NHS metrics calculation")
     def calculate_metrics(self) -> Dict[str, Any]:
         """Calculate official NHS A&E Quality Indicators
         
         Returns:
             Dictionary containing all official NHS metrics and performance indicators
         """
-        logger.info(f"🔄 CALCULATION_START: NHS metrics calculation initiated")
-        logger.info(f"📊 INPUT_DATA: Total records={len(self.records)}, Active records={len(self.active_records)}")
-        
         completed_patients = [p for p in self.records if p.is_completed_journey()]
-        
-        logger.info(f"📊 FILTERED_DATA: Completed patients={len(completed_patients)}")
         
         if not completed_patients:
             logger.warning(f"⚠️ CALCULATION_WARNING: No completed patients to analyze")
@@ -211,25 +210,31 @@ class NHSMetrics(BaseMetrics):
         # Use validated patients for all calculations
         completed_patients = validated_patients
         
-        logger.info(f"📊 CALCULATION_INPUT: Using {len(completed_patients)} validated patients")
+        # Calculate official NHS metrics using direct scipy/numpy calls
+        journey_times = [p.get_total_journey_time() for p in completed_patients]
+        assessment_times = [p.get_time_to_initial_assessment() for p in completed_patients if p.get_time_to_initial_assessment() > 0]
+        treatment_times = [p.get_time_to_treatment() for p in completed_patients if p.get_time_to_treatment() > 0]
         
-        # Calculate official NHS metrics using centralized calculations from StatisticsUtils
-        # Ensure all time calculations are centralized and consistent
-        logger.info(f"🔄 CALCULATION_STEP: Computing journey time statistics")
-        journey_time_stats = StatisticsUtils.calculate_journey_time_stats(completed_patients)
-        logger.info(f"📊 CALCULATION_RESULT: Journey time mean={journey_time_stats['mean']:.2f}min")
+        # Calculate stats directly using numpy
+        journey_time_stats = {
+            'mean': np.mean(journey_times) if journey_times else 0,
+            'median': np.median(journey_times) if journey_times else 0,
+            '95th_percentile': np.percentile(journey_times, 95) if journey_times else 0
+        }
+        assessment_time_stats = {
+            'mean': np.mean(assessment_times) if assessment_times else 0
+        }
+        treatment_time_stats = {
+            'mean': np.mean(treatment_times) if treatment_times else 0
+        }
         
-        logger.info(f"🔄 CALCULATION_STEP: Computing assessment time statistics")
-        assessment_time_stats = StatisticsUtils.calculate_assessment_time_stats(completed_patients)
-        logger.info(f"📊 CALCULATION_RESULT: Assessment time mean={assessment_time_stats['mean']:.2f}min")
-        
-        logger.info(f"🔄 CALCULATION_STEP: Computing treatment time statistics")
-        treatment_time_stats = StatisticsUtils.calculate_treatment_time_stats(completed_patients)
-        logger.info(f"📊 CALCULATION_RESULT: Treatment time mean={treatment_time_stats['mean']:.2f}min")
-        
-        logger.info(f"🔄 CALCULATION_STEP: Computing 4-hour compliance metrics")
-        compliance_metrics = StatisticsUtils.calculate_4hour_compliance(completed_patients)
-        logger.info(f"📊 CALCULATION_RESULT: 4-hour compliance={compliance_metrics['compliance_rate_pct']:.1f}%")
+        # Calculate 4-hour compliance directly
+        compliant_count = sum(1 for p in completed_patients if p.meets_4hour_standard())
+        compliance_metrics = {
+            'compliance_rate_pct': (compliant_count / len(completed_patients)) * 100 if completed_patients else 0,
+            'compliant_count': compliant_count,
+            'non_compliant_count': len(completed_patients) - compliant_count
+        }
         
         # Validate time calculations to catch negative time errors
         if journey_time_stats['mean'] < 0:
@@ -275,13 +280,12 @@ class NHSMetrics(BaseMetrics):
         # Add base statistics
         metrics.update(self.get_basic_statistics())
         
-        logger.info(f"✅ CALCULATION_SUCCESS: NHS metrics calculation completed")
-        logger.info(f"📊 FINAL_METRICS: Total attendances={metrics['total_attendances']}, 4hr compliance={metrics['4hour_standard_compliance_pct']:.1f}%")
+
         
         return metrics
     
     def _get_triage_distribution(self, patients: List) -> Dict[str, int]:
-        """Get distribution of triage categories"""
+        """Get distribution of triage categories using Counter"""
         # Initialize all possible triage categories with 0
         distribution = {
             'RED': 0,
@@ -291,22 +295,37 @@ class NHSMetrics(BaseMetrics):
             'BLUE': 0
         }
         
-        # Count actual categories
+        # Count actual categories using Counter
         categories = [p.triage_category for p in patients if p.triage_category]
         if categories:
-            counts = pd.Series(categories).value_counts()
+            counts = Counter(categories)
             for category, count in counts.items():
                 if category in distribution:
-                    distribution[category] = int(count)  # Convert to regular Python int
+                    distribution[category] = count
         
         return distribution
     
     def _get_age_group_analysis(self, patients: List) -> Dict[str, Dict]:
-        """Analyze performance by age groups using centralized calculations"""
-        age_groups = StatisticsUtils.group_patients_by_age(patients)
+        """Analyze performance by age groups using groupby and Counter"""
+        def age_group_key(patient):
+            age = getattr(patient, 'age', 0)
+            if age < 18:
+                return '0-17'
+            elif age < 65:
+                return '18-64'
+            else:
+                return '65+'
+        
+        # Group patients by age using itertools.groupby
+        sorted_patients = sorted(patients, key=age_group_key)
+        age_groups = {k: list(g) for k, g in groupby(sorted_patients, key=age_group_key)}
+        
+        # Ensure all age groups are represented
+        all_groups = {'0-17': [], '18-64': [], '65+': []}
+        all_groups.update(age_groups)
         
         analysis = {}
-        for group, group_patients in age_groups.items():
+        for group, group_patients in all_groups.items():
             if group_patients:
                 group_stats = StatisticsUtils.calculate_group_performance_stats(group_patients)
                 analysis[group] = {

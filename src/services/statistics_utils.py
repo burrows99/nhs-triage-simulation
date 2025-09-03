@@ -7,6 +7,8 @@ Provides common statistical functions using scipy.stats for reliability.
 import numpy as np
 from scipy import stats
 from typing import List, Dict, Any, Optional
+from functools import lru_cache, cached_property
+from collections import Counter
 
 
 class StatisticsUtils:
@@ -29,44 +31,41 @@ class StatisticsUtils:
         """
         from src.logger import logger
         
-        valid_patients = []
-        invalid_count = 0
+        # Validate patients using list comprehension with validation function
+        def is_valid_patient(patient):
+            if not (patient.arrival_time > 0 and patient.departure_time > 0):
+                return False
+            
+            total_time = patient.get_total_journey_time()
+            
+            if total_time < 0:
+                logger.warning(f"⚠️  Invalid timing for patient {patient.Id}: "
+                             f"arrival={patient.arrival_time:.2f}, departure={patient.departure_time:.2f}, "
+                             f"total={total_time:.2f}")
+                return False
+                
+            if total_time > 1440:  # 24 hours in minutes
+                logger.warning(f"⚠️  Unrealistic journey time for patient {patient.Id}: {total_time:.2f} minutes")
+            
+            return True
         
-        for patient in patients:
-            # Check for basic timing validity using attrs fields directly
-            if (patient.arrival_time > 0 and patient.departure_time > 0):
-                
-                total_time = patient.get_total_journey_time()
-                
-                # Flag negative journey times
-                if total_time < 0:
-                    invalid_count += 1
-                    logger.warning(f"⚠️  Invalid timing for patient {patient.Id}: "
-                                 f"arrival={patient.arrival_time:.2f}, departure={patient.departure_time:.2f}, "
-                                 f"total={total_time:.2f}")
-                    continue
-                    
-                # Flag unrealistic journey times (>24 hours)
-                if total_time > 1440:  # 24 hours in minutes
-                    logger.warning(f"⚠️  Unrealistic journey time for patient {patient.Id}: {total_time:.2f} minutes")
-                
-                valid_patients.append(patient)
-            else:
-                invalid_count += 1
-                logger.warning(f"⚠️  Missing timing data for patient {getattr(patient, 'Id', 'Unknown')}")
+        valid_patients = [p for p in patients if is_valid_patient(p)]
+        invalid_count = len(patients) - len(valid_patients)
         
         if invalid_count > 0:
             logger.error(f"❌ {invalid_count}/{len(patients)} patients have invalid timing data")
-            logger.error(f"✅ {len(valid_patients)} patients have valid timing data")
+        
+        logger.error(f"✅ {len(valid_patients)} patients have valid timing data")
         
         return valid_patients
     
     @staticmethod
-    def calculate_basic_stats(values: List[float]) -> Dict[str, float]:
-        """Calculate basic statistics using scipy.stats for production reliability.
+    @lru_cache(maxsize=128)
+    def calculate_basic_stats(values: tuple) -> Dict[str, float]:
+        """Calculate basic statistics using scipy.stats with caching for performance.
         
         Args:
-            values: List of numeric values
+            values: Tuple of numeric values (tuple for hashability in cache)
             
         Returns:
             Dictionary with basic statistics computed by scipy
@@ -108,34 +107,13 @@ class StatisticsUtils:
         }
     
     @staticmethod
-    def calculate_compliance_rate(compliant_count: int, total_count: int) -> float:
-        """Calculate compliance rate as percentage.
-        
-        Args:
-            compliant_count: Number of compliant cases
-            total_count: Total number of cases
-            
-        Returns:
-            Compliance rate as percentage (0-100)
-        """
-        return (compliant_count / total_count) * 100.0 if total_count > 0 else 0.0
+    def calculate_basic_stats_from_list(values: List[float]) -> Dict[str, float]:
+        """Wrapper for calculate_basic_stats that accepts lists."""
+        return StatisticsUtils.calculate_basic_stats(tuple(values))
     
-    @staticmethod
-    def calculate_admission_rate(admitted_patients: List, total_patients: List) -> float:
-        """Calculate admission rate as percentage.
-        
-        Args:
-            admitted_patients: List of admitted patients
-            total_patients: List of all patients
-            
-        Returns:
-            Admission rate as percentage (0-100)
-        """
-        if not total_patients:
-            return 0.0
-        
-        admitted_count = sum(1 for p in total_patients if p.admitted)
-        return (admitted_count / len(total_patients)) * 100.0
+    # Removed unnecessary wrapper functions - use numpy directly:
+    # Instead of calculate_compliance_rate, use: (compliant_count / total_count) * 100 if total_count > 0 else 0
+    # Instead of calculate_admission_rate, use: np.mean([getattr(p, 'admitted', False) for p in patients]) * 100
     
     @staticmethod
     def calculate_4hour_compliance(patients: List) -> Dict[str, Any]:
@@ -165,46 +143,10 @@ class StatisticsUtils:
             'total_patients': total_count
         }
     
-    @staticmethod
-    def calculate_journey_time_stats(patients: List) -> Dict[str, float]:
-        """Calculate journey time statistics for patients.
-        
-        Args:
-            patients: List of patient objects with journey time methods (should already be filtered for completed patients)
-            
-        Returns:
-            Dictionary with journey time statistics
-        """
-        journey_times = [p.get_total_journey_time() for p in patients]
-        return StatisticsUtils.calculate_basic_stats(journey_times)
-    
-    @staticmethod
-    def calculate_assessment_time_stats(patients: List) -> Dict[str, float]:
-        """Calculate time-to-assessment statistics for patients.
-        
-        Args:
-            patients: List of patient objects with timing methods (should already be filtered for completed patients)
-            
-        Returns:
-            Dictionary with assessment time statistics
-        """
-        assessment_times = [p.get_time_to_initial_assessment() for p in patients 
-                          if p.get_time_to_initial_assessment() > 0]
-        return StatisticsUtils.calculate_basic_stats(assessment_times)
-    
-    @staticmethod
-    def calculate_treatment_time_stats(patients: List) -> Dict[str, float]:
-        """Calculate time-to-treatment statistics for patients.
-        
-        Args:
-            patients: List of patient objects with timing methods (should already be filtered for completed patients)
-            
-        Returns:
-            Dictionary with treatment time statistics
-        """
-        treatment_times = [p.get_time_to_treatment() for p in patients 
-                         if p.get_time_to_treatment() > 0]
-        return StatisticsUtils.calculate_basic_stats(treatment_times)
+    # Removed wrapper functions - use scipy.stats.describe directly:
+    # For journey times: stats.describe([p.get_total_journey_time() for p in patients])
+    # For assessment times: stats.describe([p.get_time_to_initial_assessment() for p in patients if p.get_time_to_initial_assessment() > 0])
+    # For treatment times: stats.describe([p.get_time_to_treatment() for p in patients if p.get_time_to_treatment() > 0])
     
     @staticmethod
     def calculate_throughput_rate(processed_count: int, time_period_minutes: float) -> float:
@@ -248,7 +190,7 @@ class StatisticsUtils:
         if not patients:
             return {
                 'count': 0,
-                'journey_time_stats': StatisticsUtils.calculate_basic_stats([]),
+                'journey_time_stats': StatisticsUtils.calculate_basic_stats_from_list([]),
                 'compliance_metrics': StatisticsUtils.calculate_4hour_compliance([]),
                 'admission_rate_pct': 0.0
             }

@@ -10,6 +10,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
+import attr
 
 from .base_metrics import BaseMetrics, BaseRecord
 from .statistics_utils import StatisticsUtils

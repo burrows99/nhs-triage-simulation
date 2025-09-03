@@ -3,32 +3,24 @@
 Model for capturing system state snapshots in hospital simulation.
 """
 
+import attr
 from typing import Dict
 from src.models.base_record import BaseRecord
 
 
+@attr.s(auto_attribs=True)
 class SystemSnapshot(BaseRecord):
     """Snapshot of system state at a point in time"""
-    
-    def __init__(self, snapshot_id: str, timestamp: float, resource_usage: Dict[str, int],
-                 resource_capacity: Dict[str, int], queue_lengths: Dict[str, int],
-                 entities_processed: int = 0):
-        """Initialize SystemSnapshot with proper inheritance"""
-        # Set system snapshot specific fields
-        self.snapshot_id = snapshot_id
-        self._timestamp = timestamp
-        self.resource_usage = resource_usage  # resource_name -> current usage
-        self.resource_capacity = resource_capacity  # resource_name -> total capacity
-        self.queue_lengths = queue_lengths  # resource_name -> queue length
-        self.entities_processed = entities_processed
+    snapshot_id: str
+    timestamp: float
+    resource_usage: Dict[str, int] = attr.Factory(dict)  # resource_name -> current usage
+    resource_capacity: Dict[str, int] = attr.Factory(dict)  # resource_name -> total capacity
+    queue_lengths: Dict[str, int] = attr.Factory(dict)  # resource_name -> queue length
+    entities_processed: int = 0
     
     @property
     def record_id(self) -> str:
         return self.snapshot_id
-    
-    @property
-    def timestamp(self) -> float:
-        return self._timestamp
     
     def get_utilization(self, resource_name: str) -> float:
         """Get utilization percentage for a resource"""

@@ -9,6 +9,8 @@ import re
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+import jsonschema
+from jsonschema import validate, ValidationError as JsonSchemaValidationError
 
 from src.logger import logger
 
@@ -45,33 +47,35 @@ class JSONProcessingResult:
 class TriageJSONHandler:
     """Production-quality JSON handler for triage responses."""
     
-    # Required schema for triage responses
-    REQUIRED_SCHEMA = {
-        'triage_category': {
-            'type': str,
-            'valid_values': ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE'],
-            'required': True
+    # JSON Schema for triage responses - delegated to jsonschema library
+    TRIAGE_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "triage_category": {
+                "type": "string",
+                "enum": ["RED", "ORANGE", "YELLOW", "GREEN", "BLUE"]
+            },
+            "priority_score": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+            },
+            "confidence": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+            },
+            "reasoning": {
+                "type": "string",
+                "maxLength": 3000
+            },
+            "wait_time": {
+                "type": "string",
+                "maxLength": 500
+            }
         },
-        'priority_score': {
-            'type': int,
-            'valid_range': (1, 5),
-            'required': True
-        },
-        'confidence': {
-            'type': float,
-            'valid_range': (0.0, 1.0),
-            'required': True
-        },
-        'reasoning': {
-            'type': str,
-            'max_length': 3000,  # Further increased for comprehensive multi-agent reasoning
-            'required': True
-        },
-        'wait_time': {
-            'type': str,
-            'max_length': 500,  # Further increased for detailed operational wait time descriptions
-            'required': True
-        }
+        "required": ["triage_category", "priority_score", "confidence", "reasoning", "wait_time"],
+        "additionalProperties": False
     }
     
     def __init__(self, strict_mode: bool = True):
@@ -309,7 +313,7 @@ class TriageJSONHandler:
             return None
     
     def _validate_schema(self, data: Dict[str, Any]) -> List[str]:
-        """Validate JSON data against required schema.
+        """Validate JSON data using jsonschema library for robust validation.
         
         Args:
             data: JSON data to validate
@@ -317,46 +321,16 @@ class TriageJSONHandler:
         Returns:
             List of validation errors
         """
-        errors = []
-        
-        for field, schema in self.REQUIRED_SCHEMA.items():
-            if schema['required'] and field not in data:
-                errors.append(f"Missing required field: {field}")
-                continue
-            
-            if field not in data:
-                continue
-            
-            value = data[field]
-            expected_type = schema['type']
-            
-            # Type validation
-            if not isinstance(value, expected_type):
-                # Try type conversion
-                try:
-                    if expected_type == int:
-                        data[field] = int(value)
-                    elif expected_type == float:
-                        data[field] = float(value)
-                    elif expected_type == str:
-                        data[field] = str(value)
-                except (ValueError, TypeError):
-                    errors.append(f"Field '{field}' must be {expected_type.__name__}, got {type(value).__name__}")
-                    continue
-            
-            # Value validation
-            if 'valid_values' in schema and data[field] not in schema['valid_values']:
-                errors.append(f"Field '{field}' must be one of {schema['valid_values']}, got '{data[field]}'")
-            
-            if 'valid_range' in schema:
-                min_val, max_val = schema['valid_range']
-                if not (min_val <= data[field] <= max_val):
-                    errors.append(f"Field '{field}' must be between {min_val} and {max_val}, got {data[field]}")
-            
-            if 'max_length' in schema and len(str(data[field])) > schema['max_length']:
-                errors.append(f"Field '{field}' exceeds maximum length of {schema['max_length']}")
-        
-        return errors
+        try:
+            # Delegate validation to jsonschema library
+            validate(instance=data, schema=self.TRIAGE_SCHEMA)
+            return []
+        except JsonSchemaValidationError as e:
+            # Convert jsonschema errors to our format
+            error_msg = f"Validation error at {'.'.join(str(p) for p in e.path)}: {e.message}"
+            return [error_msg]
+        except Exception as e:
+            return [f"Schema validation failed: {str(e)}"]
     
     def _normalize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize and clean data.

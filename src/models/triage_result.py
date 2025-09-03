@@ -197,7 +197,7 @@ class TriageResult:
             if any(keyword in wait_time_lower for keyword in keywords):
                 return minutes
         
-        # Priority 3: Fallback based on triage category using centralized constants
+        # Priority 3: Strict validation using centralized constants - no fallbacks
         category_defaults = {
             TriageCategories.RED: 0,      # Immediate
             TriageCategories.ORANGE: 15,  # Very urgent
@@ -209,14 +209,16 @@ class TriageResult:
         if self.triage_category in category_defaults:
             return category_defaults[self.triage_category]
         
-        # Priority 4: Fallback based on priority score using centralized mapping
-        priority_mapping = TriageCategories.get_priority_mapping()
-        # Reverse mapping: priority -> wait time
+        # Priority 4: Strict validation based on priority score - no fallbacks
         priority_defaults = {1: 0, 2: 15, 3: 60, 4: 120, 5: 240}
-        return priority_defaults.get(self.priority_score, 60)
+        if self.priority_score in priority_defaults:
+            return priority_defaults[self.priority_score]
         
-        # Final fallback: Conservative default for unknown cases
-        return 60  # Changed from 240 to prevent bottlenecks
+        # No fallbacks - raise error for invalid data
+        raise ValueError(
+            f"Invalid triage data: category='{self.triage_category}', priority={self.priority_score}. "
+            f"Valid categories: {list(category_defaults.keys())}, Valid priorities: {list(priority_defaults.keys())}"
+        )
     
     def is_urgent(self) -> bool:
         """Check if patient requires urgent attention (RED/ORANGE).
