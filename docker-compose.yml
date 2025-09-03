@@ -18,35 +18,49 @@ services:
   #   networks:
   #     - triage-network
 
-  ollama:
-    image: ollama/ollama:latest
-    restart: "no"
+  triage-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "11434:11434"
+      - "8000:8000"   # Python app
+      - "11434:11434" # Ollama API
     volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
       - ollama_data:/root/.ollama
     environment:
-      # Performance tuning (client enforces num_ctx)
-      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
+      - PYTHONPATH=/app
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - triage-network
     healthcheck:
-      test: ["CMD", "ollama", "list"]
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
-    networks:
-      - triage-network
+      start_period: 60s
 
-  ollama-downloader:
-    image: curlimages/curl:latest
-    restart: "no"
+  # Test service to run LLM triage
+  triage-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
-      ollama:
+      triage-app:
         condition: service_healthy
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - OLLAMA_HOST=triage-app
     networks:
       - triage-network
-    command: >
-      sh -c "curl -X POST http://ollama:11434/api/pull -d '{\"name\":\"llama3.2:1b\"}' -H 'Content-Type: application/json'"
+    command: python src/triage/llm_triage_system/llm_triage_system.py
+    profiles:
+      - test
+
 networks:
   triage-network:
     driver: bridge

@@ -19,6 +19,7 @@ from src.services.operation_metrics import OperationMetrics
 from src.services.plotting_service import PlottingService
 from src.services.random_service import RandomService
 from src.triage.manchester_triage_system import ManchesterTriageSystem
+from src.triage.llm_triage_system.llm_triage_system import LLMTriageSystem
 from .simulation_engine import SimulationEngine
 # Patient models now come from Synthea data service
 from src.triage.triage_constants import (
@@ -44,9 +45,9 @@ class SimpleHospital:
         Raises:
             ValueError: If triage_system is None or not a valid triage system object
         """
-        # Validate triage system is provided and is a ManchesterTriageSystem instance
-        if not isinstance(triage_system, ManchesterTriageSystem):
-            raise ValueError("triage_system parameter must be an instance of ManchesterTriageSystem. Please provide a ManchesterTriageSystem() object.")
+
+        if not isinstance(triage_system, (ManchesterTriageSystem, LLMTriageSystem)):
+            raise ValueError("triage_system parameter must be an instance of ManchesterTriageSystem or LLMTriageSystem. Please provide a valid triage system object.")
         
         # Store triage system for later initialization
         self.triage_system_param = triage_system
@@ -417,24 +418,51 @@ class SimpleHospital:
         symptoms_input = self._generate_manual_test_symptoms(patient, flowchart_reason)
         
         # Use triage system with patient-based inputs
-        result = self.triage_system.triage_patient(
-            flowchart_reason=flowchart_reason,
-            symptoms_input=symptoms_input,
-            patient_id=patient.Id
-        )
+        # Handle different triage system interfaces
+        from src.triage.llm_triage_system.llm_triage_system import LLMTriageSystem
+        
+        if isinstance(self.triage_system, LLMTriageSystem):
+            # LLM triage system expects symptoms as a string
+            complaint = self._extract_presenting_complaint(patient)
+            symptoms_text = f"Patient presents with {complaint}. "
+            
+            # Convert symptoms dictionary to descriptive text
+            symptom_descriptions = []
+            for symptom_name, severity in symptoms_input.items():
+                if severity != 'none':
+                    symptom_descriptions.append(f"{symptom_name}: {severity}")
+            
+            if symptom_descriptions:
+                symptoms_text += "Symptoms include: " + ", ".join(symptom_descriptions)
+            
+            result = self.triage_system.triage_patient(symptoms_text)
+        else:
+            # Manchester Triage System expects structured inputs
+            result = self.triage_system.triage_patient(
+                flowchart_reason=flowchart_reason,
+                symptoms_input=symptoms_input,
+                patient_id=patient.Id
+            )
         
         # Calculate processing delay
         triage_end_time = time.time()
         processing_delay = triage_end_time - triage_start_time
         
-        # Trust MTS result completely - no safety checking
-        category = result['triage_category']
-        priority = result['priority_score']
+        # Create standardized TriageResult object
+        from src.models.triage_result import TriageResult
         
-        # Trust MTS result completely - no emergency escalation override
+        # Determine system type for result creation
+        system_type = "LLM" if isinstance(self.triage_system, LLMTriageSystem) else "MTS"
         
-        # Return full MTS result for timing information
-        return category, priority, result, processing_delay
+        # Create unified triage result
+        triage_result = TriageResult.from_raw_result(result, system_type)
+        
+        # Extract core values for backward compatibility
+        category = triage_result.triage_category
+        priority = triage_result.priority_score
+        
+        # Return standardized result
+        return category, priority, triage_result, processing_delay
     
     def patient_flow(self, patient_num):
         """Simulate patient journey with NHS metrics tracking."""
@@ -559,11 +587,9 @@ class SimpleHospital:
             # Apply processing delay and calculate total triage time
             triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
             
-            # Use MTS wait_time data for more accurate triage timing
-            mts_wait_time = triage_result.get('wait_time', '240 min')  # Default to BLUE wait time
-            # Extract numeric value from wait_time string (e.g., "60 min" -> 60)
-            import re
-            wait_minutes = int(re.search(r'\d+', mts_wait_time).group()) if re.search(r'\d+', mts_wait_time) else 240
+            # Use triage result wait_time data for more accurate triage timing
+            # TriageResult provides standardized wait_time access
+            wait_minutes = triage_result.get_wait_time_minutes()
             
             # Convert MTS wait time to actual triage processing time (much shorter than wait time)
             # Triage processing is typically 3-15 minutes regardless of final wait time
@@ -1004,10 +1030,6 @@ class SimpleHospital:
                            f"Capacity: {actual_resource.capacity} | Queue: {len(actual_resource.queue)}")
             else:
                 logger.warning(f"⚠️  RESOURCE NOT FOUND | {event_record['resource']} | SimPy resource mapping issue")
-    
-
-    
-
     
     def export_nhs_data(self, json_filepath: str = None, csv_filepath: str = None):
         """Export NHS metrics and patient data to configured output directory

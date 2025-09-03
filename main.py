@@ -22,6 +22,7 @@ from src.logger import logger
 from src.simulation.real_data_hospital import SimpleHospital
 from src.triage.triage_constants import TriageCategories
 from src.triage.manchester_triage_system import ManchesterTriageSystem
+from src.triage.llm_triage_system.llm_triage_system import LLMTriageSystem
 
 
 def main():
@@ -32,13 +33,15 @@ def main():
     logger.info("=" * 60)
     
     try:
-        # Create hospital simulation with detailed logging
-        # Initialize Manchester Triage System
         manchester_triage = ManchesterTriageSystem()
+        # Create hospital simulation with detailed logging
+        llm_triage = LLMTriageSystem(
+            model_name="hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q4_K_M"
+        )
         
         hospital = SimpleHospital(
             csv_folder='./output/csv',
-            triage_system=manchester_triage,  # Using actual triage system object
+            triage_system=llm_triage,  # Using LLM triage system instead of MTS
             sim_duration=480,    # 8 hours
             arrival_rate=40,     # 40 patients/hour (realistic rate)
             delay_scaling=0.2,  # 1 real second = 0.2 simulation minutes
