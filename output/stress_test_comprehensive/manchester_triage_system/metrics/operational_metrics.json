@@ -1,0 +1,111 @@
+{
+  "utilization": {
+    "nurse": {
+      "average_utilization_pct": 89.88095238095238,
+      "peak_utilization_pct": 100.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 100.0,
+      "utilization_std_dev": 23.290473269659348
+    },
+    "triage": {
+      "average_utilization_pct": 89.88095238095238,
+      "peak_utilization_pct": 100.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 100.0,
+      "utilization_std_dev": 23.290473269659348
+    },
+    "doctor": {
+      "average_utilization_pct": 15.079365079365077,
+      "peak_utilization_pct": 66.66666666666666,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 33.33333333333333,
+      "utilization_std_dev": 18.83144526619789
+    },
+    "bed": {
+      "average_utilization_pct": 0.0,
+      "peak_utilization_pct": 0.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 0.0
+    }
+  },
+  "queues": {
+    "nurse": {
+      "average_queue_length": 11.19047619047619,
+      "peak_queue_length": 26,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 8.348048232793827,
+      "time_with_queue": 78.57142857142857
+    },
+    "triage": {
+      "average_queue_length": 11.19047619047619,
+      "peak_queue_length": 26,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 8.348048232793827,
+      "time_with_queue": 78.57142857142857
+    },
+    "doctor": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
+    },
+    "bed": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
+    }
+  },
+  "throughput": {},
+  "wait_times": {
+    "triage": {
+      "average_wait_time_minutes": 26.63405475913633,
+      "max_wait_time_minutes": 78.52699967296653,
+      "min_wait_time_minutes": 1.8066580077387604,
+      "wait_time_std_dev": 28.09400169561559,
+      "95th_percentile_wait_time": 69.7712056802608,
+      "total_wait_events": "13"
+    },
+    "doctor": {
+      "average_wait_time_minutes": 5.1522342313537415,
+      "max_wait_time_minutes": 6.48262252665139,
+      "min_wait_time_minutes": 4.062469259464223,
+      "wait_time_std_dev": 0.9681036734425879,
+      "95th_percentile_wait_time": 6.389400131889834,
+      "total_wait_events": "6"
+    }
+  },
+  "service_times": {
+    "triage": {
+      "average_service_time_minutes": 58.62277949982812,
+      "max_service_time_minutes": 72.59136711932193,
+      "min_service_time_minutes": 38.42532095753073,
+      "service_time_std_dev": 12.79502274660174,
+      "95th_percentile_service_time": 72.18917465308478,
+      "total_service_events": "7"
+    }
+  },
+  "system_performance": {
+    "simulation_duration_minutes": 0,
+    "total_snapshots": 168,
+    "average_system_queue_length": 22.38095238095238,
+    "peak_system_queue_length": "52",
+    "system_congestion_pct": 78.57142857142857,
+    "average_system_utilization_pct": 48.710317460317455,
+    "peak_system_utilization_pct": 66.66666666666666
+  },
+  "monitoring_points": 168,
+  "total_resource_events": 71,
+  "service_name": "OperationMetrics",
+  "total_records": 0,
+  "active_records": 239,
+  "total_duration_minutes": 0,
+  "start_time": 0,
+  "end_time": null,
+  "counters": {
+    "total_records": 239
+  }
+}
