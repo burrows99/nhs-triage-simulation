@@ -13,37 +13,90 @@ class StatisticsUtils:
     
     Eliminates duplicate statistical computations across NHS metrics,
     operational metrics, and plotting services.
+    All time calculations are centralized here to prevent inconsistencies.
     """
     
     @staticmethod
+    def validate_patient_timing(patients: List) -> List:
+        """Validate and log timing issues in patient data.
+        
+        Args:
+            patients: List of patient objects with timing data
+            
+        Returns:
+            List of patients with valid timing data (filters out invalid ones)
+        """
+        from src.logger import logger
+        
+        valid_patients = []
+        invalid_count = 0
+        
+        for patient in patients:
+            # Check for basic timing validity
+            if (hasattr(patient, 'arrival_time') and hasattr(patient, 'departure_time') and
+                patient.arrival_time > 0 and patient.departure_time > 0):
+                
+                total_time = patient.get_total_journey_time()
+                
+                # Flag negative journey times
+                if total_time < 0:
+                    invalid_count += 1
+                    logger.warning(f"⚠️  Invalid timing for patient {patient.Id}: "
+                                 f"arrival={patient.arrival_time:.2f}, departure={patient.departure_time:.2f}, "
+                                 f"total={total_time:.2f}")
+                    continue
+                    
+                # Flag unrealistic journey times (>24 hours)
+                if total_time > 1440:  # 24 hours in minutes
+                    logger.warning(f"⚠️  Unrealistic journey time for patient {patient.Id}: {total_time:.2f} minutes")
+                
+                valid_patients.append(patient)
+            else:
+                invalid_count += 1
+                logger.warning(f"⚠️  Missing timing data for patient {getattr(patient, 'Id', 'Unknown')}")
+        
+        if invalid_count > 0:
+            logger.error(f"❌ {invalid_count}/{len(patients)} patients have invalid timing data")
+            logger.error(f"✅ {len(valid_patients)} patients have valid timing data")
+        
+        return valid_patients
+    
+    @staticmethod
     def calculate_basic_stats(values: List[float]) -> Dict[str, float]:
-        """Calculate basic statistical measures for a list of values.
+        """Calculate basic statistics for a list of values with validation.
         
         Args:
             values: List of numeric values
             
         Returns:
-            Dictionary containing mean, median, std_dev, min, max, 95th percentile
+            Dictionary with basic statistics
         """
         if not values:
             return {
+                'count': 0,
                 'mean': 0.0,
                 'median': 0.0,
                 'std_dev': 0.0,
                 'min': 0.0,
                 'max': 0.0,
-                '95th_percentile': 0.0,
-                'count': 0
+                '95th_percentile': 0.0
             }
         
+        # Validate for negative values that might indicate timing errors
+        negative_count = sum(1 for v in values if v < 0)
+        if negative_count > 0:
+            from src.logger import logger
+            logger.warning(f"⚠️  {negative_count}/{len(values)} values are negative - possible timing calculation error")
+            logger.warning(f"Sample negative values: {[v for v in values if v < 0][:5]}")
+        
         return {
-            'mean': float(np.mean(values)),
-            'median': float(np.median(values)),
-            'std_dev': float(np.std(values)),
-            'min': float(np.min(values)),
-            'max': float(np.max(values)),
-            '95th_percentile': float(np.percentile(values, 95)),
-            'count': len(values)
+            'count': len(values),
+            'mean': np.mean(values),
+            'median': np.median(values),
+            'std_dev': np.std(values),
+            'min': np.min(values),
+            'max': np.max(values),
+            '95th_percentile': np.percentile(values, 95)
         }
     
     @staticmethod

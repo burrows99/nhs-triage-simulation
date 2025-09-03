@@ -195,7 +195,7 @@ class SimpleHospital:
         logger.info("Random Service ready")
     
     def get_patient(self):
-        """Get next patient - returns fully prepared Synthea Patient model."""
+        """Get next patient - returns fully prepared Synthea Patient model with unique simulation ID."""
         logger.info(f"🔍 GET_PATIENT CALLED - Retrieving patient...")
         logger.info(f"📊 Total patients available: {len(self.patients) if self.patients else 0}")
         logger.info(f"📍 Current index: {self.current_index}")
@@ -204,12 +204,33 @@ class SimpleHospital:
             logger.error(f"❌ No patients available! Returning None.")
             return None
         
-        # Return Synthea patient model (already fully populated with relationships)
-        synthea_patient = self.patients[self.current_index]
-        logger.info(f"✅ Retrieved patient: ID={synthea_patient.Id}, Index={self.current_index}")
+        # Get base patient template
+        base_patient = self.patients[self.current_index]
+        logger.info(f"✅ Retrieved patient template: ID={base_patient.Id}, Index={self.current_index}")
+        
+        # Create a copy with unique simulation ID to prevent timing conflicts
+        import copy
+        synthea_patient = copy.deepcopy(base_patient)
+        
+        # Generate unique simulation ID to prevent conflicts with reused patient data
+        import time
+        unique_sim_id = f"{base_patient.Id}_sim_{int(time.time() * 1000000) % 1000000}_{self.current_index}"
+        synthea_patient.Id = unique_sim_id
+        
+        # Reset timing fields for new simulation instance
+        synthea_patient.arrival_time = 0.0
+        synthea_patient.departure_time = 0.0
+        synthea_patient.initial_assessment_time = 0.0
+        synthea_patient.treatment_start_time = 0.0
+        synthea_patient.is_reattendance = False
+        synthea_patient.admitted = False
+        synthea_patient.disposal = ""
+        synthea_patient.left_without_being_seen = False
+        synthea_patient.triage_category = ""
         
         self.current_index = (self.current_index + 1) % len(self.patients)
         logger.info(f"📍 Updated index to: {self.current_index}")
+        logger.info(f"🆔 Created unique simulation patient: {unique_sim_id}")
         
         return synthea_patient
 

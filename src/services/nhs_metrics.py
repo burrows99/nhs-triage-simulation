@@ -182,11 +182,34 @@ class NHSMetrics(BaseMetrics):
                 'active_patients': len(self.active_records)
             }
         
-        # Calculate official NHS metrics using centralized calculations
+        # Validate patient timing data using centralized validation
+        validated_patients = StatisticsUtils.validate_patient_timing(completed_patients)
+        
+        if not validated_patients:
+            return {
+                'error': 'No patients with valid timing data to analyze',
+                'total_attendances': len(completed_patients),
+                'invalid_timing_count': len(completed_patients),
+                'active_patients': len(self.active_records)
+            }
+        
+        # Use validated patients for all calculations
+        completed_patients = validated_patients
+        
+        # Calculate official NHS metrics using centralized calculations from StatisticsUtils
+        # Ensure all time calculations are centralized and consistent
         journey_time_stats = StatisticsUtils.calculate_journey_time_stats(completed_patients)
         assessment_time_stats = StatisticsUtils.calculate_assessment_time_stats(completed_patients)
         treatment_time_stats = StatisticsUtils.calculate_treatment_time_stats(completed_patients)
         compliance_metrics = StatisticsUtils.calculate_4hour_compliance(completed_patients)
+        
+        # Validate time calculations to catch negative time errors
+        if journey_time_stats['mean'] < 0:
+            logger.error(f"❌ NEGATIVE JOURNEY TIME DETECTED: {journey_time_stats['mean']:.2f} minutes")
+            logger.error(f"This indicates arrival_time > departure_time for some patients")
+            # Log sample of problematic patients for debugging
+            for i, patient in enumerate(completed_patients[:3]):
+                logger.error(f"Patient {i+1}: arrival={patient.arrival_time:.2f}, departure={patient.departure_time:.2f}, total={patient.get_total_journey_time():.2f}")
         
         metrics = {
             # ATTENDANCE SUMMARY
