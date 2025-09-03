@@ -1,0 +1,85 @@
+{
+  "utilization": {
+    "nurse": {
+      "average_utilization_pct": 0.0,
+      "peak_utilization_pct": 0.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 0.0
+    },
+    "bed": {
+      "average_utilization_pct": 0.0,
+      "peak_utilization_pct": 0.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 0.0
+    },
+    "triage": {
+      "average_utilization_pct": 0.0,
+      "peak_utilization_pct": 0.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 0.0
+    },
+    "doctor": {
+      "average_utilization_pct": 0.0,
+      "peak_utilization_pct": 0.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 0.0
+    }
+  },
+  "queues": {
+    "nurse": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
+    },
+    "bed": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
+    },
+    "triage": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
+    },
+    "doctor": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
+    }
+  },
+  "throughput": {},
+  "wait_times": {},
+  "service_times": {},
+  "system_performance": {
+    "simulation_duration_minutes": 0,
+    "total_snapshots": 1,
+    "average_system_queue_length": 0.0,
+    "peak_system_queue_length": "0",
+    "system_congestion_pct": 0.0,
+    "average_system_utilization_pct": 0.0,
+    "peak_system_utilization_pct": 0.0
+  },
+  "monitoring_points": 1,
+  "total_resource_events": 0,
+  "service_name": "OperationMetrics",
+  "total_records": 0,
+  "active_records": 1,
+  "total_duration_minutes": 0,
+  "start_time": 0,
+  "end_time": null,
+  "counters": {
+    "total_records": 1
+  }
+}

@@ -80,6 +80,10 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             nhs_metrics: NHSMetrics instance
             agent_config (Dict): Configuration for specialized agents
         """
+        # Import HF_MODEL here to ensure environment is loaded
+        from .base_llm_triage import HF_MODEL
+        if model_name is None:
+            model_name = HF_MODEL
         super().__init__(model_name, operation_metrics, nhs_metrics)
         
         self.agent_config = agent_config or self._get_default_agent_config()
