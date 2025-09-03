@@ -40,7 +40,7 @@ def main():
             csv_folder='./output/csv',
             triage_system=manchester_triage,  # Using actual triage system object
             sim_duration=480,    # 8 hours
-            arrival_rate=20,     # 20 patients/hour (realistic rate)
+            arrival_rate=40,     # 40 patients/hour (realistic rate)
             delay_scaling=0.2,  # 1 real second = 0.2 simulation minutes
             nurses=3,            # Increased to 3 for realistic triage capacity
             doctors=4,           # Increased to 4 for better doctor utilization

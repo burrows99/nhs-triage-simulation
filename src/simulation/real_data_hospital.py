@@ -13,14 +13,13 @@ sys.path.insert(0, project_root)
 from src.logger import logger
 
 from src.services.data_service import DataService
-from src.services.data_cleanup_service import DataCleanupService
 from src.services.nhs_metrics import NHSMetrics
 from src.services.operation_metrics import OperationMetrics
 from src.services.plotting_service import PlottingService
 from src.services.random_service import RandomService
 from src.triage.manchester_triage_system import ManchesterTriageSystem
 from .simulation_engine import SimulationEngine
-from src.models.patient import Patient
+# Patient models now come from Synthea data service
 from src.triage.triage_constants import (
     TriageFlowcharts, FlowchartSymptomMapping, TriageCategories,
     SymptomKeys, MedicalConditions, CommonStrings, DiagnosticTestTypes, SymptomNames,
@@ -44,12 +43,9 @@ class SimpleHospital:
         Raises:
             ValueError: If triage_system is None or not a valid triage system object
         """
-        # Validate triage system is provided and is an object
-        if triage_system is None:
-            raise ValueError("triage_system parameter is required. Please provide a triage system object (e.g., ManchesterTriageSystem(), LLMTriageSystem())")
-        
-        if isinstance(triage_system, str):
-            raise ValueError(f"String triage system '{triage_system}' is no longer supported. Please provide a triage system object instead.")
+        # Validate triage system is provided and is a ManchesterTriageSystem instance
+        if not isinstance(triage_system, ManchesterTriageSystem):
+            raise ValueError("triage_system parameter must be an instance of ManchesterTriageSystem. Please provide a ManchesterTriageSystem() object.")
         
         # Store triage system for later initialization
         self.triage_system_param = triage_system
@@ -93,8 +89,6 @@ class SimpleHospital:
             os.makedirs(os.path.join(self.output_dir, 'metrics'), exist_ok=True)
             os.makedirs(os.path.join(self.output_dir, 'plots'), exist_ok=True)
     
-
-    
     def _setup_simulation_parameters(self, **kwargs):
         """Setup simulation parameters with defaults."""
         self.sim_duration = kwargs.get('sim_duration', 1440)  # 24 hours
@@ -124,10 +118,9 @@ class SimpleHospital:
         """Load and process patient data from CSV files."""
         logger.info(f"Loading patient data from {csv_folder}...")
         self.data_service = DataService(csv_folder)
-        self.patients = self.data_service.process_all()
-        self.patient_ids = list(self.patients.keys())
+        self.patients = self.data_service.get_all_patients(deep=True)
         self.current_index = 0
-        logger.info(f"Loaded {len(self.patient_ids)} patients")
+        logger.info(f"Loaded {len(self.patients)} patients with full relationships")
     
     def _initialize_services(self, **kwargs):
         """Initialize all required services for the simulation."""
@@ -148,10 +141,7 @@ class SimpleHospital:
         self.plotting_service.register_metric_service('operations', self.operation_metrics)
         logger.info("Plotting Service ready with registered metrics")
         
-        # Initialize Data Cleanup Service for patient data processing
-        logger.info("Initializing Data Cleanup Service...")
-        self.data_cleanup = DataCleanupService()
-        logger.info("Data Cleanup Service ready")
+        # Data cleanup is now handled by the enhanced DataService
         
         # Initialize Triage System (object only - validation already done in constructor)
         self.triage_system = self.triage_system_param
@@ -165,22 +155,15 @@ class SimpleHospital:
         logger.info("Random Service ready")
     
     def get_patient(self):
-        """Get next patient with processed data, cycling through data infinitely."""
-        if not self.patient_ids:
+        """Get next patient - returns fully prepared Synthea Patient model."""
+        if not self.patients:
             return None
         
-        patient_id = self.patient_ids[self.current_index]
-        raw_patient_data = self.patients[patient_id]
-        self.current_index = (self.current_index + 1) % len(self.patient_ids)
+        # Return Synthea patient model (already fully populated with relationships)
+        synthea_patient = self.patients[self.current_index]
+        self.current_index = (self.current_index + 1) % len(self.patients)
         
-        # Create Patient object using the from_raw_data class method
-        patient = Patient.from_raw_data(
-            patient_id=patient_id,
-            raw_data=raw_patient_data,
-            data_cleanup_service=self.data_cleanup
-        )
-        
-        return patient
+        return synthea_patient
     
     def perform_triage(self, patient=None):
         """Perform triage using paper-based Manchester Triage System approach with real patient data.
@@ -262,29 +245,7 @@ class SimpleHospital:
     def _update_triage_system_resources(self):
         """Update triage system with comprehensive current SimPy resource availability and status"""
         try:
-            # Create HospitalResources object from current SimPy resource state
-            from src.triage.llm_triage_system import HospitalResources
-            
-            # Calculate detailed queue information
-            triage_queue_length = len(self.triage_resource.queue)
-            doctor_queue_length = len(self.doctor_resource.queue)
-            bed_queue_length = len(self.bed_resource.queue) if hasattr(self.bed_resource, 'queue') else 0
-            total_queue_length = triage_queue_length + doctor_queue_length + bed_queue_length
-            
-            # Calculate resource utilization
-            doctors_in_use = self.doctor_resource.count
-            nurses_in_use = self.triage_resource.count
-            beds_in_use = self.bed_resource.count
-            
-            current_resources = HospitalResources(
-                doctors_available=self.doctor_resource.capacity - doctors_in_use,
-                nurses_available=self.triage_resource.capacity - nurses_in_use,
-                beds_available=self.bed_resource.capacity - beds_in_use,
-                total_doctors=self.doctor_resource.capacity,
-                total_nurses=self.triage_resource.capacity,
-                total_beds=self.bed_resource.capacity,
-                current_queue_length=total_queue_length
-            )
+            # HospitalResources class not available - removed unused code
             
             # Add additional queue status information as attributes
             current_resources.triage_queue_length = triage_queue_length

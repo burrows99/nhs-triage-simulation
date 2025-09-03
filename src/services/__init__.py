@@ -4,7 +4,6 @@ This package contains all service classes for telemetry, metrics, plotting, and 
 """
 
 from .data_service import DataService
-from .data_cleanup_service import DataCleanupService
 from .nhs_metrics import NHSMetrics
 from .operation_metrics import OperationMetrics
 from .plotting_service import PlottingService
@@ -12,7 +11,6 @@ from .base_metrics import BaseMetrics
 
 __all__ = [
     'DataService',
-    'DataCleanupService',
     'NHSMetrics',
     'OperationMetrics',
     'PlottingService',
