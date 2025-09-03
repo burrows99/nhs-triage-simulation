@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
 
 from .base_metrics import BaseMetrics, BaseRecord
+from .statistics_utils import StatisticsUtils
 from src.logger import logger
 from src.models.synthea_models import Patient
 # Patient models now come from Synthea data service
@@ -172,7 +173,7 @@ class NHSMetrics(BaseMetrics):
         Returns:
             Dictionary containing all official NHS metrics and performance indicators
         """
-        completed_patients = [p for p in self.records if hasattr(p, 'departure_time') and p.departure_time > 0]
+        completed_patients = [p for p in self.records if p.is_completed_journey()]
         
         if not completed_patients:
             return {
@@ -181,14 +182,11 @@ class NHSMetrics(BaseMetrics):
                 'active_patients': len(self.active_records)
             }
         
-        # Calculate official NHS metrics
-        total_times = [p.departure_time - p.arrival_time for p in completed_patients if hasattr(p, 'arrival_time')]
-        initial_assessment_times = [p.initial_assessment_start - p.arrival_time for p in completed_patients 
-                                  if hasattr(p, 'initial_assessment_start') and hasattr(p, 'arrival_time') and p.initial_assessment_start > 0]
-        treatment_times = [p.treatment_start - p.arrival_time for p in completed_patients 
-                          if hasattr(p, 'treatment_start') and hasattr(p, 'arrival_time') and p.treatment_start > 0]
-        
-        four_hour_compliant = sum(1 for p in completed_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time') and (p.departure_time - p.arrival_time) <= 240)
+        # Calculate official NHS metrics using centralized calculations
+        journey_time_stats = StatisticsUtils.calculate_journey_time_stats(completed_patients)
+        assessment_time_stats = StatisticsUtils.calculate_assessment_time_stats(completed_patients)
+        treatment_time_stats = StatisticsUtils.calculate_treatment_time_stats(completed_patients)
+        compliance_metrics = StatisticsUtils.calculate_4hour_compliance(completed_patients)
         
         metrics = {
             # ATTENDANCE SUMMARY
@@ -196,23 +194,23 @@ class NHSMetrics(BaseMetrics):
             'active_patients_in_system': len(self.active_records),
             
             # OFFICIAL NHS A&E QUALITY INDICATORS
-            '1_left_before_being_seen_rate_pct': (self.counters['lwbs_count'] / len(completed_patients)) * 100 if completed_patients else 0,
-            '2_reattendance_rate_pct': (self.counters['reattendance_count'] / len(completed_patients)) * 100 if completed_patients else 0,
-            '3_time_to_initial_assessment_avg_minutes': np.mean(initial_assessment_times) if initial_assessment_times else 0,
-            '4_time_to_treatment_avg_minutes': np.mean(treatment_times) if treatment_times else 0,
-            '5_total_time_in_ae_avg_minutes': np.mean(total_times) if total_times else 0,
+            '1_left_before_being_seen_rate_pct': StatisticsUtils.calculate_compliance_rate(self.counters['lwbs_count'], len(completed_patients)),
+            '2_reattendance_rate_pct': StatisticsUtils.calculate_compliance_rate(self.counters['reattendance_count'], len(completed_patients)),
+            '3_time_to_initial_assessment_avg_minutes': assessment_time_stats['mean'],
+            '4_time_to_treatment_avg_minutes': treatment_time_stats['mean'],
+            '5_total_time_in_ae_avg_minutes': journey_time_stats['mean'],
             
             # NHS 4-HOUR STANDARD
-            '4hour_standard_compliance_pct': (four_hour_compliant / len(completed_patients)) * 100 if completed_patients else 0,
-            'attendances_within_4hours': four_hour_compliant,
-            'attendances_over_4hours': len(completed_patients) - four_hour_compliant,
-            '95pct_target_achieved': (four_hour_compliant / len(completed_patients)) >= 0.95 if completed_patients else False,
-            '76pct_interim_target_achieved': (four_hour_compliant / len(completed_patients)) >= 0.76 if completed_patients else False,
+            '4hour_standard_compliance_pct': compliance_metrics['compliance_rate_pct'],
+            'attendances_within_4hours': compliance_metrics['compliant_count'],
+            'attendances_over_4hours': compliance_metrics['non_compliant_count'],
+            '95pct_target_achieved': compliance_metrics['compliance_rate_pct'] >= 95.0,
+            '76pct_interim_target_achieved': compliance_metrics['compliance_rate_pct'] >= 76.0,
             
             # ADDITIONAL PERFORMANCE METRICS
-            'median_total_time_minutes': np.median(total_times) if total_times else 0,
-            '95th_percentile_time_minutes': np.percentile(total_times, 95) if total_times else 0,
-            'admission_rate_pct': (self.counters['admissions_count'] / len(completed_patients)) * 100 if completed_patients else 0,
+            'median_total_time_minutes': journey_time_stats['median'],
+            '95th_percentile_time_minutes': journey_time_stats['95th_percentile'],
+            'admission_rate_pct': StatisticsUtils.calculate_admission_rate(completed_patients, completed_patients),
             
             # TRIAGE BREAKDOWN
             'triage_category_distribution': self._get_triage_distribution(completed_patients),
@@ -220,7 +218,7 @@ class NHSMetrics(BaseMetrics):
             # DETAILED BREAKDOWNS
             'age_group_analysis': self._get_age_group_analysis(completed_patients),
             'gender_analysis': self._get_gender_analysis(completed_patients),
-            'time_distribution_analysis': self._get_time_distribution_analysis(total_times),
+            'time_distribution_analysis': self._get_time_distribution_analysis([p.get_total_journey_time() for p in completed_patients]),
         }
         
         # Add base statistics
@@ -250,29 +248,24 @@ class NHSMetrics(BaseMetrics):
         return distribution
     
     def _get_age_group_analysis(self, patients: List) -> Dict[str, Dict]:
-        """Analyze performance by age groups"""
-        age_groups = {
-            '0-17': [p for p in patients if p.age < 18],
-            '18-64': [p for p in patients if 18 <= p.age < 65],
-            '65+': [p for p in patients if p.age >= 65]
-        }
+        """Analyze performance by age groups using centralized calculations"""
+        age_groups = StatisticsUtils.group_patients_by_age(patients)
         
         analysis = {}
         for group, group_patients in age_groups.items():
             if group_patients:
-                times = [p.departure_time - p.arrival_time for p in group_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time')]
-                compliant = sum(1 for p in group_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time') and (p.departure_time - p.arrival_time) <= 240)
+                group_stats = StatisticsUtils.calculate_group_performance_stats(group_patients)
                 analysis[group] = {
-                    'count': len(group_patients),
-                    'avg_time_minutes': np.mean(times),
-                    '4hour_compliance_pct': (compliant / len(group_patients)) * 100,
-                    'admission_rate_pct': (sum(1 for p in group_patients if p.admitted) / len(group_patients)) * 100
+                    'count': group_stats['count'],
+                    'avg_time_minutes': group_stats['journey_time_stats']['mean'],
+                    '4hour_compliance_pct': group_stats['compliance_metrics']['compliance_rate_pct'],
+                    'admission_rate_pct': group_stats['admission_rate_pct']
                 }
         
         return analysis
     
     def _get_gender_analysis(self, patients: List) -> Dict[str, Dict]:
-        """Analyze performance by gender"""
+        """Analyze performance by gender using centralized calculations"""
         genders = defaultdict(list)
         for p in patients:
             genders[p.gender].append(p)
@@ -280,13 +273,12 @@ class NHSMetrics(BaseMetrics):
         analysis = {}
         for gender, gender_patients in genders.items():
             if gender_patients:
-                times = [p.departure_time - p.arrival_time for p in gender_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time')]
-                compliant = sum(1 for p in gender_patients if hasattr(p, 'arrival_time') and hasattr(p, 'departure_time') and (p.departure_time - p.arrival_time) <= 240)
+                group_stats = StatisticsUtils.calculate_group_performance_stats(gender_patients)
                 analysis[gender] = {
-                    'count': len(gender_patients),
-                    'avg_time_minutes': np.mean(times),
-                    '4hour_compliance_pct': (compliant / len(gender_patients)) * 100,
-                    'admission_rate_pct': (sum(1 for p in gender_patients if p.admitted) / len(gender_patients)) * 100
+                    'count': group_stats['count'],
+                    'avg_time_minutes': group_stats['journey_time_stats']['mean'],
+                    '4hour_compliance_pct': group_stats['compliance_metrics']['compliance_rate_pct'],
+                    'admission_rate_pct': group_stats['admission_rate_pct']
                 }
         
         return analysis
@@ -401,24 +393,22 @@ class NHSMetrics(BaseMetrics):
         return metrics
     
     def _record_to_dict(self, record: BaseRecord) -> Dict[str, Any]:
-        """Convert a Patient to dictionary for export"""
-        if not hasattr(record, 'Id'):
-            return super()._record_to_dict(record)
-        
+        """Convert a Patient to dictionary for export using centralized calculations"""
+        # Use centralized calculation methods from Patient model
         return {
             'patient_id': record.Id,
             'arrival_time': record.arrival_time,
             'age': record.age,
             'gender': record.gender,
             'triage_category': record.triage_category,
-            'initial_assessment_start': record.initial_assessment_start,
-            'treatment_start': record.treatment_start,
+            'initial_assessment_start': record.initial_assessment_time,
+            'treatment_start': record.treatment_start_time,
             'departure_time': record.departure_time,
-            'total_time_minutes': record.departure_time - record.arrival_time if hasattr(record, 'arrival_time') and hasattr(record, 'departure_time') else 0,
-            'time_to_assessment_minutes': record.initial_assessment_start - record.arrival_time if hasattr(record, 'initial_assessment_start') and hasattr(record, 'arrival_time') and record.initial_assessment_start > 0 else 0,
-            'time_to_treatment_minutes': record.treatment_start - record.arrival_time if hasattr(record, 'treatment_start') and hasattr(record, 'arrival_time') and record.treatment_start > 0 else 0,
-            'meets_4hour_standard': (record.departure_time - record.arrival_time) <= 240 if hasattr(record, 'arrival_time') and hasattr(record, 'departure_time') else False,
-            'is_reattendance': getattr(record, 'is_reattendance', False),
+            'total_time_minutes': record.get_total_journey_time(),
+            'time_to_assessment_minutes': record.get_time_to_initial_assessment(),
+            'time_to_treatment_minutes': record.get_time_to_treatment(),
+            'meets_4hour_standard': record.meets_4hour_standard(),
+            'is_reattendance': record.is_reattendance,
             'admitted': record.admitted,
             'disposal': record.disposal,
             'presenting_complaint': record.presenting_complaint,

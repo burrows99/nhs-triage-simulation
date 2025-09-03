@@ -258,8 +258,8 @@ class Patient(BaseRecord):
     # NHS Metrics tracking fields
     arrival_time: float = 0.0
     departure_time: float = 0.0
-    initial_assessment_start: float = 0.0
-    treatment_start: float = 0.0
+    initial_assessment_time: float = 0.0
+    treatment_start_time: float = 0.0
     triage_category: str = ""
     triage_priority: int = 0
     is_reattendance: bool = False
@@ -270,6 +270,47 @@ class Patient(BaseRecord):
     age: int = 0
     gender: str = ""
     _timestamp: float = 0.0  # Private field for timestamp storage
+    
+    # Centralized calculation methods to eliminate duplicate computations
+    def get_total_journey_time(self) -> float:
+        """Calculate total time in A&E (departure - arrival).
+        
+        Returns:
+            Total journey time in minutes
+        """
+        return self.departure_time - self.arrival_time
+    
+    def get_time_to_initial_assessment(self) -> float:
+        """Calculate time from arrival to initial assessment (triage).
+        
+        Returns:
+            Time to initial assessment in minutes, 0 if not assessed
+        """
+        return self.initial_assessment_time - self.arrival_time if self.initial_assessment_time > 0 else 0.0
+    
+    def get_time_to_treatment(self) -> float:
+        """Calculate time from arrival to treatment start (doctor consultation).
+        
+        Returns:
+            Time to treatment in minutes, 0 if no treatment started
+        """
+        return self.treatment_start_time - self.arrival_time if self.treatment_start_time > 0 else 0.0
+    
+    def meets_4hour_standard(self) -> bool:
+        """Check if patient meets NHS 4-hour standard (240 minutes).
+        
+        Returns:
+            True if total journey time <= 240 minutes
+        """
+        return self.get_total_journey_time() <= 240.0
+    
+    def is_completed_journey(self) -> bool:
+        """Check if patient has completed their journey (has departure time).
+        
+        Returns:
+            True if patient has departed
+        """
+        return self.departure_time > 0.0
     
     def extract_symptoms_from_observations(self) -> dict:
         """Extract symptoms from patient observations for triage.

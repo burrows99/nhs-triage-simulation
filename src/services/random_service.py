@@ -55,64 +55,70 @@ class RandomService:
         return random.random() < 0.5  # Clinical practice: Conservative 50% diagnostic rate for simulation
     
     def get_diagnostics_time(self, test_type: str = DiagnosticTestTypes.MIXED) -> float:
-        """Get random diagnostics time based on official NHS sources.
+        """Get diagnostics time with minimal variation (TRIAGE-INDEPENDENT).
         
-        Official Sources:
-        - NHS.uk: "The procedure will usually only take a few minutes"
-        - Royal Surrey NHS: "Most body parts take roughly 5-10 minutes each"
-        - Manchester Royal Infirmary NHS: "Most examinations only take a few minutes"
-        - Cambridge University Hospitals NHS: "Expect to spend around 30 minutes in the X-ray department"
-        - NHS: ECG takes "about 5 minutes" (NHS.uk)
-        - Oxford University Hospitals NHS: Blood tests 2-4 hours for inpatients
+        Diagnostic processing times are independent of triage decisions.
+        Small random variations added for realism while maintaining fair comparison.
         
         Args:
             test_type: Type of diagnostic from DiagnosticTestTypes constants
             
         Returns:
-            Diagnostics time in minutes based on official NHS data
+            Diagnostics time with small random variation (±15%)
         """
-        if test_type == DiagnosticTestTypes.ECG:
-            return random.uniform(5, 10)  # NHS: "about 5 minutes"
-        elif test_type == DiagnosticTestTypes.BLOOD:
-            return random.uniform(60, 120)  # NHS: 1-2 hours for blood work
-        elif test_type == DiagnosticTestTypes.XRAY:
-            return random.uniform(5, 15)  # NHS: "5-10 minutes" + positioning time
-        else:  # mixed diagnostics
-            return random.uniform(10, 30)  # Combined realistic range
+        # Base diagnostic times for triage-independent processes
+        base_diagnostic_times = {
+            DiagnosticTestTypes.ECG: 30.0,     # ECG time
+            DiagnosticTestTypes.BLOOD: 180.0,  # Blood test time (3 hours)
+            DiagnosticTestTypes.XRAY: 60.0,    # X-ray time
+            DiagnosticTestTypes.MIXED: 90.0    # Mixed diagnostics time
+        }
+        
+        base_time = base_diagnostic_times.get(test_type, 90.0)
+        # Add ±15% random variation for realism
+        variation = base_time * 0.15
+        return random.uniform(base_time - variation, base_time + variation)
     
     def should_admit_patient(self, triage_input) -> bool:
-        """Determine if high-priority patient should be admitted.
+        """Determine admission based on NHS REALITY vs Official Standards.
         
-        Based on NHS data showing higher admission rates for urgent categories.
-        Conservative estimate reflecting clinical decision-making patterns.
+        OFFICIAL NHS DATA:
+        - NHS England A&E Statistics: ~11-15% overall admission rate
+        - Higher acuity patients more likely to be admitted
         
-        Official Source:
-        - NHS England A&E Statistics: Higher acuity patients more likely to be admitted
+        NHS REALITY (What Actually Happens):
+        - Defensive medicine due to system pressures
+        - Lack of community alternatives forces admissions
+        - Social care crisis prevents safe discharge
+        - "Bed blocking" creates admission pressure
+        - Risk-averse decisions due to understaffing
+        
+        Reality: Higher admission rates due to system failures
         
         Args:
-            triage_input: TriageResult object or category string (for backward compatibility)
+            triage_input: TriageResult object or category string
             
         Returns:
-            True if patient should be admitted
+            True if patient should be admitted (reflecting NHS reality)
         """
         # Handle both TriageResult objects and raw category strings
         if hasattr(triage_input, 'triage_category'):
-            # TriageResult object
             category = triage_input.triage_category
-            # Use additional TriageResult data for more informed decisions
             if triage_input.is_urgent():  # RED or ORANGE
-                base_rate = 0.5
-                # Adjust based on confidence if available
+                # Reality: Higher admission rates due to system pressures
+                base_rate = 0.7  # Increased from 0.5 due to defensive medicine
                 confidence_factor = getattr(triage_input, 'confidence', 1.0)
                 adjusted_rate = base_rate * confidence_factor
                 return random.random() < adjusted_rate
         else:
-            # Backward compatibility: raw category string
             category = triage_input
             if category in [TriageCategories.RED, TriageCategories.ORANGE]:
-                return random.random() < 0.5  # NHS England A&E Statistics: Conservative 50% admission rate for urgent cases
+                return random.random() < 0.7  # Reality: Higher admission rate
+            elif category == TriageCategories.YELLOW:
+                return random.random() < 0.3  # Reality: Some yellow patients admitted
         
-        return False  # NHS data: Lower acuity patients typically discharged
+        # Reality: Even lower acuity patients sometimes admitted due to system pressures
+        return random.random() < 0.1  # 10% admission rate for lower acuity
     
     def should_escalate_to_emergency(self) -> bool:
         """Determine if a patient should be escalated to RED priority (emergency).
@@ -153,37 +159,34 @@ class RandomService:
             return random.choice([DiagnosticTestTypes.XRAY, DiagnosticTestTypes.ECG])
     
     def get_admission_processing_time(self) -> float:
-        """Get random admission processing time based on NHS data.
+        """Get admission processing time with minimal variation (TRIAGE-INDEPENDENT).
         
-        Based on NHS 4-hour standard and clinical workflow analysis.
-        Admission processing includes bed allocation, documentation,
-        and transfer coordination.
-        
-        Official Sources:
-        - NHS England: 95% of patients should be admitted/discharged within 4 hours
-        - King's Fund: Average ED time 75 minutes (NHS Plan target)
-        - Clinical practice: Admission processing typically 45-90 minutes
+        Admission processing time is independent of triage decisions.
+        Small random variation added for realism while maintaining fair comparison.
         
         Returns:
-            Admission processing time in minutes (45-90 minutes)
+            Admission processing time with small random variation (±20%)
         """
-        return random.uniform(90, 180)  # Extended for realistic bed queuing scenarios
+        # Base admission processing time for triage-independent processes
+        base_time = 240.0  # 4-hour base admission processing time
+        # Add ±20% random variation for realism
+        variation = base_time * 0.20
+        return random.uniform(base_time - variation, base_time + variation)
     
     def get_discharge_processing_time(self) -> float:
-        """Get random discharge processing time based on NHS workflow.
+        """Get discharge processing time with minimal variation (TRIAGE-INDEPENDENT).
         
-        Discharge processing includes documentation, medication reconciliation,
-        discharge summary, and patient education.
-        
-        Official Sources:
-        - NHS England: Discharge processes within 4-hour standard
-        - Clinical practice: Discharge documentation 20-45 minutes
-        - NHS guidance: Proper discharge planning and documentation required
+        Discharge processing time is independent of triage decisions.
+        Small random variation added for realism while maintaining fair comparison.
         
         Returns:
-            Discharge processing time in minutes (20-45 minutes)
+            Discharge processing time with small random variation (±20%)
         """
-        return random.uniform(60, 120)  # Extended for realistic bed turnover scenarios
+        # Base discharge processing time for triage-independent processes
+        base_time = 90.0  # 1.5-hour base discharge processing time
+        # Add ±20% random variation for realism
+        variation = base_time * 0.20
+        return random.uniform(base_time - variation, base_time + variation)
     
     def determine_patient_disposition(self, triage_input) -> tuple[str, bool, float]:
         """Determine patient disposition (admission or discharge) with processing time.
@@ -226,63 +229,73 @@ class RandomService:
         return random.expovariate(arrival_rate / 60)  # Poisson process: Standard healthcare modeling approach
         
     def get_triage_process_time(self, complexity: str = "standard") -> float:
-        """Get realistic time for complete MTS triage process.
+        """Get triage process time based on NHS REALITY vs Official Standards.
         
-        Based on official MTS documentation and verified research studies.
-        MTS uses 53 flowcharts with discriminator evaluation by trained nurses.
+        OFFICIAL NHS TARGETS:
+        - NHS England (2022): Initial assessment within 15 minutes
+        - Manchester Triage Group: 53 Emergency Triage charts, 3-15 minutes
+        - StatPearls: Optimal triage in 10-15 minutes
         
-        Official Sources:
-        - Manchester Triage Group (triagenet.net): 53 Emergency Triage charts
-        - Bienzeisler et al. (2024): German ED study with 35,167 patients
-          J Med Internet Res. 2024;26:e45593. doi: 10.2196/45593
-        - StatPearls Emergency Department Triage: Nurse training requirements
+        NHS REALITY (What Actually Happens):
+        - Triage nurses overwhelmed with patient volumes
+        - 15-minute target frequently missed
+        - Interruptions and multiple patient management
+        - Staff shortages causing delays
+        - Complex cases take much longer in reality
+        
+        Reality: Triage takes longer due to system pressures and nurse workload
         
         Args:
             complexity: Case complexity (simple, standard, complex)
             
         Returns:
-            Time in minutes for complete triage process
+            Time in minutes reflecting NHS reality pressures
         """
-        # Conservative estimates based on clinical practice standards
-        # Accounts for flowchart selection + assessment + documentation
+        # NHS Reality: Triage nurses under pressure, targets frequently missed
+        # Calibrated to achieve realistic NHS performance (59-76% 4-hour compliance)
         complexity_times = {
-            'simple': (3.0, 6.0),      # Manchester Triage Group: Straightforward cases 3-6 minutes
-            'standard': (5.0, 10.0),   # Bienzeisler et al. (2024): Typical MTS cases 5-10 minutes
-            'complex': (8.0, 15.0)     # StatPearls Emergency Triage: Complex presentations 8-15 minutes
+            'simple': (10.0, 30.0),    # Reality: Simple cases delayed but manageable
+            'standard': (20.0, 60.0),  # Reality: Standard cases take longer than target
+            'complex': (40.0, 120.0)   # Reality: Complex cases significantly delayed
         }
         
         min_time, max_time = complexity_times.get(complexity, complexity_times['standard'])
-        return random.uniform(min_time, max_time)
+        base_time = random.uniform(min_time, max_time)
+        
+        # Add moderate system pressure factor reflecting queue delays and interruptions
+        pressure_factor = random.uniform(1.2, 2.0)  # Moderate to high system strain
+        
+        # Add random queue delay (patients waiting for triage nurse availability)
+        queue_delay = random.uniform(0, 30)  # 0-30 minutes additional queue wait
+        
+        return (base_time * pressure_factor) + queue_delay
     
     # Removed get_doctor_assessment_time - now using MTS priority_score and fuzzy_score directly
     
     def get_resource_allocation_delay(self, resource_type: str) -> float:
-        """Get realistic minimum delay for resource allocation even when immediately available.
+        """Get delay for resource allocation with minimal variation (TRIAGE-INDEPENDENT).
         
-        In real hospitals, even when resources are available, there are realistic delays for:
-        - Staff handover and briefing
-        - Equipment preparation
-        - Patient transfer and setup
-        - Documentation and communication
+        These delays are independent of triage decisions. Small random variations
+        added for realism while maintaining fair comparison between triage systems.
         
         Args:
             resource_type: Type of resource ('doctor', 'bed', 'nurse')
             
         Returns:
-            Minimum allocation delay in minutes
+            Allocation delay with small random variation (±10%)
         """
-        allocation_delays = {
-            'doctor': (2, 8),      # Doctor handover, chart review, patient briefing: 2-8 minutes
-            'bed': (5, 15),        # Bed preparation, patient transfer, setup: 5-15 minutes
-            'nurse': (1, 4),       # Nurse handover, initial assessment setup: 1-4 minutes
-            'triage': (1, 3)       # Triage setup, initial patient contact: 1-3 minutes
+        # Base delays for triage-independent processes with small variation
+        base_delays = {
+            'doctor': 5.0,    # Doctor handover time
+            'bed': 10.0,      # Bed preparation time
+            'nurse': 2.5,     # Nurse handover time
+            'triage': 2.0     # Triage setup time
         }
         
-        if resource_type not in allocation_delays:
-            return random.uniform(1, 3)  # Default minimum delay
-        
-        min_delay, max_delay = allocation_delays[resource_type]
-        return random.uniform(min_delay, max_delay)
+        base_time = base_delays.get(resource_type, 2.0)
+        # Add ±10% random variation for realism
+        variation = base_time * 0.1
+        return random.uniform(base_time - variation, base_time + variation)
     
     def get_handover_delay(self, resource_type: str, triage_input = None) -> float:
         """Get realistic handover delay based on patient priority and resource type.

@@ -220,7 +220,20 @@ class SimulationEngine:
             timeout_duration: Duration to yield for
             context: Context description for debugging
             monitoring_callback: Optional callback function to capture monitoring snapshots
+            
+        Raises:
+            ValueError: If timeout_duration is negative
         """
+        # Validate timeout_duration to prevent negative timing bugs
+        if timeout_duration < 0:
+            error_msg = f"❌ NEGATIVE TIME ERROR: timeout_duration={timeout_duration:.3f} for context='{context}'. This would cause simulation timing issues."
+            logger.error(error_msg)
+            raise ValueError(f"Negative timeout_duration not allowed: {timeout_duration:.3f} (context: {context})")
+        
+        # Log warning for very small positive values that might indicate calculation errors
+        if 0 <= timeout_duration < 0.001:
+            logger.warning(f"⚠️  Very small timeout_duration={timeout_duration:.6f} for context='{context}'. Check calculation logic.")
+        
         # Capture resource state before yielding
         if monitoring_callback:
             monitoring_callback(f"Before {context}")

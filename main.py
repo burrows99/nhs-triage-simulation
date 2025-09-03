@@ -35,10 +35,10 @@ def parse_arguments() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 main.py                                    # Run all systems with default settings
+  python3 main.py                                    # Run all systems with NHS realistic defaults
   python3 main.py --systems manchester single       # Run only Manchester and Single LLM systems
-  python3 main.py --duration 240 --arrival-rate 30  # 4-hour simulation with 30 patients/hour
-  python3 main.py --nurses 5 --doctors 3 --beds 6   # Custom resource allocation
+  python3 main.py --duration 480 --arrival-rate 20  # 8-hour simulation with 20 patients/hour
+  python3 main.py --nurses 6 --doctors 3 --beds 8   # Smaller NHS A&E department
   python3 main.py --output-dir ./custom_output      # Custom output directory
   python3 main.py --help                            # Show this help message
 
@@ -49,41 +49,41 @@ Available Triage Systems:
         """
     )
     
-    # Simulation parameters
+    # Simulation parameters - NHS realistic defaults
     parser.add_argument(
         '--duration', '-d',
         type=float,
-        default=480,
-        help='Simulation duration in minutes (default: 480 = 8 hours)'
+        default=720,
+        help='Simulation duration in minutes (default: 720 = 12 hours, realistic for NHS A&E analysis)'
     )
     
     parser.add_argument(
         '--arrival-rate', '-a',
         type=int,
-        default=50,
-        help='Patient arrival rate per hour (default: 50)'
+        default=16,
+        help='Patient arrival rate per hour (default: 16, based on NHS A&E data: 386-411 patients/day)'
     )
     
-    # Resource allocation
+    # Resource allocation - NHS realistic staffing levels
     parser.add_argument(
         '--nurses', '-n',
         type=int,
-        default=3,
-        help='Number of nurses available (default: 3)'
+        default=8,
+        help='Number of nurses available (default: 8, typical NHS A&E triage + emergency care nurses)'
     )
     
     parser.add_argument(
         '--doctors', '-dr',
         type=int,
-        default=2,
-        help='Number of doctors available (default: 2)'
+        default=4,
+        help='Number of doctors available (default: 4, typical NHS A&E consultants + junior doctors)'
     )
     
     parser.add_argument(
         '--beds', '-b',
         type=int,
-        default=4,
-        help='Number of beds available (default: 4)'
+        default=12,
+        help='Number of beds available (default: 12, typical NHS A&E department capacity)'
     )
     
     # System selection

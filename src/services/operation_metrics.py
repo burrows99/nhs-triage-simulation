@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
 
 from .base_metrics import BaseMetrics, BaseRecord
+from .statistics_utils import StatisticsUtils
 from src.logger import logger
 from src.models.resource_event import ResourceEvent
 from src.models.system_snapshot import SystemSnapshot
@@ -258,7 +259,7 @@ class OperationMetrics(BaseMetrics):
         return queue_metrics
     
     def _calculate_throughput_metrics(self) -> Dict[str, Any]:
-        """Calculate throughput metrics"""
+        """Calculate throughput metrics using centralized calculations"""
         throughput_metrics = {}
         
         for resource, data in self.throughput_data.items():
@@ -269,42 +270,44 @@ class OperationMetrics(BaseMetrics):
                 
                 throughput_metrics[resource] = {
                     'total_processed': total_count,
-                    'throughput_per_hour': (total_count / total_time) * 60 if total_time > 0 else 0,
+                    'throughput_per_hour': StatisticsUtils.calculate_throughput_rate(total_count, total_time),
                     'average_processing_rate': total_count / len(data) if data else 0
                 }
         
         return throughput_metrics
     
     def _calculate_wait_time_metrics(self) -> Dict[str, Any]:
-        """Calculate wait time metrics"""
+        """Calculate wait time metrics using centralized statistics"""
         wait_time_metrics = {}
         
         for resource, wait_times in self.wait_times.items():
             if wait_times:
+                stats = StatisticsUtils.calculate_basic_stats(wait_times)
                 wait_time_metrics[resource] = {
-                    'average_wait_time_minutes': np.mean(wait_times),
-                    'max_wait_time_minutes': np.max(wait_times),
-                    'min_wait_time_minutes': np.min(wait_times),
-                    'wait_time_std_dev': np.std(wait_times),
-                    '95th_percentile_wait_time': np.percentile(wait_times, 95),
-                    'total_wait_events': len(wait_times)
+                    'average_wait_time_minutes': stats['mean'],
+                    'max_wait_time_minutes': stats['max'],
+                    'min_wait_time_minutes': stats['min'],
+                    'wait_time_std_dev': stats['std_dev'],
+                    '95th_percentile_wait_time': stats['95th_percentile'],
+                    'total_wait_events': stats['count']
                 }
         
         return wait_time_metrics
     
     def _calculate_service_time_metrics(self) -> Dict[str, Any]:
-        """Calculate service time metrics"""
+        """Calculate service time metrics using centralized statistics"""
         service_time_metrics = {}
         
         for resource, service_times in self.service_times.items():
             if service_times:
+                stats = StatisticsUtils.calculate_basic_stats(service_times)
                 service_time_metrics[resource] = {
-                    'average_service_time_minutes': np.mean(service_times),
-                    'max_service_time_minutes': np.max(service_times),
-                    'min_service_time_minutes': np.min(service_times),
-                    'service_time_std_dev': np.std(service_times),
-                    '95th_percentile_service_time': np.percentile(service_times, 95),
-                    'total_service_events': len(service_times)
+                    'average_service_time_minutes': stats['mean'],
+                    'max_service_time_minutes': stats['max'],
+                    'min_service_time_minutes': stats['min'],
+                    'service_time_std_dev': stats['std_dev'],
+                    '95th_percentile_service_time': stats['95th_percentile'],
+                    'total_service_events': stats['count']
                 }
         
         return service_time_metrics
