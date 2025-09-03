@@ -34,6 +34,10 @@ class SimpleHospital:
     
     def __init__(self, csv_folder='./output/csv', output_dir='./output/hospital_simulation', 
                  triage_system=None, **kwargs):
+        logger.info(f"🏥 Initializing Hospital Simulation...")
+        logger.info(f"📁 CSV folder: {csv_folder}")
+        logger.info(f"📂 Output directory: {output_dir}")
+        logger.info(f"🩺 Triage system: {type(triage_system).__name__ if triage_system else 'None'}")
         """Initialize hospital simulation with all required services and data.
         
         Args:
@@ -118,11 +122,25 @@ class SimpleHospital:
     
     def _load_patient_data(self, csv_folder: str):
         """Load and process patient data from CSV files."""
-        logger.info(f"Loading patient data from {csv_folder}...")
+        logger.info(f"📊 Loading patient data from {csv_folder}...")
+        logger.info(f"📁 Checking if CSV folder exists: {os.path.exists(csv_folder)}")
+        
+        if os.path.exists(csv_folder):
+            csv_files = [f for f in os.listdir(csv_folder) if f.endswith('.csv')]
+            logger.info(f"📄 Found {len(csv_files)} CSV files: {csv_files}")
+        else:
+            logger.error(f"❌ CSV folder does not exist: {csv_folder}")
+        
         self.data_service = DataService(csv_folder)
         self.patients = self.data_service.get_all_patients(deep=True)
         self.current_index = 0
-        logger.info(f"Loaded {len(self.patients)} patients with full relationships")
+        
+        logger.info(f"✅ Loaded {len(self.patients)} patients with full relationships")
+        if len(self.patients) == 0:
+            logger.error(f"⚠️  WARNING: No patients loaded! Simulation will not run properly.")
+        else:
+            logger.info(f"👥 First patient ID: {self.patients[0].Id if self.patients else 'None'}")
+            logger.info(f"👥 Sample patient data: {type(self.patients[0]).__name__ if self.patients else 'None'}")
     
     def _initialize_services(self, **kwargs):
         """Initialize all required services for the simulation."""
@@ -158,12 +176,20 @@ class SimpleHospital:
     
     def get_patient(self):
         """Get next patient - returns fully prepared Synthea Patient model."""
+        logger.info(f"🔍 GET_PATIENT CALLED - Retrieving patient...")
+        logger.info(f"📊 Total patients available: {len(self.patients) if self.patients else 0}")
+        logger.info(f"📍 Current index: {self.current_index}")
+        
         if not self.patients:
+            logger.error(f"❌ No patients available! Returning None.")
             return None
         
         # Return Synthea patient model (already fully populated with relationships)
         synthea_patient = self.patients[self.current_index]
+        logger.info(f"✅ Retrieved patient: ID={synthea_patient.Id}, Index={self.current_index}")
+        
         self.current_index = (self.current_index + 1) % len(self.patients)
+        logger.info(f"📍 Updated index to: {self.current_index}")
         
         return synthea_patient
 
@@ -396,15 +422,21 @@ class SimpleHospital:
         Note: This method now measures and returns the actual processing time for 
         integration with SimPy's discrete event simulation.
         """
+        logger.info(f"🩺 PERFORM_TRIAGE CALLED - Starting triage assessment...")
+        logger.info(f"👤 Patient ID: {patient.Id if patient else 'None'}")
+        logger.info(f"🔧 Triage system type: {type(self.triage_system).__name__}")
+        
         # Paper-based approach: Nurse selects appropriate flowchart based on patient presentation
         # FMTS paper: "decision aid system for the ER nurses to properly categorize patients based on their symptoms"
         
         if patient is None:
+            logger.error(f"❌ No patient provided for triage!")
             raise ValueError("Patient object is required for triage. Cannot perform triage without real patient information.")
         
         # Measure actual triage processing time
         import time
         triage_start_time = time.time()
+        logger.info(f"⏱️  Triage processing started at {triage_start_time}")
         
         # Use real patient data for triage
         # Map chief complaint to appropriate flowchart
@@ -423,6 +455,7 @@ class SimpleHospital:
         
         if isinstance(self.triage_system, LLMTriageSystem):
             # LLM triage system expects symptoms as a string
+            logger.info(f"🤖 Using LLM Triage System for patient {patient.Id}")
             complaint = self._extract_presenting_complaint(patient)
             symptoms_text = f"Patient presents with {complaint}. "
             
@@ -435,7 +468,12 @@ class SimpleHospital:
             if symptom_descriptions:
                 symptoms_text += "Symptoms include: " + ", ".join(symptom_descriptions)
             
+            logger.info(f"📝 Sending to LLM: '{symptoms_text[:100]}{'...' if len(symptoms_text) > 100 else ''}'")
+            logger.info(f"🔄 Calling triage_system.triage_patient()...")
+            
             result = self.triage_system.triage_patient(symptoms_text)
+            
+            logger.info(f"✅ LLM triage completed. Result: {result}")
         else:
             # Manchester Triage System expects structured inputs
             result = self.triage_system.triage_patient(
@@ -448,14 +486,15 @@ class SimpleHospital:
         triage_end_time = time.time()
         processing_delay = triage_end_time - triage_start_time
         
-        # Create standardized TriageResult object
+        # Handle triage result based on system type
         from src.models.triage_result import TriageResult
         
-        # Determine system type for result creation
-        system_type = "LLM" if isinstance(self.triage_system, LLMTriageSystem) else "MTS"
-        
-        # Create unified triage result
-        triage_result = TriageResult.from_raw_result(result, system_type)
+        if isinstance(self.triage_system, LLMTriageSystem):
+            # LLM system already returns TriageResult object
+            triage_result = result
+        else:
+            # MTS system returns dictionary, convert to TriageResult
+            triage_result = TriageResult.from_raw_result(result, "MTS")
         
         # Extract core values for backward compatibility
         category = triage_result.triage_category
@@ -685,13 +724,13 @@ class SimpleHospital:
         priority = triage_result.priority_score
         fuzzy_score = triage_result.fuzzy_score if triage_result.fuzzy_score is not None else 5.0
         
-        # Base assessment times by priority (increased for realistic queuing)
+        # Base assessment times by priority (higher priority = more complex = more time)
         time_ranges = {
-            1: (20, 40),  # RED - Critical
-            2: (30, 60),  # ORANGE - Very urgent
-            3: (40, 80),  # YELLOW - Urgent
-            4: (50, 90),  # GREEN - Standard
-            5: (30, 60)   # BLUE - Non-urgent
+            1: (60, 120), # RED - Critical (most complex, longest time)
+            2: (45, 90),  # ORANGE - Very urgent
+            3: (30, 60),  # YELLOW - Urgent
+            4: (20, 40),  # GREEN - Standard
+            5: (15, 30)   # BLUE - Non-urgent (simplest, shortest time)
         }
         
         min_time, max_time = time_ranges.get(priority, (20, 40))

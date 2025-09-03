@@ -333,7 +333,6 @@ class MedicalCategories:
             cls.OPHTHALMOLOGICAL, cls.ENT, cls.ENDOCRINE, cls.ALLERGIC
         ]
 
-
 class TriageCategories:
     """Triage category constants"""
     RED = "RED"
@@ -357,7 +356,6 @@ class TriageCategories:
             cls.GREEN: 4,
             cls.BLUE: 5
         }
-
 
 class FuzzyCategories:
     """Fuzzy triage category constants (lowercase for fuzzy logic) - references TriageCategories"""
@@ -403,8 +401,6 @@ class WaitTimeDisplays:
     def get_wait_time_displays(cls) -> List[str]:
         """Get wait time displays in order"""
         return [cls.IMMEDIATE, cls.TEN_MIN, cls.SIXTY_MIN, cls.ONE_TWENTY_MIN, cls.TWO_FORTY_MIN]
-    
-
 
 class SymptomNames:
     """Comprehensive symptom name constants for flowcharts"""

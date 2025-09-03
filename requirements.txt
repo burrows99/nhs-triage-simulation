@@ -6,6 +6,9 @@ scipy>=1.7.0
 seaborn>=0.11.0
 scikit-fuzzy
 requests
-httpx
-langgraph
+openai>=1.0.0  # For Hugging Face API calls
 networkx
+watchdog  # For hot reload in development
+# Dependencies for HuggingFace API and fallback transformer models
+transformers>=4.30.0
+torch>=2.0.0

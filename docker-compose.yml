@@ -1,62 +1,25 @@
 services:
-  # Ollama service for LLM inference
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-    restart: unless-stopped
-    networks:
-      - nhs-network
-
-  ollama-downloader:
-    image: curlimages/curl:latest
-    container_name: ollama-downloader
-    depends_on:
-      ollama:
-        condition: service_started
-    command: >
-      sh -c "
-        echo 'Waiting for Ollama to be ready...'
-        while ! curl -f http://ollama:11434/api/tags; do
-          echo 'Ollama not ready, waiting 5 seconds...'
-          sleep 5
-        done
-        echo 'Ollama is ready, downloading model...'
-        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q2_K\"}' --max-time 1800
-        echo 'Model download completed'
-      "
-    networks:
-      - nhs-network
-    restart: "no"
-  # Hospital simulation service - runs main.py after model is downloaded
+  # Hospital simulation service - runs main.py with Hugging Face API
   hospital-simulation:
     image: python:3.11-slim
-    depends_on:
-      ollama-downloader:
-        condition: service_completed_successfully
+
     volumes:
-      - .:/app
-      - ./output:/app/output
-      - ./logs:/app/logs
+      - .:/app  # Mount entire project directory
     working_dir: /app
     environment:
       - PYTHONPATH=/app
-      - OLLAMA_API_URL=http://ollama:11434/api/v1
+
+      - PYTHONUNBUFFERED=1  # Ensure Python output is not buffered
     networks:
       - nhs-network
     command: >
       sh -c "pip install -r requirements.txt && 
-             python main.py"
+             watchmedo auto-restart --directory=./src --directory=. --pattern='*.py' --recursive -- python -u main.py"
     restart: "no"
+    stdin_open: true
+    tty: true
+
 
 networks:
   nhs-network:
     driver: bridge
-    
-volumes:
-  ollama_data:
