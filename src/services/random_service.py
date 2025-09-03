@@ -7,7 +7,8 @@ Single Responsibility: Only handles random data generation
 """
 
 import random
-from typing import Tuple
+from typing import Tuple, Dict, List, Any, Optional
+import logging
 from src.triage.triage_constants import TriageCategories, DiagnosticTestTypes
 
 
@@ -346,13 +347,8 @@ class RandomService:
     
     def _calculate_priority_multiplier(self, priority, confidence_factor, triage_input):
         """Calculate delay multiplier based on priority and confidence."""
-        priority_multipliers = {
-            1: 0.5,  # RED: Fastest handover but still 50% of base delay
-            2: 0.7,  # ORANGE: Quick handover
-            3: 0.9,  # YELLOW: Standard handover
-            4: 1.0,  # GREEN: Normal handover
-            5: 1.2   # BLUE: Can wait slightly longer
-        }
+        from src.triage.triage_constants import PRIORITY_MULTIPLIERS
+        priority_multipliers = PRIORITY_MULTIPLIERS
         
         multiplier = priority_multipliers.get(priority, 1.0)
         

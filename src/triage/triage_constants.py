@@ -714,3 +714,21 @@ class FlowchartNames:
             MedicalConditions.NAUSEA: cls.NAUSEA_VOMITING_DISPLAY,
             MedicalConditions.VOMITING: cls.NAUSEA_VOMITING_DISPLAY
         }
+
+# Priority-based multipliers for resource allocation delays
+PRIORITY_MULTIPLIERS = {
+    1: 0.5,  # RED: Fastest handover but still 50% of base delay
+    2: 0.7,  # ORANGE: Quick handover
+    3: 0.9,  # YELLOW: Standard handover
+    4: 1.0,  # GREEN: Normal handover
+    5: 1.2   # BLUE: Can wait slightly longer
+}
+
+# Category-based time mappings for resource allocation
+CATEGORY_TIME_MAPPINGS = {
+    TriageCategories.RED: (0.5, 2.0),    # Very fast for critical
+    TriageCategories.ORANGE: (1.0, 3.0), # Fast for very urgent
+    TriageCategories.YELLOW: (2.0, 5.0), # Moderate for urgent
+    TriageCategories.GREEN: (3.0, 8.0),  # Slower for standard
+    TriageCategories.BLUE: (5.0, 12.0)   # Slowest for non-urgent
+}

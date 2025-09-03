@@ -9,6 +9,8 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 import re
 
+from src.triage.triage_constants import TriageCategories
+
 
 @attr.s(auto_attribs=True)
 class TriageResult:
@@ -195,19 +197,21 @@ class TriageResult:
             if any(keyword in wait_time_lower for keyword in keywords):
                 return minutes
         
-        # Priority 3: Fallback based on triage category (SOLID: Dependency Inversion)
+        # Priority 3: Fallback based on triage category using centralized constants
         category_defaults = {
-            'RED': 0,      # Immediate
-            'ORANGE': 15,  # Very urgent
-            'YELLOW': 60,  # Urgent  
-            'GREEN': 120,  # Standard
-            'BLUE': 240    # Non-urgent
+            TriageCategories.RED: 0,      # Immediate
+            TriageCategories.ORANGE: 15,  # Very urgent
+            TriageCategories.YELLOW: 60,  # Urgent
+            TriageCategories.GREEN: 120,  # Standard
+            TriageCategories.BLUE: 240    # Non-urgent
         }
         
         if self.triage_category in category_defaults:
             return category_defaults[self.triage_category]
         
-        # Priority 4: Fallback based on priority score
+        # Priority 4: Fallback based on priority score using centralized mapping
+        priority_mapping = TriageCategories.get_priority_mapping()
+        # Reverse mapping: priority -> wait time
         priority_defaults = {1: 0, 2: 15, 3: 60, 4: 120, 5: 240}
         return priority_defaults.get(self.priority_score, 60)
         
