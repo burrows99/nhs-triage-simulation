@@ -6,23 +6,26 @@ providing consistent and configurable random behavior across the system.
 Single Responsibility: Only handles random data generation
 """
 
+import attr
 import random
 from typing import Tuple, Dict, List, Any, Optional
 import logging
+
 from src.triage.triage_constants import TriageCategories, DiagnosticTestTypes
 
 
+@attr.s(auto_attribs=True)
 class RandomService:
     """Centralized random data generation service for hospital simulation."""
     
-    def __init__(self, seed: int = None):
-        """Initialize random service with optional seed for reproducibility.
+    seed: Optional[int] = None
+    
+    def __attrs_post_init__(self):
+        """Initialize random service with optional seed for reproducibility."""
+        if self.seed is not None:
+            random.seed(self.seed)
         
-        Args:
-            seed: Optional seed for random number generator
-        """
-        if seed is not None:
-            random.seed(seed)
+        self.logger = logging.getLogger(__name__)
     
     def get_wait_time_variation(self, wait_time_type: str) -> float:
         """Get random variation for MTS wait time conversion.

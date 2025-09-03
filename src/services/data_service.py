@@ -17,21 +17,20 @@ from src.models.synthea_models import (
 )
 
 
+import attr
+
+@attr.s(auto_attribs=True)
 class DataService:
     """Enhanced service for loading Synthea CSV files and constructing models with relationships."""
     
-    def __init__(self, csv_folder: str = "./output/csv"):
-        """Initialize the data service.
-        
-        Args:
-            csv_folder: Path to folder containing Synthea CSV files
-        """
-        self.csv_folder = csv_folder
-        self.patients: List[Patient] = []
-        self.encounters: List[Encounter] = []
-        self.organizations: List[Organization] = []
-        self.providers: List[Provider] = []
-        self.payers: List[Payer] = []
+    csv_folder: str = "./output/csv"
+    
+    # Initialize empty collections using attr.Factory
+    patients: List[Patient] = attr.Factory(list)
+    encounters: List[Encounter] = attr.Factory(list)
+    organizations: List[Organization] = attr.Factory(list)
+    providers: List[Provider] = attr.Factory(list)
+    payers: List[Payer] = attr.Factory(list)
         
     @log_data_transfer("DataService.load_and_construct_data")
     def load_and_construct_data(self) -> None:

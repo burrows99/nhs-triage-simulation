@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
 import json
+import attr
 from abc import ABC, abstractmethod
 
 # Import centralized logger
@@ -18,22 +19,19 @@ from src.logger import logger
 from src.models.base_record import BaseRecord
 
 
+@attr.s
 class BaseMetrics(ABC):
     """Base class for all metrics services providing common functionality"""
     
-    def __init__(self, name: str = "BaseMetrics"):
-        """Initialize base metrics service
-        
-        Args:
-            name: Name identifier for this metrics service
-        """
-        self.name = name
-        self.records: List[BaseRecord] = []
-        self.active_records: Dict[str, BaseRecord] = {}
-        self.counters: Dict[str, int] = defaultdict(int)
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
-        
+    name: str = attr.ib(default="BaseMetrics")
+    records: List[BaseRecord] = attr.ib(factory=list)
+    active_records: Dict[str, BaseRecord] = attr.ib(factory=dict)
+    counters: Dict[str, int] = attr.ib(factory=lambda: defaultdict(int))
+    start_time: Optional[float] = attr.ib(default=None)
+    end_time: Optional[float] = attr.ib(default=None)
+    
+    def __attrs_post_init__(self):
+        """Post-initialization setup"""
         logger.info(f"{self.name} metrics service initialized")
     
     def add_record(self, record: BaseRecord) -> None:

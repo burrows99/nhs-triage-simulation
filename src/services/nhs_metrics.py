@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from dataclasses import dataclass
+import attr
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
@@ -29,23 +30,25 @@ from src.models.synthea_models import Patient
 # Patient models now come from Synthea data service
 
 
+@attr.s(auto_attribs=True)
 class NHSMetrics(BaseMetrics):
     """NHS A&E Quality Indicators Service
     
     Provides NHS-specific metrics tracking and calculation capabilities.
     """
     
-    def __init__(self, reattendance_window_hours: int = 72):
-        """Initialize NHS Metrics Service
-        
-        Args:
-            reattendance_window_hours: Time window for re-attendance tracking (default: 72 hours)
-        """
+    # Configuration
+    reattendance_window_hours: int = 72
+    
+    # NHS-specific tracking
+    patient_history: Dict[str, List[float]] = attr.Factory(lambda: defaultdict(list))
+    
+    def __attrs_post_init__(self):
+        """Initialize NHS Metrics Service after attrs initialization"""
         super().__init__("NHSMetrics")
         
         # NHS-specific tracking
-        self.reattendance_window = reattendance_window_hours
-        self.patient_history: Dict[str, List[float]] = defaultdict(list)
+        self.reattendance_window = self.reattendance_window_hours
         
         # NHS-specific counters
         self.counters.update({

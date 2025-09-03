@@ -19,36 +19,37 @@ from src.models.resource_event import ResourceEvent
 from src.models.system_snapshot import SystemSnapshot
 
 
+@attr.s(auto_attribs=True)
 class OperationMetrics(BaseMetrics):
     """Operational metrics tracking service
     
     Tracks resource utilization, queue performance, throughput, and system efficiency.
     """
     
-    def __init__(self):
+    # Tracking counters
+    last_snapshot_time: float = 0.0
+    snapshot_counter: int = 0  # Counter for unique snapshot IDs
+    
+    # Resource tracking
+    resource_events: List[ResourceEvent] = attr.Factory(list)
+    system_snapshots: List[SystemSnapshot] = attr.Factory(list)
+    
+    # Performance tracking
+    throughput_data: Dict[str, List[Tuple[float, int]]] = attr.Factory(lambda: defaultdict(list))  # time -> count
+    wait_times: Dict[str, List[float]] = attr.Factory(lambda: defaultdict(list))  # resource -> wait_times
+    service_times: Dict[str, List[float]] = attr.Factory(lambda: defaultdict(list))  # resource -> service_times
+    
+    # Real-time metrics
+    current_utilization: Dict[str, float] = attr.Factory(dict)
+    peak_utilization: Dict[str, float] = attr.Factory(dict)
+    average_queue_length: Dict[str, float] = attr.Factory(lambda: defaultdict(float))
+    
+    def __attrs_post_init__(self):
         """Initialize Operation Metrics Service
         
         Uses synchronized monitoring instead of time-based intervals.
         """
         super().__init__("OperationMetrics")
-        
-        self.last_snapshot_time = 0.0
-        self.snapshot_counter = 0  # Counter for unique snapshot IDs
-        
-        # Resource tracking
-        self.resource_events: List[ResourceEvent] = []
-        self.system_snapshots: List[SystemSnapshot] = []
-        
-        # Performance tracking
-        self.throughput_data: Dict[str, List[Tuple[float, int]]] = defaultdict(list)  # time -> count
-        self.wait_times: Dict[str, List[float]] = defaultdict(list)  # resource -> wait_times
-        self.service_times: Dict[str, List[float]] = defaultdict(list)  # resource -> service_times
-        
-        # Real-time metrics
-        self.current_utilization: Dict[str, float] = {}
-        self.peak_utilization: Dict[str, float] = {}
-        self.average_queue_length: Dict[str, float] = defaultdict(float)
-        
         logger.info("Operation metrics service initialized")
     
     def record_resource_event(self, event_type: str, resource_name: str, 

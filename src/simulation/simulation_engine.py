@@ -4,12 +4,14 @@ This module contains the core simulation engine functionality extracted from Sim
 to provide better separation of concerns and reusability.
 """
 
+import attr
 import simpy
 import logging
 from typing import Dict, List, Any, Callable, Optional
 from src.logger import logger
 
 
+@attr.s(auto_attribs=True)
 class SimulationEngine:
     """Core simulation engine for discrete event simulation.
     
@@ -21,31 +23,26 @@ class SimulationEngine:
     - Simulation time management
     """
     
-    def __init__(self, duration: float, arrival_rate: float, resources: Dict[str, int], priority_resources: List[str] = None):
-        """Initialize the simulation engine.
-        
-        Args:
-            duration: Simulation duration in minutes
-            arrival_rate: Entity arrival rate per hour
-            resources: Dictionary of resource types and capacities
-            priority_resources: List of resource names that should use PriorityResource
-        """
-        self.duration = duration
-        self.arrival_rate = arrival_rate
-        self.resources = resources
-        self.priority_resources = priority_resources or []
-        
-        # Simulation state
-        self.env = None
-        self.simpy_resources = {}
-        
-        # Counters
-        self.entity_count = 0
-        self.total_time = 0
-        self.categories = []
-        
-        # Callbacks
-        self.arrival_callback = None
+    duration: float
+    arrival_rate: float
+    resources: Dict[str, int]
+    priority_resources: List[str] = attr.Factory(list)
+    
+    # Simulation state - initialized in post_init
+    env: simpy.Environment = attr.ib(init=False, default=None)
+    simpy_resources: Dict[str, Any] = attr.Factory(dict)
+    
+    # Counters
+    entity_count: int = 0
+    total_time: float = 0
+    categories: List[str] = attr.Factory(list)
+    
+    # Callbacks
+    arrival_callback: Optional[Callable] = None
+    
+    def __attrs_post_init__(self):
+        """Initialize simulation engine after attrs initialization."""
+        pass
         
     def initialize_environment(self):
         """Initialize the SimPy environment and resources."""

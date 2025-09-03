@@ -10,9 +10,9 @@ from src.models.base_record import BaseRecord
 
 @attr.s(auto_attribs=True)
 class SystemSnapshot(BaseRecord):
-    """Snapshot of system state at a point in time"""
+    """Represents a snapshot of system state at a specific time."""
     snapshot_id: str
-    timestamp: float
+    _timestamp: float = attr.ib()
     resource_usage: Dict[str, int] = attr.Factory(dict)  # resource_name -> current usage
     resource_capacity: Dict[str, int] = attr.Factory(dict)  # resource_name -> total capacity
     queue_lengths: Dict[str, int] = attr.Factory(dict)  # resource_name -> queue length
@@ -20,7 +20,13 @@ class SystemSnapshot(BaseRecord):
     
     @property
     def record_id(self) -> str:
+        """Implementation of abstract method from BaseRecord."""
         return self.snapshot_id
+    
+    @property
+    def timestamp(self) -> float:
+        """Implementation of abstract method from BaseRecord."""
+        return self._timestamp
     
     def get_utilization(self, resource_name: str) -> float:
         """Get utilization percentage for a resource"""

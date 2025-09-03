@@ -6,6 +6,7 @@ including NHS metrics, operational metrics, and custom visualizations.
 Single Responsibility: Only handles data visualization and plotting
 """
 
+import attr
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -18,33 +19,28 @@ import os
 from src.logger import logger
 
 
+@attr.s
 class PlottingService:
     """Centralized plotting service for all metrics visualization."""
     
-    def __init__(self, style: str = 'seaborn-v0_8', figsize: Tuple[int, int] = (12, 8)):
-        """Initialize plotting service with style and default figure size.
-        
-        Args:
-            style: Matplotlib style to use
-            figsize: Default figure size (width, height)
-        """
-        plt.style.use(style)
+    style: str = attr.ib(default='seaborn-v0_8')
+    default_figsize: Tuple[int, int] = attr.ib(default=(12, 8))
+    colors: Dict[str, str] = attr.ib(factory=lambda: {
+        'primary': '#2E86AB',
+        'secondary': '#A23B72', 
+        'success': '#F18F01',
+        'warning': '#C73E1D',
+        'info': '#6A994E',
+        'nhs_blue': '#005EB8',
+        'nhs_green': '#009639',
+        'nhs_red': '#DA020E'
+    })
+    metric_services: Dict[str, Any] = attr.ib(factory=dict)
+    
+    def __attrs_post_init__(self):
+        """Initialize plotting service with style and default figure size."""
+        plt.style.use(self.style)
         sns.set_palette("husl")
-        self.default_figsize = figsize
-        self.colors = {
-            'primary': '#2E86AB',
-            'secondary': '#A23B72', 
-            'success': '#F18F01',
-            'warning': '#C73E1D',
-            'info': '#6A994E',
-            'nhs_blue': '#005EB8',
-            'nhs_green': '#009639',
-            'nhs_red': '#DA020E'
-        }
-        
-        # Registry for metric services
-        self.metric_services: Dict[str, Any] = {}
-        
         logger.info("Plotting service initialized")
     
     def register_metric_service(self, name: str, service: Any) -> None:
