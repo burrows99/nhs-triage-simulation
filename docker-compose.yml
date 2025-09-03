@@ -2,50 +2,62 @@ services:
   # Ollama service for LLM inference
   ollama:
     image: ollama/ollama:latest
+    container_name: ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
     networks:
-      - triage-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 300s  # 5 minutes to allow model download
-    command: >
-      sh -c "ollama serve & 
-             sleep 10 && 
-             ollama pull hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q2_K && 
-             wait"
+      - nhs-network
 
-  # Hospital simulation service - runs main.py after ollama is ready
+  ollama-downloader:
+    image: curlimages/curl:latest
+    container_name: ollama-downloader
+    depends_on:
+      ollama:
+        condition: service_started
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to be ready...'
+        while ! curl -f http://ollama:11434/api/tags; do
+          echo 'Ollama not ready, waiting 5 seconds...'
+          sleep 5
+        done
+        echo 'Ollama is ready, downloading model...'
+        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:1b\"}' --max-time 1800
+        echo 'Model download completed'
+      "
+    networks:
+      - nhs-network
+    restart: "no"
+  # Hospital simulation service - runs main.py after model is downloaded
   hospital-simulation:
     image: python:3.11-slim
     depends_on:
-      ollama:
-        condition: service_healthy
+      ollama-downloader:
+        condition: service_completed_successfully
     volumes:
       - .:/app
-      - ./output:/app/output
+      - output_data:/app/output
       - ./logs:/app/logs
     working_dir: /app
     environment:
       - PYTHONPATH=/app
       - OLLAMA_API_URL=http://ollama:11434/api/v1
     networks:
-      - triage-network
+      - nhs-network
     command: >
       sh -c "pip install -r requirements.txt && 
              python main.py"
     restart: "no"
 
 networks:
-  triage-network:
+  nhs-network:
     driver: bridge
-
+    
 volumes:
   ollama_data:
+  output_data:
