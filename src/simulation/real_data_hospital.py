@@ -147,7 +147,7 @@ class SimpleHospital:
         self.triage_system = self.triage_system_param
         logger.info(f"Using provided triage system: {type(self.triage_system).__name__}")
         
-        self._validate_triage_system_connection()
+        # Triage system validation removed
         
         # Initialize Random Service for centralized random data generation
         logger.info("Initializing Random Service...")
@@ -244,111 +244,7 @@ class SimpleHospital:
     
 
     
-    def _initialize_triage_system(self, triage_type: str, **kwargs):
-        """Initialize the appropriate triage system based on configuration
-        
-        Args:
-            triage_type: Type of triage system ('manchester' or 'llm')
-            **kwargs: Configuration parameters
-            
-        Returns:
-            Configured triage system instance
-        """
-        logger.info(f"Initializing {triage_type.title()} Triage System...")
-        
-        if triage_type.lower() == 'llm':
-            return self._create_llm_triage_system(**kwargs)
-        else:
-            return self._create_manchester_triage_system(**kwargs)
-    
-    def _create_llm_triage_system(self, **kwargs):
-        """Create and configure LLM Triage System
-        
-        Args:
-            **kwargs: Configuration parameters
-            
-        Returns:
-            Configured LLM triage system
-        """
-        # Configure LLM system parameters
-        llm_params = {
-            'num_agents_per_type': kwargs.get('num_agents_per_type', 2),
-            'model': kwargs.get('llm_model', 'llama3.2:1b'),
-            'ollama_url': kwargs.get('ollama_url', 'http://localhost:11434')
-        }
-        
-        # Validate Ollama connection before creating system
-        if not self._validate_ollama_connection(llm_params['ollama_url'], llm_params['model']):
-            logger.warning("⚠️  Warning: Ollama validation failed, but continuing with LLM system creation")
-        
-        logger.warning("LLM Triage System not implemented, falling back to Manchester Triage System")
-        return self._create_manchester_triage_system(**kwargs)
-    
-    def _create_manchester_triage_system(self, **kwargs):
-        """Create and configure Manchester Triage System
-        
-        Args:
-            **kwargs: Configuration parameters
-            
-        Returns:
-            Configured Manchester triage system
-        """
-        triage_system = ManchesterTriageSystem()
-        logger.info("Manchester Triage System ready")
-        return triage_system
-    
-    def _validate_ollama_connection(self, ollama_url: str, model: str) -> bool:
-        """Validate Ollama service connection and model availability
-        
-        Args:
-            ollama_url: Ollama service URL
-            model: Model name to validate
-            
-        Returns:
-            True if connection and model are valid, False otherwise
-        """
-        try:
-            from src.services.ollama_service import OllamaService
-            
-            logger.info(f"🔌 Validating Ollama connection to {ollama_url}...")
-            ollama = OllamaService(base_url=ollama_url)
-            
-            # Test health check
-            if not ollama.health_check():
-                logger.error(f"❌ Ollama service at {ollama_url} is not responding")
-                return False
-            
-            logger.info(f"✅ Ollama service is running")
-            
-            # Test model availability
-            models = ollama.list_models()
-            if 'models' in models:
-                available_models = [m.get('name', '') for m in models['models']]
-                if model in available_models:
-                    logger.info(f"✅ Model '{model}' is available")
-                    return True
-                else:
-                    logger.warning(f"⚠️  Model '{model}' not found. Available: {available_models}")
-                    return False
-            else:
-                logger.warning(f"⚠️  Could not retrieve model list from Ollama")
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ Ollama validation failed: {str(e)}")
-            return False
-    
-    def _validate_triage_system_connection(self):
-        """Validate the initialized triage system connection"""
-        logger.info("🔍 Validating triage system connection...")
-        
-        try:
-            if self.triage_system.validate_connection():
-                logger.info("✅ Triage system validated successfully")
-            else:
-                logger.warning("⚠️  Warning: Triage system connection validation failed")
-        except Exception as e:
-            logger.warning(f"⚠️  Warning: Triage system validation error: {str(e)}")
+
     
     def _convert_symptoms_to_mts_format(self, raw_symptoms: Dict[str, str], flowchart_reason: str) -> Dict[str, str]:
         """Convert real patient symptoms to MTS flowchart format.
