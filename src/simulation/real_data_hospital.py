@@ -686,66 +686,49 @@ class SimpleHospital:
          }
     
     def _capture_monitoring_snapshot(self, context: str = ""):
-        """Capture a monitoring snapshot at the current simulation time.
+        """Hospital-specific monitoring snapshot using generalized simulation engine method.
         
         Args:
             context: Context description for debugging
         """
-        # Get actual resource usage directly from SimPy resources
-        triage_resource = self.simulation_engine.get_resource('nurses')
-        doctor_resource = self.simulation_engine.get_resource('doctors')
-        bed_resource = self.simulation_engine.get_resource('beds')
-        
-        # Track both triage (nurse function) and nurse (resource) separately
-        resource_usage = {
-            'triage': triage_resource.count,  # Nurses doing triage work
-            'nurse': triage_resource.count,   # Nurse resource utilization
-            'doctor': doctor_resource.count,
-            'bed': bed_resource.count
+        # Hospital-specific resource mappings
+        resource_mapping = {
+            'triage': 'nurses',  # Triage is performed by nurses
+            'nurse': 'nurses',   # Nurse resource utilization
+            'doctor': 'doctors',
+            'bed': 'beds'
         }
-        resource_capacity = {
+        
+        capacity_mapping = {
             'triage': self.nurses,
             'nurse': self.nurses,
             'doctor': self.doctors,
             'bed': self.beds
         }
-        queue_lengths = {
-            'triage': len(triage_resource.queue),
-            'nurse': len(triage_resource.queue),
-            'doctor': len(doctor_resource.queue),
-            'bed': len(bed_resource.queue)
-        }
         
-        # Debug logging for system snapshot
-        logger.debug(f"📸 SYNC SNAPSHOT | Time: {self.simulation_engine.env.now:.1f} | Context: {context} | "
-                    f"Usage: {resource_usage} | Capacity: {resource_capacity} | Queues: {queue_lengths}")
-        
-        # Calculate and log utilization percentages
-        utilization_debug = {}
-        for resource in resource_usage:
-            if resource in resource_capacity and resource_capacity[resource] > 0:
-                util_pct = (resource_usage[resource] / resource_capacity[resource]) * 100
-                utilization_debug[resource] = util_pct
-            else:
-                utilization_debug[resource] = 0
-        
-        logger.debug(f"📊 SYNC UTILIZATION | {context} | {utilization_debug}")
-        
-        # Record the snapshot
-        self.operation_metrics.record_system_snapshot(
-            timestamp=self.simulation_engine.env.now,
-            resource_usage=resource_usage,
-            resource_capacity=resource_capacity,
-            queue_lengths=queue_lengths,
-            entities_processed=self.patient_count
+        # Use generalized monitoring from simulation engine
+        self.simulation_engine.capture_monitoring_snapshot(
+            context=context,
+            resource_mapping=resource_mapping,
+            capacity_mapping=capacity_mapping,
+            metrics_recorder=self._record_hospital_metrics,
+            entity_count=self.patient_count
         )
+    
+    def _record_hospital_metrics(self, snapshot_data: dict):
+        """Hospital-specific metrics recording callback.
         
-        # Log current state for monitoring
-        logger.debug(f"Monitor | Time: {self.simulation_engine.env.now:6.1f} | {context} | "
-                   f"Triage: {triage_resource.count}/{self.nurses} (Q:{len(triage_resource.queue)}) | "
-                   f"Doctors: {doctor_resource.count}/{self.doctors} (Q:{len(doctor_resource.queue)}) | "
-                   f"Beds: {bed_resource.count}/{self.beds} (Q:{len(bed_resource.queue)}) | "
-                   f"Patients: {self.patient_count}")
+        Args:
+            snapshot_data: Snapshot data from simulation engine
+        """
+        # Record the snapshot in hospital operation metrics
+        self.operation_metrics.record_system_snapshot(
+            timestamp=snapshot_data['timestamp'],
+            resource_usage=snapshot_data['resource_usage'],
+            resource_capacity=snapshot_data['resource_capacity'],
+            queue_lengths=snapshot_data['queue_lengths'],
+            entities_processed=snapshot_data['entities_processed']
+        )
     
     def _get_simpy_resource_name(self, metrics_resource_name: str) -> str:
         """Map metrics resource names to SimPy resource names.

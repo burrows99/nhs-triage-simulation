@@ -256,6 +256,74 @@ class SimulationEngine:
         logger.debug(f"🔍 RESOURCE EVENT | Type: {event_type.upper()} | Resource: {resource_name} | "
                     f"Entity: {entity_id} | Time: {self.env.now:.1f} | Extra: {kwargs}")
     
+    def capture_monitoring_snapshot(self, context: str = "", resource_mapping: Dict[str, str] = None,
+                                  capacity_mapping: Dict[str, int] = None, 
+                                  metrics_recorder: Callable = None, entity_count: int = 0):
+        """Capture a monitoring snapshot at the current simulation time.
+        
+        Args:
+            context: Context description for debugging
+            resource_mapping: Mapping of logical resource names to SimPy resource names
+            capacity_mapping: Mapping of resource names to their capacities
+            metrics_recorder: Callback function to record the snapshot in domain-specific metrics
+            entity_count: Current count of entities processed
+        """
+        if not resource_mapping or not capacity_mapping:
+            logger.warning("No resource mappings provided for monitoring snapshot")
+            return
+            
+        # Get actual resource usage from SimPy resources
+        resource_usage = {}
+        resource_capacity = {}
+        queue_lengths = {}
+        
+        for logical_name, simpy_name in resource_mapping.items():
+            if simpy_name in self.simpy_resources:
+                resource = self.simpy_resources[simpy_name]
+                resource_usage[logical_name] = resource.count
+                resource_capacity[logical_name] = capacity_mapping.get(logical_name, 0)
+                queue_lengths[logical_name] = len(resource.queue)
+            else:
+                resource_usage[logical_name] = 0
+                resource_capacity[logical_name] = capacity_mapping.get(logical_name, 0)
+                queue_lengths[logical_name] = 0
+        
+        # Debug logging for system snapshot
+        logger.debug(f"📸 SYNC SNAPSHOT | Time: {self.env.now:.1f} | Context: {context} | "
+                    f"Usage: {resource_usage} | Capacity: {resource_capacity} | Queues: {queue_lengths}")
+        
+        # Calculate and log utilization percentages
+        utilization_debug = {}
+        for resource in resource_usage:
+            if resource in resource_capacity and resource_capacity[resource] > 0:
+                util_pct = (resource_usage[resource] / resource_capacity[resource]) * 100
+                utilization_debug[resource] = util_pct
+            else:
+                utilization_debug[resource] = 0
+        
+        logger.debug(f"📊 SYNC UTILIZATION | {context} | {utilization_debug}")
+        
+        # Use callback for domain-specific metrics recording
+        if metrics_recorder:
+            metrics_recorder({
+                'timestamp': self.env.now,
+                'resource_usage': resource_usage,
+                'resource_capacity': resource_capacity,
+                'queue_lengths': queue_lengths,
+                'entities_processed': entity_count,
+                'context': context
+            })
+        
+        # Log current state for monitoring
+        resource_status = []
+        for logical_name, simpy_name in resource_mapping.items():
+            if simpy_name in self.simpy_resources:
+                resource = self.simpy_resources[simpy_name]
+                capacity = capacity_mapping.get(logical_name, 0)
+                resource_status.append(f"{logical_name.title()}: {resource.count}/{capacity} (Q:{len(resource.queue)})")
+        
+        logger.debug(f"Monitor | Time: {self.env.now:6.1f} | {context} | {' | '.join(resource_status)} | Entities: {entity_count}")}]}}}
+    
     def get_monitoring_summary(self) -> Dict[str, Any]:
         """Get summary of monitoring data collected during simulation.
         
