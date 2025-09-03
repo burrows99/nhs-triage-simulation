@@ -95,12 +95,42 @@ class TriageResult:
         Returns:
             TriageResult instance
         """
+        # Build comprehensive MTS reasoning from available fields
+        reasoning_parts = []
+        
+        # Add flowchart information
+        flowchart = mts_result.get('flowchart_used', 'unknown')
+        reasoning_parts.append(f"Flowchart: {flowchart}")
+        
+        # Add fuzzy score with interpretation
+        fuzzy_score = mts_result.get('fuzzy_score', 0.0)
+        reasoning_parts.append(f"Fuzzy Score: {fuzzy_score:.3f}")
+        
+        # Add symptoms processed information
+        symptoms_processed = mts_result.get('symptoms_processed', {})
+        if symptoms_processed:
+            symptom_count = len(symptoms_processed)
+            reasoning_parts.append(f"Symptoms Evaluated: {symptom_count}")
+        
+        # Add numeric inputs summary
+        numeric_inputs = mts_result.get('numeric_inputs', [])
+        if numeric_inputs:
+            reasoning_parts.append(f"Numeric Inputs: {len(numeric_inputs)} values")
+        
+        # Add triage category explanation
+        category = mts_result['triage_category']
+        wait_time = mts_result['wait_time']
+        reasoning_parts.append(f"Result: {category} category with {wait_time} target time")
+        
+        # Combine all reasoning parts
+        mts_reasoning = "MTS Assessment - " + ", ".join(reasoning_parts)
+        
         return cls(
             triage_category=mts_result['triage_category'],
             priority_score=mts_result['priority_score'],
             wait_time=mts_result['wait_time'],
             confidence=1.0,  # MTS is deterministic
-            reasoning=f"MTS flowchart: {mts_result.get('flowchart_used', 'unknown')}, fuzzy score: {mts_result.get('fuzzy_score', 0.0):.3f}",
+            reasoning=mts_reasoning,
             system_type="MTS",
             flowchart_used=mts_result.get('flowchart_used'),
             fuzzy_score=mts_result.get('fuzzy_score'),
@@ -164,53 +194,7 @@ class TriageResult:
         """
         return self.priority_score <= 2
     
-    def is_emergency(self) -> bool:
-        """Check if patient is emergency case (RED only).
-        
-        Returns:
-            True if emergency (priority 1), False otherwise
-        """
-        return self.priority_score == 1
-    
-    def get_nhs_target_time(self) -> int:
-        """Get NHS target time for this triage category.
-        
-        Returns:
-            Target time in minutes according to NHS standards
-        """
-        # NHS target times by priority
-        nhs_targets = {
-            1: 0,    # RED: Immediate
-            2: 10,   # ORANGE: 10 minutes
-            3: 60,   # YELLOW: 1 hour
-            4: 120,  # GREEN: 2 hours
-            5: 240   # BLUE: 4 hours
-        }
-        return nhs_targets.get(self.priority_score, 240)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for serialization.
-        
-        Returns:
-            Dictionary representation of triage result
-        """
-        return {
-            'triage_category': self.triage_category,
-            'priority_score': self.priority_score,
-            'wait_time': self.wait_time,
-            'confidence': self.confidence,
-            'reasoning': self.reasoning,
-            'system_type': self.system_type,
-            'flowchart_used': self.flowchart_used,
-            'fuzzy_score': self.fuzzy_score,
-            'symptoms_processed': self.symptoms_processed,
-            'numeric_inputs': self.numeric_inputs,
-            'timestamp': self.timestamp.isoformat(),
-            'wait_time_minutes': self.get_wait_time_minutes(),
-            'is_urgent': self.is_urgent(),
-            'is_emergency': self.is_emergency(),
-            'nhs_target_time': self.get_nhs_target_time()
-        }
+
     
     def __str__(self) -> str:
         """String representation for logging and debugging."""

@@ -80,7 +80,7 @@ class RandomService:
         else:  # mixed diagnostics
             return random.uniform(10, 30)  # Combined realistic range
     
-    def should_admit_patient(self, category: str) -> bool:
+    def should_admit_patient(self, triage_input) -> bool:
         """Determine if high-priority patient should be admitted.
         
         Based on NHS data showing higher admission rates for urgent categories.
@@ -90,13 +90,28 @@ class RandomService:
         - NHS England A&E Statistics: Higher acuity patients more likely to be admitted
         
         Args:
-            category: Triage category
+            triage_input: TriageResult object or category string (for backward compatibility)
             
         Returns:
             True if patient should be admitted
         """
-        if category in [TriageCategories.RED, TriageCategories.ORANGE]:
-            return random.random() < 0.5  # NHS England A&E Statistics: Conservative 50% admission rate for urgent cases
+        # Handle both TriageResult objects and raw category strings
+        if hasattr(triage_input, 'triage_category'):
+            # TriageResult object
+            category = triage_input.triage_category
+            # Use additional TriageResult data for more informed decisions
+            if triage_input.is_urgent():  # RED or ORANGE
+                base_rate = 0.5
+                # Adjust based on confidence if available
+                confidence_factor = getattr(triage_input, 'confidence', 1.0)
+                adjusted_rate = base_rate * confidence_factor
+                return random.random() < adjusted_rate
+        else:
+            # Backward compatibility: raw category string
+            category = triage_input
+            if category in [TriageCategories.RED, TriageCategories.ORANGE]:
+                return random.random() < 0.5  # NHS England A&E Statistics: Conservative 50% admission rate for urgent cases
+        
         return False  # NHS data: Lower acuity patients typically discharged
     
     def should_escalate_to_emergency(self) -> bool:
@@ -110,15 +125,24 @@ class RandomService:
         """
         return random.random() < 0.03  # 3% chance of emergency escalation
     
-    def get_diagnostic_test_type(self, category: str) -> str:
+    def get_diagnostic_test_type(self, triage_input) -> str:
         """Get appropriate diagnostic test type based on triage category.
         
         Args:
-            category: Triage category (RED, ORANGE, YELLOW, GREEN, BLUE)
+            triage_input: TriageResult object or category string (for backward compatibility)
             
         Returns:
             Diagnostic test type from DiagnosticTestTypes
         """
+        # Handle both TriageResult objects and raw category strings
+        if hasattr(triage_input, 'triage_category'):
+            # TriageResult object - can use additional data for more informed decisions
+            category = triage_input.triage_category
+            # Could potentially use fuzzy_score, confidence, or system_type for enhanced logic
+        else:
+            # Backward compatibility: raw category string
+            category = triage_input
+        
         if category == TriageCategories.RED:
             return random.choice([DiagnosticTestTypes.ECG, DiagnosticTestTypes.BLOOD, DiagnosticTestTypes.MIXED])
         elif category == TriageCategories.ORANGE:
@@ -161,14 +185,14 @@ class RandomService:
         """
         return random.uniform(20, 45)  # NHS England & Clinical practice: Discharge documentation 20-45 minutes
     
-    def determine_patient_disposition(self, category: str) -> tuple[str, bool, float]:
+    def determine_patient_disposition(self, triage_input) -> tuple[str, bool, float]:
         """Determine patient disposition (admission or discharge) with processing time.
         
         Based on conservative clinical practice estimates rather than
         specific research data for processing times.
         
         Args:
-            category: Triage category
+            triage_input: TriageResult object or category string (for backward compatibility)
             
         Returns:
             Tuple of (disposition, admitted, processing_time)
@@ -176,7 +200,8 @@ class RandomService:
             - admitted: Boolean indicating admission status
             - processing_time: Time in minutes for disposition processing
         """
-        if self.should_admit_patient(category):
+        # Use TriageResult-aware admission logic
+        if self.should_admit_patient(triage_input):
             # High priority patients - conservative admission rate
             disposition = 'admitted'
             admitted = True
@@ -259,21 +284,42 @@ class RandomService:
         min_delay, max_delay = allocation_delays[resource_type]
         return random.uniform(min_delay, max_delay)
     
-    def get_handover_delay(self, resource_type: str, priority: int = 5) -> float:
+    def get_handover_delay(self, resource_type: str, triage_input = None) -> float:
         """Get realistic handover delay based on patient priority and resource type.
         
         Higher priority patients get faster handovers but still have minimum realistic delays.
         
         Args:
             resource_type: Type of resource ('doctor', 'bed', 'nurse')
-            priority: Patient priority (1=RED, 2=ORANGE, 3=YELLOW, 4=GREEN, 5=BLUE)
+            triage_input: TriageResult object, priority integer, or None (for backward compatibility)
             
         Returns:
             Handover delay in minutes
         """
         base_delay = self.get_resource_allocation_delay(resource_type)
-        
-        # Priority adjustment: higher priority = faster handover but still realistic minimum
+        priority, confidence_factor = self._extract_priority_and_confidence(triage_input)
+        multiplier = self._calculate_priority_multiplier(priority, confidence_factor, triage_input)
+        adjusted_delay = base_delay * multiplier
+        return self._apply_minimum_delay(adjusted_delay, priority)
+    
+    def _extract_priority_and_confidence(self, triage_input):
+        """Extract priority and confidence from different input types."""
+        if hasattr(triage_input, 'priority_score'):
+            # TriageResult object
+            priority = triage_input.priority_score
+            confidence_factor = getattr(triage_input, 'confidence', 1.0)
+        elif isinstance(triage_input, int):
+            # Raw priority integer (backward compatibility)
+            priority = triage_input
+            confidence_factor = 1.0
+        else:
+            # Default case
+            priority = 5
+            confidence_factor = 1.0
+        return priority, confidence_factor
+    
+    def _calculate_priority_multiplier(self, priority, confidence_factor, triage_input):
+        """Calculate delay multiplier based on priority and confidence."""
         priority_multipliers = {
             1: 0.5,  # RED: Fastest handover but still 50% of base delay
             2: 0.7,  # ORANGE: Quick handover
@@ -283,9 +329,15 @@ class RandomService:
         }
         
         multiplier = priority_multipliers.get(priority, 1.0)
-        adjusted_delay = base_delay * multiplier
         
-        # Ensure minimum realistic delay even for highest priority
+        # Adjust for confidence if using TriageResult
+        if hasattr(triage_input, 'confidence') and priority <= 2:  # RED/ORANGE
+            multiplier *= (0.8 + 0.2 * confidence_factor)  # 0.8-1.0 range
+        
+        return multiplier
+    
+    def _apply_minimum_delay(self, adjusted_delay, priority):
+        """Apply minimum realistic delay constraints."""
         min_realistic_delay = 0.5 if priority == 1 else 1.0
         return max(adjusted_delay, min_realistic_delay)
     

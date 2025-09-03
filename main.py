@@ -41,7 +41,7 @@ def main():
         
         hospital = SimpleHospital(
             csv_folder='./output/csv',
-            triage_system=llm_triage,  # Using LLM triage system instead of MTS
+            triage_system=manchester_triage,  # Using LLM triage system instead of MTS
             sim_duration=480,    # 8 hours
             arrival_rate=40,     # 40 patients/hour (realistic rate)
             delay_scaling=0.2,  # 1 real second = 0.2 simulation minutes

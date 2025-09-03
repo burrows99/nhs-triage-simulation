@@ -492,7 +492,7 @@ class SimpleHospital:
         # Diagnostics stage (optional)
         diagnostics_start = self.simulation_engine.env.now
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🔬 Patient #{patient_num}: Checking for diagnostics at {self.simulation_engine.format_sim_time(diagnostics_start)}")
-        yield from self._process_diagnostics(category)
+        yield from self._process_diagnostics(triage_result)
         
         if self.simulation_engine.env.now > diagnostics_start:
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🧪 Patient #{patient_num}: Completed diagnostics at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)} (Duration: {self.simulation_engine.env.now - diagnostics_start:.1f}min)")
@@ -502,7 +502,7 @@ class SimpleHospital:
         # Disposition stage
         disposition_start = self.simulation_engine.env.now
         self.simulation_engine.log_with_sim_time(logging.INFO, f"📋 Patient #{patient_num}: Starting disposition at {self.simulation_engine.format_sim_time(disposition_start)}")
-        disposition, admitted = yield from self._process_disposition(category, priority)
+        disposition, admitted = yield from self._process_disposition(triage_result)
         
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient #{patient_num}: Disposition decided - {disposition.upper()} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
         
@@ -563,7 +563,8 @@ class SimpleHospital:
             
             # Add realistic triage setup delay even when nurse is immediately available
             triage_setup_delay = self.random_service.get_resource_allocation_delay('triage')
-            yield self.simulation_engine.env.timeout(triage_setup_delay)
+            yield from self.simulation_engine.enhanced_yield_with_monitoring(
+                triage_setup_delay, "triage setup", self._capture_monitoring_snapshot)
             
             triage_service_start = self.simulation_engine.env.now
             total_wait_time = triage_service_start - triage_start
@@ -622,111 +623,130 @@ class SimpleHospital:
     def _process_doctor_assessment(self, patient, category, priority, triage_result, patient_num):
         """Process doctor assessment stage."""
         assessment_start = self.simulation_engine.env.now
-        # Record treatment start (Synthea models don't have record_treatment_start method)
-        # Treatment timing is tracked in NHS metrics instead
         self.nhs_metrics.record_treatment_start(patient, assessment_start)
         
+        # Acquire doctor resource
+        yield from self._acquire_doctor_resource(patient, triage_result, patient_num, assessment_start)
+        
+        # Calculate and perform assessment
+        assessment_time = self._calculate_assessment_time(triage_result)
+        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient #{patient_num}: Doctor assessment will take {assessment_time:.1f}min")
+        
+        yield from self._perform_doctor_assessment(assessment_time, patient, triage_result, patient_num, assessment_start)
+    
+    def _acquire_doctor_resource(self, patient, triage_result, patient_num, assessment_start):
+        """Acquire doctor resource with proper logging and delays."""
         doctor_resource = self.simulation_engine.get_resource('doctors')
+        priority = triage_result.priority_score
         self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Waiting for doctor at {self.simulation_engine.format_sim_time(assessment_start)} (Priority: {priority}, Queue: {len(doctor_resource.queue)} waiting)")
         
-        # Triage system resource updates removed (HospitalResources class not available)
-        
         with doctor_resource.request(priority=priority) as req:
-            # Record resource request event
             self.simulation_engine.record_resource_event(
                 'request', 'doctor', patient.Id, self._record_hospital_event, 
                 priority=priority, queue_length=len(doctor_resource.queue))
             
             yield req
-            resource_acquired_time = self.simulation_engine.env.now
-            queue_wait_time = resource_acquired_time - assessment_start
-            
-            # Add realistic handover delay even when resource is immediately available
-            handover_delay = self.random_service.get_handover_delay('doctor', priority)
-            yield self.simulation_engine.env.timeout(handover_delay)
-            
-            assessment_service_start = self.simulation_engine.env.now
-            total_wait_time = assessment_service_start - assessment_start
-            
-            # Record resource acquisition event with total wait time
-            self.simulation_engine.record_resource_event(
-                'acquire', 'doctor', patient.Id, self._record_hospital_event, 
-                wait_time=total_wait_time, priority=priority)
-            
-            # Capture monitoring snapshot right after doctor resource acquisition
-            self._capture_monitoring_snapshot("doctor resource acquired")
-            
-            if queue_wait_time > 0.1:
-                self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient #{patient_num}: Started doctor assessment at {self.simulation_engine.format_sim_time(assessment_service_start)} (Queue wait: {queue_wait_time:.1f}min + Handover: {handover_delay:.1f}min = Total: {total_wait_time:.1f}min)")
-            else:
-                self.simulation_engine.log_with_sim_time(logging.INFO, f"👨‍⚕️ Patient #{patient_num}: Started doctor assessment at {self.simulation_engine.format_sim_time(assessment_service_start)} (Handover delay: {handover_delay:.1f}min)")
+            yield from self._handle_doctor_handover(patient, triage_result, patient_num, assessment_start)
+    
+    def _handle_doctor_handover(self, patient, triage_result, patient_num, assessment_start):
+        """Handle doctor handover process with delays and logging."""
+        resource_acquired_time = self.simulation_engine.env.now
+        queue_wait_time = resource_acquired_time - assessment_start
         
-        # Use MTS priority_score for more accurate assessment time calculation
-        mts_priority = triage_result.get('priority_score', 5)
-        mts_fuzzy_score = triage_result.get('fuzzy_score', 5.0)
-        
-        # Calculate assessment time based on MTS priority and fuzzy score
-        # Lower priority numbers and fuzzy scores = more urgent = longer assessment time
-        if mts_priority == 1:  # RED - Critical
-            assessment_time = random.uniform(10, 25)  # Complex resuscitation
-        elif mts_priority == 2:  # ORANGE - Very urgent
-            assessment_time = random.uniform(15, 35)  # Detailed assessment
-        elif mts_priority == 3:  # YELLOW - Urgent
-            assessment_time = random.uniform(20, 45)  # Standard assessment
-        elif mts_priority == 4:  # GREEN - Standard
-            assessment_time = random.uniform(25, 50)  # Routine assessment
-        else:  # BLUE - Non-urgent
-            assessment_time = random.uniform(15, 30)  # Minor conditions
-            
-        # Adjust based on fuzzy score for more precision
-        urgency_factor = max(0.5, (6.0 - mts_fuzzy_score) / 5.0)  # More urgent = higher factor
-        assessment_time *= urgency_factor
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient #{patient_num}: Doctor assessment will take {assessment_time:.1f}min")
-        
+        # Add realistic handover delay
+        handover_delay = self.random_service.get_handover_delay('doctor', triage_result)
         yield from self.simulation_engine.enhanced_yield_with_monitoring(
-                assessment_time, "doctor assessment", self._capture_monitoring_snapshot)
+            handover_delay, "doctor handover", self._capture_monitoring_snapshot)
+        
+        assessment_service_start = self.simulation_engine.env.now
+        total_wait_time = assessment_service_start - assessment_start
+        priority = triage_result.priority_score
+        
+        self.simulation_engine.record_resource_event(
+            'acquire', 'doctor', patient.Id, self._record_hospital_event, 
+            wait_time=total_wait_time, priority=priority)
+        
+        self._capture_monitoring_snapshot("doctor resource acquired")
+        self._log_doctor_start(patient_num, assessment_service_start, queue_wait_time, handover_delay, total_wait_time)
+    
+    def _log_doctor_start(self, patient_num, start_time, queue_wait, handover_delay, total_wait):
+        """Log doctor assessment start with appropriate detail level."""
+        if queue_wait > 0.1:
+            self.simulation_engine.log_with_sim_time(logging.INFO, 
+                f"👨‍⚕️ Patient #{patient_num}: Started doctor assessment at {self.simulation_engine.format_sim_time(start_time)} "
+                f"(Queue wait: {queue_wait:.1f}min + Handover: {handover_delay:.1f}min = Total: {total_wait:.1f}min)")
+        else:
+            self.simulation_engine.log_with_sim_time(logging.INFO, 
+                f"👨‍⚕️ Patient #{patient_num}: Started doctor assessment at {self.simulation_engine.format_sim_time(start_time)} "
+                f"(Handover delay: {handover_delay:.1f}min)")
+    
+    def _calculate_assessment_time(self, triage_result):
+        """Calculate doctor assessment time based on triage result."""
+        priority = triage_result.priority_score
+        fuzzy_score = triage_result.fuzzy_score if triage_result.fuzzy_score is not None else 5.0
+        
+        # Base assessment times by priority
+        time_ranges = {
+            1: (10, 25),  # RED - Critical
+            2: (15, 35),  # ORANGE - Very urgent
+            3: (20, 45),  # YELLOW - Urgent
+            4: (25, 50),  # GREEN - Standard
+            5: (15, 30)   # BLUE - Non-urgent
+        }
+        
+        min_time, max_time = time_ranges.get(priority, (20, 40))
+        assessment_time = random.uniform(min_time, max_time)
+        
+        # Adjust based on fuzzy score for more precision
+        urgency_factor = max(0.5, (6.0 - fuzzy_score) / 5.0)
+        return assessment_time * urgency_factor
+    
+    def _perform_doctor_assessment(self, assessment_time, patient, triage_result, patient_num, assessment_start):
+        """Perform the actual doctor assessment with monitoring."""
+        yield from self.simulation_engine.enhanced_yield_with_monitoring(
+            assessment_time, "doctor assessment", self._capture_monitoring_snapshot)
         
         assessment_end = self.simulation_engine.env.now
+        priority = triage_result.priority_score
         
-        # Capture monitoring snapshot right before doctor resource release
         self._capture_monitoring_snapshot("doctor resource before release")
-        
-        # Record resource release event
         self.simulation_engine.record_resource_event(
             'release', 'doctor', patient.Id, self._record_hospital_event, 
             service_time=assessment_time, priority=priority)
         
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient #{patient_num}: Completed doctor assessment at {self.simulation_engine.format_sim_time(assessment_end)} (Total assessment time: {assessment_end - assessment_start:.1f}min)")
+        self.simulation_engine.log_with_sim_time(logging.INFO, 
+            f"✅ Patient #{patient_num}: Completed doctor assessment at {self.simulation_engine.format_sim_time(assessment_end)} "
+            f"(Total assessment time: {assessment_end - assessment_start:.1f}min)")
     
-    def _process_diagnostics(self, category):
+    def _process_diagnostics(self, triage_result):
         """Process optional diagnostics stage with specific test types.
         
         Uses NHS official timing data for different diagnostic procedures.
         """
         if self.random_service.should_perform_diagnostics():
-            # Determine diagnostic type based on triage category and clinical needs
-            diagnostic_type = self._determine_diagnostic_type(category)
+            # Determine diagnostic type based on triage result and clinical needs
+            diagnostic_type = self._determine_diagnostic_type(triage_result)
             diagnostics_time = self.random_service.get_diagnostics_time(diagnostic_type)
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🔬 Performing {diagnostic_type} diagnostics (Duration: {diagnostics_time:.1f}min)")
             yield from self.simulation_engine.enhanced_yield_with_monitoring(
                 diagnostics_time, "diagnostics", self._capture_monitoring_snapshot)
     
-    def _determine_diagnostic_type(self, category):
-        """Determine appropriate diagnostic test type based on triage category.
+    def _determine_diagnostic_type(self, triage_result):
+        """Determine appropriate diagnostic test type based on triage result.
         
         Returns specific test type for NHS evidence-based timing.
         """
-        # Use RandomService for consistent diagnostic test selection
-        return self.random_service.get_diagnostic_test_type(category)
+        # Use RandomService for consistent diagnostic test selection with TriageResult
+        return self.random_service.get_diagnostic_test_type(triage_result)
     
-    def _process_disposition(self, category, priority):
+    def _process_disposition(self, triage_result):
         """Process patient disposition using NHS evidence-based timing.
         
         Uses official NHS sources for admission and discharge processing times.
         """
-        # Determine admission decision using NHS-based logic
-        admitted = self.random_service.should_admit_patient(category)
+        # Determine admission decision using NHS-based logic with TriageResult
+        admitted = self.random_service.should_admit_patient(triage_result)
         
         if admitted:
             # Admission process with NHS evidence-based timing
@@ -738,16 +758,17 @@ class SimpleHospital:
             # Bed allocation process
             bed_start = self.simulation_engine.env.now
             bed_resource = self.simulation_engine.get_resource('beds')
-            self.simulation_engine.log_with_sim_time(logging.INFO, f"🛏️  Waiting for bed at {self.simulation_engine.format_sim_time(bed_start)} (Priority: {priority}, Available beds: {bed_resource.capacity - bed_resource.count})")
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"🛏️  Waiting for bed at {self.simulation_engine.format_sim_time(bed_start)} (Priority: {triage_result.priority_score}, Available beds: {bed_resource.capacity - bed_resource.count})")
             
-            with bed_resource.request(priority=priority) as req:
+            with bed_resource.request(priority=triage_result.priority_score) as req:
                 yield req
                 resource_acquired_time = self.simulation_engine.env.now
                 queue_wait_time = resource_acquired_time - bed_start
                 
                 # Add realistic bed preparation delay even when bed is immediately available
-                bed_prep_delay = self.random_service.get_handover_delay('bed', priority)
-                yield self.simulation_engine.env.timeout(bed_prep_delay)
+                bed_prep_delay = self.random_service.get_handover_delay('bed', triage_result)
+                yield from self.simulation_engine.enhanced_yield_with_monitoring(
+                    bed_prep_delay, "bed preparation", self._capture_monitoring_snapshot)
                 
                 bed_service_start = self.simulation_engine.env.now
                 total_wait_time = bed_service_start - bed_start
@@ -815,7 +836,8 @@ class SimpleHospital:
             interarrival = self.random_service.get_patient_arrival_interval(self.arrival_rate)
             
             self.simulation_engine.log_with_sim_time(logging.DEBUG, f"⏰ Next patient arrival in {interarrival:.1f}min (at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now + interarrival)})")
-            yield self.simulation_engine.env.timeout(interarrival)
+            yield from self.simulation_engine.enhanced_yield_with_monitoring(
+                interarrival, "patient arrival interval", self._capture_monitoring_snapshot)
             
             patient_num += 1
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🆕 Generating patient #{patient_num} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")

@@ -93,52 +93,55 @@ class SimulationEngine:
         if not self.env:
             raise RuntimeError("Simulation environment not initialized. Call initialize_environment() first.")
         
+        self._log_simulation_start()
+        self._execute_simulation_loop()
+        return self._generate_simulation_results()
+    
+    def _log_simulation_start(self):
+        """Log simulation startup information."""
         logger.info(f"🚀 STARTING SIMULATION: {self.duration/60:.1f}h duration with {self.arrival_rate} arrivals/hour")
         logger.info(f"▶️  Simulation started at {self.format_sim_time(self.env.now)}")
         logger.info(f"📊 Real-time monitoring enabled (5-minute intervals)")
-        
-        # Run simulation with periodic progress updates
-        start_time = self.env.now
+    
+    def _execute_simulation_loop(self):
+        """Execute the main simulation loop with progress tracking."""
         progress_interval = self.duration / 10  # Log progress every 10% of simulation
         next_progress = progress_interval
         
         while self.env.now < self.duration:
-            # Run until next progress point or end
             run_until = min(next_progress, self.duration)
             
-            # Only run if we haven't reached the end yet
             if self.env.now < run_until:
                 self.env.run(until=run_until)
             
-            # Log progress if we hit a progress milestone
             if self.env.now >= next_progress and self.env.now < self.duration:
-                progress_pct = (self.env.now / self.duration) * 100
-                logger.info(f"📊 PROGRESS: {progress_pct:.0f}% complete at {self.format_sim_time(self.env.now)} | Entities processed: {self.entity_count}")
-                
-                # Log resource utilization
-                resource_status = []
-                for name, resource in self.simpy_resources.items():
-                    queue_len = len(resource.queue)
-                    resource_status.append(f"{name.title()} queue: {queue_len}")
-                logger.info(f"📈 Resource utilization: {', '.join(resource_status)}")
-                
+                self._log_progress_update(next_progress)
                 next_progress += progress_interval
             
-            # Break if we've reached the end
             if self.env.now >= self.duration:
                 break
+    
+    def _log_progress_update(self, next_progress):
+        """Log progress update with resource utilization."""
+        progress_pct = (self.env.now / self.duration) * 100
+        logger.info(f"📊 PROGRESS: {progress_pct:.0f}% complete at {self.format_sim_time(self.env.now)} | Entities processed: {self.entity_count}")
         
-        # Calculate results
+        resource_status = self._get_resource_status_summary()
+        logger.info(f"📈 Resource utilization: {', '.join(resource_status)}")
+    
+    def _get_resource_status_summary(self):
+        """Get current resource status for logging."""
+        resource_status = []
+        for name, resource in self.simpy_resources.items():
+            queue_len = len(resource.queue)
+            resource_status.append(f"{name.title()} queue: {queue_len}")
+        return resource_status
+    
+    def _generate_simulation_results(self):
+        """Generate and log final simulation results."""
         avg_time = self.total_time / self.entity_count if self.entity_count > 0 else 0
         
-        logger.info(f"🏁 SIMULATION COMPLETE at {self.format_sim_time(self.env.now)}!")
-        logger.info(f"📊 Final Results: {self.entity_count} entities processed, average time: {avg_time:.1f}min")
-        
-        # Log final resource state
-        resource_states = []
-        for name, resource in self.simpy_resources.items():
-            resource_states.append(f"{name.title()}: {resource.count}/{resource.capacity}")
-        logger.info(f"🏭 Final resource state: {', '.join(resource_states)}")
+        self._log_simulation_completion(avg_time)
         
         return {
             'total_entities': self.entity_count,
@@ -149,6 +152,16 @@ class SimulationEngine:
             'final_resource_state': {name: {'count': res.count, 'capacity': res.capacity} 
                                    for name, res in self.simpy_resources.items()}
         }
+    
+    def _log_simulation_completion(self, avg_time):
+        """Log simulation completion information."""
+        logger.info(f"🏁 SIMULATION COMPLETE at {self.format_sim_time(self.env.now)}!")
+        logger.info(f"📊 Final Results: {self.entity_count} entities processed, average time: {avg_time:.1f}min")
+        
+        resource_states = []
+        for name, resource in self.simpy_resources.items():
+            resource_states.append(f"{name.title()}: {resource.count}/{resource.capacity}")
+        logger.info(f"🏭 Final resource state: {', '.join(resource_states)}")
     
     def update_entity_completion(self, total_time: float, category: str = None):
         """Update counters when an entity completes its journey.
@@ -271,8 +284,16 @@ class SimulationEngine:
         if not resource_mapping or not capacity_mapping:
             logger.warning("No resource mappings provided for monitoring snapshot")
             return
-            
-        # Get actual resource usage from SimPy resources
+        
+        snapshot_data = self._collect_resource_data(resource_mapping, capacity_mapping)
+        self._log_snapshot_info(context, snapshot_data)
+        utilization_data = self._calculate_utilization(snapshot_data)
+        self._log_utilization_info(context, utilization_data)
+        self._record_metrics(metrics_recorder, snapshot_data, entity_count, context)
+        self._log_detailed_status(resource_mapping, capacity_mapping, context, entity_count)
+    
+    def _collect_resource_data(self, resource_mapping, capacity_mapping):
+        """Collect current resource usage and queue data."""
         resource_usage = {}
         resource_capacity = {}
         queue_lengths = {}
@@ -288,38 +309,52 @@ class SimulationEngine:
                 resource_capacity[logical_name] = capacity_mapping.get(logical_name, 0)
                 queue_lengths[logical_name] = 0
         
-        # Snapshot logging for monitoring
+        return {
+            'resource_usage': resource_usage,
+            'resource_capacity': resource_capacity,
+            'queue_lengths': queue_lengths
+        }
+    
+    def _log_snapshot_info(self, context, snapshot_data):
+        """Log basic snapshot information."""
         logger.info(f"📸 SNAPSHOT CAPTURED | Time: {self.env.now:.1f} | Context: {context}")
-        logger.info(f"   📊 Resource Usage: {resource_usage}")
-        logger.info(f"   🏥 Resource Capacity: {resource_capacity}")
-        logger.info(f"   📋 Queue Lengths: {queue_lengths}")
+        logger.info(f"   📊 Resource Usage: {snapshot_data['resource_usage']}")
+        logger.info(f"   🏥 Resource Capacity: {snapshot_data['resource_capacity']}")
+        logger.info(f"   📋 Queue Lengths: {snapshot_data['queue_lengths']}")
         logger.debug(f"📸 SYNC SNAPSHOT | Time: {self.env.now:.1f} | Context: {context} | "
-                    f"Usage: {resource_usage} | Capacity: {resource_capacity} | Queues: {queue_lengths}")
-        
-        # Calculate and log utilization percentages
+                    f"Usage: {snapshot_data['resource_usage']} | Capacity: {snapshot_data['resource_capacity']} | Queues: {snapshot_data['queue_lengths']}")
+    
+    def _calculate_utilization(self, snapshot_data):
+        """Calculate resource utilization percentages."""
         utilization_debug = {}
-        for resource in resource_usage:
-            if resource in resource_capacity and resource_capacity[resource] > 0:
-                util_pct = (resource_usage[resource] / resource_capacity[resource]) * 100
+        for resource in snapshot_data['resource_usage']:
+            capacity = snapshot_data['resource_capacity'].get(resource, 0)
+            if capacity > 0:
+                util_pct = (snapshot_data['resource_usage'][resource] / capacity) * 100
                 utilization_debug[resource] = util_pct
             else:
                 utilization_debug[resource] = 0
-        
-        logger.info(f"   📊 Resource Utilization: {utilization_debug}")
-        logger.debug(f"📊 SYNC UTILIZATION | {context} | {utilization_debug}")
-        
-        # Use callback for domain-specific metrics recording
+        return utilization_debug
+    
+    def _log_utilization_info(self, context, utilization_data):
+        """Log utilization information."""
+        logger.info(f"   📊 Resource Utilization: {utilization_data}")
+        logger.debug(f"📊 SYNC UTILIZATION | {context} | {utilization_data}")
+    
+    def _record_metrics(self, metrics_recorder, snapshot_data, entity_count, context):
+        """Record metrics using the provided callback."""
         if metrics_recorder:
             metrics_recorder({
                 'timestamp': self.env.now,
-                'resource_usage': resource_usage,
-                'resource_capacity': resource_capacity,
-                'queue_lengths': queue_lengths,
+                'resource_usage': snapshot_data['resource_usage'],
+                'resource_capacity': snapshot_data['resource_capacity'],
+                'queue_lengths': snapshot_data['queue_lengths'],
                 'entities_processed': entity_count,
                 'context': context
             })
-        
-        # Log current state for monitoring
+    
+    def _log_detailed_status(self, resource_mapping, capacity_mapping, context, entity_count):
+        """Log detailed resource status for debugging."""
         resource_status = []
         for logical_name, simpy_name in resource_mapping.items():
             if simpy_name in self.simpy_resources:
