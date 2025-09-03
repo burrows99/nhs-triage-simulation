@@ -236,10 +236,10 @@ class Observation(BaseRecord):
     """Observation model corresponding to observations.csv using attrs for consistency."""
     DATE: str = attr.ib(validator=attr.validators.instance_of(str))
     PATIENT: str = attr.ib(validator=attr.validators.instance_of(str))
-    ENCOUNTER: str = attr.ib(validator=attr.validators.instance_of(str))
     CODE: str = attr.ib(converter=str, validator=attr.validators.instance_of(str))
     DESCRIPTION: str = attr.ib(validator=attr.validators.instance_of(str))
     TYPE: str = attr.ib(validator=attr.validators.instance_of(str))
+    ENCOUNTER: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     VALUE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     UNITS: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
@@ -265,11 +265,11 @@ class Organization(BaseRecord):
     ADDRESS: str = attr.ib(validator=attr.validators.instance_of(str))
     CITY: str = attr.ib(validator=attr.validators.instance_of(str))
     STATE: str = attr.ib(validator=attr.validators.instance_of(str))
-    ZIP: str = attr.ib(converter=lambda x: str(x) if x is not None and str(x) != 'nan' else "", validator=attr.validators.instance_of(str))
     LAT: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     LON: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     REVENUE: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     UTILIZATION: int = attr.ib(validator=attr.validators.instance_of(int))
+    ZIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     PHONE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
@@ -299,13 +299,13 @@ class Patient(BaseRecord):
     CITY: str = attr.ib(validator=attr.validators.instance_of(str))
     STATE: str = attr.ib(validator=attr.validators.instance_of(str))
     COUNTY: str = attr.ib(validator=attr.validators.instance_of(str))
-    ZIP: str = attr.ib(converter=lambda x: str(x) if x is not None and str(x) != 'nan' else "", validator=attr.validators.instance_of(str))
     LAT: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     LON: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     HEALTHCARE_EXPENSES: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     HEALTHCARE_COVERAGE: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     
     # Optional fields after mandatory ones
+    ZIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     DEATHDATE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     DRIVERS: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     PASSPORT: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
@@ -425,7 +425,7 @@ class PayerTransition(BaseRecord):
     PATIENT: str = attr.ib(validator=attr.validators.instance_of(str))
     START_YEAR: int = attr.ib(validator=attr.validators.instance_of(int))
     PAYER: str = attr.ib(validator=attr.validators.instance_of(str))
-    OWNERSHIP: str = attr.ib(validator=attr.validators.instance_of(str))
+    OWNERSHIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     END_YEAR: Optional[int] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(int)))
     
     @property
@@ -508,10 +508,10 @@ class Provider(BaseRecord):
     ADDRESS: str = attr.ib(validator=attr.validators.instance_of(str))
     CITY: str = attr.ib(validator=attr.validators.instance_of(str))
     STATE: str = attr.ib(validator=attr.validators.instance_of(str))
-    ZIP: str = attr.ib(converter=lambda x: str(x) if x is not None and str(x) != 'nan' else "", validator=attr.validators.instance_of(str))
     LAT: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     LON: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     UTILIZATION: int = attr.ib(validator=attr.validators.instance_of(int))
+    ZIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
     def record_id(self) -> str:

@@ -74,7 +74,7 @@ class OperationMetrics(BaseMetrics):
         
         event = ResourceEvent(
             event_id=event_id,
-            timestamp=timestamp,
+            event_timestamp=timestamp,
             event_type=event_type,
             resource_name=resource_name,
             entity_id=entity_id,
