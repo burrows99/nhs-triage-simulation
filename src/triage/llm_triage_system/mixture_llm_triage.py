@@ -171,26 +171,33 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
         Returns:
             TriageResult: Triage result from multi-agent consensus
         """
+        logger.info(f"🔄 DATA_TRANSFER_START: MixtureLLMTriage.triage_patient() initiated")
+        logger.info(f"📊 TRANSFER_SOURCE: Symptoms text - {symptoms}")
+        logger.info(f"📍 TRANSFER_DESTINATION: Multi-agent workflow system")
         logger.info(f"🤖 Starting Multi-Agent Triage Assessment")
         logger.info(f"📋 Patient Symptoms: {symptoms[:80]}{'...' if len(symptoms) > 80 else ''}")
         
         # Validate input
+        logger.info(f"🔄 DATA_TRANSFER: Validating symptoms input...")
         self._validate_symptoms(symptoms)
+        logger.info(f"📊 TRANSFER_RESULT: Symptoms validation completed")
         
         if not LANGGRAPH_AVAILABLE or self.workflow is None:
-            logger.warning(f"⚠️ Multi-agent workflow not available - falling back to single agent")
+            logger.warning(f"⚠️ SYSTEM_FALLBACK: Multi-agent workflow not available - falling back to single agent")
             return self._fallback_single_agent_triage(symptoms)
         
         try:
             # Execute multi-agent workflow
-            logger.info(f"🔄 Executing Multi-Agent Workflow")
+            logger.info(f"🔄 DATA_TRANSFER: Executing Multi-Agent Workflow")
+            logger.info(f"📊 TRANSFER_PAYLOAD: Symptoms length: {len(symptoms)} chars")
             result = self._execute_multi_agent_workflow(symptoms)
-            logger.info(f"✅ Multi-Agent Triage Assessment Complete")
+            logger.info(f"📊 TRANSFER_RESULT: Workflow result - {str(result.__dict__)[:300]}...")
+            logger.info(f"✅ DATA_TRANSFER_SUCCESS: Multi-Agent Triage Assessment Complete")
             return result
             
         except Exception as e:
-            logger.error(f"❌ Multi-agent workflow failed: {e}")
-            logger.info(f"🔄 Falling back to single agent")
+            logger.error(f"❌ DATA_TRANSFER_ERROR: Multi-agent workflow failed: {e}")
+            logger.info(f"🔄 SYSTEM_FALLBACK: Falling back to single agent")
             return self._fallback_single_agent_triage(symptoms)
     
     def _fallback_single_agent_triage(self, symptoms: str) -> TriageResult:
@@ -629,6 +636,12 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
         """
         logger.info(f"🔍 Finalizer: Combining all agent analyses")
         
+        # 🔍 DEBUG: Log all agent inputs and outputs
+        logger.info(f"🔍 DEBUG: === AGENT INPUT/OUTPUT VALIDATION ===")
+        logger.info(f"🔍 DEBUG: Patient symptoms: {state['symptoms'][:100]}...")
+        logger.info(f"🔍 DEBUG: Operational context: {state['operational_context'][:100]}...")
+        logger.info(f"🔍 DEBUG: Patient history: {state['patient_history'][:100]}...")
+        
         try:
             # Compile all agent outputs - handle list format from Annotated fields
             agent_outputs = {}
@@ -642,6 +655,9 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
                     agent_outputs[field_name] = field_data
                 else:
                     agent_outputs[field_name] = {"error": "No analysis available", "status": "missing"}
+                
+                # 🔍 DEBUG: Log each agent's output
+                logger.info(f"🔍 DEBUG: {field_name} output: {json.dumps(agent_outputs[field_name], indent=2)[:200]}...")
             
             prompt = f"""
             You are the final decision maker for a multi-agent triage system. Combine all agent analyses into a final triage decision.
@@ -705,6 +721,16 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             final_decision.setdefault("dissenting_opinions", "None identified")
             
             state["final_decision"] = final_decision
+            
+            # 🔍 DEBUG: Log final decision details
+            logger.info(f"🔍 DEBUG: === FINAL AGENT DECISION ===")
+            logger.info(f"🔍 DEBUG: Triage category: {final_decision['triage_category']}")
+            logger.info(f"🔍 DEBUG: Priority score: {final_decision['priority_score']}")
+            logger.info(f"🔍 DEBUG: Confidence: {final_decision['confidence']}")
+            logger.info(f"🔍 DEBUG: Wait time: '{final_decision['wait_time']}'")
+            logger.info(f"🔍 DEBUG: Reasoning: {final_decision['reasoning'][:150]}...")
+            logger.info(f"🔍 DEBUG: Consensus factors: {final_decision.get('consensus_factors', 'N/A')}")
+            
             logger.info(f"✅ Final decision: {final_decision['triage_category']} (Priority {final_decision['priority_score']})")
             
         except Exception as e:

@@ -440,65 +440,83 @@ class PlottingService:
         Returns:
             Dictionary mapping chart names to file paths
         """
+        logger.info(f"🔄 DATA_TRANSFER_START: PlottingService.generate_all_charts() initiated")
+        logger.info(f"📊 TRANSFER_SOURCE: Registered metric services - {list(self.metric_services.keys())}")
+        logger.info(f"📍 TRANSFER_DESTINATION: Chart files in {output_dir}")
+        
         os.makedirs(output_dir, exist_ok=True)
+        logger.info(f"📊 DIRECTORY_CREATED: {output_dir}")
         generated_charts = {}
         
         # Generate NHS charts if NHS metrics service is registered
         nhs_service = self.get_metric_service('nhs')
         if nhs_service:
             try:
+                logger.info(f"🔄 DATA_TRANSFER: Generating NHS charts...")
                 nhs_metrics = nhs_service.calculate_metrics()
+                logger.info(f"📊 TRANSFER_PAYLOAD: NHS data - {str(nhs_metrics)[:200]}...")
                 
                 # Compliance chart
                 compliance_path = os.path.join(output_dir, 'nhs_compliance.png')
                 self.create_compliance_chart(nhs_metrics, save_path=compliance_path)
                 generated_charts['nhs_compliance'] = compliance_path
+                logger.info(f"✅ CHART_SUCCESS: NHS compliance chart saved to {compliance_path}")
                 
                 # Triage distribution
                 if 'triage_category_distribution' in nhs_metrics:
                     triage_path = os.path.join(output_dir, 'triage_distribution.png')
                     self.create_triage_distribution_chart(nhs_metrics['triage_category_distribution'], save_path=triage_path)
                     generated_charts['triage_distribution'] = triage_path
+                    logger.info(f"✅ CHART_SUCCESS: Triage distribution chart saved to {triage_path}")
                 
                 logger.info("Generated NHS charts")
             except Exception as e:
-                logger.error(f"Error generating NHS charts: {e}")
+                logger.error(f"❌ CHART_ERROR: Error generating NHS charts: {e}")
         
         # Generate operational charts if operation metrics service is registered
         op_service = self.get_metric_service('operations')
         if op_service:
             try:
+                logger.info(f"🔄 DATA_TRANSFER: Generating operational charts...")
                 op_metrics = op_service.calculate_metrics()
+                logger.info(f"📊 TRANSFER_PAYLOAD: Operations data - {str(op_metrics)[:200]}...")
                 
                 # Utilization chart
                 if 'utilization' in op_metrics:
                     util_path = os.path.join(output_dir, 'resource_utilization.png')
                     self.create_utilization_chart(op_metrics['utilization'], save_path=util_path)
                     generated_charts['resource_utilization'] = util_path
+                    logger.info(f"✅ CHART_SUCCESS: Resource utilization chart saved to {util_path}")
                 
                 # Queue analysis
                 if 'queues' in op_metrics:
                     queue_path = os.path.join(output_dir, 'queue_analysis.png')
                     self.create_queue_analysis_chart(op_metrics['queues'], save_path=queue_path)
                     generated_charts['queue_analysis'] = queue_path
+                    logger.info(f"✅ CHART_SUCCESS: Queue analysis chart saved to {queue_path}")
                 
                 logger.info("Generated operational charts")
             except Exception as e:
-                logger.error(f"Error generating operational charts: {e}")
+                logger.error(f"❌ CHART_ERROR: Error generating operational charts: {e}")
         
         # Generate combined dashboard if both services are available
         if nhs_service and op_service:
             try:
+                logger.info(f"🔄 DATA_TRANSFER: Generating combined dashboard...")
                 nhs_metrics = nhs_service.calculate_metrics()
                 op_metrics = op_service.calculate_metrics()
                 
                 dashboard_path = os.path.join(output_dir, 'combined_dashboard.png')
                 self.create_combined_dashboard(nhs_metrics, op_metrics, save_path=dashboard_path)
                 generated_charts['combined_dashboard'] = dashboard_path
+                logger.info(f"✅ CHART_SUCCESS: Combined dashboard saved to {dashboard_path}")
                 
                 logger.info("Generated combined dashboard")
             except Exception as e:
-                logger.error(f"Error generating combined dashboard: {e}")
+                logger.error(f"❌ CHART_ERROR: Error generating combined dashboard: {e}")
+        
+        logger.info(f"✅ DATA_TRANSFER_SUCCESS: All charts generated - {len(generated_charts)} charts created")
+        logger.info(f"📊 FINAL_CHART_PATHS: {generated_charts}")
         
         return generated_charts
     

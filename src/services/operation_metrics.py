@@ -64,6 +64,10 @@ class OperationMetrics(BaseMetrics):
         Returns:
             Created ResourceEvent
         """
+        logger.info(f"🔄 DATA_TRANSFER_START: OperationMetrics.record_resource_event() initiated")
+        logger.info(f"📊 TRANSFER_SOURCE: ResourceEvent - {event_type} for {resource_name} by {entity_id}")
+        logger.info(f"📍 TRANSFER_DESTINATION: Operation metrics event storage")
+        
         event_id = f"{resource_name}_{event_type}_{entity_id}_{timestamp}"
         
         event = ResourceEvent(
@@ -80,13 +84,18 @@ class OperationMetrics(BaseMetrics):
         
         self.resource_events.append(event)
         self.add_record(event)
+        logger.info(f"📊 TRANSFER_RESULT: Event stored - total_events={len(self.resource_events)}")
         
         # Update performance tracking
         if event_type == 'acquire' and event.wait_time > 0:
             self.wait_times[resource_name].append(event.wait_time)
+            logger.info(f"📊 WAIT_TIME_UPDATE: {resource_name} wait_time={event.wait_time:.2f}min added")
         
         if event_type == 'release' and event.service_time > 0:
             self.service_times[resource_name].append(event.service_time)
+            logger.info(f"📊 SERVICE_TIME_UPDATE: {resource_name} service_time={event.service_time:.2f}min added")
+        
+        logger.info(f"✅ DATA_TRANSFER_SUCCESS: Resource event recorded for {resource_name} {event_type} at {timestamp:.2f}")
         
         return event
     

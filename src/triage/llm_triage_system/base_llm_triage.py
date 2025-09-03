@@ -124,7 +124,7 @@ class BaseLLMTriageSystem(ABC):
             context_parts = [
                 f"\n📊 CURRENT HOSPITAL OPERATIONAL STATUS (Time: {current_time:.1f}min):\n",
                 self._build_utilization_context(operation_data, latest_snapshot),
-                self._build_wait_times_context(operation_data),
+                # self._build_wait_times_context(operation_data),  # REMOVED: Agents should calculate wait times themselves
                 self._build_queue_performance_context(operation_data),
                 self._build_system_status_context(operation_data, nhs_data),
                 self._build_triage_distribution_context(nhs_data),
@@ -179,17 +179,9 @@ class BaseLLMTriageSystem(ABC):
         return context
     
     def _build_wait_times_context(self, operation_data: dict) -> str:
-        """Build wait times context section."""
-        if not ('wait_times' in operation_data and operation_data['wait_times']):
-            return ""
-        
-        context = "\n⏰ CURRENT WAIT TIMES:\n"
-        for resource, wait_data in operation_data['wait_times'].items():
-            avg_wait = wait_data.get('average_wait_time_minutes', 0.0)
-            max_wait = wait_data.get('max_wait_time_minutes', 0.0)
-            context += f"• {resource.title()}: {avg_wait:.1f}min avg (peak: {max_wait:.1f}min)\n"
-        
-        return context
+        """Build wait times context section - DISABLED for pure clinical decisions."""
+        # 🔍 PURE CLINICAL DECISION: Wait times excluded to ensure agents calculate based on clinical analysis only
+        return ""
     
     def _build_queue_performance_context(self, operation_data: dict) -> str:
         """Build queue performance context section."""
@@ -235,8 +227,8 @@ class BaseLLMTriageSystem(ABC):
         return f"\n💡 OPERATIONAL GUIDANCE:\n{guidance}\n"
     
     def _build_context_footer(self) -> str:
-        """Build context footer with important notice."""
-        return "\n⚠️ IMPORTANT: Use this operational context to inform wait time estimates and triage decisions based on CURRENT hospital conditions, not just clinical guidelines.\n"
+        """Build context footer with important notice - Pure clinical focus."""
+        return "\n⚠️ IMPORTANT: Use this operational context to inform triage decisions based on CURRENT hospital conditions and clinical severity. Calculate wait times based purely on your clinical assessment and operational analysis.\n"
     
     def _get_utilization_status(self, utilization: float) -> str:
         """Get utilization status indicator."""

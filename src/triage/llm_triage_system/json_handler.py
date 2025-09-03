@@ -197,7 +197,7 @@ class TriageJSONHandler:
         return None
     
     def _extract_json_string(self, text: str) -> Optional[str]:
-        """Extract JSON string from text.
+        """Extract JSON string from text with enhanced pattern matching.
         
         Args:
             text: Input text containing JSON
@@ -205,12 +205,56 @@ class TriageJSONHandler:
         Returns:
             Extracted JSON string or None
         """
-        # Find JSON object boundaries
+        import re
+        
+        # Pattern 1: Look for JSON in code blocks
+        json_block_pattern = r'```(?:json)?\s*({.*?})\s*```'
+        match = re.search(json_block_pattern, text, re.DOTALL)
+        if match:
+            return match.group(1)
+        
+        # Pattern 2: Look for JSON after common prefixes
+        json_prefix_patterns = [
+            r'(?:json|JSON)\s*[:\-]?\s*({.*?})(?:\s|$)',
+            r'(?:response|result|decision)\s*[:\-]?\s*({.*?})(?:\s|$)',
+            r'(?:triage|assessment)\s*[:\-]?\s*({.*?})(?:\s|$)'
+        ]
+        
+        for pattern in json_prefix_patterns:
+            match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        # Pattern 3: Find the largest valid JSON object
+        json_candidates = []
+        start_positions = [i for i, char in enumerate(text) if char == '{']
+        
+        for start_idx in start_positions:
+            brace_count = 0
+            end_idx = start_idx
+            
+            for i, char in enumerate(text[start_idx:], start_idx):
+                if char == '{':
+                    brace_count += 1
+                elif char == '}':
+                    brace_count -= 1
+                    if brace_count == 0:
+                        end_idx = i + 1
+                        candidate = text[start_idx:end_idx]
+                        # Check if it looks like a triage JSON
+                        if any(field in candidate.lower() for field in ['triage_category', 'priority_score', 'confidence']):
+                            json_candidates.append(candidate)
+                        break
+        
+        # Return the longest candidate (most likely to be complete)
+        if json_candidates:
+            return max(json_candidates, key=len)
+        
+        # Fallback: Original logic
         start_idx = text.find('{')
         if start_idx == -1:
             return None
         
-        # Find matching closing brace
         brace_count = 0
         end_idx = start_idx
         
@@ -224,7 +268,6 @@ class TriageJSONHandler:
                     break
         
         if brace_count != 0:
-            # Try finding last closing brace
             end_idx = text.rfind('}') + 1
             if end_idx == 0:
                 return None

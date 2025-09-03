@@ -463,6 +463,9 @@ class SimpleHospital:
         Note: This method now measures and returns the actual processing time for 
         integration with SimPy's discrete event simulation.
         """
+        logger.info(f"🔄 DATA_TRANSFER_START: perform_triage() initiated")
+        logger.info(f"📊 TRANSFER_SOURCE: Patient object - {str(patient.__dict__ if patient else 'None')}")
+        logger.info(f"📍 TRANSFER_DESTINATION: Triage system - {type(self.triage_system).__name__}")
         logger.info(f"🩺 TRIAGE ASSESSMENT INITIATED")
         logger.info(f"👤 Patient ID: {patient.Id if patient else 'None'}")
         logger.info(f"🔧 Triage System: {type(self.triage_system).__name__}")
@@ -542,18 +545,28 @@ class SimpleHospital:
         # Handle triage result based on system type
         from src.models.triage_result import TriageResult
         
+        logger.info(f"🔄 DATA_TRANSFER: Processing triage system response...")
+        logger.info(f"📊 TRANSFER_PAYLOAD: Raw result - {str(result)[:500]}...")
+        
         if isinstance(self.triage_system, (SingleLLMTriage, MixtureLLMTriage)):
             # LLM system already returns TriageResult object
+            logger.info(f"🔄 DATA_TRANSFER: LLM result is TriageResult object")
             triage_result = result
             logger.info(f"📋 LLM Result Type: TriageResult object")
+            logger.info(f"📊 TRANSFER_RESULT: TriageResult object - {str(triage_result.__dict__)}")
         else:
             # MTS system returns dictionary, convert to TriageResult
+            logger.info(f"🔄 DATA_TRANSFER: Converting MTS dictionary to TriageResult")
+            logger.info(f"📊 TRANSFER_PAYLOAD: MTS dict - {str(result)}")
             triage_result = TriageResult.from_raw_result(result, "MTS")
             logger.info(f"📋 MTS Result Type: Dictionary converted to TriageResult")
+            logger.info(f"📊 TRANSFER_RESULT: Converted TriageResult - {str(triage_result.__dict__)}")
         
         # Extract core values for backward compatibility
+        logger.info(f"🔄 DATA_TRANSFER: Extracting core values from TriageResult...")
         category = triage_result.triage_category
         priority = triage_result.priority_score
+        logger.info(f"📊 TRANSFER_RESULT: Extracted values - category={category}, priority={priority}")
         
         logger.info(f"🎯 FINAL TRIAGE DECISION SUMMARY")
         logger.info(f"🏥 Category: {category}")
@@ -703,24 +716,78 @@ class SimpleHospital:
             
             # Perform triage assessment during nurse consultation
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🔍 Patient #{patient_num}: Nurse performing triage assessment")
-            category, priority, triage_result, processing_delay_seconds = self.perform_triage(patient)
+            
+            try:
+                category, priority, triage_result, processing_delay_seconds = self.perform_triage(patient)
+            except Exception as triage_error:
+                logger.error(f"❌ Primary triage failed for Patient #{patient_num}: {triage_error}")
+                logger.info(f"🔄 Falling back to Manchester Triage System for Patient #{patient_num}")
+                
+                # Create MTS fallback instance
+                mts_fallback = ManchesterTriageSystem()
+                
+                # Extract data needed for MTS
+                flowchart_reason = ComplaintToFlowchartMapping.get_flowchart_for_complaint(self._extract_presenting_complaint(patient))
+                symptoms_input = self._generate_manual_test_symptoms(patient, flowchart_reason)
+                
+                # Perform MTS triage as fallback
+                logger.info(f"🏥 FALLBACK: Using Manchester Triage System")
+                logger.info(f"📋 Flowchart Selected: {flowchart_reason}")
+                
+                mts_result = mts_fallback.triage_patient(
+                    flowchart_reason=flowchart_reason,
+                    symptoms_input=symptoms_input,
+                    patient_id=patient.Id
+                )
+                
+                # Convert MTS result to TriageResult
+                from src.models.triage_result import TriageResult
+                triage_result = TriageResult.from_raw_result(mts_result, "MTS_FALLBACK")
+                category = triage_result.triage_category
+                priority = triage_result.priority_score
+                processing_delay_seconds = 1.0  # Minimal delay for MTS fallback
+                
+                logger.info(f"✅ MTS Fallback completed: {category} (Priority {priority})")
             
             # Apply processing delay and calculate total triage time
             triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
             
-            # Use triage result wait_time data for more accurate triage timing
-            # TriageResult provides standardized wait_time access
-            wait_minutes = triage_result.get_wait_time_minutes()
+            # 🔍 DEBUG: Agent-Generated Wait Time Analysis
+            agent_wait_minutes = triage_result.get_wait_time_minutes()
+            logger.info(f"🔍 DEBUG: Agent-generated wait time: {agent_wait_minutes} minutes")
+            logger.info(f"🔍 DEBUG: Agent wait time string: '{triage_result.wait_time}'")
+            logger.info(f"🔍 DEBUG: Triage system type: {triage_result.system_type}")
             
-            # Convert MTS wait time to actual triage processing time (much shorter than wait time)
-            # Triage processing is typically 3-15 minutes regardless of final wait time
-            if category in [TriageCategories.RED]:
-                base_triage_time = self.random_service.get_triage_process_time("complex")
-            elif category in [TriageCategories.ORANGE, TriageCategories.YELLOW]:
-                base_triage_time = self.random_service.get_triage_process_time("standard")
+            # Use agent-generated wait times for LLM systems, fallback to RandomService for MTS
+            if isinstance(self.triage_system, (SingleLLMTriage, MixtureLLMTriage)):
+                # LLM agents should determine their own wait times based on analysis
+                logger.info(f"🤖 USING AGENT-GENERATED WAIT TIME: {agent_wait_minutes} minutes")
+                
+                # Convert agent wait time to actual triage processing time
+                # Agents provide target wait time, but triage assessment is shorter
+                if agent_wait_minutes <= 15:  # Immediate/urgent cases
+                    base_triage_time = min(agent_wait_minutes * 0.3, 15.0)  # 30% of wait time, max 15 min
+                elif agent_wait_minutes <= 60:  # Standard cases
+                    base_triage_time = min(agent_wait_minutes * 0.2, 20.0)  # 20% of wait time, max 20 min
+                else:  # Non-urgent cases
+                    base_triage_time = min(agent_wait_minutes * 0.1, 30.0)  # 10% of wait time, max 30 min
+                
+                logger.info(f"🔍 DEBUG: Converted agent wait time {agent_wait_minutes}min → triage time {base_triage_time:.1f}min")
             else:
-                base_triage_time = self.random_service.get_triage_process_time("simple")
+                # Manchester Triage System - use traditional RandomService approach
+                logger.info(f"🏥 USING RANDOM SERVICE TIMES (MTS System)")
+                if category in [TriageCategories.RED]:
+                    base_triage_time = self.random_service.get_triage_process_time("complex")
+                elif category in [TriageCategories.ORANGE, TriageCategories.YELLOW]:
+                    base_triage_time = self.random_service.get_triage_process_time("standard")
+                else:
+                    base_triage_time = self.random_service.get_triage_process_time("simple")
+                
+                logger.info(f"🔍 DEBUG: RandomService triage time: {base_triage_time:.1f}min")
+            
             total_triage_time = base_triage_time + triage_processing_delay
+            
+            logger.info(f"🔍 DEBUG: Final triage breakdown - Base: {base_triage_time:.1f}min + Processing: {triage_processing_delay:.1f}min = Total: {total_triage_time:.1f}min")
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient #{patient_num}: Triage assessment will take {total_triage_time:.1f}min (assessment: {base_triage_time:.1f}min + processing: {triage_processing_delay:.1f}min)")
             

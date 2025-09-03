@@ -22,14 +22,15 @@ You are a UK medical triage assistant. Apply your NHS training to assess patient
 Prioritize patient safety and use clinical judgment for uncertain cases.
 """
 
-# Wait Time Estimation Guidelines
-WAIT_TIME_GUIDELINES = {
-    "RED": "Immediate (0 min)",
-    "ORANGE": "1-2 hours", 
-    "YELLOW": "2-4 hours",
-    "GREEN": "4-6 hours",
-    "BLUE": "Self-care or routine appointment"
-}
+# 🔍 PURE CLINICAL DECISION: Wait time guidelines removed
+# Agents must calculate wait times based purely on clinical assessment
+# WAIT_TIME_GUIDELINES = {  # DISABLED - agents should determine wait times themselves
+#     "RED": "Immediate (0 min)",
+#     "ORANGE": "1-2 hours", 
+#     "YELLOW": "2-4 hours",
+#     "GREEN": "4-6 hours",
+#     "BLUE": "Self-care or routine appointment"
+# }
 
 # Simplified Confidence Guidelines
 CONFIDENCE_GUIDELINES = """
@@ -85,7 +86,7 @@ Required JSON format (copy exactly, replacing values):
   "priority_score": 1,
   "confidence": 0.85,
   "reasoning": "Brief clinical explanation based on NHS guidelines{reasoning_context}",
-  "wait_time": "Immediate (0 min)"
+  "wait_time": "[Calculate based on clinical severity and operational context]"
 }}
 
 Rules:
@@ -93,12 +94,12 @@ Rules:
 - priority_score: Must be integer 1-5 (1=RED, 2=ORANGE, 3=YELLOW, 4=GREEN, 5=BLUE)
 - confidence: Must be decimal 0.0-1.0 (e.g., 0.85, not 85%)
 - reasoning: String under 200 characters
-- wait_time: String describing expected wait
+- wait_time: String describing expected wait based on YOUR clinical assessment and operational analysis
 
 Example valid responses:
-{{"triage_category": "RED", "priority_score": 1, "confidence": 0.9, "reasoning": "Chest pain with severe symptoms requires immediate assessment", "wait_time": "Immediate (0 min)"}}
+{{"triage_category": "RED", "priority_score": 1, "confidence": 0.9, "reasoning": "Chest pain with severe symptoms requires immediate assessment", "wait_time": "[Your calculated wait time based on severity]"}}
 
-{{"triage_category": "YELLOW", "priority_score": 3, "confidence": 0.7, "reasoning": "Moderate symptoms requiring urgent but not immediate care", "wait_time": "2-4 hours"}}
+{{"triage_category": "YELLOW", "priority_score": 3, "confidence": 0.7, "reasoning": "Moderate symptoms requiring urgent but not immediate care", "wait_time": "[Your calculated wait time based on clinical assessment]"}}
 
 Respond with JSON only - no other text."""
     

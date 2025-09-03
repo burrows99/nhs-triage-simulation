@@ -58,12 +58,18 @@ class NHSMetrics(BaseMetrics):
             patient: Synthea Patient object
             arrival_time: Arrival time in minutes
         """
+        logger.info(f"🔄 DATA_TRANSFER_START: NHSMetrics.add_patient_arrival() initiated")
+        logger.info(f"📊 TRANSFER_SOURCE: Patient object - {str(patient.__dict__)}")
+        logger.info(f"📍 TRANSFER_DESTINATION: NHS metrics record storage")
+        
         # Check for re-attendance
         is_reattendance = self._check_reattendance(patient.Id, arrival_time)
         
         # Store arrival time and re-attendance status on patient object
         patient.arrival_time = arrival_time
         patient.is_reattendance = is_reattendance
+        
+        logger.info(f"📊 TRANSFER_PAYLOAD: Patient updated - arrival_time={arrival_time}, is_reattendance={is_reattendance}")
         
         # Add patient directly to base metrics (Patient now inherits from BaseRecord)
         self.add_record(patient)
@@ -73,6 +79,9 @@ class NHSMetrics(BaseMetrics):
         
         # Track arrival time for re-attendance checking
         self.patient_history[patient.Id].append(arrival_time)
+        
+        logger.info(f"📊 TRANSFER_RESULT: Record stored in metrics - patient_id={patient.Id}, records_count={len(self.records)}")
+        logger.info(f"✅ DATA_TRANSFER_SUCCESS: NHS Metrics arrival recorded for patient {patient.Id} at {arrival_time:.2f}min")
     
     def add_patient_object(self, patient) -> None:
         """Record patient arrival using Patient object
@@ -173,9 +182,15 @@ class NHSMetrics(BaseMetrics):
         Returns:
             Dictionary containing all official NHS metrics and performance indicators
         """
+        logger.info(f"🔄 CALCULATION_START: NHS metrics calculation initiated")
+        logger.info(f"📊 INPUT_DATA: Total records={len(self.records)}, Active records={len(self.active_records)}")
+        
         completed_patients = [p for p in self.records if p.is_completed_journey()]
         
+        logger.info(f"📊 FILTERED_DATA: Completed patients={len(completed_patients)}")
+        
         if not completed_patients:
+            logger.warning(f"⚠️ CALCULATION_WARNING: No completed patients to analyze")
             return {
                 'error': 'No completed patients to analyze',
                 'total_attendances': self.counters['total_records'],
@@ -196,12 +211,25 @@ class NHSMetrics(BaseMetrics):
         # Use validated patients for all calculations
         completed_patients = validated_patients
         
+        logger.info(f"📊 CALCULATION_INPUT: Using {len(completed_patients)} validated patients")
+        
         # Calculate official NHS metrics using centralized calculations from StatisticsUtils
         # Ensure all time calculations are centralized and consistent
+        logger.info(f"🔄 CALCULATION_STEP: Computing journey time statistics")
         journey_time_stats = StatisticsUtils.calculate_journey_time_stats(completed_patients)
+        logger.info(f"📊 CALCULATION_RESULT: Journey time mean={journey_time_stats['mean']:.2f}min")
+        
+        logger.info(f"🔄 CALCULATION_STEP: Computing assessment time statistics")
         assessment_time_stats = StatisticsUtils.calculate_assessment_time_stats(completed_patients)
+        logger.info(f"📊 CALCULATION_RESULT: Assessment time mean={assessment_time_stats['mean']:.2f}min")
+        
+        logger.info(f"🔄 CALCULATION_STEP: Computing treatment time statistics")
         treatment_time_stats = StatisticsUtils.calculate_treatment_time_stats(completed_patients)
+        logger.info(f"📊 CALCULATION_RESULT: Treatment time mean={treatment_time_stats['mean']:.2f}min")
+        
+        logger.info(f"🔄 CALCULATION_STEP: Computing 4-hour compliance metrics")
         compliance_metrics = StatisticsUtils.calculate_4hour_compliance(completed_patients)
+        logger.info(f"📊 CALCULATION_RESULT: 4-hour compliance={compliance_metrics['compliance_rate_pct']:.1f}%")
         
         # Validate time calculations to catch negative time errors
         if journey_time_stats['mean'] < 0:
@@ -246,6 +274,9 @@ class NHSMetrics(BaseMetrics):
         
         # Add base statistics
         metrics.update(self.get_basic_statistics())
+        
+        logger.info(f"✅ CALCULATION_SUCCESS: NHS metrics calculation completed")
+        logger.info(f"📊 FINAL_METRICS: Total attendances={metrics['total_attendances']}, 4hr compliance={metrics['4hour_standard_compliance_pct']:.1f}%")
         
         return metrics
     
