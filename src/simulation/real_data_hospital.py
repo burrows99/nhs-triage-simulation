@@ -2,12 +2,12 @@ import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Any
 import sys
-import os
 import logging
 import random
+from pathlib import Path
 
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, project_root)
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 from src.logger import logger
 
@@ -79,19 +79,21 @@ class SimpleHospital:
         self.simulation_engine.log_with_sim_time(logging.INFO, f"Output directory: {self.output_dir}")
     
     def _ensure_output_directory(self):
-        """Ensure output directory exists, create if necessary"""
+        """Ensure output directory exists using pathlib for robust file operations."""
         try:
-            os.makedirs(self.output_dir, exist_ok=True)
-            os.makedirs(os.path.join(self.output_dir, 'metrics'), exist_ok=True)
-            os.makedirs(os.path.join(self.output_dir, 'plots'), exist_ok=True)
+            output_path = Path(self.output_dir)
+            output_path.mkdir(parents=True, exist_ok=True)
+            (output_path / 'metrics').mkdir(exist_ok=True)
+            (output_path / 'plots').mkdir(exist_ok=True)
             logger.info(f"📁 Output directory ready: {self.output_dir}")
         except Exception as e:
             logger.warning(f"⚠️  Warning: Could not create output directory {self.output_dir}: {str(e)}")
             logger.info(f"📁 Using default directory: ./output/hospital_simulation")
             self.output_dir = './output/hospital_simulation'
-            os.makedirs(self.output_dir, exist_ok=True)
-            os.makedirs(os.path.join(self.output_dir, 'metrics'), exist_ok=True)
-            os.makedirs(os.path.join(self.output_dir, 'plots'), exist_ok=True)
+            output_path = Path(self.output_dir)
+            output_path.mkdir(parents=True, exist_ok=True)
+            (output_path / 'metrics').mkdir(exist_ok=True)
+            (output_path / 'plots').mkdir(exist_ok=True)
     
     def _setup_simulation_parameters(self, **kwargs):
         """Setup simulation parameters with realistic NHS defaults based on official data.

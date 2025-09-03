@@ -152,10 +152,17 @@ class BaseLLMTriageSystem(ABC):
     
     def _get_latest_snapshot(self):
         """Get the latest system snapshot from operation metrics."""
-        if hasattr(self.operation_metrics, 'get_latest_snapshot'):
+        try:
             return self.operation_metrics.get_latest_snapshot()
-        elif self.operation_metrics.system_snapshots:
-            return self.operation_metrics.system_snapshots[-1]
+        except AttributeError:
+            pass
+        
+        try:
+            if self.operation_metrics.system_snapshots:
+                return self.operation_metrics.system_snapshots[-1]
+        except AttributeError:
+            pass
+        
         return None
     
     def _build_utilization_context(self, operation_data: dict, latest_snapshot) -> str:
@@ -199,7 +206,10 @@ class BaseLLMTriageSystem(ABC):
     def _build_system_status_context(self, operation_data: dict, nhs_data: dict) -> str:
         """Build system status context section."""
         system_pressure = self._assess_system_pressure_from_metrics(operation_data)
-        current_load = len(self.nhs_metrics.active_records) if hasattr(self.nhs_metrics, 'active_records') else 0
+        try:
+            current_load = len(self.nhs_metrics.active_records)
+        except AttributeError:
+            current_load = 0
         
         return f"\n🚦 SYSTEM PRESSURE: {system_pressure}\n👥 CURRENT PATIENT LOAD: {current_load} patients in system\n"
     

@@ -1,10 +1,11 @@
 """Statistics Utilities
 
-Centralized statistical calculations to eliminate duplicate computations across the codebase.
-Provides common statistical functions used in NHS metrics, operational metrics, and plotting.
+Centralized statistical calculations delegating to production libraries.
+Provides common statistical functions using scipy.stats for reliability.
 """
 
 import numpy as np
+from scipy import stats
 from typing import List, Dict, Any, Optional
 
 
@@ -32,9 +33,8 @@ class StatisticsUtils:
         invalid_count = 0
         
         for patient in patients:
-            # Check for basic timing validity
-            if (hasattr(patient, 'arrival_time') and hasattr(patient, 'departure_time') and
-                patient.arrival_time > 0 and patient.departure_time > 0):
+            # Check for basic timing validity using attrs fields directly
+            if (patient.arrival_time > 0 and patient.departure_time > 0):
                 
                 total_time = patient.get_total_journey_time()
                 
@@ -63,13 +63,13 @@ class StatisticsUtils:
     
     @staticmethod
     def calculate_basic_stats(values: List[float]) -> Dict[str, float]:
-        """Calculate basic statistics for a list of values with validation.
+        """Calculate basic statistics using scipy.stats for production reliability.
         
         Args:
             values: List of numeric values
             
         Returns:
-            Dictionary with basic statistics
+            Dictionary with basic statistics computed by scipy
         """
         if not values:
             return {
@@ -79,7 +79,9 @@ class StatisticsUtils:
                 'std_dev': 0.0,
                 'min': 0.0,
                 'max': 0.0,
-                '95th_percentile': 0.0
+                '95th_percentile': 0.0,
+                'skewness': 0.0,
+                'kurtosis': 0.0
             }
         
         # Validate for negative values that might indicate timing errors
@@ -89,14 +91,20 @@ class StatisticsUtils:
             logger.warning(f"⚠️  {negative_count}/{len(values)} values are negative - possible timing calculation error")
             logger.warning(f"Sample negative values: {[v for v in values if v < 0][:5]}")
         
+        # Delegate to scipy.stats for production-grade statistical calculations
+        values_array = np.array(values)
+        desc_stats = stats.describe(values_array)
+        
         return {
-            'count': len(values),
-            'mean': np.mean(values),
-            'median': np.median(values),
-            'std_dev': np.std(values),
-            'min': np.min(values),
-            'max': np.max(values),
-            '95th_percentile': np.percentile(values, 95)
+            'count': desc_stats.nobs,
+            'mean': desc_stats.mean,
+            'median': np.median(values_array),  # scipy doesn't include median in describe
+            'std_dev': np.sqrt(desc_stats.variance),
+            'min': desc_stats.minmax[0],
+            'max': desc_stats.minmax[1],
+            '95th_percentile': np.percentile(values_array, 95),
+            'skewness': desc_stats.skewness,
+            'kurtosis': desc_stats.kurtosis
         }
     
     @staticmethod

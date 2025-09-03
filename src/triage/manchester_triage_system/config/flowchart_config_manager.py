@@ -59,9 +59,10 @@ class FlowchartConfigManager:
             pandas DataFrame containing all flowchart configurations
         """
         if self._flowcharts_df is None:
-            if hasattr(self._config_source, 'get_all_flowcharts'):
+            # Use duck typing instead of hasattr for cleaner code
+            try:
                 flowcharts_data = self._config_source.get_all_flowcharts()
-            else:
+            except AttributeError:
                 flowcharts_data = self._config_source.load_flowcharts()
             
             self._flowcharts_dict = flowcharts_data

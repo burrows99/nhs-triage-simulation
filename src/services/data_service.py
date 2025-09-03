@@ -106,11 +106,11 @@ class DataService:
         self._populate_encounter_relationships(encounters, allergies, careplans, conditions, 
                                              imaging_studies, immunizations, medications, 
                                              observations, procedures)
-        logger.info(f"📊 TRANSFER_RESULT: Encounter relationships populated - encounters with relationships: {sum(1 for e in encounters if hasattr(e, 'allergies') and e.allergies)}")
+        logger.info(f"📊 TRANSFER_RESULT: Encounter relationships populated - encounters with relationships: {sum(1 for e in encounters if e.allergies)}")
         
         logger.info("🔄 DATA_TRANSFER: Populating patient relationships...")
         self._populate_patient_relationships(patients, payer_transitions)
-        logger.info(f"📊 TRANSFER_RESULT: Patient relationships populated - patients with payer transitions: {sum(1 for p in patients if hasattr(p, 'payer_transitions') and p.payer_transitions)}")
+        logger.info(f"📊 TRANSFER_RESULT: Patient relationships populated - patients with payer transitions: {sum(1 for p in patients if p.payer_transitions)}")
         
         # Store constructed data
         logger.info("🔄 DATA_TRANSFER: Storing constructed data in DataService instance...")

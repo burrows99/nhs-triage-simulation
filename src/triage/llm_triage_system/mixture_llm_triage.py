@@ -324,14 +324,20 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
         """
         # For now, extract basic history indicators from symptoms
         # In a real system, this would access patient records
+        import re
         history_indicators = []
+        symptoms_lower = symptoms.lower()
         
-        if "previous" in symptoms.lower() or "history of" in symptoms.lower():
-            history_indicators.append("Previous medical history mentioned")
-        if "medication" in symptoms.lower() or "taking" in symptoms.lower():
-            history_indicators.append("Current medications indicated")
-        if "allergy" in symptoms.lower() or "allergic" in symptoms.lower():
-            history_indicators.append("Allergy information present")
+        # Medical history patterns using efficient regex
+        history_patterns = {
+            'Previous medical history mentioned': r'\b(previous|history of|past)\b',
+            'Current medications indicated': r'\b(medication|taking|prescribed|drug)\b',
+            'Allergy information present': r'\b(allergy|allergic|reaction)\b'
+        }
+        
+        for message, pattern in history_patterns.items():
+            if re.search(pattern, symptoms_lower):
+                history_indicators.append(message)
         
         return "; ".join(history_indicators) if history_indicators else "No specific history indicators found"
     
@@ -689,7 +695,9 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             }
             
             # Add JSON mode for supported models
-            if "gpt" in self.model_name.lower() or "claude" in self.model_name.lower():
+            # Use regex for efficient model detection
+        import re
+        if re.search(r'\b(gpt|claude)\b', self.model_name.lower()):
                 api_params["response_format"] = {"type": "json_object"}
             
             completion = self.client.chat.completions.create(**api_params)

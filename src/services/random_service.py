@@ -109,19 +109,25 @@ class RandomService:
         # Import TriageResult for proper type checking
         from src.models.triage_result import TriageResult
         
-        # Handle both TriageResult objects and raw category strings
-        if isinstance(triage_input, TriageResult):
+        # Handle both TriageResult objects and raw category strings using duck typing
+        try:
             category = triage_input.triage_category
-            if triage_input.is_urgent():  # RED or ORANGE
-                # ALWAYS admit RED and ORANGE cases - clinical necessity
-                return True
-        else:
+            # Check if it's a TriageResult with is_urgent method
+            try:
+                if triage_input.is_urgent():  # RED or ORANGE
+                    # ALWAYS admit RED and ORANGE cases - clinical necessity
+                    return True
+            except AttributeError:
+                pass  # Not a TriageResult with is_urgent method
+        except AttributeError:
+            # Raw category string (backward compatibility)
             category = triage_input
-            if category in [TriageCategories.RED, TriageCategories.ORANGE]:
-                # ALWAYS admit RED and ORANGE cases - clinical necessity
-                return True
-            elif category == TriageCategories.YELLOW:
-                return random.random() < 0.3  # Reality: Some yellow patients admitted
+            
+        if category in [TriageCategories.RED, TriageCategories.ORANGE]:
+            # ALWAYS admit RED and ORANGE cases - clinical necessity
+            return True
+        elif category == TriageCategories.YELLOW:
+            return random.random() < 0.3  # Reality: Some yellow patients admitted
         
         # Reality: Even lower acuity patients sometimes admitted due to system pressures
         return random.random() < 0.1  # 10% admission rate for lower acuity
@@ -146,12 +152,12 @@ class RandomService:
         Returns:
             Diagnostic test type from DiagnosticTestTypes
         """
-        # Handle both TriageResult objects and raw category strings
-        if hasattr(triage_input, 'triage_category'):
+        # Handle both TriageResult objects and raw category strings using duck typing
+        try:
             # TriageResult object - can use additional data for more informed decisions
             category = triage_input.triage_category
             # Could potentially use fuzzy_score, confidence, or system_type for enhanced logic
-        else:
+        except AttributeError:
             # Backward compatibility: raw category string
             category = triage_input
         
@@ -322,19 +328,20 @@ class RandomService:
         return self._apply_minimum_delay(adjusted_delay, priority)
     
     def _extract_priority_and_confidence(self, triage_input):
-        """Extract priority and confidence from different input types."""
-        if hasattr(triage_input, 'priority_score'):
+        """Extract priority and confidence from different input types using duck typing."""
+        try:
             # TriageResult object
             priority = triage_input.priority_score
             confidence_factor = getattr(triage_input, 'confidence', 1.0)
-        elif isinstance(triage_input, int):
-            # Raw priority integer (backward compatibility)
-            priority = triage_input
-            confidence_factor = 1.0
-        else:
-            # Default case
-            priority = 5
-            confidence_factor = 1.0
+        except AttributeError:
+            if isinstance(triage_input, int):
+                # Raw priority integer (backward compatibility)
+                priority = triage_input
+                confidence_factor = 1.0
+            else:
+                # Default case
+                priority = 5
+                confidence_factor = 1.0
         return priority, confidence_factor
     
     def _calculate_priority_multiplier(self, priority, confidence_factor, triage_input):
@@ -349,9 +356,12 @@ class RandomService:
         
         multiplier = priority_multipliers.get(priority, 1.0)
         
-        # Adjust for confidence if using TriageResult
-        if hasattr(triage_input, 'confidence') and priority <= 2:  # RED/ORANGE
-            multiplier *= (0.8 + 0.2 * confidence_factor)  # 0.8-1.0 range
+        # Adjust for confidence if using TriageResult (duck typing)
+        try:
+            if triage_input.confidence and priority <= 2:  # RED/ORANGE
+                multiplier *= (0.8 + 0.2 * confidence_factor)  # 0.8-1.0 range
+        except AttributeError:
+            pass  # No confidence attribute, use base multiplier
         
         return multiplier
     

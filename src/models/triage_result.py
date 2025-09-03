@@ -204,13 +204,12 @@ class TriageResult:
             'BLUE': 240    # Non-urgent
         }
         
-        if hasattr(self, 'triage_category') and self.triage_category in category_defaults:
+        if self.triage_category in category_defaults:
             return category_defaults[self.triage_category]
         
         # Priority 4: Fallback based on priority score
-        if hasattr(self, 'priority_score'):
-            priority_defaults = {1: 0, 2: 15, 3: 60, 4: 120, 5: 240}
-            return priority_defaults.get(self.priority_score, 60)
+        priority_defaults = {1: 0, 2: 15, 3: 60, 4: 120, 5: 240}
+        return priority_defaults.get(self.priority_score, 60)
         
         # Final fallback: Conservative default for unknown cases
         return 60  # Changed from 240 to prevent bottlenecks

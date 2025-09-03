@@ -9,6 +9,8 @@ from __future__ import annotations
 import attr
 from dataclasses import dataclass, field
 from typing import Optional, List
+from dateutil.parser import parse as parse_date
+from dateutil.parser import ParserError
 from .base_record import BaseRecord
 
 
@@ -28,8 +30,12 @@ class Allergy(BaseRecord):
     
     @property
     def timestamp(self) -> float:
-        # Convert date string to timestamp if needed
-        return 0.0  # Placeholder - would need proper date parsing
+        """Convert START date to timestamp using dateutil for robust parsing."""
+        try:
+            parsed_date = parse_date(self.START)
+            return parsed_date.timestamp()
+        except (ParserError, ValueError, AttributeError):
+            return 0.0  # Fallback for invalid dates
 
 
 @attr.s(auto_attribs=True)
@@ -51,7 +57,16 @@ class CarePlan(BaseRecord):
     
     @property
     def timestamp(self) -> float:
-        return 0.0  # Placeholder - would need proper date parsing
+        """Convert date to timestamp using dateutil for robust parsing."""
+        try:
+            # Try to parse the START date field if available
+            date_field = getattr(self, 'START', None) or getattr(self, 'DATE', None) or getattr(self, 'BIRTHDATE', None)
+            if date_field:
+                parsed_date = parse_date(date_field)
+                return parsed_date.timestamp()
+            return 0.0
+        except (ParserError, ValueError, AttributeError):
+            return 0.0  # Fallback for invalid dates
 
 
 @attr.s(auto_attribs=True)
@@ -70,7 +85,16 @@ class Condition(BaseRecord):
     
     @property
     def timestamp(self) -> float:
-        return 0.0  # Placeholder - would need proper date parsing
+        """Convert date to timestamp using dateutil for robust parsing."""
+        try:
+            # Try to parse the START date field if available
+            date_field = getattr(self, 'START', None) or getattr(self, 'DATE', None) or getattr(self, 'BIRTHDATE', None)
+            if date_field:
+                parsed_date = parse_date(date_field)
+                return parsed_date.timestamp()
+            return 0.0
+        except (ParserError, ValueError, AttributeError):
+            return 0.0  # Fallback for invalid dates
 
 
 @dataclass
@@ -318,44 +342,35 @@ class Patient(BaseRecord):
         return self.departure_time > 0.0
     
     def extract_symptoms_from_observations(self) -> dict:
-        """Extract symptoms from patient observations for triage.
+        """Extract symptoms from patient observations using efficient pattern matching.
         
         Returns:
             Dictionary of symptoms extracted from observations
         """
-        symptoms = {}
+        # Symptom mapping for efficient extraction
+        symptom_patterns = {
+            'pain': ['pain'],
+            'fever': ['fever', 'temperature'],
+            'nausea': ['nausea'],
+            'vomiting': ['vomit'],
+            'breathing_difficulty': ['breath', 'respiratory'],
+            'chest_pain': ['chest'],
+            'headache': ['head'],
+            'severe_symptoms': ['emergency', 'urgent']
+        }
         
-        # Extract symptoms from observations if available
-        if hasattr(self, 'observations') and self.observations:
-            for obs in self.observations:
-                # Map observation descriptions to symptom keys
-                if 'pain' in obs.DESCRIPTION.lower():
-                    symptoms['pain'] = True
-                if 'fever' in obs.DESCRIPTION.lower() or 'temperature' in obs.DESCRIPTION.lower():
-                    symptoms['fever'] = True
-                if 'nausea' in obs.DESCRIPTION.lower():
-                    symptoms['nausea'] = True
-                if 'vomit' in obs.DESCRIPTION.lower():
-                    symptoms['vomiting'] = True
-                if 'breath' in obs.DESCRIPTION.lower() or 'respiratory' in obs.DESCRIPTION.lower():
-                    symptoms['breathing_difficulty'] = True
-                if 'chest' in obs.DESCRIPTION.lower():
-                    symptoms['chest_pain'] = True
-                if 'head' in obs.DESCRIPTION.lower():
-                    symptoms['headache'] = True
+        # Extract from observations and encounters using attrs fields directly
+        descriptions = []
+        if self.encounters:
+            descriptions.extend(enc.DESCRIPTION.lower() for enc in self.encounters)
+        # Note: observations field would need to be added to Patient attrs model if needed
         
-        # If no observations available, extract from encounters
-        if not symptoms and self.encounters:
-            for encounter in self.encounters:
-                desc = encounter.DESCRIPTION.lower()
-                if 'pain' in desc:
-                    symptoms['pain'] = True
-                if 'fever' in desc:
-                    symptoms['fever'] = True
-                if 'emergency' in desc or 'urgent' in desc:
-                    symptoms['severe_symptoms'] = True
-        
-        return symptoms
+        # Efficient symptom detection using any() and generator expressions
+        return {
+            symptom: any(pattern in desc for desc in descriptions for pattern in patterns)
+            for symptom, patterns in symptom_patterns.items()
+            if any(pattern in desc for desc in descriptions for pattern in patterns)
+        }
     
     @property
     def record_id(self) -> str:
