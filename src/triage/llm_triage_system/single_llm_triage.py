@@ -64,18 +64,30 @@ class SingleLLMTriage(BaseLLMTriageSystem):
             prompt = get_full_triage_prompt(symptoms, operational_context)
             logger.info(f"📝 Prompt generated: {len(prompt)} chars for model {self.model_name}")
             
-            # Step 3: Query API and process response
+            # Step 3: Query API with retry logic for malformed JSON
             logger.info(f"🔍 Step 3: Querying AI Model for Triage Decision")
-            raw_response = self._query_single_model(prompt)
+            max_retries = 2
+            json_result = None
             
-            # Step 4: Process JSON response with production handler
-            logger.info(f"🔍 Step 4: Processing JSON Response")
-            json_result = self.json_handler.process_response(raw_response)
-            
-            if json_result.quality == ResponseQuality.FAILED or json_result.data is None:
-                error_msg = f"JSON processing failed: {'; '.join(json_result.errors)}"
-                logger.error(f"❌ {error_msg}")
-                raise ValueError(error_msg)
+            for attempt in range(max_retries + 1):
+                if attempt > 0:
+                    logger.warning(f"🔄 Retry attempt {attempt}/{max_retries} due to JSON parsing failure")
+                    # Enhance prompt for retry with more explicit JSON requirements
+                    prompt = self._enhance_prompt_for_retry(prompt, attempt)
+                
+                raw_response = self._query_single_model(prompt)
+                
+                # Step 4: Process JSON response with production handler
+                logger.info(f"🔍 Step 4: Processing JSON Response (Attempt {attempt + 1})")
+                json_result = self.json_handler.process_response(raw_response, retry_count=attempt)
+                
+                if json_result.quality != ResponseQuality.FAILED and json_result.data is not None:
+                    break
+                
+                if attempt == max_retries:
+                    error_msg = f"JSON processing failed after {max_retries + 1} attempts: {'; '.join(json_result.errors)}"
+                    logger.error(f"❌ {error_msg}")
+                    raise ValueError(error_msg)
             
             # Log quality metrics
             logger.info(f"✅ JSON processed (Quality: {json_result.quality.value}, Time: {json_result.processing_time_ms:.1f}ms)")
@@ -130,5 +142,23 @@ class SingleLLMTriage(BaseLLMTriageSystem):
         except Exception as api_call_error:
             logger.error(f"❌ API call failed: {api_call_error}")
             raise RuntimeError(f"HF API call failed: {api_call_error}") from api_call_error
+    
+    def _enhance_prompt_for_retry(self, original_prompt: str, attempt: int) -> str:
+        """Enhance prompt with stronger JSON formatting requirements for retry attempts.
+        
+        Args:
+            original_prompt: The original prompt that failed
+            attempt: Retry attempt number
+            
+        Returns:
+            Enhanced prompt with stricter JSON requirements
+        """
+        retry_instructions = {
+            1: "\n\n🚨 CRITICAL: Your previous response was not valid JSON. You MUST respond with ONLY a JSON object. No text before or after. Start with { and end with }.",
+            2: "\n\n🚨 FINAL ATTEMPT: Respond with EXACTLY this format:\n{\"triage_category\": \"RED\", \"priority_score\": 1, \"confidence\": 0.9, \"reasoning\": \"Your reasoning here\", \"wait_time\": \"Immediate (0 min)\"}\n\nReplace values but keep exact structure. NO OTHER TEXT."
+        }
+        
+        enhancement = retry_instructions.get(attempt, "")
+        return original_prompt + enhancement
     
     # All JSON processing now handled by TriageJSONHandler

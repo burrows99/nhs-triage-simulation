@@ -14,17 +14,19 @@ This system uses parallel agents to analyze different aspects of triage:
 
 import json
 import asyncio
-from typing import Dict, Any, List, Optional, TypedDict
+from typing import Dict, Any, List, Optional, TypedDict, Annotated
 from concurrent.futures import ThreadPoolExecutor
 
 try:
     from langgraph.graph import StateGraph, END
+    from langgraph.graph.message import add_messages
     LANGGRAPH_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"LangGraph import failed: {e}")
     LANGGRAPH_AVAILABLE = False
     StateGraph = None
     END = None
+    add_messages = None
 
 from src.logger import logger
 from .base_llm_triage import BaseLLMTriageSystem
@@ -33,26 +35,55 @@ from src.models.triage_result import TriageResult
 from .config.system_prompts import get_triage_categories
 
 
+# Custom reducer function for agent analysis results
+def agent_analysis_reducer(left: List[Dict[str, Any]], right: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Reducer function to handle multiple agent updates to analysis fields.
+    
+    Args:
+        left: Current list of analysis results
+        right: New analysis result to add
+        
+    Returns:
+        Updated list with new analysis result appended
+    """
+    if left is None:
+        left = []
+    if right is not None:
+        return left + [right]
+    return left
+
+# Custom reducer for dictionary fields that might be updated by multiple agents
+def dict_reducer(left: Optional[Dict[str, Any]], right: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Reducer function for dictionary fields - takes the latest non-null value."""
+    return right if right is not None else left
+
+
 # State definition for LangGraph workflow
+# Custom reducer for string fields that might be updated by multiple agents
+def string_reducer(left: Optional[str], right: Optional[str]) -> Optional[str]:
+    """Reducer function for string fields - takes the latest non-null value."""
+    return right if right is not None else left
+
 class TriageState(TypedDict):
     """State object for the multi-agent triage workflow."""
-    symptoms: str
-    operational_context: str
-    patient_history: str
+    # Use reducer for symptoms to handle potential concurrent updates
+    symptoms: Annotated[str, string_reducer]
+    operational_context: Annotated[str, string_reducer]
+    patient_history: Annotated[str, string_reducer]
     
-    # Agent analysis results
-    symptom_analysis: Optional[Dict[str, Any]]
-    history_evaluation: Optional[Dict[str, Any]]
-    guidelines_check: Optional[Dict[str, Any]]
-    operations_analysis: Optional[Dict[str, Any]]
-    trends_analysis: Optional[Dict[str, Any]]
+    # Agent analysis results - using custom reducer to handle concurrent updates
+    symptom_analysis: Annotated[List[Dict[str, Any]], agent_analysis_reducer]
+    history_evaluation: Annotated[List[Dict[str, Any]], agent_analysis_reducer]
+    guidelines_check: Annotated[List[Dict[str, Any]], agent_analysis_reducer]
+    operations_analysis: Annotated[List[Dict[str, Any]], agent_analysis_reducer]
+    trends_analysis: Annotated[List[Dict[str, Any]], agent_analysis_reducer]
     
-    # Final result
-    final_decision: Optional[Dict[str, Any]]
+    # Final result - using dict reducer to handle concurrent updates
+    final_decision: Annotated[Optional[Dict[str, Any]], dict_reducer]
     
-    # Workflow control
-    next_step: Optional[str]
-    error: Optional[str]
+    # Workflow control - using string reducer to handle concurrent updates
+    next_step: Annotated[Optional[str], string_reducer]
+    error: Annotated[Optional[str], string_reducer]
 
 
 class MixtureLLMTriage(BaseLLMTriageSystem):
@@ -251,11 +282,11 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             "symptoms": symptoms,
             "operational_context": operational_context,
             "patient_history": self._extract_patient_history(symptoms),
-            "symptom_analysis": None,
-            "history_evaluation": None,
-            "guidelines_check": None,
-            "operations_analysis": None,
-            "trends_analysis": None,
+            "symptom_analysis": [],
+            "history_evaluation": [],
+            "guidelines_check": [],
+            "operations_analysis": [],
+            "trends_analysis": [],
             "final_decision": None,
             "next_step": None,
             "error": None
@@ -334,6 +365,7 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             )
             
             analysis = json.loads(completion.choices[0].message.content)
+            # Update state using the custom reducer
             state["symptom_analysis"] = analysis
             logger.info(f"✅ Symptom analysis complete: {analysis.get('severity_assessment', 'unknown')} severity")
             
@@ -379,6 +411,7 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             )
             
             evaluation = json.loads(completion.choices[0].message.content)
+            # Update state using the custom reducer
             state["history_evaluation"] = evaluation
             logger.info(f"✅ History evaluation complete: {evaluation.get('risk_stratification', 'unknown')} risk")
             
@@ -424,6 +457,7 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             )
             
             guidelines = json.loads(completion.choices[0].message.content)
+            # Update state using the custom reducer
             state["guidelines_check"] = guidelines
             logger.info(f"✅ Guidelines check complete: {guidelines.get('nhs_category_recommendation', 'unknown')} recommended")
             
@@ -469,6 +503,7 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             )
             
             operations = json.loads(completion.choices[0].message.content)
+            # Update state using the custom reducer
             state["operations_analysis"] = operations
             logger.info(f"✅ Operations analysis complete: {operations.get('capacity_status', 'unknown')} capacity")
             
@@ -525,6 +560,7 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             )
             
             trends = json.loads(completion.choices[0].message.content)
+            # Update state using the custom reducer
             state["trends_analysis"] = trends
             logger.info(f"✅ Trends analysis complete")
             
@@ -547,14 +583,18 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
         logger.info(f"🔍 Finalizer: Combining all agent analyses")
         
         try:
-            # Compile all agent outputs
-            agent_outputs = {
-                "symptom_analysis": state.get("symptom_analysis", {}),
-                "history_evaluation": state.get("history_evaluation", {}),
-                "guidelines_check": state.get("guidelines_check", {}),
-                "operations_analysis": state.get("operations_analysis", {}),
-                "trends_analysis": state.get("trends_analysis", {})
-            }
+            # Compile all agent outputs - handle list format from Annotated fields
+            agent_outputs = {}
+            
+            # Safely extract the latest analysis from each agent's results list
+            for field_name in ["symptom_analysis", "history_evaluation", "guidelines_check", "operations_analysis", "trends_analysis"]:
+                field_data = state.get(field_name, [])
+                if isinstance(field_data, list) and len(field_data) > 0:
+                    agent_outputs[field_name] = field_data[-1]
+                elif isinstance(field_data, dict):
+                    agent_outputs[field_name] = field_data
+                else:
+                    agent_outputs[field_name] = {"error": "No analysis available", "status": "missing"}
             
             prompt = f"""
             You are the final decision maker for a multi-agent triage system. Combine all agent analyses into a final triage decision.

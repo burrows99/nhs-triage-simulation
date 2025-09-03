@@ -64,12 +64,12 @@ class TriageJSONHandler:
         },
         'reasoning': {
             'type': str,
-            'max_length': 500,
+            'max_length': 2000,  # Increased for multi-agent detailed reasoning
             'required': True
         },
         'wait_time': {
             'type': str,
-            'max_length': 100,
+            'max_length': 200,  # Increased for detailed wait time descriptions
             'required': True
         }
     }
@@ -85,11 +85,12 @@ class TriageJSONHandler:
             'RED': 1, 'ORANGE': 2, 'YELLOW': 3, 'GREEN': 4, 'BLUE': 5
         }
     
-    def process_response(self, raw_response: str) -> JSONProcessingResult:
+    def process_response(self, raw_response: str, retry_count: int = 0) -> JSONProcessingResult:
         """Process raw LLM response into validated JSON.
         
         Args:
             raw_response: Raw response from LLM API
+            retry_count: Number of retry attempts (for logging)
             
         Returns:
             JSONProcessingResult with processed data and quality metrics
@@ -107,10 +108,15 @@ class TriageJSONHandler:
         )
         
         try:
+            # Log raw response for debugging malformed JSON
+            if len(raw_response.strip()) < 50:
+                logger.warning(f"⚠️  Suspiciously short response ({len(raw_response)} chars): {raw_response}")
+            
             # Step 1: Extract and parse JSON
             json_data = self._extract_and_parse_json(raw_response)
             if json_data is None:
                 result.errors.append("No valid JSON found in response")
+                logger.error(f"❌ JSON extraction failed. Raw response: {raw_response[:200]}...")
                 if self.strict_mode:
                     raise JSONParsingError("Failed to extract valid JSON")
                 return result
@@ -138,6 +144,8 @@ class TriageJSONHandler:
         except (JSONParsingError, ValidationError) as e:
             result.errors.append(str(e))
             logger.error(f"❌ JSON processing failed: {e}")
+            if retry_count > 0:
+                logger.error(f"❌ This was retry attempt #{retry_count}")
             if self.strict_mode:
                 raise
         
