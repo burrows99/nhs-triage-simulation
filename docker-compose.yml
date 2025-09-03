@@ -27,7 +27,7 @@ services:
           sleep 5
         done
         echo 'Ollama is ready, downloading model...'
-        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:1b\"}' --max-time 1800
+        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q2_K\"}' --max-time 1800
         echo 'Model download completed'
       "
     networks:
