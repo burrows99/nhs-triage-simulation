@@ -50,7 +50,7 @@ class CarePlan(BaseRecord):
     CODE: str = attr.ib(converter=str, validator=attr.validators.instance_of(str))
     DESCRIPTION: str = attr.ib(validator=attr.validators.instance_of(str))
     STOP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
-    REASONCODE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    REASONCODE: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     REASONDESCRIPTION: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
@@ -121,7 +121,7 @@ class Encounter(BaseRecord):
     TOTAL_CLAIM_COST: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     PAYER_COVERAGE: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     STOP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
-    REASONCODE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    REASONCODE: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     REASONDESCRIPTION: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     # Related data grouped by encounter
@@ -214,7 +214,7 @@ class Medication(BaseRecord):
     DISPENSES: int = attr.ib(validator=attr.validators.instance_of(int))
     TOTALCOST: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     STOP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
-    REASONCODE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    REASONCODE: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     REASONDESCRIPTION: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
@@ -239,7 +239,7 @@ class Observation(BaseRecord):
     CODE: str = attr.ib(converter=str, validator=attr.validators.instance_of(str))
     DESCRIPTION: str = attr.ib(validator=attr.validators.instance_of(str))
     TYPE: str = attr.ib(validator=attr.validators.instance_of(str))
-    ENCOUNTER: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    ENCOUNTER: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     VALUE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     UNITS: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
@@ -269,7 +269,7 @@ class Organization(BaseRecord):
     LON: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     REVENUE: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     UTILIZATION: int = attr.ib(validator=attr.validators.instance_of(int))
-    ZIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    ZIP: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     PHONE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
@@ -305,7 +305,7 @@ class Patient(BaseRecord):
     HEALTHCARE_COVERAGE: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     
     # Optional fields after mandatory ones
-    ZIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    ZIP: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     DEATHDATE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     DRIVERS: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     PASSPORT: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
@@ -425,7 +425,7 @@ class PayerTransition(BaseRecord):
     PATIENT: str = attr.ib(validator=attr.validators.instance_of(str))
     START_YEAR: int = attr.ib(validator=attr.validators.instance_of(int))
     PAYER: str = attr.ib(validator=attr.validators.instance_of(str))
-    OWNERSHIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    OWNERSHIP: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     END_YEAR: Optional[int] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(int)))
     
     @property
@@ -459,7 +459,7 @@ class Payer(BaseRecord):
     ADDRESS: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     CITY: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     STATE_HEADQUARTERED: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
-    ZIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    ZIP: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     PHONE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
@@ -480,7 +480,7 @@ class Procedure(BaseRecord):
     CODE: str = attr.ib(converter=str, validator=attr.validators.instance_of(str))
     DESCRIPTION: str = attr.ib(validator=attr.validators.instance_of(str))
     BASE_COST: float = attr.ib(validator=attr.validators.instance_of((int, float)))
-    REASONCODE: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    REASONCODE: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     REASONDESCRIPTION: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
@@ -511,7 +511,7 @@ class Provider(BaseRecord):
     LAT: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     LON: float = attr.ib(validator=attr.validators.instance_of((int, float)))
     UTILIZATION: int = attr.ib(validator=attr.validators.instance_of(int))
-    ZIP: Optional[str] = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    ZIP: Optional[str] = attr.ib(default=None, converter=lambda x: str(x) if x is not None and str(x).strip() != '' and str(x) != 'nan' else None, validator=attr.validators.optional(attr.validators.instance_of(str)))
     
     @property
     def record_id(self) -> str:

@@ -313,7 +313,7 @@ class OperationMetrics(BaseMetrics):
         
         for resource, wait_times in self.wait_times.items():
             if wait_times:
-                stats = StatisticsUtils.calculate_basic_stats(wait_times)
+                stats = StatisticsUtils.calculate_basic_stats(tuple(wait_times))
                 wait_time_metrics[resource] = {
                     'average_wait_time_minutes': stats['mean'],
                     'max_wait_time_minutes': stats['max'],
@@ -331,7 +331,7 @@ class OperationMetrics(BaseMetrics):
         
         for resource, service_times in self.service_times.items():
             if service_times:
-                stats = StatisticsUtils.calculate_basic_stats(service_times)
+                stats = StatisticsUtils.calculate_basic_stats(tuple(service_times))
                 service_time_metrics[resource] = {
                     'average_service_time_minutes': stats['mean'],
                     'max_service_time_minutes': stats['max'],
