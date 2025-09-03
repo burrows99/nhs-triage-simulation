@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 """
-Hospital Simulation with Manchester Triage System
+Hospital Simulation with LLM Triage System
 
-This script runs a hospital simulation using real patient data from Synthea
-and the Manchester Triage System for patient triage.
-
-Usage:
-    python main.py
+Runs hospital simulation using real Synthea patient data with LLM-based triage.
 """
 
 import sys
 import os
 import logging
 
-# Add the src directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-# Import centralized logger
 from src.logger import logger
 
 from src.simulation.real_data_hospital import SimpleHospital
@@ -31,15 +25,13 @@ def main():
     logger.info("=" * 60)
     
     try:
-        # Create temporary LLM triage system
         temp_llm_triage = LLMTriageSystem()
         
-        # Initialize hospital with metrics services
         hospital = SimpleHospital(
             csv_folder='./output/csv',
             triage_system=temp_llm_triage,
-            sim_duration=480,    # 8 hours
-            arrival_rate=50,     # 50 patients/hour
+            sim_duration=480,
+            arrival_rate=50,
             delay_scaling=0,
             nurses=3,
             doctors=2,
@@ -47,27 +39,22 @@ def main():
             log_level=logging.INFO
         )
         
-        # Create LLM triage system with operational metrics
         llm_triage_with_metrics = LLMTriageSystem(
             operation_metrics=hospital.operation_metrics,
             nhs_metrics=hospital.nhs_metrics
         )
         
-        # Replace with metrics-aware version
         hospital.triage_system = llm_triage_with_metrics
         
         logger.info(f"📊 Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")
         logger.info(f"🤖 Triage: LLM with operational context")
         
-        # Run simulation
         results = hospital.run()
         
-        # Display results
         logger.info("📊 Simulation Results:")
-        logger.info(f"  Total Patients Processed: {results['total_patients']}")
-        logger.info(f"  Average Time in Hospital: {results['avg_time']:.1f} minutes")
+        logger.info(f"  Total Patients: {results['total_patients']}")
+        logger.info(f"  Average Time: {results['avg_time']:.1f} minutes")
         
-        # Category breakdown
         from collections import Counter
         category_counts = Counter(results['categories'])
         logger.info(f"🏷️  Triage Category Distribution:")

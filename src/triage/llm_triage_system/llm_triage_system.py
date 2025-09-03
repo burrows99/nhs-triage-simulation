@@ -3,24 +3,20 @@ import os
 from typing import Dict, Any
 from openai import OpenAI
 
-# Load environment variables from .env file
 try:
     from dotenv import load_dotenv
-    load_dotenv()  # Load .env file if it exists
+    load_dotenv()
 except ImportError:
-    pass  # python-dotenv not installed, use system environment variables
+    pass
 
-# HuggingFace and ML dependencies
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 import torch
 import numpy as np
 
-# Import centralized logger
 from src.logger import logger
 from .config.system_prompts import get_system_prompt, get_triage_categories, get_wait_time_for_category, get_full_triage_prompt
 from src.models.triage_result import TriageResult
 
-# Hugging Face API configuration - Load from environment variables
 HF_API_KEY = os.getenv('HF_API_KEY', 'your-huggingface-api-key-here')
 HF_BASE_URL = os.getenv('HF_BASE_URL', 'https://router.huggingface.co/v1')
 HF_MODEL = os.getenv('HF_MODEL', 'openai/gpt-oss-120b:together')
@@ -87,7 +83,6 @@ class LLMTriageSystem:
             raise ValueError("Empty symptoms provided to LLM triage system")
         
         try:
-            # Generate operational context if metrics are available
             operational_context = ""
             if self.operation_metrics and self.nhs_metrics:
                 current_time = 0.0
@@ -96,21 +91,14 @@ class LLMTriageSystem:
                 operational_context = self._generate_operational_context(current_time)
                 logger.debug(f"📊 Added operational context ({len(operational_context)} chars)")
             
-            # Generate complete prompt using system_prompts module
             prompt = get_full_triage_prompt(symptoms, operational_context)
-            
             logger.debug(f"🔍 API Request: {self.model_name} ({len(prompt)} chars)")
             
             try:
                 completion = self.client.chat.completions.create(
                     model=self.model_name,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    temperature=0.0  # Low temperature for consistent medical decisions
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0
                 )
                 
                 response_content = completion.choices[0].message.content
@@ -120,29 +108,24 @@ class LLMTriageSystem:
                 logger.error(f"❌ API call failed: {api_call_error}")
                 raise RuntimeError(f"HF API call failed: {api_call_error}") from api_call_error
             
-            # Parse and validate JSON response
             try:
                 triage_data = json.loads(response_content)
                 logger.debug(f"📋 Parsed: {json.dumps(triage_data, separators=(',', ':'))}")
-                
             except json.JSONDecodeError as json_error:
                 logger.error(f"❌ Invalid JSON response: {response_content[:200]}...")
                 raise ValueError(f"Invalid JSON response: {json_error}") from json_error
             
-            # Validate required fields
             required_fields = ["triage_category", "priority_score", "confidence", "reasoning", "wait_time"]
             missing_fields = [field for field in required_fields if field not in triage_data]
             if missing_fields:
                 logger.error(f"❌ Missing fields: {missing_fields}")
                 raise ValueError(f"Missing required fields: {missing_fields}")
             
-            # Validate triage category
             valid_categories = get_triage_categories()
             if triage_data["triage_category"] not in valid_categories:
                 logger.error(f"❌ Invalid category: {triage_data['triage_category']}")
                 raise ValueError(f"Invalid triage category: {triage_data['triage_category']}")
             
-            # Convert data types
             try:
                 triage_data["priority_score"] = int(triage_data["priority_score"])
                 triage_data["confidence"] = float(triage_data["confidence"])
