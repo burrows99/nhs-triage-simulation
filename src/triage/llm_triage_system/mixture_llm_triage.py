@@ -28,6 +28,7 @@ except ImportError as e:
 
 from src.logger import logger
 from .base_llm_triage import BaseLLMTriageSystem
+from .json_handler import TriageJSONHandler, ResponseQuality
 from src.models.triage_result import TriageResult
 from .config.system_prompts import get_triage_categories
 
@@ -89,6 +90,7 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
         self.agent_config = agent_config or self._get_default_agent_config()
         self.workflow = None
         self.executor = ThreadPoolExecutor(max_workers=5)
+        self.json_handler = TriageJSONHandler(strict_mode=True)
         
         logger.info(f"🤖 Initializing Mixture LLM Triage System (Multi-Agent)")
         
@@ -575,25 +577,45 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             Respond only with valid JSON.
             """
             
-            completion = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0
-            )
+            # Use strict JSON formatting
+            api_params = {
+                "model": self.model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.0,
+                "max_tokens": 800
+            }
             
-            final_decision = json.loads(completion.choices[0].message.content)
+            # Add JSON mode for supported models
+            if "gpt" in self.model_name.lower() or "claude" in self.model_name.lower():
+                api_params["response_format"] = {"type": "json_object"}
             
-            # Validate the decision
-            valid_categories = get_triage_categories()
-            if final_decision.get("triage_category") not in valid_categories:
-                logger.warning(f"Invalid category {final_decision.get('triage_category')}, defaulting to YELLOW")
-                final_decision["triage_category"] = "YELLOW"
+            completion = self.client.chat.completions.create(**api_params)
+            response_content = completion.choices[0].message.content
             
-            # Ensure required fields
+            # Use JSON handler for parsing and validation
+            json_result = self.json_handler.process_response(response_content)
+            
+            if json_result.quality == ResponseQuality.FAILED or json_result.data is None:
+                error_msg = f"Multi-agent JSON processing failed: {'; '.join(json_result.errors)}"
+                logger.error(f"❌ {error_msg}")
+                logger.error(f"🚨 STRICT MODE: No fallback - failing fast for debugging")
+                logger.error(f"Raw response: {response_content[:300]}...")
+                raise ValueError(error_msg)
+            
+            logger.info(f"✅ Multi-agent JSON processed (Quality: {json_result.quality.value}, Time: {json_result.processing_time_ms:.1f}ms)")
+            if json_result.warnings:
+                for warning in json_result.warnings:
+                    logger.warning(f"⚠️  {warning}")
+            
+            final_decision = json_result.data
+            
+            # Ensure all required fields are present with defaults
             final_decision.setdefault("priority_score", self._category_to_priority(final_decision["triage_category"]))
             final_decision.setdefault("confidence", 0.8)
             final_decision.setdefault("reasoning", "Multi-agent consensus decision")
             final_decision.setdefault("wait_time", "Based on current capacity")
+            final_decision.setdefault("consensus_factors", "Agent consensus analysis")
+            final_decision.setdefault("dissenting_opinions", "None identified")
             
             state["final_decision"] = final_decision
             logger.info(f"✅ Final decision: {final_decision['triage_category']} (Priority {final_decision['priority_score']})")
@@ -653,3 +675,5 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             ],
             "fallback_mode": "Single Agent" if not LANGGRAPH_AVAILABLE else "None"
         }
+    
+    # JSON validation now handled by TriageJSONHandler

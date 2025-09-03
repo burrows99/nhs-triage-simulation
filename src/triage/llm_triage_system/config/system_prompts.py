@@ -64,25 +64,43 @@ def get_full_triage_prompt(symptoms: str, operational_context: str = "") -> str:
     """
     system_context = get_system_prompt()
     
+    # Prepare context-specific text
+    reasoning_context = ' and current hospital conditions' if operational_context else ''
+    guidelines_context = ' AND the current hospital operational status' if operational_context else ''
+    
     prompt = f"""{system_context}{operational_context}
 
 Patient Presentation:
 {symptoms}
 
-Based on the NHS UK Triage Guidelines above{' AND the current hospital operational status' if operational_context else ''}, analyze these symptoms and provide a triage recommendation.
+Based on the NHS UK Triage Guidelines above{guidelines_context}, analyze these symptoms and provide a triage recommendation.
 
 {_get_operational_instructions(operational_context)}
 
-Output ONLY the following JSON object with no additional text:
+CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no additional text.
+
+Required JSON format (copy exactly, replacing values):
 {{
-  "triage_category": "one of RED, ORANGE, YELLOW, GREEN, BLUE",
-  "priority_score": "integer from 1 to 5",
-  "confidence": "float from 0.0 to 1.0",
-  "reasoning": "brief clinical explanation based on NHS guidelines{' and current hospital conditions' if operational_context else ''}",
-  "wait_time": "expected wait time as string{' based on current operational status' if operational_context else ''} (e.g., 'Immediate (0 min)')"
+  "triage_category": "RED",
+  "priority_score": 1,
+  "confidence": 0.85,
+  "reasoning": "Brief clinical explanation based on NHS guidelines{reasoning_context}",
+  "wait_time": "Immediate (0 min)"
 }}
 
-Do not include any text before or after the JSON."""
+Rules:
+- triage_category: Must be exactly one of: RED, ORANGE, YELLOW, GREEN, BLUE
+- priority_score: Must be integer 1-5 (1=RED, 2=ORANGE, 3=YELLOW, 4=GREEN, 5=BLUE)
+- confidence: Must be decimal 0.0-1.0 (e.g., 0.85, not 85%)
+- reasoning: String under 200 characters
+- wait_time: String describing expected wait
+
+Example valid responses:
+{{"triage_category": "RED", "priority_score": 1, "confidence": 0.9, "reasoning": "Chest pain with severe symptoms requires immediate assessment", "wait_time": "Immediate (0 min)"}}
+
+{{"triage_category": "YELLOW", "priority_score": 3, "confidence": 0.7, "reasoning": "Moderate symptoms requiring urgent but not immediate care", "wait_time": "2-4 hours"}}
+
+Respond with JSON only - no other text."""
     
     return prompt
 
