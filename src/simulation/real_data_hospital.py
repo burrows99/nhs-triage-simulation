@@ -365,8 +365,8 @@ class SimpleHospital:
             self._capture_monitoring_snapshot("triage resource before release")
             
             # Record resource release event
-        self.simulation_engine.record_resource_event(
-            'release', 'triage', patient_id, self._record_hospital_event, service_time=total_triage_time)
+            self.simulation_engine.record_resource_event(
+                'release', 'triage', patient_id, self._record_hospital_event, service_time=total_triage_time)
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient #{patient_num}: Completed triage assessment at {self.simulation_engine.format_sim_time(triage_end)} (Total triage time: {triage_end - triage_start:.1f}min)")
             
@@ -385,9 +385,9 @@ class SimpleHospital:
         
         with doctor_resource.request(priority=priority) as req:
             # Record resource request event
-        self.simulation_engine.record_resource_event(
-            'request', 'doctor', patient.patient_id, self._record_hospital_event, 
-            priority=priority, queue_length=len(doctor_resource.queue))
+            self.simulation_engine.record_resource_event(
+                'request', 'doctor', patient.patient_id, self._record_hospital_event, 
+                priority=priority, queue_length=len(doctor_resource.queue))
             
             yield req
             assessment_service_start = self.simulation_engine.env.now
@@ -768,7 +768,7 @@ class SimpleHospital:
                 logger.debug(f"📊 UTILIZATION DEBUG | {event_record['resource']} | In Use: {actual_resource.count} | "
                            f"Capacity: {actual_resource.capacity} | Queue: {len(actual_resource.queue)}")
             else:
-                logger.warning(f"⚠️  RESOURCE NOT FOUND | {event_record['resource']} | SimPy resource mapping issue")}]}}}
+                logger.warning(f"⚠️  RESOURCE NOT FOUND | {event_record['resource']} | SimPy resource mapping issue")
     
 
     
