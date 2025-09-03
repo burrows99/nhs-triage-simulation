@@ -62,16 +62,7 @@ class SimulationEngine:
         
         logger.info(f"🏗️  Resources initialized: {', '.join([f'{k}: {v}' for k, v in self.resources.items()])}")
     
-    def get_resource(self, resource_name: str):
-        """Get a SimPy resource by name.
-        
-        Args:
-            resource_name: Name of the resource
-            
-        Returns:
-            SimPy resource object
-        """
-        return self.simpy_resources.get(resource_name)
+
     
     def schedule_arrivals(self, arrival_process_func: Callable):
         """Schedule the patient arrival process.

@@ -910,15 +910,3 @@ class PlottingService:
         # Save with high DPI
         fig.savefig(save_path, dpi=300, bbox_inches='tight', 
                    facecolor='white', edgecolor='none')
-    
-    def close_all_figures(self):
-        """Close all matplotlib figures to free memory."""
-        plt.close('all')
-    
-    def set_style(self, style: str):
-        """Change matplotlib style."""
-        plt.style.use(style)
-    
-    def get_available_styles(self) -> List[str]:
-        """Get list of available matplotlib styles."""
-        return plt.style.available

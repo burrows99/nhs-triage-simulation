@@ -8,7 +8,7 @@ Single Responsibility: Only handles validation
 from typing import Dict, Any
 from src.triage.triage_constants import TriageCategories
 from .base_validator import BaseValidator
-from ..paper_references import FMTSPaperReferences, reference_section_ii, paper_context
+from ..paper_references import FMTSPaperReferences
 
 
 class TriageValidator(BaseValidator):

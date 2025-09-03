@@ -133,17 +133,3 @@ class FMTSPaperReferences:
         return f"Paper Context: {context}"
     
     # Removed unused get_bibtex_citation method
-
-
-# Convenience functions for common reference patterns
-def reference_section_ii(quote: str) -> str:
-    """Generate Section II reference comment."""
-    return FMTSPaperReferences.get_reference_comment("Section II", quote)
-
-def reference_section_i(quote: str) -> str:
-    """Generate Section I reference comment."""
-    return FMTSPaperReferences.get_reference_comment("Section I", quote)
-
-def paper_context(context: str) -> str:
-    """Generate paper context comment."""
-    return FMTSPaperReferences.get_context_comment(context)

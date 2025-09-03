@@ -596,7 +596,7 @@ class SimpleHospital:
         # Assessment timing is tracked in NHS metrics instead
         self.nhs_metrics.record_initial_assessment(patient, triage_start)
         
-        triage_resource = self.simulation_engine.get_resource('nurses')
+        triage_resource = self.simulation_engine.simpy_resources['nurses']
         if len(triage_resource.queue) > 5:  # Only log if significant queue
             self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Queue: {len(triage_resource.queue)} waiting")
         else:
@@ -689,7 +689,7 @@ class SimpleHospital:
     
     def _acquire_doctor_resource(self, patient, triage_result, patient_num, assessment_start):
         """Acquire doctor resource with proper logging and delays."""
-        doctor_resource = self.simulation_engine.get_resource('doctors')
+        doctor_resource = self.simulation_engine.simpy_resources['doctors']
         priority = triage_result.priority_score
         self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Waiting for doctor at {self.simulation_engine.format_sim_time(assessment_start)} (Priority: {priority}, Queue: {len(doctor_resource.queue)} waiting)")
         
@@ -810,7 +810,7 @@ class SimpleHospital:
             
             # Bed allocation process
             bed_start = self.simulation_engine.env.now
-            bed_resource = self.simulation_engine.get_resource('beds')
+            bed_resource = self.simulation_engine.simpy_resources['beds']
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🛏️  Waiting for bed at {self.simulation_engine.format_sim_time(bed_start)} (Priority: {triage_result.priority_score}, Available beds: {bed_resource.capacity - bed_resource.count})")
             
             with bed_resource.request(priority=triage_result.priority_score) as req:
@@ -925,9 +925,9 @@ class SimpleHospital:
         self.simulation_engine.log_with_sim_time(logging.INFO, f"📊 Final Results: {self.patient_count} patients processed, average time: {avg_time:.1f}min")
         
         # Get final resource states from simulation engine
-        triage_resource = self.simulation_engine.get_resource('nurses')
-        doctor_resource = self.simulation_engine.get_resource('doctors')
-        bed_resource = self.simulation_engine.get_resource('beds')
+        triage_resource = self.simulation_engine.simpy_resources['nurses']
+        doctor_resource = self.simulation_engine.simpy_resources['doctors']
+        bed_resource = self.simulation_engine.simpy_resources['beds']
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Final resource state: Triage: {triage_resource.count}/{self.nurses}, Doctors: {doctor_resource.count}/{self.doctors}, Beds: {bed_resource.count}/{self.beds}")
         
         logger.info(f"Simulation Complete!")
@@ -1100,7 +1100,8 @@ class SimpleHospital:
         
         # Additional logging for utilization tracking issues
         if event_record['event_type'] == 'acquire':
-            actual_resource = self.simulation_engine.get_resource(self._get_simpy_resource_name(event_record['resource']))
+            simpy_resource_name = self._get_simpy_resource_name(event_record['resource'])
+            actual_resource = self.simulation_engine.simpy_resources.get(simpy_resource_name)
             if actual_resource:
                 logger.debug(f"📊 UTILIZATION DEBUG | {event_record['resource']} | In Use: {actual_resource.count} | "
                            f"Capacity: {actual_resource.capacity} | Queue: {len(actual_resource.queue)}")

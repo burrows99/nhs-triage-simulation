@@ -340,11 +340,3 @@ class RandomService:
         """Apply minimum realistic delay constraints."""
         min_realistic_delay = 0.5 if priority == 1 else 1.0
         return max(adjusted_delay, min_realistic_delay)
-    
-    def set_seed(self, seed: int) -> None:
-        """Set random seed for reproducible results.
-        
-        Args:
-            seed: Random seed value
-        """
-        random.seed(seed)
