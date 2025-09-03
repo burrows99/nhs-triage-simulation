@@ -322,7 +322,7 @@ class SimulationEngine:
                 capacity = capacity_mapping.get(logical_name, 0)
                 resource_status.append(f"{logical_name.title()}: {resource.count}/{capacity} (Q:{len(resource.queue)})")
         
-        logger.debug(f"Monitor | Time: {self.env.now:6.1f} | {context} | {' | '.join(resource_status)} | Entities: {entity_count}")}]}}}
+        logger.debug(f"Monitor | Time: {self.env.now:6.1f} | {context} | {' | '.join(resource_status)} | Entities: {entity_count}")
     
     def get_monitoring_summary(self) -> Dict[str, Any]:
         """Get summary of monitoring data collected during simulation.

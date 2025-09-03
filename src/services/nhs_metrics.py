@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 
 from .base_metrics import BaseMetrics, BaseRecord
 from src.logger import logger
-from src.models.patient import Patient
+# Patient models now come from Synthea data service
 
 
 class NHSMetrics(BaseMetrics):
@@ -51,7 +51,7 @@ class NHSMetrics(BaseMetrics):
     
     def add_patient_arrival(self, patient_id: str, arrival_time: float, 
                            age: int = 30, gender: str = "Unknown", 
-                           presenting_complaint: str = "") -> Patient:
+                           presenting_complaint: str = ""):
         """Record patient arrival and return patient object
         
         Args:
@@ -67,27 +67,26 @@ class NHSMetrics(BaseMetrics):
         # Check for re-attendance
         is_reattendance = self._check_reattendance(patient_id, arrival_time)
         
-        patient = Patient(
-            patient_id=patient_id,
-            age=age,
-            gender=gender,
-            presenting_complaint=presenting_complaint
-        )
-        patient.record_arrival(arrival_time)
-        patient.is_reattendance = is_reattendance
+        # Record arrival metrics directly (no Patient object needed)
+        arrival_record = {
+            'patient_id': patient_id,
+            'arrival_time': arrival_time,
+            'age': age,
+            'gender': gender,
+            'presenting_complaint': presenting_complaint,
+            'is_reattendance': is_reattendance
+        }
         
         # Add to base metrics
-        self.add_record(patient)
+        self.add_record(arrival_record)
         
         if is_reattendance:
             self.counters['reattendance_count'] += 1
         
         # Track arrival time for re-attendance checking
         self.patient_history[patient_id].append(arrival_time)
-        
-        return patient
     
-    def add_patient_object(self, patient: Patient) -> Patient:
+    def add_patient_object(self, patient) -> None:
         """Record patient arrival using Patient object
         
         Args:
@@ -111,7 +110,7 @@ class NHSMetrics(BaseMetrics):
         
         return patient
     
-    def update_patient_record_from_object(self, patient: Patient) -> None:
+    def update_patient_record_from_object(self, patient) -> None:
         """Update Patient record with final data (no-op since we use Patient objects directly)
         
         Args:
@@ -243,7 +242,7 @@ class NHSMetrics(BaseMetrics):
         
         return metrics
     
-    def _get_triage_distribution(self, patients: List[Patient]) -> Dict[str, int]:
+    def _get_triage_distribution(self, patients: List) -> Dict[str, int]:
         """Get distribution of triage categories"""
         # Initialize all possible triage categories with 0
         distribution = {
@@ -264,7 +263,7 @@ class NHSMetrics(BaseMetrics):
         
         return distribution
     
-    def _get_age_group_analysis(self, patients: List[Patient]) -> Dict[str, Dict]:
+    def _get_age_group_analysis(self, patients: List) -> Dict[str, Dict]:
         """Analyze performance by age groups"""
         age_groups = {
             '0-17': [p for p in patients if p.age < 18],
@@ -286,7 +285,7 @@ class NHSMetrics(BaseMetrics):
         
         return analysis
     
-    def _get_gender_analysis(self, patients: List[Patient]) -> Dict[str, Dict]:
+    def _get_gender_analysis(self, patients: List) -> Dict[str, Dict]:
         """Analyze performance by gender"""
         genders = defaultdict(list)
         for p in patients:

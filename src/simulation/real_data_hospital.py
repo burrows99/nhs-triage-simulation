@@ -285,11 +285,8 @@ class SimpleHospital:
         
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient #{patient_num}: Disposition decided - {disposition.upper()} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
         
-        # Complete patient journey
-        patient.record_departure(self.simulation_engine.env.now, disposition, admitted)
-        
-        # Update NHS metrics with final patient data
-        self.nhs_metrics.update_patient_record_from_object(patient)
+        # Complete patient journey - NHS metrics updated through direct metric recording
+        # (Synthea Patient models don't have record_departure method)
         
         self._complete_patient_journey(patient.patient_id, arrival_time, disposition, admitted, 
                                      category, patient.age, patient.gender, patient_num)
@@ -298,13 +295,34 @@ class SimpleHospital:
         """Setup patient data and record arrival metrics."""
         patient = self.get_patient()
         
-        # Record arrival time in patient object
-        patient.record_arrival(arrival_time)
-        
-        # Record patient arrival in NHS metrics using Patient object
-        self.nhs_metrics.add_patient_object(patient)
+        # Record patient arrival in NHS metrics using Synthea patient data
+        self.nhs_metrics.add_patient_arrival(
+            patient_id=patient.Id,
+            arrival_time=arrival_time,
+            age=self._calculate_age_from_birthdate(patient.BIRTHDATE),
+            gender=patient.GENDER,
+            presenting_complaint=self._extract_presenting_complaint(patient)
+        )
         
         return patient
+    
+    def _calculate_age_from_birthdate(self, birthdate_str: str) -> int:
+        """Calculate age from Synthea birthdate string."""
+        try:
+            from datetime import datetime
+            birthdate = datetime.strptime(birthdate_str, '%Y-%m-%d')
+            today = datetime.now()
+            age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+            return max(0, age)
+        except:
+            return 30  # Default age if parsing fails
+    
+    def _extract_presenting_complaint(self, patient) -> str:
+        """Extract presenting complaint from Synthea patient encounters."""
+        if patient.encounters:
+            # Use the first encounter's description as presenting complaint
+            return patient.encounters[0].DESCRIPTION
+        return 'General visit'
     
     def _process_triage_stage(self, patient_id, patient, patient_num):
         """Process triage nurse assessment stage and determine category/priority."""
