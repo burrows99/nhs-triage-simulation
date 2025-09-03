@@ -1,18 +1,11 @@
 {
   "utilization": {
     "nurse": {
-      "average_utilization_pct": 98.05013927576601,
+      "average_utilization_pct": 38.80597014925372,
       "peak_utilization_pct": 100.0,
       "min_utilization_pct": 0.0,
-      "current_utilization_pct": 100.0,
-      "utilization_std_dev": 11.639321680098151
-    },
-    "doctor": {
-      "average_utilization_pct": 85.23676880222841,
-      "peak_utilization_pct": 100.0,
-      "min_utilization_pct": 0.0,
-      "current_utilization_pct": 100.0,
-      "utilization_std_dev": 30.169201337399034
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 29.701117525570744
     },
     "bed": {
       "average_utilization_pct": 0.0,
@@ -21,28 +14,28 @@
       "current_utilization_pct": 0.0,
       "utilization_std_dev": 0.0
     },
-    "triage": {
-      "average_utilization_pct": 98.05013927576601,
+    "doctor": {
+      "average_utilization_pct": 40.298507462686565,
       "peak_utilization_pct": 100.0,
       "min_utilization_pct": 0.0,
-      "current_utilization_pct": 100.0,
-      "utilization_std_dev": 11.639321680098151
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 38.86333303370608
+    },
+    "triage": {
+      "average_utilization_pct": 38.80597014925372,
+      "peak_utilization_pct": 100.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 0.0,
+      "utilization_std_dev": 29.701117525570744
     }
   },
   "queues": {
     "nurse": {
-      "average_queue_length": 15.030640668523677,
-      "peak_queue_length": 34,
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
       "min_queue_length": 0,
-      "queue_length_std_dev": 9.849941384190826,
-      "time_with_queue": 94.98607242339833
-    },
-    "doctor": {
-      "average_queue_length": 1.0389972144846797,
-      "peak_queue_length": 3,
-      "min_queue_length": 0,
-      "queue_length_std_dev": 0.9133092649057681,
-      "time_with_queue": 65.73816155988858
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
     },
     "bed": {
       "average_queue_length": 0.0,
@@ -51,69 +44,76 @@
       "queue_length_std_dev": 0.0,
       "time_with_queue": 0.0
     },
-    "triage": {
-      "average_queue_length": 15.030640668523677,
-      "peak_queue_length": 34,
+    "doctor": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
       "min_queue_length": 0,
-      "queue_length_std_dev": 9.849941384190826,
-      "time_with_queue": 94.98607242339833
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
+    },
+    "triage": {
+      "average_queue_length": 0.0,
+      "peak_queue_length": 0,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.0,
+      "time_with_queue": 0.0
     }
   },
   "throughput": {},
   "wait_times": {
     "triage": {
-      "average_wait_time_minutes": 15.109540320266465,
-      "max_wait_time_minutes": 31.60272708191188,
-      "min_wait_time_minutes": 1.2350923567314434,
-      "wait_time_std_dev": 9.195144599606428,
-      "95th_percentile_wait_time": 29.61021903967176,
-      "total_wait_events": 23
+      "average_wait_time_minutes": 2.3294205069041496,
+      "max_wait_time_minutes": 2.9583167214267974,
+      "min_wait_time_minutes": 1.582503202821954,
+      "wait_time_std_dev": 0.6032235792998517,
+      "95th_percentile_wait_time": 2.931617549176399,
+      "total_wait_events": 5
     },
     "doctor": {
-      "average_wait_time_minutes": 7.312251833923952,
-      "max_wait_time_minutes": 12.610681381350432,
-      "min_wait_time_minutes": 1.3704876349253894,
-      "wait_time_std_dev": 3.273110213022239,
-      "95th_percentile_wait_time": 11.72086369006713,
-      "total_wait_events": 18
+      "average_wait_time_minutes": 4.1128990703834685,
+      "max_wait_time_minutes": 4.544656417678432,
+      "min_wait_time_minutes": 3.074950576871565,
+      "wait_time_std_dev": 0.5336415753746896,
+      "95th_percentile_wait_time": 4.515088904308645,
+      "total_wait_events": 5
     }
   },
   "service_times": {
     "triage": {
-      "average_service_time_minutes": 5.852027362785421,
-      "max_service_time_minutes": 10.96321340612416,
-      "min_service_time_minutes": 3.2763956008562194,
-      "service_time_std_dev": 1.745159795769836,
-      "95th_percentile_service_time": 9.068310752583734,
-      "total_service_events": 21
+      "average_service_time_minutes": 5.6648936772536445,
+      "max_service_time_minutes": 6.40443445955426,
+      "min_service_time_minutes": 4.485483767575244,
+      "service_time_std_dev": 0.6863367532381908,
+      "95th_percentile_service_time": 6.3527144448539845,
+      "total_service_events": 5
     },
     "doctor": {
-      "average_service_time_minutes": 15.856482873955997,
-      "max_service_time_minutes": 26.05612767943216,
-      "min_service_time_minutes": 8.490624599284732,
-      "service_time_std_dev": 5.187846211218237,
-      "95th_percentile_service_time": 23.858897065844655,
-      "total_service_events": 9
+      "average_service_time_minutes": 16.247497203214433,
+      "max_service_time_minutes": 21.23254380962152,
+      "min_service_time_minutes": 11.262450596807346,
+      "service_time_std_dev": 4.985046606407088,
+      "95th_percentile_service_time": 20.734039148980813,
+      "total_service_events": 2
     }
   },
   "system_performance": {
     "simulation_duration_minutes": 0,
-    "total_snapshots": 359,
-    "average_system_queue_length": 31.100278551532032,
-    "peak_system_queue_length": "71",
-    "system_congestion_pct": 94.98607242339833,
-    "average_system_utilization_pct": 70.33426183844011,
-    "peak_system_utilization_pct": 75.0
+    "total_snapshots": 67,
+    "average_system_queue_length": 0.0,
+    "peak_system_queue_length": "0",
+    "system_congestion_pct": 0.0,
+    "average_system_utilization_pct": 29.4776119402985,
+    "peak_system_utilization_pct": 50.0
   },
-  "monitoring_points": 359,
-  "total_resource_events": 150,
+  "monitoring_points": 67,
+  "total_resource_events": 27,
   "service_name": "OperationMetrics",
   "total_records": 0,
-  "active_records": 509,
+  "active_records": 94,
   "total_duration_minutes": 0,
   "start_time": 0,
   "end_time": null,
   "counters": {
-    "total_records": 509
+    "total_records": 94
   }
 }

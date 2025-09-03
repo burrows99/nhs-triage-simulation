@@ -12,7 +12,11 @@ from openai import OpenAI
 
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    # Try to load .env.dev first, then fallback to .env
+    if os.path.exists('.env.dev'):
+        load_dotenv('.env.dev')
+    else:
+        load_dotenv()
 except ImportError:
     pass
 
