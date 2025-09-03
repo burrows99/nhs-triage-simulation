@@ -8,3 +8,4 @@ scikit-fuzzy
 requests
 ollama
 langgraph
+networkx

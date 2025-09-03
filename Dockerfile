@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS base
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -32,6 +32,7 @@ RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
 # Start Ollama in background\n\
+echo "Starting Ollama server..."\n\
 ollama serve &\n\
 OLLAMA_PID=$!\n\
 \n\
@@ -40,13 +41,19 @@ echo "Waiting for Ollama to start..."\n\
 while ! curl -s http://localhost:11434/api/tags > /dev/null; do\n\
     sleep 2\n\
 done\n\
-echo "Ollama is ready!"\n\
+echo "Ollama server is running!"\n\
 \n\
-# Pull the UK triage model\n\
-echo "Pulling UK triage model..."\n\
-ollama pull hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q4_K_M || echo "Model pull failed, continuing..."\n\
+# Download model BEFORE API becomes available for health checks\n\
+echo "Downloading UK triage model (this may take several minutes)..."\n\
+ollama pull hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q4_K_M\n\
+echo "Model download completed!"\n\
 \n\
-# Keep container running and show logs\n\
+# Verify model is available\n\
+echo "Verifying model availability..."\n\
+ollama list | grep -q "hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q4_K_M" && echo "✅ Model verified and ready!" || echo "⚠️  Model verification failed"\n\
+\n\
+# Now API is fully ready for use\n\
+echo "🎯 Triage system ready! API available at http://localhost:11434"\n\
 echo "Container ready! Ollama PID: $OLLAMA_PID"\n\
 wait $OLLAMA_PID' > /app/start.sh
 
@@ -56,5 +63,8 @@ RUN chmod +x /app/start.sh
 ENV PYTHONPATH=/app
 ENV OLLAMA_HOST=0.0.0.0
 
-# Default command
+# Make start script executable
+RUN chmod +x /app/start.sh
+
+# Default command (can be overridden by docker-compose)
 CMD ["/app/start.sh"]

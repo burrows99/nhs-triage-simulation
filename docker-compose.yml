@@ -38,10 +38,29 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 10
+      start_period: 300s  # 5 minutes to allow model download
 
-  # Test service to run LLM triage
+  # Hospital simulation service - runs main.py after triage-app is ready
+  hospital-simulation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      triage-app:
+        condition: service_healthy
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - OLLAMA_HOST=triage-app
+    networks:
+      - triage-network
+    command: python main.py
+    restart: "no"
+
+  # Test service to run LLM triage (optional)
   triage-test:
     build:
       context: .
