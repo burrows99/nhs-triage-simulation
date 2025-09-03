@@ -102,7 +102,7 @@ class BaseLLMTriageSystem(ABC):
     
     def _generate_operational_context(self, current_time: float) -> str:
         """
-        Generate operational context string from existing metrics classes.
+        Generate operational context string using existing metrics infrastructure.
         
         Args:
             current_time: Current simulation time
@@ -110,68 +110,129 @@ class BaseLLMTriageSystem(ABC):
         Returns:
             Formatted operational context string
         """
-        if not self.operation_metrics or not self.nhs_metrics:
+        if not self._has_metrics():
             return "\n📊 OPERATIONAL CONTEXT: Not available (metrics not provided)\n"
         
         try:
-            # Get latest operational data
-            operation_data = self.operation_metrics.calculate_metrics()
-            nhs_data = self.nhs_metrics.calculate_metrics()
+            operation_data, nhs_data = self._get_metrics_data()
+            latest_snapshot = self._get_latest_snapshot()
             
-            # Get latest system snapshot
-            latest_snapshot = None
-            if self.operation_metrics.system_snapshots:
-                latest_snapshot = self.operation_metrics.system_snapshots[-1]
+            context_parts = [
+                f"\n📊 CURRENT HOSPITAL OPERATIONAL STATUS (Time: {current_time:.1f}min):\n",
+                self._build_utilization_context(operation_data, latest_snapshot),
+                self._build_wait_times_context(operation_data),
+                self._build_queue_performance_context(operation_data),
+                self._build_system_status_context(operation_data, nhs_data),
+                self._build_triage_distribution_context(nhs_data),
+                self._build_operational_guidance_context(operation_data),
+                self._build_context_footer()
+            ]
             
-            context = f"\n📊 CURRENT HOSPITAL OPERATIONAL STATUS (Time: {current_time:.1f}min):\n\n"
-            
-            # Resource utilization
-            if latest_snapshot:
-                context += "🏥 RESOURCE UTILIZATION:\n"
-                for resource in latest_snapshot.resource_usage:
-                    utilization = latest_snapshot.get_utilization(resource)
-                    queue_len = latest_snapshot.queue_lengths.get(resource, 0)
-                    status = self._get_utilization_status(utilization)
-                    context += f"• {resource.title()}: {utilization:.1f}% {status} (Queue: {queue_len} patients)\n"
-            
-            # Wait times
-            if 'wait_times' in operation_data:
-                context += "\n⏰ CURRENT WAIT TIMES:\n"
-                for resource, data in operation_data['wait_times'].items():
-                    avg_wait = data.get('average_wait_time_minutes', 0.0)
-                    max_wait = data.get('max_wait_time_minutes', 0.0)
-                    context += f"• {resource.title()}: {avg_wait:.1f}min avg (peak: {max_wait:.1f}min)\n"
-            
-            # System pressure assessment
-            system_pressure = self._assess_system_pressure(latest_snapshot, operation_data)
-            context += f"\n🚦 SYSTEM PRESSURE: {system_pressure}\n"
-            
-            # Current patient load
-            current_load = len(self.nhs_metrics.active_records)
-            context += f"👥 CURRENT PATIENT LOAD: {current_load} patients in system\n"
-            
-            # Recent triage distribution
-            triage_dist = nhs_data.get('triage_category_distribution', {})
-            if triage_dist:
-                context += "\n📊 RECENT TRIAGE DISTRIBUTION:\n"
-                total_triaged = sum(triage_dist.values())
-                for category, count in triage_dist.items():
-                    if total_triaged > 0:
-                        percentage = (count / total_triaged) * 100
-                        context += f"• {category}: {count} patients ({percentage:.1f}%)\n"
-            
-            # Operational guidance
-            guidance = self._generate_operational_guidance(latest_snapshot, operation_data)
-            if guidance:
-                context += f"\n💡 OPERATIONAL GUIDANCE:\n{guidance}\n"
-            
-            context += "\n⚠️ IMPORTANT: Use this operational context to inform wait time estimates and triage decisions based on CURRENT hospital conditions, not just clinical guidelines.\n"
-            
-            return context
+            return "".join(filter(None, context_parts))
             
         except Exception as e:
             logger.debug(f"⚠️ Operational context error: {e}")
             return "\n📊 OPERATIONAL CONTEXT: Not available\n"
+    
+    # Helper methods for operational context generation
+    
+    def _has_metrics(self) -> bool:
+        """Check if metrics services are available."""
+        return self.operation_metrics is not None and self.nhs_metrics is not None
+    
+    def _get_metrics_data(self) -> tuple:
+        """Get calculated metrics data from both services."""
+        operation_data = self.operation_metrics.calculate_metrics()
+        nhs_data = self.nhs_metrics.calculate_metrics()
+        return operation_data, nhs_data
+    
+    def _get_latest_snapshot(self):
+        """Get the latest system snapshot from operation metrics."""
+        if hasattr(self.operation_metrics, 'get_latest_snapshot'):
+            return self.operation_metrics.get_latest_snapshot()
+        elif self.operation_metrics.system_snapshots:
+            return self.operation_metrics.system_snapshots[-1]
+        return None
+    
+    def _build_utilization_context(self, operation_data: dict, latest_snapshot) -> str:
+        """Build resource utilization context section."""
+        if not ('utilization' in operation_data and operation_data['utilization']):
+            return ""
+        
+        context = "\n🏥 RESOURCE UTILIZATION:\n"
+        for resource, util_data in operation_data['utilization'].items():
+            avg_util = util_data.get('average_utilization_pct', 0.0)
+            peak_util = util_data.get('peak_utilization_pct', 0.0)
+            status = self._get_utilization_status(avg_util)
+            
+            # Get current queue length from latest snapshot
+            queue_len = 0
+            if latest_snapshot and resource in latest_snapshot.queue_lengths:
+                queue_len = latest_snapshot.queue_lengths[resource]
+            
+            context += f"• {resource.title()}: {avg_util:.1f}% {status} (Peak: {peak_util:.1f}%, Queue: {queue_len})\n"
+        
+        return context
+    
+    def _build_wait_times_context(self, operation_data: dict) -> str:
+        """Build wait times context section."""
+        if not ('wait_times' in operation_data and operation_data['wait_times']):
+            return ""
+        
+        context = "\n⏰ CURRENT WAIT TIMES:\n"
+        for resource, wait_data in operation_data['wait_times'].items():
+            avg_wait = wait_data.get('average_wait_time_minutes', 0.0)
+            max_wait = wait_data.get('max_wait_time_minutes', 0.0)
+            context += f"• {resource.title()}: {avg_wait:.1f}min avg (peak: {max_wait:.1f}min)\n"
+        
+        return context
+    
+    def _build_queue_performance_context(self, operation_data: dict) -> str:
+        """Build queue performance context section."""
+        if not ('queues' in operation_data and operation_data['queues']):
+            return ""
+        
+        context = "\n📋 QUEUE PERFORMANCE:\n"
+        for resource, queue_data in operation_data['queues'].items():
+            avg_queue = queue_data.get('average_queue_length', 0.0)
+            peak_queue = queue_data.get('peak_queue_length', 0)
+            context += f"• {resource.title()}: {avg_queue:.1f} avg queue (peak: {peak_queue})\n"
+        
+        return context
+    
+    def _build_system_status_context(self, operation_data: dict, nhs_data: dict) -> str:
+        """Build system status context section."""
+        system_pressure = self._assess_system_pressure_from_metrics(operation_data)
+        current_load = len(self.nhs_metrics.active_records) if hasattr(self.nhs_metrics, 'active_records') else 0
+        
+        return f"\n🚦 SYSTEM PRESSURE: {system_pressure}\n👥 CURRENT PATIENT LOAD: {current_load} patients in system\n"
+    
+    def _build_triage_distribution_context(self, nhs_data: dict) -> str:
+        """Build triage distribution context section."""
+        triage_dist = nhs_data.get('triage_category_distribution', {})
+        if not triage_dist:
+            return ""
+        
+        context = "\n📊 RECENT TRIAGE DISTRIBUTION:\n"
+        total_triaged = sum(triage_dist.values())
+        for category, count in triage_dist.items():
+            if total_triaged > 0:
+                percentage = (count / total_triaged) * 100
+                context += f"• {category}: {count} patients ({percentage:.1f}%)\n"
+        
+        return context
+    
+    def _build_operational_guidance_context(self, operation_data: dict) -> str:
+        """Build operational guidance context section."""
+        guidance = self._generate_operational_guidance_from_metrics(operation_data)
+        if not guidance:
+            return ""
+        
+        return f"\n💡 OPERATIONAL GUIDANCE:\n{guidance}\n"
+    
+    def _build_context_footer(self) -> str:
+        """Build context footer with important notice."""
+        return "\n⚠️ IMPORTANT: Use this operational context to inform wait time estimates and triage decisions based on CURRENT hospital conditions, not just clinical guidelines.\n"
     
     def _get_utilization_status(self, utilization: float) -> str:
         """Get utilization status indicator."""
@@ -184,17 +245,24 @@ class BaseLLMTriageSystem(ABC):
         else:
             return "🔵 LOW"
     
-    def _assess_system_pressure(self, snapshot, operation_data) -> str:
-        """Assess overall system pressure level."""
-        if not snapshot:
+    def _assess_system_pressure_from_metrics(self, operation_data) -> str:
+        """Assess overall system pressure level using existing metrics data."""
+        if not operation_data:
             return "UNKNOWN"
         
-        # Calculate average utilization
-        utilizations = [snapshot.get_utilization(r) for r in snapshot.resource_usage]
-        avg_utilization = sum(utilizations) / len(utilizations) if utilizations else 0
+        # Calculate average utilization from metrics data
+        avg_utilization = 0
+        if 'utilization' in operation_data and operation_data['utilization']:
+            utilizations = [util_data.get('average_utilization_pct', 0) 
+                          for util_data in operation_data['utilization'].values()]
+            avg_utilization = sum(utilizations) / len(utilizations) if utilizations else 0
         
-        # Get maximum queue length
-        max_queue = max(snapshot.queue_lengths.values()) if snapshot.queue_lengths else 0
+        # Get maximum queue length from metrics data
+        max_queue = 0
+        if 'queues' in operation_data and operation_data['queues']:
+            queue_lengths = [queue_data.get('peak_queue_length', 0) 
+                           for queue_data in operation_data['queues'].values()]
+            max_queue = max(queue_lengths) if queue_lengths else 0
         
         # Determine pressure level
         if avg_utilization >= 95 or max_queue >= 20:
@@ -206,31 +274,71 @@ class BaseLLMTriageSystem(ABC):
         else:
             return "LOW - Normal operations"
     
-    def _generate_operational_guidance(self, snapshot, operation_data) -> str:
-        """Generate operational guidance based on current conditions."""
-        if not snapshot:
+    def _generate_operational_guidance_from_metrics(self, operation_data) -> str:
+        """Generate operational guidance based on existing metrics data."""
+        if not operation_data:
             return ""
         
         guidance = []
         
-        # Check for high utilization resources
-        for resource in snapshot.resource_usage:
-            utilization = snapshot.get_utilization(resource)
-            queue_len = snapshot.queue_lengths.get(resource, 0)
-            
-            if utilization >= 90:
-                guidance.append(f"• {resource.title()} at {utilization:.1f}% capacity - expedite appropriate cases")
-            elif queue_len >= 15:
-                guidance.append(f"• {resource.title()} has {queue_len} patients waiting - prioritize urgent cases")
+        # Add utilization-based guidance
+        guidance.extend(self._get_utilization_guidance(operation_data))
         
-        # System-wide guidance
-        utilizations = [snapshot.get_utilization(r) for r in snapshot.resource_usage]
-        avg_utilization = sum(utilizations) / len(utilizations) if utilizations else 0
+        # Add queue-based guidance
+        guidance.extend(self._get_queue_guidance(operation_data))
         
-        if avg_utilization >= 85:
-            guidance.append("• High system load - use strict triage criteria and consider discharge planning")
+        # Add system-wide guidance
+        guidance.extend(self._get_system_wide_guidance(operation_data))
         
         return "\n".join(guidance) if guidance else "• System operating within normal parameters"
+    
+    def _get_utilization_guidance(self, operation_data: dict) -> list:
+        """Get guidance based on resource utilization metrics."""
+        guidance = []
+        
+        if 'utilization' in operation_data and operation_data['utilization']:
+            for resource, util_data in operation_data['utilization'].items():
+                avg_util = util_data.get('average_utilization_pct', 0.0)
+                peak_util = util_data.get('peak_utilization_pct', 0.0)
+                
+                if peak_util >= 95:
+                    guidance.append(f"• {resource.title()} at critical {peak_util:.1f}% peak capacity - immediate action required")
+                elif avg_util >= 90:
+                    guidance.append(f"• {resource.title()} at {avg_util:.1f}% avg capacity - expedite appropriate cases")
+        
+        return guidance
+    
+    def _get_queue_guidance(self, operation_data: dict) -> list:
+        """Get guidance based on queue length metrics."""
+        guidance = []
+        
+        if 'queues' in operation_data and operation_data['queues']:
+            for resource, queue_data in operation_data['queues'].items():
+                avg_queue = queue_data.get('average_queue_length', 0.0)
+                peak_queue = queue_data.get('peak_queue_length', 0)
+                
+                if peak_queue >= 20:
+                    guidance.append(f"• {resource.title()} has critical queue length of {peak_queue} - urgent intervention needed")
+                elif avg_queue >= 15:
+                    guidance.append(f"• {resource.title()} has high avg queue of {avg_queue:.1f} - prioritize urgent cases")
+        
+        return guidance
+    
+    def _get_system_wide_guidance(self, operation_data: dict) -> list:
+        """Get system-wide guidance based on overall metrics."""
+        guidance = []
+        
+        if 'utilization' in operation_data and operation_data['utilization']:
+            utilizations = [util_data.get('average_utilization_pct', 0) 
+                          for util_data in operation_data['utilization'].values()]
+            avg_utilization = sum(utilizations) / len(utilizations) if utilizations else 0
+            
+            if avg_utilization >= 85:
+                guidance.append("• High system load - use strict triage criteria and consider discharge planning")
+            elif avg_utilization >= 75:
+                guidance.append("• Moderate system load - monitor closely and prepare for capacity constraints")
+        
+        return guidance
     
     def _validate_api_response(self, triage_data: Dict[str, Any]) -> None:
         """

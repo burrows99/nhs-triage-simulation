@@ -10,7 +10,7 @@ from .single_llm_triage import SingleLLMTriage
 from .mixture_llm_triage import MixtureLLMTriage
 from .base_llm_triage import BaseLLMTriageSystem
 
-# Backward compatibility (deprecated)
-from .llm_triage_system import LLMTriageSystem
+# Backward compatibility (deprecated) - LLMTriageSystem is now an alias
+LLMTriageSystem = SingleLLMTriage
 
 __all__ = ['SingleLLMTriage', 'MixtureLLMTriage', 'BaseLLMTriageSystem', 'LLMTriageSystem']

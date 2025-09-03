@@ -231,19 +231,8 @@ def run_simulation(triage_system, system_name: str, output_dir: str, args: argpa
         log_level=log_level
     )
     
-    # Set up triage system with metrics if it's LLM-based
-    if isinstance(triage_system, type) and issubclass(triage_system, (SingleLLMTriage, MixtureLLMTriage)):
-        if issubclass(triage_system, MixtureLLMTriage):
-            triage_with_metrics = MixtureLLMTriage(
-                operation_metrics=hospital.operation_metrics,
-                nhs_metrics=hospital.nhs_metrics
-            )
-        else:
-            triage_with_metrics = SingleLLMTriage(
-                operation_metrics=hospital.operation_metrics,
-                nhs_metrics=hospital.nhs_metrics
-            )
-        hospital.triage_system = triage_with_metrics
+    # Metrics connection is now handled automatically in hospital initialization
+    # No need to manually set up metrics for LLM-based systems
     
     if not args.quiet:
         logger.info(f"📊 Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")

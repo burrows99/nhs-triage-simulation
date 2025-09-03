@@ -161,11 +161,16 @@ class SimpleHospital:
         
         # Data cleanup is now handled by the enhanced DataService
         
-        # Initialize Triage System (object only - validation already done in constructor)
+        # Initialize Triage System with dedicated metrics instances
         self.triage_system = self.triage_system_param
         logger.info(f"Using provided triage system: {type(self.triage_system).__name__}")
         
-        # Triage system validation removed
+        # Provide metrics instances to LLM-based triage systems for operational context
+        if isinstance(self.triage_system, (SingleLLMTriage, MixtureLLMTriage)):
+            logger.info("🔗 Connecting LLM triage system to metrics services for operational context")
+            self.triage_system.operation_metrics = self.operation_metrics
+            self.triage_system.nhs_metrics = self.nhs_metrics
+            logger.info("✅ LLM triage system connected to metrics services")
         
         # Initialize Random Service for centralized random data generation
         logger.info("Initializing Random Service...")
