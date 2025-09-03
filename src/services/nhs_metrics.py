@@ -45,6 +45,7 @@ class NHSMetrics(BaseMetrics):
     
     def __attrs_post_init__(self):
         """Initialize NHS Metrics Service after attrs initialization"""
+        # Initialize base metrics properly
         super().__init__("NHSMetrics")
         
         # NHS-specific tracking

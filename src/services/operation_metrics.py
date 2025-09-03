@@ -49,8 +49,8 @@ class OperationMetrics(BaseMetrics):
         
         Uses synchronized monitoring instead of time-based intervals.
         """
+        # Initialize base metrics properly
         super().__init__("OperationMetrics")
-        logger.info("Operation metrics service initialized")
     
     def record_resource_event(self, event_type: str, resource_name: str, 
                             entity_id: str, timestamp: float, **kwargs) -> ResourceEvent:

@@ -14,6 +14,7 @@ This system uses parallel agents to analyze different aspects of triage:
 
 import json
 import asyncio
+import re
 from typing import Dict, Any, List, Optional, TypedDict, Annotated
 from concurrent.futures import ThreadPoolExecutor
 
@@ -683,8 +684,7 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             
             # Add JSON mode for supported models
             # Use regex for efficient model detection
-        import re
-        if re.search(r'\b(gpt|claude)\b', self.model_name.lower()):
+            if re.search(r'\b(gpt|claude)\b', self.model_name.lower()):
                 api_params["response_format"] = {"type": "json_object"}
             
             completion = self.client.chat.completions.create(**api_params)
