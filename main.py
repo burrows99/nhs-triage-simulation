@@ -17,7 +17,8 @@ from src.logger import logger
 from src.simulation.real_data_hospital import SimpleHospital
 from src.triage.triage_constants import TriageCategories
 from src.triage.manchester_triage_system import ManchesterTriageSystem
-from src.triage.llm_triage_system.llm_triage_system import LLMTriageSystem
+from src.triage.llm_triage_system.single_llm_triage import SingleLLMTriage
+from src.triage.llm_triage_system.mixture_llm_triage import MixtureLLMTriage
 
 
 def run_simulation(triage_system, system_name: str, output_dir: str):
@@ -36,12 +37,14 @@ def run_simulation(triage_system, system_name: str, output_dir: str):
     
     # Create initial triage system instance
     if isinstance(triage_system, type):
-        if issubclass(triage_system, LLMTriageSystem):
-            temp_triage = LLMTriageSystem()
+        if issubclass(triage_system, SingleLLMTriage):
+            temp_triage = SingleLLMTriage()
+        elif issubclass(triage_system, MixtureLLMTriage):
+            temp_triage = MixtureLLMTriage()
         elif issubclass(triage_system, ManchesterTriageSystem):
             temp_triage = ManchesterTriageSystem()
         else:
-            temp_triage = LLMTriageSystem()  # Default fallback
+            temp_triage = SingleLLMTriage()  # Default fallback
     else:
         temp_triage = triage_system
     
@@ -59,11 +62,17 @@ def run_simulation(triage_system, system_name: str, output_dir: str):
     )
     
     # Set up triage system with metrics if it's LLM-based
-    if isinstance(triage_system, type) and issubclass(triage_system, LLMTriageSystem):
-        triage_with_metrics = LLMTriageSystem(
-            operation_metrics=hospital.operation_metrics,
-            nhs_metrics=hospital.nhs_metrics
-        )
+    if isinstance(triage_system, type) and issubclass(triage_system, (SingleLLMTriage, MixtureLLMTriage)):
+        if issubclass(triage_system, MixtureLLMTriage):
+            triage_with_metrics = MixtureLLMTriage(
+                operation_metrics=hospital.operation_metrics,
+                nhs_metrics=hospital.nhs_metrics
+            )
+        else:
+            triage_with_metrics = SingleLLMTriage(
+                operation_metrics=hospital.operation_metrics,
+                nhs_metrics=hospital.nhs_metrics
+            )
         hospital.triage_system = triage_with_metrics
     
     logger.info(f"📊 Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")
@@ -102,12 +111,17 @@ def main():
                 'system': ManchesterTriageSystem,
                 'name': 'Manchester Triage System',
                 'output_dir': './output/simulation/manchester_triage_system'
+            },
+            {
+                'system': SingleLLMTriage,
+                'name': 'Single LLM Triage System',
+                'output_dir': './output/simulation/single_llm_system'
+            },
+            {
+                'system': MixtureLLMTriage,
+                'name': 'Multi-Agent LLM Triage System',
+                'output_dir': './output/simulation/multi_agent_llm_system'
             }
-            # {
-            #     'system': LLMTriageSystem,
-            #     'name': 'LLM-based Triage System',
-            #     'output_dir': './output/simulation/llm_based_system'
-            # }
         ]
         
         results_summary = {}

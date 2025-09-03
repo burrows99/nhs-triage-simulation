@@ -17,7 +17,8 @@ from src.services.operation_metrics import OperationMetrics
 from src.services.plotting_service import PlottingService
 from src.services.random_service import RandomService
 from src.triage.manchester_triage_system import ManchesterTriageSystem
-from src.triage.llm_triage_system.llm_triage_system import LLMTriageSystem
+from src.triage.llm_triage_system.single_llm_triage import SingleLLMTriage
+from src.triage.llm_triage_system.mixture_llm_triage import MixtureLLMTriage
 from .simulation_engine import SimulationEngine
 from src.triage.triage_constants import (
     TriageFlowcharts, FlowchartSymptomMapping, TriageCategories,
@@ -47,8 +48,8 @@ class SimpleHospital:
             ValueError: If triage_system is None or not a valid triage system object
         """
 
-        if not isinstance(triage_system, (ManchesterTriageSystem, LLMTriageSystem)):
-            raise ValueError("triage_system parameter must be an instance of ManchesterTriageSystem or LLMTriageSystem. Please provide a valid triage system object.")
+        if not isinstance(triage_system, (ManchesterTriageSystem, SingleLLMTriage, MixtureLLMTriage)):
+            raise ValueError("triage_system parameter must be an instance of ManchesterTriageSystem, SingleLLMTriage, or MixtureLLMTriage. Please provide a valid triage system object.")
         
         # Store triage system for later initialization
         self.triage_system_param = triage_system
@@ -449,9 +450,9 @@ class SimpleHospital:
         
         # Use triage system with patient-based inputs
         # Handle different triage system interfaces
-        from src.triage.llm_triage_system.llm_triage_system import LLMTriageSystem
+        # Import moved to top of file
         
-        if isinstance(self.triage_system, LLMTriageSystem):
+        if isinstance(self.triage_system, (SingleLLMTriage, MixtureLLMTriage)):
             # LLM triage system expects symptoms as a string
             logger.info(f"🤖 Using LLM Triage System for patient {patient.Id}")
             complaint = self._extract_presenting_complaint(patient)
@@ -498,7 +499,7 @@ class SimpleHospital:
         # Handle triage result based on system type
         from src.models.triage_result import TriageResult
         
-        if isinstance(self.triage_system, LLMTriageSystem):
+        if isinstance(self.triage_system, (SingleLLMTriage, MixtureLLMTriage)):
             # LLM system already returns TriageResult object
             triage_result = result
             logger.info(f"📋 LLM Result Type: TriageResult object")
