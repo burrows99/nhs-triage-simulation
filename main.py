@@ -53,7 +53,7 @@ def main():
         logger.info(f"  Arrival Rate: {hospital.arrival_rate} patients/hour")
         logger.info(f"  Staff: {hospital.nurses} nurses, {hospital.doctors} doctors")
         logger.info(f"  Beds: {hospital.beds}")
-        logger.info(f"  Patient Data: {len(hospital.patient_ids)} real patients available")
+        logger.info(f"  Patient Data: {len(hospital.patients)} real patients available")
         
         # Run simulation
         results = hospital.run()

@@ -297,4 +297,4 @@ class DataService:
             # Populate payer transitions
             patient.payer_transitions = [pt for pt in payer_transitions if pt.PATIENT == patient_id]
 
-DataService().load_and_construct_data()
+# DataService().load_and_construct_data()  # Removed: This was causing double data loading
