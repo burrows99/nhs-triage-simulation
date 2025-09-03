@@ -242,26 +242,7 @@ class SimpleHospital:
         # Return full MTS result for timing information
         return category, priority, result, processing_delay
     
-    def _update_triage_system_resources(self):
-        """Update triage system with comprehensive current SimPy resource availability and status"""
-        try:
-            # HospitalResources class not available - removed unused code
-            
-            # Add additional queue status information as attributes
-            current_resources.triage_queue_length = triage_queue_length
-            current_resources.doctor_queue_length = doctor_queue_length
-            current_resources.bed_queue_length = bed_queue_length
-            current_resources.doctors_in_use = doctors_in_use
-            current_resources.nurses_in_use = nurses_in_use
-            current_resources.beds_in_use = beds_in_use
-            current_resources.simulation_time = self.simulation_engine.env.now if self.simulation_engine.env else 0
-            
-            # Update triage system with current resources
-            self.triage_system.update_resources(current_resources)
-            
-        except Exception as e:
-             # Silently continue if resource update fails (e.g., for Manchester system)
-             pass
+
     
     def _initialize_triage_system(self, triage_type: str, **kwargs):
         """Initialize the appropriate triage system based on configuration
@@ -491,8 +472,7 @@ class SimpleHospital:
         triage_resource = self.simulation_engine.get_resource('nurses')
         self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Waiting for triage nurse at {self.simulation_engine.format_sim_time(triage_start)} (Queue: {len(triage_resource.queue)} waiting)")
         
-        # Update triage system with current resource availability (including real queue lengths)
-        self._update_triage_system_resources()
+        # Triage system resource updates removed (HospitalResources class not available)
         
         with triage_resource.request() as req:
             # Record resource request event
@@ -563,8 +543,7 @@ class SimpleHospital:
         doctor_resource = self.simulation_engine.get_resource('doctors')
         self.simulation_engine.log_with_sim_time(logging.INFO, f"⏳ Patient #{patient_num}: Waiting for doctor at {self.simulation_engine.format_sim_time(assessment_start)} (Priority: {priority}, Queue: {len(doctor_resource.queue)} waiting)")
         
-        # Update triage system with current resource availability (including doctor queue lengths)
-        self._update_triage_system_resources()
+        # Triage system resource updates removed (HospitalResources class not available)
         
         with doctor_resource.request(priority=priority) as req:
             # Record resource request event
