@@ -95,25 +95,31 @@ class RandomService:
         
         Reality: Higher admission rates due to system failures
         
+        CLINICAL LOGIC:
+        - RED and ORANGE cases ALWAYS require admission (life-threatening/urgent)
+        - YELLOW cases have moderate admission probability
+        - GREEN/BLUE cases have low admission probability
+        
         Args:
             triage_input: TriageResult object or category string
             
         Returns:
             True if patient should be admitted (reflecting NHS reality)
         """
+        # Import TriageResult for proper type checking
+        from src.models.triage_result import TriageResult
+        
         # Handle both TriageResult objects and raw category strings
-        if hasattr(triage_input, 'triage_category'):
+        if isinstance(triage_input, TriageResult):
             category = triage_input.triage_category
             if triage_input.is_urgent():  # RED or ORANGE
-                # Reality: Higher admission rates due to system pressures
-                base_rate = 0.7  # Increased from 0.5 due to defensive medicine
-                confidence_factor = getattr(triage_input, 'confidence', 1.0)
-                adjusted_rate = base_rate * confidence_factor
-                return random.random() < adjusted_rate
+                # ALWAYS admit RED and ORANGE cases - clinical necessity
+                return True
         else:
             category = triage_input
             if category in [TriageCategories.RED, TriageCategories.ORANGE]:
-                return random.random() < 0.7  # Reality: Higher admission rate
+                # ALWAYS admit RED and ORANGE cases - clinical necessity
+                return True
             elif category == TriageCategories.YELLOW:
                 return random.random() < 0.3  # Reality: Some yellow patients admitted
         
