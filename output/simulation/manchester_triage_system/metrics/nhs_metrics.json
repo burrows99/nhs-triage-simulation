@@ -1,5 +1,70 @@
 {
-  "error": "No completed patients to analyze",
-  "total_attendances": 32,
-  "active_patients": 32
+  "total_attendances": 12,
+  "active_patients_in_system": 37,
+  "1_left_before_being_seen_rate_pct": 0.0,
+  "2_reattendance_rate_pct": 0.0,
+  "3_time_to_initial_assessment_avg_minutes": 0,
+  "4_time_to_treatment_avg_minutes": 0,
+  "5_total_time_in_ae_avg_minutes": 127.10042941071812,
+  "4hour_standard_compliance_pct": 100.0,
+  "attendances_within_4hours": 12,
+  "attendances_over_4hours": 0,
+  "95pct_target_achieved": true,
+  "76pct_interim_target_achieved": true,
+  "median_total_time_minutes": 128.80189714224548,
+  "95th_percentile_time_minutes": 154.44182992985992,
+  "admission_rate_pct": 0.0,
+  "triage_category_distribution": {
+    "RED": 1,
+    "ORANGE": 0,
+    "YELLOW": 6,
+    "GREEN": 3,
+    "BLUE": 2
+  },
+  "age_group_analysis": {
+    "0-17": {
+      "count": 12,
+      "avg_time_minutes": 127.10042941071812,
+      "4hour_compliance_pct": 100.0,
+      "admission_rate_pct": 0.0
+    }
+  },
+  "gender_analysis": {
+    "": {
+      "count": 12,
+      "avg_time_minutes": 127.10042941071812,
+      "4hour_compliance_pct": 100.0,
+      "admission_rate_pct": 0.0
+    }
+  },
+  "time_distribution_analysis": {
+    "min_time_minutes": 103.08194037970895,
+    "max_time_minutes": 162.1625810629844,
+    "std_dev_minutes": 16.892794979806098,
+    "quartiles": {
+      "25th_percentile": 112.59473446318432,
+      "50th_percentile": 128.80189714224548,
+      "75th_percentile": 136.00852669823314
+    },
+    "distribution_bins": {
+      "0-60min": 0,
+      "60-120min": 5,
+      "120-240min": 7,
+      "240-360min": 0,
+      "360+min": 0
+    }
+  },
+  "service_name": "NHSMetrics",
+  "total_records": 12,
+  "active_records": 37,
+  "total_duration_minutes": 167.33321737454554,
+  "start_time": 0.0,
+  "end_time": 167.33321737454554,
+  "counters": {
+    "lwbs_count": 0,
+    "reattendance_count": 0,
+    "admissions_count": 0,
+    "total_records": 49,
+    "completed_records": 12
+  }
 }

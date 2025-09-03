@@ -1,55 +1,55 @@
 {
   "utilization": {
     "doctor": {
-      "average_utilization_pct": 65.92356687898089,
+      "average_utilization_pct": 63.05220883534137,
       "peak_utilization_pct": 100.0,
-      "min_utilization_pct": 0.0,
-      "current_utilization_pct": 100.0,
-      "utilization_std_dev": 39.113674185589915
-    },
-    "triage": {
-      "average_utilization_pct": 96.17834394904459,
-      "peak_utilization_pct": 100.0,
-      "min_utilization_pct": 0.0,
-      "current_utilization_pct": 100.0,
-      "utilization_std_dev": 16.81174768138357
-    },
-    "nurse": {
-      "average_utilization_pct": 96.17834394904459,
-      "peak_utilization_pct": 100.0,
-      "min_utilization_pct": 0.0,
-      "current_utilization_pct": 100.0,
-      "utilization_std_dev": 16.81174768138357
-    },
-    "bed": {
-      "average_utilization_pct": 0.0,
-      "peak_utilization_pct": 0.0,
       "min_utilization_pct": 0.0,
       "current_utilization_pct": 0.0,
-      "utilization_std_dev": 0.0
+      "utilization_std_dev": 37.93958707661526
+    },
+    "nurse": {
+      "average_utilization_pct": 79.74118697010265,
+      "peak_utilization_pct": 100.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 66.66666666666666,
+      "utilization_std_dev": 27.75969870922931
+    },
+    "triage": {
+      "average_utilization_pct": 79.74118697010265,
+      "peak_utilization_pct": 100.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 66.66666666666666,
+      "utilization_std_dev": 27.75969870922931
+    },
+    "bed": {
+      "average_utilization_pct": 4.752342704149933,
+      "peak_utilization_pct": 50.0,
+      "min_utilization_pct": 0.0,
+      "current_utilization_pct": 50.0,
+      "utilization_std_dev": 13.720736580675572
     }
   },
   "queues": {
     "doctor": {
-      "average_queue_length": 0.17834394904458598,
-      "peak_queue_length": 1,
+      "average_queue_length": 0.14323962516733602,
+      "peak_queue_length": 2,
       "min_queue_length": 0,
-      "queue_length_std_dev": 0.3828020178679419,
-      "time_with_queue": 17.8343949044586
-    },
-    "triage": {
-      "average_queue_length": 9.73248407643312,
-      "peak_queue_length": 21,
-      "min_queue_length": 0,
-      "queue_length_std_dev": 5.822624624997888,
-      "time_with_queue": 90.44585987261146
+      "queue_length_std_dev": 0.3935105449736792,
+      "time_with_queue": 12.717536813922356
     },
     "nurse": {
-      "average_queue_length": 9.73248407643312,
-      "peak_queue_length": 21,
+      "average_queue_length": 0.5568942436412316,
+      "peak_queue_length": 4,
       "min_queue_length": 0,
-      "queue_length_std_dev": 5.822624624997888,
-      "time_with_queue": 90.44585987261146
+      "queue_length_std_dev": 0.8645417220026633,
+      "time_with_queue": 35.34136546184739
+    },
+    "triage": {
+      "average_queue_length": 0.5568942436412316,
+      "peak_queue_length": 4,
+      "min_queue_length": 0,
+      "queue_length_std_dev": 0.8645417220026633,
+      "time_with_queue": 35.34136546184739
     },
     "bed": {
       "average_queue_length": 0.0,
@@ -62,58 +62,60 @@
   "throughput": {},
   "wait_times": {
     "triage": {
-      "average_wait_time_minutes": 9.898305691071378,
-      "max_wait_time_minutes": 18.429126031618587,
-      "min_wait_time_minutes": 1.7788338748500192,
-      "wait_time_std_dev": 5.6301606213764455,
-      "95th_percentile_wait_time": 17.72942682817422,
-      "total_wait_events": 11
+      "average_wait_time_minutes": 4.102792537251542,
+      "max_wait_time_minutes": 10.551118799847877,
+      "min_wait_time_minutes": 1.0086323929833156,
+      "wait_time_std_dev": 2.939150094727916,
+      "95th_percentile_wait_time": 10.263128067114337,
+      "total_wait_events": 49
     },
     "doctor": {
-      "average_wait_time_minutes": 6.086220359549389,
-      "max_wait_time_minutes": 7.264304342710229,
-      "min_wait_time_minutes": 4.284863572080404,
-      "wait_time_std_dev": 1.1207945216768014,
-      "95th_percentile_wait_time": 7.260326434945405,
-      "total_wait_events": 6
+      "average_wait_time_minutes": 5.033755590062788,
+      "max_wait_time_minutes": 9.157497778554664,
+      "min_wait_time_minutes": 1.7076059936082686,
+      "wait_time_std_dev": 2.0703009536974464,
+      "95th_percentile_wait_time": 8.465406300367095,
+      "total_wait_events": 47
     }
   },
   "service_times": {
     "triage": {
-      "average_service_time_minutes": 6.416550137962248,
-      "max_service_time_minutes": 9.34903121496456,
-      "min_service_time_minutes": 3.251709234315074,
-      "service_time_std_dev": 1.7640914436542496,
-      "95th_percentile_service_time": 9.005973433791812,
-      "total_service_events": 9
+      "average_service_time_minutes": 6.76863778714484,
+      "max_service_time_minutes": 13.301699550528351,
+      "min_service_time_minutes": 3.4462785762053594,
+      "service_time_std_dev": 1.9876367993354618,
+      "95th_percentile_service_time": 9.254159861211308,
+      "total_service_events": 47
     },
     "doctor": {
-      "average_service_time_minutes": 11.604037570770378,
-      "max_service_time_minutes": 11.604037570770378,
-      "min_service_time_minutes": 11.604037570770378,
-      "service_time_std_dev": 0.0,
-      "95th_percentile_service_time": 11.604037570770378,
-      "total_service_events": 1
+      "average_service_time_minutes": 26.354628114662027,
+      "max_service_time_minutes": 67.50114355307906,
+      "min_service_time_minutes": 8.409896042253925,
+      "service_time_std_dev": 13.320480579548581,
+      "95th_percentile_service_time": 54.124456041199664,
+      "total_service_events": 40
     }
   },
   "system_performance": {
     "simulation_duration_minutes": 0,
-    "total_snapshots": 157,
-    "average_system_queue_length": 19.643312101910826,
-    "peak_system_queue_length": "42",
-    "system_congestion_pct": 90.44585987261146,
-    "average_system_utilization_pct": 64.57006369426752,
-    "peak_system_utilization_pct": 75.0
+    "total_snapshots": 747,
+    "average_system_queue_length": 1.2570281124497993,
+    "peak_system_queue_length": "8",
+    "system_congestion_pct": 44.310575635876845,
+    "average_system_utilization_pct": 56.82173136992414,
+    "peak_system_utilization_pct": 75.0,
+    "final_entities_processed": 12,
+    "processing_rate_per_hour": 0
   },
-  "monitoring_points": 157,
-  "total_resource_events": 68,
+  "monitoring_points": 747,
+  "total_resource_events": 279,
   "service_name": "OperationMetrics",
   "total_records": 0,
-  "active_records": 225,
+  "active_records": 1026,
   "total_duration_minutes": 0,
   "start_time": 0,
   "end_time": null,
   "counters": {
-    "total_records": 225
+    "total_records": 1026
   }
 }

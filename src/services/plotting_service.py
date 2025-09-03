@@ -93,41 +93,67 @@ class PlottingService:
         """
         fig, ax = plt.subplots(figsize=self.default_figsize)
         
-        # Extract compliance rate
-        compliance_rate = compliance_data.get('4hour_standard_compliance_pct', 0)
-        total_patients = compliance_data.get('total_attendances', 0)
-        within_4hrs = compliance_data.get('attendances_within_4hours', 0)
-        over_4hrs = compliance_data.get('attendances_over_4hours', 0)
-        
-        # Create gauge-style chart
-        angles = np.linspace(0, np.pi, 100)
-        values = np.ones_like(angles) * compliance_rate / 100
-        
-        # Plot compliance arc
-        ax.fill_between(angles, 0, values, alpha=0.7, color=self.colors['nhs_green'] if compliance_rate >= 95 else self.colors['nhs_red'])
-        ax.fill_between(angles, values, 1, alpha=0.3, color='lightgray')
-        
-        # Add target lines
-        target_95 = np.ones_like(angles) * 0.95
-        target_76 = np.ones_like(angles) * 0.76
-        ax.plot(angles, target_95, '--', color=self.colors['nhs_blue'], linewidth=2, label='95% NHS Target (Official)')
-        ax.plot(angles, target_76, '--', color=self.colors['warning'], linewidth=2, label='76% Interim Target')
-        
-        # Formatting
-        ax.set_ylim(0, 1)
-        ax.set_xlim(0, np.pi)
-        detailed_title = f"{title}\n{compliance_rate:.1f}% of patients seen within 4 hours\n({within_4hrs}/{total_patients} patients)"
-        ax.set_title(detailed_title, fontsize=14, fontweight='bold')
-        ax.legend(loc='upper right')
-        ax.grid(True, alpha=0.3)
-        
-        # Remove x-axis labels for cleaner look
-        ax.set_xticks([])
-        ax.set_ylabel('Compliance Rate (% of patients within 240 minutes)', fontsize=10)
-        
-        # Add explanatory text
-        ax.text(np.pi/2, -0.15, 'Total Time = Arrival to Departure from A&E\nIncludes: Triage + Doctor Assessment + Diagnostics + Disposition', 
-                ha='center', va='top', fontsize=9, style='italic', transform=ax.transData)
+        # Check if this is an error case (no completed patients)
+        if 'error' in compliance_data:
+            # Create an informative chart for the error case
+            ax.text(0.5, 0.6, 'NHS 4-Hour A&E Standard Compliance', 
+                   ha='center', va='center', fontsize=16, fontweight='bold', transform=ax.transAxes)
+            ax.text(0.5, 0.5, f"Status: {compliance_data['error']}", 
+                   ha='center', va='center', fontsize=14, color='red', transform=ax.transAxes)
+            ax.text(0.5, 0.4, f"Total Attendances: {compliance_data.get('total_attendances', 0)}", 
+                   ha='center', va='center', fontsize=12, transform=ax.transAxes)
+            ax.text(0.5, 0.35, f"Active Patients: {compliance_data.get('active_patients', 0)}", 
+                   ha='center', va='center', fontsize=12, transform=ax.transAxes)
+            ax.text(0.5, 0.25, 'Patients are still in the system and have not completed their journey', 
+                   ha='center', va='center', fontsize=10, style='italic', transform=ax.transAxes)
+            ax.text(0.5, 0.2, 'Charts will be generated once patients complete their A&E journey', 
+                   ha='center', va='center', fontsize=10, style='italic', transform=ax.transAxes)
+            
+            # Remove axes for clean look
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+        else:
+            # Extract compliance rate for normal case
+            compliance_rate = compliance_data.get('4hour_standard_compliance_pct', 0)
+            total_patients = compliance_data.get('total_attendances', 0)
+            within_4hrs = compliance_data.get('attendances_within_4hours', 0)
+            over_4hrs = compliance_data.get('attendances_over_4hours', 0)
+            
+            # Create gauge-style chart
+            angles = np.linspace(0, np.pi, 100)
+            values = np.ones_like(angles) * compliance_rate / 100
+            
+            # Plot compliance arc
+            ax.fill_between(angles, 0, values, alpha=0.7, color=self.colors['nhs_green'] if compliance_rate >= 95 else self.colors['nhs_red'])
+            ax.fill_between(angles, values, 1, alpha=0.3, color='lightgray')
+            
+            # Add target lines
+            target_95 = np.ones_like(angles) * 0.95
+            target_76 = np.ones_like(angles) * 0.76
+            ax.plot(angles, target_95, '--', color=self.colors['nhs_blue'], linewidth=2, label='95% NHS Target (Official)')
+            ax.plot(angles, target_76, '--', color=self.colors['warning'], linewidth=2, label='76% Interim Target')
+            
+            # Formatting
+            ax.set_ylim(0, 1)
+            ax.set_xlim(0, np.pi)
+            detailed_title = f"{title}\n{compliance_rate:.1f}% of patients seen within 4 hours\n({within_4hrs}/{total_patients} patients)"
+            ax.set_title(detailed_title, fontsize=14, fontweight='bold')
+            ax.legend(loc='upper right')
+            ax.grid(True, alpha=0.3)
+            
+            # Remove x-axis labels for cleaner look
+            ax.set_xticks([])
+            ax.set_ylabel('Compliance Rate (% of patients within 240 minutes)', fontsize=10)
+            
+            # Add explanatory text
+            ax.text(np.pi/2, -0.15, 'Total Time = Arrival to Departure from A&E\nIncludes: Triage + Doctor Assessment + Diagnostics + Disposition', 
+                    ha='center', va='top', fontsize=9, style='italic', transform=ax.transData)
         
         plt.tight_layout()
         
@@ -290,12 +316,24 @@ class PlottingService:
         # NHS Compliance (top left)
         if nhs_metrics:
             ax1 = fig.add_subplot(gs[0, 0])
-            compliance_rate = nhs_metrics.get('4hour_standard_compliance_pct', 0)
-            ax1.pie([compliance_rate, 100-compliance_rate], 
-                   labels=['Within 4hrs', 'Over 4hrs'],
-                   colors=[self.colors['nhs_green'], self.colors['nhs_red']],
-                   autopct='%1.1f%%')
-            ax1.set_title(f'NHS 4-Hour Standard\n{compliance_rate:.1f}% Compliance')
+            if 'error' in nhs_metrics:
+                # Handle error case
+                ax1.text(0.5, 0.6, 'NHS 4-Hour Standard', ha='center', va='center', fontsize=12, fontweight='bold', transform=ax1.transAxes)
+                ax1.text(0.5, 0.4, f"{nhs_metrics['error']}", ha='center', va='center', fontsize=10, color='red', transform=ax1.transAxes)
+                ax1.text(0.5, 0.2, f"Active: {nhs_metrics.get('active_patients', 0)}", ha='center', va='center', fontsize=10, transform=ax1.transAxes)
+                ax1.set_xlim(0, 1)
+                ax1.set_ylim(0, 1)
+                ax1.set_xticks([])
+                ax1.set_yticks([])
+                for spine in ax1.spines.values():
+                    spine.set_visible(False)
+            else:
+                compliance_rate = nhs_metrics.get('4hour_standard_compliance_pct', 0)
+                ax1.pie([compliance_rate, 100-compliance_rate], 
+                       labels=['Within 4hrs', 'Over 4hrs'],
+                       colors=[self.colors['nhs_green'], self.colors['nhs_red']],
+                       autopct='%1.1f%%')
+                ax1.set_title(f'NHS 4-Hour Standard\n{compliance_rate:.1f}% Compliance')
         
         # Resource Utilization (top middle)
         if operation_metrics and 'utilization' in operation_metrics:
@@ -329,7 +367,7 @@ class PlottingService:
             ax3.grid(True, alpha=0.3)
         
         # NHS Triage Distribution (middle left)
-        if nhs_metrics and 'triage_category_distribution' in nhs_metrics:
+        if nhs_metrics and 'triage_category_distribution' in nhs_metrics and 'error' not in nhs_metrics:
             ax4 = fig.add_subplot(gs[1, 0])
             triage_dist = nhs_metrics['triage_category_distribution']
             if triage_dist:
@@ -358,10 +396,16 @@ class PlottingService:
         
         if nhs_metrics:
             summary_text += f"NHS Metrics:\n"
-            summary_text += f"• Total Patients: {nhs_metrics.get('total_attendances', 0)}\n"
-            summary_text += f"• 4-Hour Compliance: {nhs_metrics.get('4hour_standard_compliance_pct', 0):.1f}%\n"
-            summary_text += f"• Average Time in A&E: {nhs_metrics.get('5_total_time_in_ae_avg_minutes', 0):.1f} minutes\n"
-            summary_text += f"• Admission Rate: {nhs_metrics.get('admission_rate_pct', 0):.1f}%\n\n"
+            if 'error' in nhs_metrics:
+                summary_text += f"• Status: {nhs_metrics['error']}\n"
+                summary_text += f"• Total Attendances: {nhs_metrics.get('total_attendances', 0)}\n"
+                summary_text += f"• Active Patients: {nhs_metrics.get('active_patients', 0)}\n"
+            else:
+                summary_text += f"• Total Patients: {nhs_metrics.get('total_attendances', 0)}\n"
+                summary_text += f"• 4-Hour Compliance: {nhs_metrics.get('4hour_standard_compliance_pct', 0):.1f}%\n"
+                summary_text += f"• Average Time in A&E: {nhs_metrics.get('5_total_time_in_ae_avg_minutes', 0):.1f} minutes\n"
+                summary_text += f"• Admission Rate: {nhs_metrics.get('admission_rate_pct', 0):.1f}%\n"
+            summary_text += "\n"
         
         if operation_metrics:
             summary_text += f"Operational Metrics:\n"

@@ -533,40 +533,63 @@ class SimpleHospital:
         arrival_time = self.simulation_engine.env.now
         
         self.simulation_engine.log_with_sim_time(logging.INFO, f"🚶 Patient #{patient_num} arrived")
+        logger.info(f"🔍 DEBUG: Patient #{patient_num} starting journey at time {arrival_time:.2f}")
         
-        patient = self._setup_patient_arrival(arrival_time)
-        
-        self.simulation_engine.log_with_sim_time(logging.DEBUG, f"👤 Patient #{patient_num}: Age {self._calculate_age_from_birthdate(patient.BIRTHDATE)}, {patient.GENDER}, Complaint: '{self._extract_presenting_complaint(patient)}'")
-        
-        self.simulation_engine.log_with_sim_time(logging.DEBUG, f"👩‍⚕️ Patient #{patient_num}: Entering triage assessment")
-        category, priority, triage_result = yield from self._process_triage_stage(patient.Id, patient, patient_num)
-        
-        self.nhs_metrics.record_triage_category(patient, category)
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏷️ Patient #{patient_num}: {category} (P{priority})")
-        
-        self.simulation_engine.log_with_sim_time(logging.DEBUG, f"👨‍⚕️ Patient #{patient_num}: Entering doctor assessment")
-        yield from self._process_doctor_assessment(patient, category, priority, triage_result, patient_num)
-        
-        diagnostics_start = self.simulation_engine.env.now
-        self.simulation_engine.log_with_sim_time(logging.DEBUG, f"🔬 Patient #{patient_num}: Checking diagnostics")
-        yield from self._process_diagnostics(triage_result)
-        
-        if self.simulation_engine.env.now > diagnostics_start:
-            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"🧪 Patient #{patient_num}: Diagnostics completed ({self.simulation_engine.env.now - diagnostics_start:.1f}min)")
-        else:
-            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"⏭️ Patient #{patient_num}: No diagnostics required")
-        
-        disposition_start = self.simulation_engine.env.now
-        self.simulation_engine.log_with_sim_time(logging.DEBUG, f"📋 Patient #{patient_num}: Starting disposition")
-        disposition, admitted = yield from self._process_disposition(triage_result)
-        
-        self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient #{patient_num}: Disposition decided - {disposition.upper()} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
-        
-        # Complete patient journey - NHS metrics updated through direct metric recording
-        # (Synthea Patient models don't have record_departure method)
-        
-        self._complete_patient_journey(patient.Id, arrival_time, disposition, admitted, 
-                                     category, self._calculate_age_from_birthdate(patient.BIRTHDATE), patient.GENDER, patient_num)
+        try:
+            patient = self._setup_patient_arrival(arrival_time)
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} setup completed, ID: {patient.Id}")
+            
+            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"👤 Patient #{patient_num}: Age {self._calculate_age_from_birthdate(patient.BIRTHDATE)}, {patient.GENDER}, Complaint: '{self._extract_presenting_complaint(patient)}'")
+            
+            # TRIAGE STAGE
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} entering triage stage at time {self.simulation_engine.env.now:.2f}")
+            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"👩‍⚕️ Patient #{patient_num}: Entering triage assessment")
+            category, priority, triage_result = yield from self._process_triage_stage(patient.Id, patient, patient_num)
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} completed triage at time {self.simulation_engine.env.now:.2f}, category: {category}")
+            
+            self.nhs_metrics.record_triage_category(patient, category)
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"🏷️ Patient #{patient_num}: {category} (P{priority})")
+            
+            # DOCTOR ASSESSMENT STAGE
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} entering doctor assessment at time {self.simulation_engine.env.now:.2f}")
+            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"👨‍⚕️ Patient #{patient_num}: Entering doctor assessment")
+            yield from self._process_doctor_assessment(patient, category, priority, triage_result, patient_num)
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} completed doctor assessment at time {self.simulation_engine.env.now:.2f}")
+            
+            # DIAGNOSTICS STAGE
+            diagnostics_start = self.simulation_engine.env.now
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} entering diagnostics at time {diagnostics_start:.2f}")
+            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"🔬 Patient #{patient_num}: Checking diagnostics")
+            yield from self._process_diagnostics(triage_result)
+            
+            if self.simulation_engine.env.now > diagnostics_start:
+                self.simulation_engine.log_with_sim_time(logging.DEBUG, f"🧪 Patient #{patient_num}: Diagnostics completed ({self.simulation_engine.env.now - diagnostics_start:.1f}min)")
+                logger.info(f"🔍 DEBUG: Patient #{patient_num} completed diagnostics at time {self.simulation_engine.env.now:.2f}")
+            else:
+                self.simulation_engine.log_with_sim_time(logging.DEBUG, f"⏭️ Patient #{patient_num}: No diagnostics required")
+                logger.info(f"🔍 DEBUG: Patient #{patient_num} skipped diagnostics at time {self.simulation_engine.env.now:.2f}")
+            
+            # DISPOSITION STAGE
+            disposition_start = self.simulation_engine.env.now
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} entering disposition at time {disposition_start:.2f}")
+            self.simulation_engine.log_with_sim_time(logging.DEBUG, f"📋 Patient #{patient_num}: Starting disposition")
+            disposition, admitted = yield from self._process_disposition(triage_result)
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} completed disposition at time {self.simulation_engine.env.now:.2f}, outcome: {disposition}")
+            
+            self.simulation_engine.log_with_sim_time(logging.INFO, f"🏥 Patient #{patient_num}: Disposition decided - {disposition.upper()} at {self.simulation_engine.format_sim_time(self.simulation_engine.env.now)}")
+            
+            # COMPLETION STAGE
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} entering completion at time {self.simulation_engine.env.now:.2f}")
+            self._complete_patient_journey(patient.Id, arrival_time, disposition, admitted, 
+                                         category, self._calculate_age_from_birthdate(patient.BIRTHDATE), patient.GENDER, patient_num)
+            logger.info(f"🔍 DEBUG: Patient #{patient_num} FULLY COMPLETED journey at time {self.simulation_engine.env.now:.2f}")
+            
+        except Exception as e:
+            logger.error(f"🔍 DEBUG: Patient #{patient_num} FAILED at time {self.simulation_engine.env.now:.2f} with error: {e}")
+            logger.error(f"🔍 DEBUG: Exception details: {type(e).__name__}: {str(e)}")
+            import traceback
+            logger.error(f"🔍 DEBUG: Traceback: {traceback.format_exc()}")
+            raise
     
     def _setup_patient_arrival(self, arrival_time):
         """Setup patient data and record arrival metrics."""
