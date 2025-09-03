@@ -242,10 +242,6 @@ class SimpleHospital:
         # Return full MTS result for timing information
         return category, priority, result, processing_delay
     
-
-    
-
-    
     def _convert_symptoms_to_mts_format(self, raw_symptoms: Dict[str, str], flowchart_reason: str) -> Dict[str, str]:
         """Convert real patient symptoms to MTS flowchart format.
         
