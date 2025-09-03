@@ -27,48 +27,37 @@ from src.triage.llm_triage_system.llm_triage_system import LLMTriageSystem
 
 def main():
     """Main function to run the hospital simulation"""
-    logger.info("🚀 Starting Hospital Simulation with Manchester Triage System")
-    logger.info("This simulation uses real Synthea patient data with MTS triage")
-    logger.info("🏥 Hospital Simulation with Manchester Triage System")
+    logger.info("🏥 Starting Hospital Simulation with LLM Triage System")
     logger.info("=" * 60)
     
     try:
-        # Create a temporary LLM triage system first (will be replaced with metrics-aware version)
-        logger.info("🤖 Creating initial LLM Triage System...")
+        # Create temporary LLM triage system
         temp_llm_triage = LLMTriageSystem()
         
-        # Create hospital with temporary triage system to initialize metrics
-        logger.info("🏥 Initializing hospital to set up metrics services...")
+        # Initialize hospital with metrics services
         hospital = SimpleHospital(
             csv_folder='./output/csv',
-            triage_system=temp_llm_triage,  # Temporary triage system
+            triage_system=temp_llm_triage,
             sim_duration=480,    # 8 hours
-            arrival_rate=50,     # 50 patients/hour (higher demand)
-            delay_scaling=0,  # 1 real second = 0 simulation minutes
-            nurses=3,            # Triage capacity
-            doctors=2,           # Reduced to 2 for realistic doctor queuing
-            beds=4,              # Reduced to 4 for realistic bed queuing
-            log_level=logging.INFO  # Enable detailed logging
+            arrival_rate=50,     # 50 patients/hour
+            delay_scaling=0,
+            nurses=3,
+            doctors=2,
+            beds=4,
+            log_level=logging.INFO
         )
         
-        # Now create LLM triage system with operational metrics
-        logger.info("🤖 Creating LLM Triage System with operational metrics integration...")
+        # Create LLM triage system with operational metrics
         llm_triage_with_metrics = LLMTriageSystem(
             operation_metrics=hospital.operation_metrics,
             nhs_metrics=hospital.nhs_metrics
         )
         
-        # Replace the temporary triage system with the metrics-aware version
+        # Replace with metrics-aware version
         hospital.triage_system = llm_triage_with_metrics
-        logger.info("✅ LLM Triage System updated with operational metrics integration")
         
-        logger.info(f"Simulation Parameters:")
-        logger.info(f"  Duration: {hospital.sim_duration/60:.1f} hours")
-        logger.info(f"  Arrival Rate: {hospital.arrival_rate} patients/hour")
-        logger.info(f"  Staff: {hospital.nurses} nurses, {hospital.doctors} doctors")
-        logger.info(f"  Beds: {hospital.beds}")
-        logger.info(f"  Patient Data: {len(hospital.patients)} real patients available")
-        logger.info(f"  Triage System: LLM with operational context integration")
+        logger.info(f"📊 Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")
+        logger.info(f"🤖 Triage: LLM with operational context")
         
         # Run simulation
         results = hospital.run()

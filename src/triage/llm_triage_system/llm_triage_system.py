@@ -3,6 +3,13 @@ import os
 from typing import Dict, Any
 from openai import OpenAI
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env file if it exists
+except ImportError:
+    pass  # python-dotenv not installed, use system environment variables
+
 # HuggingFace and ML dependencies
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 import torch
@@ -10,13 +17,13 @@ import numpy as np
 
 # Import centralized logger
 from src.logger import logger
-from .config.system_prompts import get_system_prompt, get_triage_categories, get_wait_time_for_category
+from .config.system_prompts import get_system_prompt, get_triage_categories, get_wait_time_for_category, get_full_triage_prompt
 from src.models.triage_result import TriageResult
 
-# Hugging Face API configuration
+# Hugging Face API configuration - Load from environment variables
 HF_API_KEY = os.getenv('HF_API_KEY', 'your-huggingface-api-key-here')
-HF_BASE_URL = "https://router.huggingface.co/v1"
-HF_MODEL = "openai/gpt-oss-120b:together"
+HF_BASE_URL = os.getenv('HF_BASE_URL', 'https://router.huggingface.co/v1')
+HF_MODEL = os.getenv('HF_MODEL', 'openai/gpt-oss-120b:together')
 
 
 
@@ -40,27 +47,18 @@ class LLMTriageSystem:
         self.model_name = model_name
         self.operation_metrics = operation_metrics
         self.nhs_metrics = nhs_metrics
-        logger.info(f"🚀 Initializing LLM Triage System with HF model: {model_name}")
+        logger.info(f"🤖 Initializing LLM Triage System: {model_name}")
         
         try:
-            # Initialize OpenAI client for Hugging Face API
-            logger.info(f"🔧 Initializing OpenAI client with base_url={HF_BASE_URL}")
-            logger.info(f"🔑 API key configured: {HF_API_KEY[:10]}...{HF_API_KEY[-4:]}")
-            
             self.client = OpenAI(
                 base_url=HF_BASE_URL,
                 api_key=HF_API_KEY,
             )
-            
-            logger.info(f"✅ LLM Triage System initialized successfully")
-            logger.info(f"🔗 Connected to Hugging Face API at {HF_BASE_URL}")
-            logger.info(f"🤖 Using model: {model_name}")
+            logger.info(f"✅ LLM Triage System ready")
             
         except Exception as e:
-            error_msg = f"❌ CRITICAL ERROR: Failed to initialize LLM Triage System: {e}"
-            logger.error(error_msg)
-            logger.error(f"🔧 Configuration: base_url={HF_BASE_URL}, model={model_name}")
-            raise RuntimeError(error_msg) from e
+            logger.error(f"❌ Failed to initialize LLM system: {e}")
+            raise RuntimeError(f"Failed to initialize LLM system: {e}") from e
         
         # Initialize triage categories mapping
         self.triage_categories = get_triage_categories()
@@ -82,55 +80,26 @@ class LLMTriageSystem:
             ValueError: If API call fails
             RuntimeError: If client is not initialized
         """
-        logger.info(f"🏥 Starting Hugging Face API triage assessment for symptoms: '{symptoms[:100]}{'...' if len(symptoms) > 100 else ''}'")
+        logger.info(f"🩺 Triaging patient: {symptoms[:80]}{'...' if len(symptoms) > 80 else ''}")
         
         if not symptoms or not symptoms.strip():
-            error_msg = "❌ CRITICAL ERROR: Empty or whitespace-only symptoms provided to LLM triage system"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+            logger.error("❌ Empty symptoms provided")
+            raise ValueError("Empty symptoms provided to LLM triage system")
         
         try:
-            # Get comprehensive NHS system prompt
-            system_context = get_system_prompt()
-            
             # Generate operational context if metrics are available
             operational_context = ""
             if self.operation_metrics and self.nhs_metrics:
-                # Use current simulation time (we'll need to get this from somewhere)
-                # For now, use the latest snapshot time if available
                 current_time = 0.0
                 if self.operation_metrics.system_snapshots:
                     current_time = self.operation_metrics.system_snapshots[-1].timestamp
                 operational_context = self._generate_operational_context(current_time)
-                logger.info(f"📊 Including operational context in triage decision")
-            else:
-                logger.debug(f"📊 No operational metrics available for context")
+                logger.debug(f"📊 Added operational context ({len(operational_context)} chars)")
             
-            prompt = f"""{system_context}{operational_context}
-
-Patient Presentation:
-{symptoms}
-
-Based on the NHS UK Triage Guidelines above AND the current hospital operational status, analyze these symptoms and provide a triage recommendation.
-
-IMPORTANT: Consider the current hospital conditions when estimating wait times. If the system is under high pressure, adjust wait time estimates accordingly while maintaining patient safety as the top priority.
-
-Output ONLY the following JSON object with no additional text:
-{{
-  "triage_category": "one of RED, ORANGE, YELLOW, GREEN, BLUE",
-  "priority_score": "integer from 1 to 5",
-  "confidence": "float from 0.0 to 1.0",
-  "reasoning": "brief clinical explanation based on NHS guidelines and current hospital conditions",
-  "wait_time": "expected wait time as string based on current operational status (e.g., 'Immediate (0 min)')"
-}}
-
-Do not include any text before or after the JSON."""
+            # Generate complete prompt using system_prompts module
+            prompt = get_full_triage_prompt(symptoms, operational_context)
             
-            logger.info(f"🔍 Sending request to Hugging Face API...")
-            logger.info(f"🤖 Model: {self.model_name}")
-            logger.info(f"📝 Prompt length: {len(prompt)} characters")
-            logger.info(f"📄 Prompt preview: {prompt[:300]}...")
-            logger.debug(f"📄 Full prompt: {prompt}")
+            logger.debug(f"🔍 API Request: {self.model_name} ({len(prompt)} chars)")
             
             try:
                 completion = self.client.chat.completions.create(
@@ -145,73 +114,47 @@ Do not include any text before or after the JSON."""
                 )
                 
                 response_content = completion.choices[0].message.content
-                logger.info(f"📨 Received response from HF API")
-                logger.info(f"📊 Response length: {len(response_content)} characters")
-                logger.info(f"📄 Raw response: {response_content}")
-                logger.debug(f"📄 Response content: {response_content[:200]}{'...' if len(response_content) > 200 else ''}")
+                logger.debug(f"📨 API Response: {len(response_content)} chars")
                 
             except Exception as api_call_error:
-                error_msg = f"❌ CRITICAL ERROR: HF API call failed: {api_call_error}"
-                logger.error(error_msg)
-                logger.error(f"🔧 Request details: model={self.model_name}, base_url={HF_BASE_URL}")
-                raise RuntimeError(error_msg) from api_call_error
+                logger.error(f"❌ API call failed: {api_call_error}")
+                raise RuntimeError(f"HF API call failed: {api_call_error}") from api_call_error
             
-            # Parse JSON response - STRICT MODE
-            logger.info(f"🔍 Parsing JSON response...")
+            # Parse and validate JSON response
             try:
                 triage_data = json.loads(response_content)
-                logger.info(f"✅ JSON parsed successfully")
-                logger.info(f"📋 Minified JSON: {json.dumps(triage_data, separators=(',', ':'))}")
+                logger.debug(f"📋 Parsed: {json.dumps(triage_data, separators=(',', ':'))}")
                 
             except json.JSONDecodeError as json_error:
-                error_msg = f"❌ CRITICAL ERROR: Failed to parse JSON response from HF API: {json_error}"
-                logger.error(error_msg)
-                logger.error(f"📄 Raw response: {response_content}")
-                logger.error(f"🔧 Expected JSON format with fields: triage_category, priority_score, confidence, reasoning, wait_time")
-                raise ValueError(error_msg) from json_error
+                logger.error(f"❌ Invalid JSON response: {response_content[:200]}...")
+                raise ValueError(f"Invalid JSON response: {json_error}") from json_error
             
-            # Validate required fields - STRICT MODE
-            logger.info(f"🔍 Validating required fields...")
+            # Validate required fields
             required_fields = ["triage_category", "priority_score", "confidence", "reasoning", "wait_time"]
             missing_fields = [field for field in required_fields if field not in triage_data]
             if missing_fields:
-                error_msg = f"❌ CRITICAL ERROR: Missing required fields in HF API response: {missing_fields}"
-                logger.error(error_msg)
-                logger.error(f"📄 Received fields: {list(triage_data.keys())}")
-                logger.error(f"📄 Full response: {triage_data}")
-                raise ValueError(error_msg)
+                logger.error(f"❌ Missing fields: {missing_fields}")
+                raise ValueError(f"Missing required fields: {missing_fields}")
             
-            # Validate triage category - STRICT MODE
-            logger.info(f"🔍 Validating triage category: {triage_data['triage_category']}")
+            # Validate triage category
             valid_categories = get_triage_categories()
             if triage_data["triage_category"] not in valid_categories:
-                error_msg = f"❌ CRITICAL ERROR: Invalid triage category '{triage_data['triage_category']}' returned by HF API. Valid categories: {valid_categories}"
-                logger.error(error_msg)
-                logger.error(f"📄 Full API response: {response_content}")
-                raise ValueError(error_msg)
+                logger.error(f"❌ Invalid category: {triage_data['triage_category']}")
+                raise ValueError(f"Invalid triage category: {triage_data['triage_category']}")
             
-            # Validate and convert data types - STRICT MODE
-            logger.info(f"🔍 Validating data types...")
+            # Convert data types
             try:
                 triage_data["priority_score"] = int(triage_data["priority_score"])
                 triage_data["confidence"] = float(triage_data["confidence"])
             except (ValueError, TypeError) as type_error:
-                error_msg = f"❌ CRITICAL ERROR: Invalid data types in HF API response: {type_error}"
-                logger.error(error_msg)
-                logger.error(f"📄 priority_score: {triage_data.get('priority_score')} (type: {type(triage_data.get('priority_score'))})")
-                logger.error(f"📄 confidence: {triage_data.get('confidence')} (type: {type(triage_data.get('confidence'))})")
-                raise ValueError(error_msg) from type_error
+                logger.error(f"❌ Invalid data types: {type_error}")
+                raise ValueError(f"Invalid data types: {type_error}") from type_error
             
-            logger.info(f"✅ Triage classification completed: {triage_data['triage_category']} (Priority {triage_data['priority_score']})")
-            logger.info(f"📊 Confidence: {triage_data['confidence']:.1%}, Wait time: {triage_data['wait_time']}")
-            logger.info(f"💭 Reasoning: {triage_data['reasoning'][:100]}...")
+            logger.info(f"✅ {triage_data['triage_category']} (P{triage_data['priority_score']}) - {triage_data['confidence']:.0%} confidence")
                 
         except Exception as api_error:
-            error_msg = f"❌ CRITICAL ERROR: Hugging Face API call failed: {api_error}"
-            logger.error(error_msg)
-            logger.error(f"🔧 API Configuration: base_url={HF_BASE_URL}, model={self.model_name}")
-            logger.error(f"📝 Input symptoms: {symptoms[:200]}...")
-            raise RuntimeError(error_msg) from api_error
+            logger.error(f"❌ Triage failed: {api_error}")
+            raise RuntimeError(f"Triage failed: {api_error}") from api_error
         
         # Return TriageResult object using from_llm_result class method
         return TriageResult.from_llm_result(triage_data)
@@ -285,8 +228,8 @@ Do not include any text before or after the JSON."""
             return context
             
         except Exception as e:
-            logger.warning(f"⚠️ Failed to generate operational context: {e}")
-            return "\n📊 OPERATIONAL CONTEXT: Error retrieving current hospital status\n"
+            logger.debug(f"⚠️ Operational context error: {e}")
+            return "\n📊 OPERATIONAL CONTEXT: Not available\n"
     
     def _get_utilization_status(self, utilization: float) -> str:
         """Get utilization status indicator"""

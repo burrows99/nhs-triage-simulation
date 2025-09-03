@@ -9,6 +9,7 @@ requests
 openai>=1.0.0  # For Hugging Face API calls
 networkx
 watchdog  # For hot reload in development
+python-dotenv>=1.0.0  # For loading environment variables from .env files
 # Dependencies for HuggingFace API and fallback transformer models
 transformers>=4.30.0
 torch>=2.0.0

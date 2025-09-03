@@ -1,3 +1,10 @@
+# Environment variables
+.env
+.env.dev
+.env.local
+.env.production
+*.env
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
