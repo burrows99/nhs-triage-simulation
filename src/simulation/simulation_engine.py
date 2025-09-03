@@ -206,6 +206,56 @@ class SimulationEngine:
     
     # Removed simple wrapper methods - access env directly for timeout/process operations
     
+    def enhanced_yield_with_monitoring(self, timeout_duration: float, context: str = "", monitoring_callback: Callable = None):
+        """Enhanced yield function that combines process yielding with synchronized monitoring.
+        
+        This eliminates timing mismatches by capturing resource utilization at the exact
+        moments when resources are being used or released.
+        
+        Args:
+            timeout_duration: Duration to yield for
+            context: Context description for debugging
+            monitoring_callback: Optional callback function to capture monitoring snapshots
+        """
+        # Capture resource state before yielding
+        if monitoring_callback:
+            monitoring_callback(f"Before {context}")
+        
+        # Perform the actual yield
+        yield self.env.timeout(timeout_duration)
+        
+        # Capture resource state after yielding
+        if monitoring_callback:
+            monitoring_callback(f"After {context}")
+    
+    def record_resource_event(self, event_type: str, resource_name: str, entity_id: str = None, 
+                            event_recorder: Callable = None, **kwargs):
+        """Record resource usage events for detailed analysis.
+        
+        Args:
+            event_type: Type of event ('request', 'acquire', 'release')
+            resource_name: Name of the resource
+            entity_id: Optional entity identifier
+            event_recorder: Optional callback function to record the event
+            **kwargs: Additional event data
+        """
+        # Generic event recording using simulation engine
+        event_record = {
+            'time': self.env.now,
+            'event_type': event_type,
+            'resource': resource_name,
+            'entity_id': entity_id,
+            **kwargs
+        }
+        
+        # Use callback for domain-specific event recording
+        if event_recorder:
+            event_recorder(event_record)
+        
+        # Enhanced debug logging for all resource events
+        logger.debug(f"🔍 RESOURCE EVENT | Type: {event_type.upper()} | Resource: {resource_name} | "
+                    f"Entity: {entity_id} | Time: {self.env.now:.1f} | Extra: {kwargs}")
+    
     def get_monitoring_summary(self) -> Dict[str, Any]:
         """Get summary of monitoring data collected during simulation.
         

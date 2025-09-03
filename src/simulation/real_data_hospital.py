@@ -192,7 +192,9 @@ class SimpleHospital:
         raw_symptoms = patient.symptoms
         
         # Convert real patient symptoms to MTS format
-        symptoms_input = self._convert_symptoms_to_mts_format(raw_symptoms, flowchart_reason)
+        # Use symptoms directly from triage constants instead of custom mapping
+        expected_symptoms = FlowchartSymptomMapping.get_symptoms_for_flowchart(flowchart_reason)
+        symptoms_input = {k: v for k, v in raw_symptoms.items() if k in expected_symptoms}
         
         # Ensure we have real patient symptoms - no random fallback
         if not symptoms_input:
@@ -241,57 +243,6 @@ class SimpleHospital:
         
         # Return full MTS result for timing information
         return category, priority, result, processing_delay
-    
-    def _convert_symptoms_to_mts_format(self, raw_symptoms: Dict[str, str], flowchart_reason: str) -> Dict[str, str]:
-        """Convert real patient symptoms to MTS flowchart format.
-        
-        Args:
-            raw_symptoms: Symptoms from extract_patient_symptoms
-            flowchart_reason: Selected flowchart identifier
-            
-        Returns:
-            Dictionary of symptoms in MTS format for the specific flowchart
-        """
-        if not raw_symptoms:
-            return {}
-        
-        # Get expected symptoms for this flowchart
-        expected_symptoms = FlowchartSymptomMapping.get_symptoms_for_flowchart(flowchart_reason)
-        mts_symptoms = {}
-        
-        # Map common symptom keys from extract_patient_symptoms to MTS format
-        symptom_mapping = {
-            # From SymptomKeys to MTS flowchart symptoms
-            SymptomKeys.PAIN_LEVEL: 'severe_pain',
-            SymptomKeys.CRUSHING_SENSATION: 'crushing_sensation', 
-            SymptomKeys.BREATHING_DIFFICULTY: 'breathless',
-            SymptomKeys.SWEATING: 'sweating',
-            SymptomKeys.RADIATION: 'radiation',
-            SymptomKeys.WHEEZE: 'wheeze',
-            SymptomKeys.CYANOSIS: 'cyanosis',
-            SymptomKeys.CONSCIOUSNESS: 'consciousness_level',
-            SymptomKeys.TEMPERATURE: 'temperature',
-            SymptomKeys.BLEEDING: 'bleeding',
-            SymptomKeys.CONFUSION_LEVEL: 'confusion',
-            SymptomKeys.DEFORMITY: 'deformity',
-            SymptomKeys.MECHANISM: 'mechanism',
-            # From SymptomNames to MTS symptoms
-            SymptomNames.NAUSEA: 'nausea',
-            SymptomNames.HEADACHE: 'pain_severity',
-            SymptomNames.DIZZINESS: 'dizziness',
-            SymptomNames.CHEST_PAIN: 'chest_pain'
-        }
-        
-        # Convert symptoms that exist in both raw_symptoms and expected_symptoms
-        for raw_key, raw_value in raw_symptoms.items():
-            # Map the key to MTS format
-            mts_key = symptom_mapping.get(raw_key, raw_key)
-            
-            # Only include if this symptom is expected for the flowchart
-            if mts_key in expected_symptoms:
-                mts_symptoms[mts_key] = raw_value
-        
-        return mts_symptoms
     
     def patient_flow(self, patient_num):
         """Simulate patient journey with NHS metrics tracking."""
@@ -368,14 +319,17 @@ class SimpleHospital:
         
         with triage_resource.request() as req:
             # Record resource request event
-            self.record_resource_event('request', 'triage', patient_id, queue_length=len(triage_resource.queue))
+            self.simulation_engine.record_resource_event(
+                'request', 'triage', patient_id, self._record_hospital_event, 
+                queue_length=len(triage_resource.queue))
             
             yield req
             triage_service_start = self.simulation_engine.env.now
             wait_time = triage_service_start - triage_start
             
             # Record resource acquisition event
-            self.record_resource_event('acquire', 'triage', patient_id, wait_time=wait_time)
+            self.simulation_engine.record_resource_event(
+                'acquire', 'triage', patient_id, self._record_hospital_event, wait_time=wait_time)
             
             # Capture monitoring snapshot right after triage resource acquisition
             self._capture_monitoring_snapshot("triage resource acquired")
@@ -388,12 +342,22 @@ class SimpleHospital:
             
             # Apply processing delay and calculate total triage time
             triage_processing_delay = self._scale_delay(processing_delay_seconds, delay_type='triage')
-            base_triage_time = self._calculate_triage_time(category, triage_result)
+            
+            # Determine complexity based on triage category for evidence-based timing
+            if category in [TriageCategories.RED]:
+                complexity = "complex"  # Immediate cases are complex
+            elif category in [TriageCategories.ORANGE, TriageCategories.YELLOW]:
+                complexity = "standard"  # Urgent cases are standard
+            else:
+                complexity = "simple"  # Less urgent cases are simpler
+                
+            base_triage_time = self.random_service.get_triage_process_time(complexity)
             total_triage_time = base_triage_time + triage_processing_delay
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient #{patient_num}: Triage assessment will take {total_triage_time:.1f}min (assessment: {base_triage_time:.1f}min + processing: {triage_processing_delay:.1f}min)")
             
-            yield from self.enhanced_yield_with_monitoring(total_triage_time, "triage assessment")
+            yield from self.simulation_engine.enhanced_yield_with_monitoring(
+            total_triage_time, "triage assessment", self._capture_monitoring_snapshot)
             
             triage_end = self.simulation_engine.env.now
             
@@ -401,30 +365,12 @@ class SimpleHospital:
             self._capture_monitoring_snapshot("triage resource before release")
             
             # Record resource release event
-            self.record_resource_event('release', 'triage', patient_id, service_time=total_triage_time)
+        self.simulation_engine.record_resource_event(
+            'release', 'triage', patient_id, self._record_hospital_event, service_time=total_triage_time)
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient #{patient_num}: Completed triage assessment at {self.simulation_engine.format_sim_time(triage_end)} (Total triage time: {triage_end - triage_start:.1f}min)")
             
             return category, priority, triage_result
-    
-    def _calculate_triage_time(self, category, triage_result):
-        """Calculate triage assessment time using evidence-based NHS timing.
-        
-        Uses official MTS research and NHS sources for realistic triage duration.
-        """
-        if not triage_result:
-            raise ValueError("MTS result is required for triage time calculation")
-        
-        # Determine complexity based on triage category
-        if category in [TriageCategories.RED]:
-            complexity = "complex"  # Immediate cases are complex
-        elif category in [TriageCategories.ORANGE, TriageCategories.YELLOW]:
-            complexity = "standard"  # Urgent cases are standard
-        else:
-            complexity = "simple"  # Less urgent cases are simpler
-        
-        # Use evidence-based triage process time (NHS official sources)
-        return self.random_service.get_triage_process_time(complexity)
     
     def _process_doctor_assessment(self, patient, category, priority, triage_result, patient_num):
         """Process doctor assessment stage."""
@@ -439,14 +385,18 @@ class SimpleHospital:
         
         with doctor_resource.request(priority=priority) as req:
             # Record resource request event
-            self.record_resource_event('request', 'doctor', patient.patient_id, priority=priority, queue_length=len(doctor_resource.queue))
+        self.simulation_engine.record_resource_event(
+            'request', 'doctor', patient.patient_id, self._record_hospital_event, 
+            priority=priority, queue_length=len(doctor_resource.queue))
             
             yield req
             assessment_service_start = self.simulation_engine.env.now
             wait_time = assessment_service_start - assessment_start
             
             # Record resource acquisition event
-            self.record_resource_event('acquire', 'doctor', patient.patient_id, wait_time=wait_time, priority=priority)
+            self.simulation_engine.record_resource_event(
+                'acquire', 'doctor', patient.patient_id, self._record_hospital_event, 
+                wait_time=wait_time, priority=priority)
             
             # Capture monitoring snapshot right after doctor resource acquisition
             self._capture_monitoring_snapshot("doctor resource acquired")
@@ -457,7 +407,8 @@ class SimpleHospital:
         assessment_time = self.random_service.get_doctor_assessment_time(category)
         self.simulation_engine.log_with_sim_time(logging.INFO, f"⏱️  Patient #{patient_num}: Doctor assessment will take {assessment_time:.1f}min")
         
-        yield from self.enhanced_yield_with_monitoring(assessment_time, "doctor assessment")
+        yield from self.simulation_engine.enhanced_yield_with_monitoring(
+                assessment_time, "doctor assessment", self._capture_monitoring_snapshot)
         
         assessment_end = self.simulation_engine.env.now
         
@@ -465,11 +416,11 @@ class SimpleHospital:
         self._capture_monitoring_snapshot("doctor resource before release")
         
         # Record resource release event
-        self.record_resource_event('release', 'doctor', patient.patient_id, service_time=assessment_time, priority=priority)
+        self.simulation_engine.record_resource_event(
+            'release', 'doctor', patient.patient_id, self._record_hospital_event, 
+            service_time=assessment_time, priority=priority)
         
         self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Patient #{patient_num}: Completed doctor assessment at {self.simulation_engine.format_sim_time(assessment_end)} (Total assessment time: {assessment_end - assessment_start:.1f}min)")
-    
-
     
     def _process_diagnostics(self, category):
         """Process optional diagnostics stage with specific test types.
@@ -482,7 +433,8 @@ class SimpleHospital:
             diagnostics_time = self.random_service.get_diagnostics_time(diagnostic_type)
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🔬 Performing {diagnostic_type} diagnostics (Duration: {diagnostics_time:.1f}min)")
-            yield from self.enhanced_yield_with_monitoring(diagnostics_time, "diagnostics")
+            yield from self.simulation_engine.enhanced_yield_with_monitoring(
+                diagnostics_time, "diagnostics", self._capture_monitoring_snapshot)
     
     def _determine_diagnostic_type(self, category):
         """Determine appropriate diagnostic test type based on triage category.
@@ -519,7 +471,8 @@ class SimpleHospital:
                 
                 self.simulation_engine.log_with_sim_time(logging.INFO, f"🛏️  Bed allocated at {self.simulation_engine.format_sim_time(bed_service_start)} (Waited: {bed_wait_time:.1f}min)")
                 
-                yield from self.enhanced_yield_with_monitoring(processing_time, "admission processing")
+                yield from self.simulation_engine.enhanced_yield_with_monitoring(
+                processing_time, "admission processing", self._capture_monitoring_snapshot)
                 
                 bed_end = self.simulation_engine.env.now
                 self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Admission processing completed at {self.simulation_engine.format_sim_time(bed_end)} (Total bed process: {bed_end - bed_start:.1f}min)")
@@ -529,7 +482,8 @@ class SimpleHospital:
             processing_time = self.random_service.get_discharge_processing_time()
             
             self.simulation_engine.log_with_sim_time(logging.INFO, f"🚪 Patient being discharged - processing time: {processing_time:.1f}min")
-            yield from self.enhanced_yield_with_monitoring(processing_time, "discharge processing")
+            yield from self.simulation_engine.enhanced_yield_with_monitoring(
+                processing_time, "discharge processing", self._capture_monitoring_snapshot)
             
             discharge_end = self.simulation_engine.env.now
             self.simulation_engine.log_with_sim_time(logging.INFO, f"✅ Discharge processing completed at {self.simulation_engine.format_sim_time(discharge_end)}")
@@ -733,25 +687,6 @@ class SimpleHospital:
     
 
     
-    def enhanced_yield_with_monitoring(self, timeout_duration: float, context: str = ""):
-        """Enhanced yield function that combines process yielding with synchronized monitoring.
-        
-        This eliminates timing mismatches by capturing resource utilization at the exact
-        moments when resources are being used or released.
-        
-        Args:
-            timeout_duration: Duration to yield for
-            context: Context description for debugging
-        """
-        # Capture resource state before yielding
-        self._capture_monitoring_snapshot(f"Before {context}")
-        
-        # Perform the actual yield
-        yield self.simulation_engine.env.timeout(timeout_duration)
-        
-        # Capture resource state after yielding
-        self._capture_monitoring_snapshot(f"After {context}")
-    
     def _capture_monitoring_snapshot(self, context: str = ""):
         """Capture a monitoring snapshot at the current simulation time.
         
@@ -830,45 +765,31 @@ class SimpleHospital:
         }
         return mapping.get(metrics_resource_name, metrics_resource_name)
     
-    def record_resource_event(self, event_type: str, resource_name: str, patient_id: str = None, **kwargs):
-        """Record resource usage events for detailed analysis.
+    def _record_hospital_event(self, event_record: dict):
+        """Hospital-specific event recording callback.
         
         Args:
-            event_type: Type of event ('request', 'acquire', 'release')
-            resource_name: Name of the resource ('triage', 'doctor', 'bed')
-            patient_id: Optional patient identifier
-            **kwargs: Additional event data
+            event_record: Event record from simulation engine
         """
-        # Modern event recording using simulation engine
-        event_record = {
-            'time': self.simulation_engine.env.now,
-            'event_type': event_type,
-            'resource': resource_name,
-            'patient_id': patient_id,
-            **kwargs
-        }
-        
         # Record in operation metrics
         self.operation_metrics.record_resource_event(
-            event_type=event_type,
-            resource_name=resource_name,
-            entity_id=patient_id or 'unknown',
-            timestamp=self.simulation_engine.env.now,
-            **kwargs
+            event_type=event_record['event_type'],
+            resource_name=event_record['resource'],
+            entity_id=event_record['entity_id'] or 'unknown',
+            timestamp=event_record['time'],
+            **{k: v for k, v in event_record.items() if k not in ['time', 'event_type', 'resource', 'entity_id']}
         )
         
-        # Enhanced debug logging for all resource events
-        logger.debug(f"🔍 RESOURCE EVENT | Type: {event_type.upper()} | Resource: {resource_name} | "
-                    f"Patient: {patient_id} | Time: {self.simulation_engine.env.now:.1f} | Extra: {kwargs}")
-        
         # Additional logging for utilization tracking issues
-        if event_type == 'acquire':
-            actual_resource = self.simulation_engine.get_resource(self._get_simpy_resource_name(resource_name))
+        if event_record['event_type'] == 'acquire':
+            actual_resource = self.simulation_engine.get_resource(self._get_simpy_resource_name(event_record['resource']))
             if actual_resource:
-                logger.debug(f"📊 UTILIZATION DEBUG | {resource_name} | In Use: {actual_resource.count} | "
+                logger.debug(f"📊 UTILIZATION DEBUG | {event_record['resource']} | In Use: {actual_resource.count} | "
                            f"Capacity: {actual_resource.capacity} | Queue: {len(actual_resource.queue)}")
             else:
-                logger.warning(f"⚠️  RESOURCE NOT FOUND | {resource_name} | SimPy resource mapping issue")
+                logger.warning(f"⚠️  RESOURCE NOT FOUND | {event_record['resource']} | SimPy resource mapping issue")}]}}}
+    
+
     
     def get_monitoring_summary(self):
         """Get summary of monitoring data collected during simulation.
