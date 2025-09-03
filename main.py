@@ -9,7 +9,9 @@ for comparative analysis. Outputs results to separate directories.
 import sys
 import os
 import logging
+import argparse
 from collections import Counter
+from typing import List, Optional
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
@@ -21,7 +23,168 @@ from src.triage.llm_triage_system.single_llm_triage import SingleLLMTriage
 from src.triage.llm_triage_system.mixture_llm_triage import MixtureLLMTriage
 
 
-def run_simulation(triage_system, system_name: str, output_dir: str):
+def parse_arguments() -> argparse.Namespace:
+    """
+    Parse command line arguments for the hospital simulation.
+    
+    Returns:
+        Parsed arguments namespace
+    """
+    parser = argparse.ArgumentParser(
+        description="Hospital Simulation with Multiple Triage Systems",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 main.py                                    # Run all systems with default settings
+  python3 main.py --systems manchester single       # Run only Manchester and Single LLM systems
+  python3 main.py --duration 240 --arrival-rate 30  # 4-hour simulation with 30 patients/hour
+  python3 main.py --nurses 5 --doctors 3 --beds 6   # Custom resource allocation
+  python3 main.py --output-dir ./custom_output      # Custom output directory
+  python3 main.py --help                            # Show this help message
+
+Available Triage Systems:
+  manchester    - Manchester Triage System (rule-based fuzzy logic)
+  single        - Single LLM Triage System (single AI agent)
+  multi-agent   - Multi-Agent LLM Triage System (6 specialized agents)
+        """
+    )
+    
+    # Simulation parameters
+    parser.add_argument(
+        '--duration', '-d',
+        type=float,
+        default=480,
+        help='Simulation duration in minutes (default: 480 = 8 hours)'
+    )
+    
+    parser.add_argument(
+        '--arrival-rate', '-a',
+        type=int,
+        default=50,
+        help='Patient arrival rate per hour (default: 50)'
+    )
+    
+    # Resource allocation
+    parser.add_argument(
+        '--nurses', '-n',
+        type=int,
+        default=3,
+        help='Number of nurses available (default: 3)'
+    )
+    
+    parser.add_argument(
+        '--doctors', '-dr',
+        type=int,
+        default=2,
+        help='Number of doctors available (default: 2)'
+    )
+    
+    parser.add_argument(
+        '--beds', '-b',
+        type=int,
+        default=4,
+        help='Number of beds available (default: 4)'
+    )
+    
+    # System selection
+    parser.add_argument(
+        '--systems', '-s',
+        nargs='*',
+        choices=['manchester', 'single', 'multi-agent', 'all'],
+        default=['all'],
+        help='Triage systems to run (default: all). Choose from: manchester, single, multi-agent, or all'
+    )
+    
+    # Output configuration
+    parser.add_argument(
+        '--output-dir', '-o',
+        type=str,
+        default='./output/simulation',
+        help='Base output directory for simulation results (default: ./output/simulation)'
+    )
+    
+    parser.add_argument(
+        '--log-level', '-l',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+        default='INFO',
+        help='Logging level (default: INFO)'
+    )
+    
+    # Performance options
+    parser.add_argument(
+        '--delay-scaling',
+        type=float,
+        default=0,
+        help='Delay scaling factor for simulation speed (default: 0 = no delays)'
+    )
+    
+    parser.add_argument(
+        '--seed',
+        type=int,
+        help='Random seed for reproducible results (optional)'
+    )
+    
+    # Feature flags
+    parser.add_argument(
+        '--skip-plots',
+        action='store_true',
+        help='Skip generating plots and charts (faster execution)'
+    )
+    
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose output with detailed logging'
+    )
+    
+    parser.add_argument(
+        '--quiet', '-q',
+        action='store_true',
+        help='Suppress non-essential output'
+    )
+    
+    return parser.parse_args()
+
+
+def get_system_configurations(args: argparse.Namespace) -> List[dict]:
+    """
+    Get triage system configurations based on command line arguments.
+    
+    Args:
+        args: Parsed command line arguments
+        
+    Returns:
+        List of system configuration dictionaries
+    """
+    all_systems = [
+        {
+            'key': 'manchester',
+            'system': ManchesterTriageSystem,
+            'name': 'Manchester Triage System',
+            'output_dir': f'{args.output_dir}/manchester_triage_system'
+        },
+        {
+            'key': 'single',
+            'system': SingleLLMTriage,
+            'name': 'Single LLM Triage System',
+            'output_dir': f'{args.output_dir}/single_llm_system'
+        },
+        {
+            'key': 'multi-agent',
+            'system': MixtureLLMTriage,
+            'name': 'Multi-Agent LLM Triage System',
+            'output_dir': f'{args.output_dir}/multi_agent_llm_system'
+        }
+    ]
+    
+    # Filter systems based on user selection
+    if 'all' in args.systems:
+        return all_systems
+    else:
+        return [sys for sys in all_systems if sys['key'] in args.systems]
+
+
+def run_simulation(triage_system, system_name: str, output_dir: str, args: argparse.Namespace):
     """Run simulation with specified triage system
     
     Args:
@@ -48,17 +211,24 @@ def run_simulation(triage_system, system_name: str, output_dir: str):
     else:
         temp_triage = triage_system
     
+    # Set logging level based on arguments
+    log_level = getattr(logging, args.log_level)
+    if args.verbose:
+        log_level = logging.DEBUG
+    elif args.quiet:
+        log_level = logging.WARNING
+    
     hospital = SimpleHospital(
         csv_folder='./output/csv',
         output_dir=output_dir,
         triage_system=temp_triage,
-        sim_duration=480,
-        arrival_rate=50,
-        delay_scaling=0,
-        nurses=3,
-        doctors=2,
-        beds=4,
-        log_level=logging.INFO
+        sim_duration=args.duration,
+        arrival_rate=args.arrival_rate,
+        delay_scaling=args.delay_scaling,
+        nurses=args.nurses,
+        doctors=args.doctors,
+        beds=args.beds,
+        log_level=log_level
     )
     
     # Set up triage system with metrics if it's LLM-based
@@ -75,8 +245,11 @@ def run_simulation(triage_system, system_name: str, output_dir: str):
             )
         hospital.triage_system = triage_with_metrics
     
-    logger.info(f"📊 Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")
-    logger.info(f"🔧 Triage System: {system_name}")
+    if not args.quiet:
+        logger.info(f"📊 Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")
+        logger.info(f"🔧 Triage System: {system_name}")
+        if args.seed:
+            logger.info(f"🎲 Random Seed: {args.seed}")
     
     results = hospital.run()
     
@@ -100,67 +273,85 @@ def run_simulation(triage_system, system_name: str, output_dir: str):
 
 def main():
     """Main function to run comparative hospital simulations"""
-    logger.info("🏥 Starting Comparative Hospital Simulation")
-    logger.info("🔄 Running both Manchester Triage System and LLM-based Triage")
-    logger.info("=" * 80)
+    # Parse command line arguments
+    args = parse_arguments()
+    
+    # Set random seed if provided
+    if args.seed:
+        import random
+        import numpy as np
+        random.seed(args.seed)
+        np.random.seed(args.seed)
+        logger.info(f"🎲 Random seed set to: {args.seed}")
+    
+    # Configure logging based on arguments
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    elif args.quiet:
+        logging.getLogger().setLevel(logging.WARNING)
+    else:
+        logging.getLogger().setLevel(getattr(logging, args.log_level))
+    
+    if not args.quiet:
+        logger.info("🏥 Starting Comparative Hospital Simulation")
+        logger.info(f"🔄 Running systems: {', '.join(args.systems)}")
+        logger.info("=" * 80)
     
     try:
-        # Simulation configurations
-        simulations = [
-            {
-                'system': ManchesterTriageSystem,
-                'name': 'Manchester Triage System',
-                'output_dir': './output/simulation/manchester_triage_system'
-            },
-            {
-                'system': SingleLLMTriage,
-                'name': 'Single LLM Triage System',
-                'output_dir': './output/simulation/single_llm_system'
-            },
-            {
-                'system': MixtureLLMTriage,
-                'name': 'Multi-Agent LLM Triage System',
-                'output_dir': './output/simulation/multi_agent_llm_system'
-            }
-        ]
+        # Get system configurations based on arguments
+        simulations = get_system_configurations(args)
         
         results_summary = {}
         
-        # Run simulations for both systems
+        # Run simulations for selected systems
         for sim_config in simulations:
             try:
                 results = run_simulation(
                     triage_system=sim_config['system'],
                     system_name=sim_config['name'],
-                    output_dir=sim_config['output_dir']
+                    output_dir=sim_config['output_dir'],
+                    args=args
                 )
                 results_summary[sim_config['name']] = results
                 
             except Exception as e:
                 logger.error(f"❌ {sim_config['name']} simulation failed: {e}")
+                if args.verbose:
+                    import traceback
+                    logger.error(traceback.format_exc())
                 continue
         
+
+        
         # Generate comparative summary
-        logger.info("📊 COMPARATIVE SIMULATION SUMMARY")
-        logger.info("=" * 80)
-        
-        for system_name, results in results_summary.items():
-            logger.info(f"🔧 {system_name}:")
-            logger.info(f"   📊 Patients Processed: {results['total_patients']}")
-            logger.info(f"   ⏱️  Average Time: {results['avg_time']:.1f} minutes")
+        if not args.quiet and results_summary:
+            logger.info("📊 COMPARATIVE SIMULATION SUMMARY")
+            logger.info("=" * 80)
             
-            category_counts = Counter(results['categories'])
-            logger.info(f"   🏷️  Category Distribution:")
-            for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
-                count = category_counts.get(category, 0)
-                percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
-                logger.info(f"      {category}: {count} ({percentage:.1f}%)")
-            logger.info("")
+            for system_name, results in results_summary.items():
+                logger.info(f"🔧 {system_name}:")
+                logger.info(f"   📊 Patients Processed: {results['total_patients']}")
+                logger.info(f"   ⏱️  Average Time: {results['avg_time']:.1f} minutes")
+                
+                if not args.skip_plots:  # Only show detailed stats if plots aren't skipped
+                    category_counts = Counter(results['categories'])
+                    logger.info(f"   🏷️  Category Distribution:")
+                    for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
+                        count = category_counts.get(category, 0)
+                        percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
+                        logger.info(f"      {category}: {count} ({percentage:.1f}%)")
+                logger.info("")
+            
+            logger.info("✅ All simulations completed successfully!")
+            logger.info("📁 Results available in:")
+            for sim_config in simulations:
+                logger.info(f"   📂 {sim_config['output_dir']}/")
         
-        logger.info("✅ All simulations completed successfully!")
-        logger.info("📁 Results available in:")
-        logger.info("   📂 ./output/simulation/manchester_triage_system/")
-        logger.info("   📂 ./output/simulation/llm_based_system/")
+        # Print summary for quiet mode
+        elif args.quiet and results_summary:
+            total_patients = sum(r['total_patients'] for r in results_summary.values())
+            avg_time = sum(r['avg_time'] for r in results_summary.values()) / len(results_summary)
+            print(f"Completed: {len(results_summary)} systems, {total_patients} total patients, {avg_time:.1f}min avg time")
         
     except KeyboardInterrupt:
         logger.info("⏹️ Simulation interrupted by user")
