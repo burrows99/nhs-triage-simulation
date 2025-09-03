@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 
-def setup_logger(log_level=logging.INFO, log_to_file=True):
+def setup_logger(log_level=logging.DEBUG, log_to_file=True):
     """Setup centralized logger for the entire application.
     
     Args:

@@ -31,6 +31,7 @@ class OperationMetrics(BaseMetrics):
         super().__init__("OperationMetrics")
         
         self.last_snapshot_time = 0.0
+        self.snapshot_counter = 0  # Counter for unique snapshot IDs
         
         # Resource tracking
         self.resource_events: List[ResourceEvent] = []
@@ -103,7 +104,9 @@ class OperationMetrics(BaseMetrics):
         Returns:
             Created SystemSnapshot
         """
-        snapshot_id = f"snapshot_{timestamp}"
+        # Generate unique snapshot ID using timestamp and counter
+        self.snapshot_counter += 1
+        snapshot_id = f"snapshot_{timestamp}_{self.snapshot_counter}"
         
         snapshot = SystemSnapshot(
             snapshot_id=snapshot_id,

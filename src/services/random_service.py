@@ -229,36 +229,65 @@ class RandomService:
         min_time, max_time = complexity_times.get(complexity, complexity_times['standard'])
         return random.uniform(min_time, max_time)
     
-    def get_doctor_assessment_time(self, category: str) -> float:
-        """Get random doctor assessment time based on NHS evidence and triage priority.
+    # Removed get_doctor_assessment_time - now using MTS priority_score and fuzzy_score directly
+    
+    def get_resource_allocation_delay(self, resource_type: str) -> float:
+        """Get realistic minimum delay for resource allocation even when immediately available.
         
-        Based on NHS clinical practice data and emergency medicine research.
-        Assessment times vary by triage category reflecting clinical complexity
-        and urgency requirements.
-        
-        Official Sources:
-        - NHS England Emergency Care Data Set (ECDS): Assessment time standards
-        - Royal College of Emergency Medicine: Clinical assessment guidelines
-        - Emergency Medicine Journal: ED assessment time studies
-        - Clinical practice: Consultant assessment duration patterns
+        In real hospitals, even when resources are available, there are realistic delays for:
+        - Staff handover and briefing
+        - Equipment preparation
+        - Patient transfer and setup
+        - Documentation and communication
         
         Args:
-            category: Triage category (RED, ORANGE, YELLOW, GREEN, BLUE)
+            resource_type: Type of resource ('doctor', 'bed', 'nurse')
             
         Returns:
-            Assessment time in minutes based on NHS evidence
+            Minimum allocation delay in minutes
         """
-        # NHS evidence-based assessment time ranges by triage priority
-        assessment_ranges = {
-            TriageCategories.RED: (10, 25),      # Royal College of Emergency Medicine: Complex resuscitation 10-25 min
-            TriageCategories.ORANGE: (15, 35),   # NHS England ECDS: Very urgent detailed assessment 15-35 min
-            TriageCategories.YELLOW: (20, 45),   # Emergency Medicine Journal: Standard urgent assessment 20-45 min
-            TriageCategories.GREEN: (25, 50),    # Clinical practice guidelines: Routine assessment 25-50 min
-            TriageCategories.BLUE: (15, 30)      # NHS clinical standards: Minor conditions 15-30 min
+        allocation_delays = {
+            'doctor': (2, 8),      # Doctor handover, chart review, patient briefing: 2-8 minutes
+            'bed': (5, 15),        # Bed preparation, patient transfer, setup: 5-15 minutes
+            'nurse': (1, 4),       # Nurse handover, initial assessment setup: 1-4 minutes
+            'triage': (1, 3)       # Triage setup, initial patient contact: 1-3 minutes
         }
         
-        min_time, max_time = assessment_ranges.get(category, assessment_ranges[TriageCategories.YELLOW])
-        return random.uniform(min_time, max_time)
+        if resource_type not in allocation_delays:
+            return random.uniform(1, 3)  # Default minimum delay
+        
+        min_delay, max_delay = allocation_delays[resource_type]
+        return random.uniform(min_delay, max_delay)
+    
+    def get_handover_delay(self, resource_type: str, priority: int = 5) -> float:
+        """Get realistic handover delay based on patient priority and resource type.
+        
+        Higher priority patients get faster handovers but still have minimum realistic delays.
+        
+        Args:
+            resource_type: Type of resource ('doctor', 'bed', 'nurse')
+            priority: Patient priority (1=RED, 2=ORANGE, 3=YELLOW, 4=GREEN, 5=BLUE)
+            
+        Returns:
+            Handover delay in minutes
+        """
+        base_delay = self.get_resource_allocation_delay(resource_type)
+        
+        # Priority adjustment: higher priority = faster handover but still realistic minimum
+        priority_multipliers = {
+            1: 0.5,  # RED: Fastest handover but still 50% of base delay
+            2: 0.7,  # ORANGE: Quick handover
+            3: 0.9,  # YELLOW: Standard handover
+            4: 1.0,  # GREEN: Normal handover
+            5: 1.2   # BLUE: Can wait slightly longer
+        }
+        
+        multiplier = priority_multipliers.get(priority, 1.0)
+        adjusted_delay = base_delay * multiplier
+        
+        # Ensure minimum realistic delay even for highest priority
+        min_realistic_delay = 0.5 if priority == 1 else 1.0
+        return max(adjusted_delay, min_realistic_delay)
     
     def set_seed(self, seed: int) -> None:
         """Set random seed for reproducible results.

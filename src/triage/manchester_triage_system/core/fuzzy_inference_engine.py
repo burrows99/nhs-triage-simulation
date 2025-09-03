@@ -42,5 +42,11 @@ class FuzzyInferenceEngine:
                 self._simulation.input[input_names[i]] = value
         
         # Compute fuzzy inference result
-        self._simulation.compute()
-        return self._simulation.output['triage_category']
+        try:
+            self._simulation.compute()
+            return self._simulation.output['triage_category']
+        except Exception as e:
+            # If fuzzy computation fails, return a default score
+            # This ensures the simulation continues running
+            print(f"Fuzzy inference failed: {e}, using default score")
+            return 5.0  # Default to BLUE category (score 5)

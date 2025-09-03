@@ -288,7 +288,11 @@ class SimulationEngine:
                 resource_capacity[logical_name] = capacity_mapping.get(logical_name, 0)
                 queue_lengths[logical_name] = 0
         
-        # Debug logging for system snapshot
+        # Snapshot logging for monitoring
+        logger.info(f"📸 SNAPSHOT CAPTURED | Time: {self.env.now:.1f} | Context: {context}")
+        logger.info(f"   📊 Resource Usage: {resource_usage}")
+        logger.info(f"   🏥 Resource Capacity: {resource_capacity}")
+        logger.info(f"   📋 Queue Lengths: {queue_lengths}")
         logger.debug(f"📸 SYNC SNAPSHOT | Time: {self.env.now:.1f} | Context: {context} | "
                     f"Usage: {resource_usage} | Capacity: {resource_capacity} | Queues: {queue_lengths}")
         
@@ -301,6 +305,7 @@ class SimulationEngine:
             else:
                 utilization_debug[resource] = 0
         
+        logger.info(f"   📊 Resource Utilization: {utilization_debug}")
         logger.debug(f"📊 SYNC UTILIZATION | {context} | {utilization_debug}")
         
         # Use callback for domain-specific metrics recording
