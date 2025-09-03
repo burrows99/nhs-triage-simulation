@@ -685,8 +685,6 @@ class SimpleHospital:
              'nhs_metrics': nhs_metrics
          }
     
-
-    
     def _capture_monitoring_snapshot(self, context: str = ""):
         """Capture a monitoring snapshot at the current simulation time.
         
