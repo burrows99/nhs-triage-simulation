@@ -43,11 +43,11 @@ def main():
             csv_folder='./output/csv',
             triage_system=manchester_triage,  # Using LLM triage system instead of MTS
             sim_duration=480,    # 8 hours
-            arrival_rate=40,     # 40 patients/hour (realistic rate)
+            arrival_rate=50,     # 50 patients/hour (higher demand)
             delay_scaling=0.2,  # 1 real second = 0.2 simulation minutes
-            nurses=3,            # Increased to 3 for realistic triage capacity
-            doctors=4,           # Increased to 4 for better doctor utilization
-            beds=8,              # Increased to 8 for realistic bed capacity
+            nurses=3,            # Triage capacity
+            doctors=2,           # Reduced to 2 for realistic doctor queuing
+            beds=4,              # Reduced to 4 for realistic bed queuing
             log_level=logging.INFO  # Enable detailed logging
         )
         

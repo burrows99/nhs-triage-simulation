@@ -167,7 +167,7 @@ class RandomService:
         Returns:
             Admission processing time in minutes (45-90 minutes)
         """
-        return random.uniform(45, 90)  # King's Fund & NHS England: Clinical practice 45-90 minutes
+        return random.uniform(90, 180)  # Extended for realistic bed queuing scenarios
     
     def get_discharge_processing_time(self) -> float:
         """Get random discharge processing time based on NHS workflow.
@@ -183,7 +183,7 @@ class RandomService:
         Returns:
             Discharge processing time in minutes (20-45 minutes)
         """
-        return random.uniform(20, 45)  # NHS England & Clinical practice: Discharge documentation 20-45 minutes
+        return random.uniform(60, 120)  # Extended for realistic bed turnover scenarios
     
     def determine_patient_disposition(self, triage_input) -> tuple[str, bool, float]:
         """Determine patient disposition (admission or discharge) with processing time.

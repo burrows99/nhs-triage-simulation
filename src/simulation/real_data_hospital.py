@@ -685,13 +685,13 @@ class SimpleHospital:
         priority = triage_result.priority_score
         fuzzy_score = triage_result.fuzzy_score if triage_result.fuzzy_score is not None else 5.0
         
-        # Base assessment times by priority
+        # Base assessment times by priority (increased for realistic queuing)
         time_ranges = {
-            1: (10, 25),  # RED - Critical
-            2: (15, 35),  # ORANGE - Very urgent
-            3: (20, 45),  # YELLOW - Urgent
-            4: (25, 50),  # GREEN - Standard
-            5: (15, 30)   # BLUE - Non-urgent
+            1: (20, 40),  # RED - Critical
+            2: (30, 60),  # ORANGE - Very urgent
+            3: (40, 80),  # YELLOW - Urgent
+            4: (50, 90),  # GREEN - Standard
+            5: (30, 60)   # BLUE - Non-urgent
         }
         
         min_time, max_time = time_ranges.get(priority, (20, 40))

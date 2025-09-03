@@ -127,7 +127,7 @@ class TriageResult:
         
         return cls(
             triage_category=mts_result['triage_category'],
-            priority_score=mts_result['priority_score'],
+            priority_score=int(mts_result['priority_score']),
             wait_time=mts_result['wait_time'],
             confidence=1.0,  # MTS is deterministic
             reasoning=mts_reasoning,
@@ -151,10 +151,10 @@ class TriageResult:
         """
         return cls(
             triage_category=llm_result['triage_category'],
-            priority_score=llm_result['priority_score'],
-            wait_time=llm_result.get('wait_time', f"{llm_result['priority_score'] * 60} min"),
-            confidence=llm_result.get('confidence', 0.8),
-            reasoning=llm_result.get('reasoning', 'LLM triage assessment'),
+            priority_score=int(llm_result['priority_score']),
+            wait_time=llm_result['wait_time'],
+            confidence=float(llm_result['confidence']),
+            reasoning=llm_result['reasoning'],
             system_type="LLM",
             raw_output=llm_result
         )
