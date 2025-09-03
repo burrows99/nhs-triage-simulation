@@ -76,23 +76,30 @@ class LLMTriageSystem:
             ValueError: If API call fails
             RuntimeError: If client is not initialized
         """
-        logger.info(f"🩺 Triaging patient: {symptoms[:80]}{'...' if len(symptoms) > 80 else ''}")
+        logger.info(f"🩺 Starting LLM Triage Assessment")
+        logger.info(f"📋 Patient Symptoms: {symptoms[:80]}{'...' if len(symptoms) > 80 else ''}")
         
         if not symptoms or not symptoms.strip():
             logger.error("❌ Empty symptoms provided")
             raise ValueError("Empty symptoms provided to LLM triage system")
         
         try:
+            logger.info(f"🔍 Step 1: Gathering Operational Context")
             operational_context = ""
             if self.operation_metrics and self.nhs_metrics:
                 current_time = 0.0
                 if self.operation_metrics.system_snapshots:
                     current_time = self.operation_metrics.system_snapshots[-1].timestamp
                 operational_context = self._generate_operational_context(current_time)
-                logger.debug(f"📊 Added operational context ({len(operational_context)} chars)")
+                logger.info(f"📊 Operational context included: {len(operational_context)} chars")
+            else:
+                logger.info(f"📊 No operational context available")
             
+            logger.info(f"🔍 Step 2: Building Clinical Prompt")
             prompt = get_full_triage_prompt(symptoms, operational_context)
-            logger.debug(f"🔍 API Request: {self.model_name} ({len(prompt)} chars)")
+            logger.info(f"📝 Prompt generated: {len(prompt)} chars for model {self.model_name}")
+            
+            logger.info(f"🔍 Step 3: Querying AI Model for Triage Decision")
             
             try:
                 completion = self.client.chat.completions.create(
@@ -102,38 +109,49 @@ class LLMTriageSystem:
                 )
                 
                 response_content = completion.choices[0].message.content
-                logger.debug(f"📨 API Response: {len(response_content)} chars")
+                logger.info(f"✅ AI Response received: {len(response_content)} chars")
                 
             except Exception as api_call_error:
-                logger.error(f"❌ API call failed: {api_call_error}")
+                logger.error(f"❌ Step 3 Failed: API call error - {api_call_error}")
                 raise RuntimeError(f"HF API call failed: {api_call_error}") from api_call_error
             
+            logger.info(f"🔍 Step 4: Parsing AI Decision")
             try:
                 triage_data = json.loads(response_content)
-                logger.debug(f"📋 Parsed: {json.dumps(triage_data, separators=(',', ':'))}")
+                logger.info(f"📋 AI Decision parsed successfully")
+                logger.info(f"🎯 Raw Decision: {json.dumps(triage_data, separators=(',', ':'))}")
             except json.JSONDecodeError as json_error:
-                logger.error(f"❌ Invalid JSON response: {response_content[:200]}...")
+                logger.error(f"❌ Step 4 Failed: Invalid JSON response - {response_content[:200]}...")
                 raise ValueError(f"Invalid JSON response: {json_error}") from json_error
             
+            logger.info(f"🔍 Step 5: Validating AI Decision")
             required_fields = ["triage_category", "priority_score", "confidence", "reasoning", "wait_time"]
             missing_fields = [field for field in required_fields if field not in triage_data]
             if missing_fields:
-                logger.error(f"❌ Missing fields: {missing_fields}")
+                logger.error(f"❌ Step 5 Failed: Missing required fields - {missing_fields}")
                 raise ValueError(f"Missing required fields: {missing_fields}")
+            logger.info(f"✅ All required fields present")
             
             valid_categories = get_triage_categories()
             if triage_data["triage_category"] not in valid_categories:
-                logger.error(f"❌ Invalid category: {triage_data['triage_category']}")
+                logger.error(f"❌ Step 5 Failed: Invalid triage category - {triage_data['triage_category']}")
                 raise ValueError(f"Invalid triage category: {triage_data['triage_category']}")
+            logger.info(f"✅ Triage category '{triage_data['triage_category']}' is valid")
             
             try:
                 triage_data["priority_score"] = int(triage_data["priority_score"])
                 triage_data["confidence"] = float(triage_data["confidence"])
+                logger.info(f"✅ Data types validated and converted")
             except (ValueError, TypeError) as type_error:
-                logger.error(f"❌ Invalid data types: {type_error}")
+                logger.error(f"❌ Step 5 Failed: Invalid data types - {type_error}")
                 raise ValueError(f"Invalid data types: {type_error}") from type_error
             
-            logger.info(f"✅ {triage_data['triage_category']} (P{triage_data['priority_score']}) - {triage_data['confidence']:.0%} confidence")
+            logger.info(f"🔍 Step 6: Final Triage Decision")
+            logger.info(f"🏥 TRIAGE RESULT: {triage_data['triage_category']} (Priority {triage_data['priority_score']})")
+            logger.info(f"📊 Confidence: {triage_data['confidence']:.1%}")
+            logger.info(f"⏰ Wait Time: {triage_data['wait_time']}")
+            logger.info(f"💭 Clinical Reasoning: {triage_data['reasoning'][:100]}{'...' if len(triage_data['reasoning']) > 100 else ''}")
+            logger.info(f"✅ LLM Triage Assessment Complete")
                 
         except Exception as api_error:
             logger.error(f"❌ Triage failed: {api_error}")

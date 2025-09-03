@@ -80,30 +80,54 @@ class TriageProcessor:
         Returns:
             Complete triage result with category, wait time, etc.
         """
+        from src.logger import logger
         
-        # Validate inputs
+        logger.info(f"🏥 Starting Manchester Triage System Assessment")
+        logger.info(f"📋 Flowchart: {flowchart_reason}")
+        logger.info(f"📝 Symptoms Input: {symptoms_input}")
+        
+        # Step 1: Validate inputs
+        logger.info(f"🔍 Step 1: Validating Input Parameters")
         validation = TriageValidator.validate_inputs(flowchart_reason, symptoms_input)
         if not validation['valid']:
+            logger.error(f"❌ Step 1 Failed: Input validation errors - {validation['errors']}")
             raise ValueError(f"Invalid inputs: {validation['errors']}")
+        logger.info(f"✅ Input validation passed")
         
-        # Lookup flowchart
+        # Step 2: Lookup flowchart
+        logger.info(f"🔍 Step 2: Loading Flowchart Configuration")
         flowchart_config = self._flowchart_manager.get_flowchart(flowchart_reason)
         if flowchart_config is None:
-            # Default to chest_pain as per original implementation
+            logger.info(f"⚠️ Flowchart '{flowchart_reason}' not found, defaulting to 'chest_pain'")
             flowchart_config = self._flowchart_manager.get_flowchart('chest_pain')
+            flowchart_reason = 'chest_pain'
+        logger.info(f"✅ Flowchart '{flowchart_reason}' loaded successfully")
         
-        # Process symptoms
+        # Step 3: Process symptoms
+        logger.info(f"🔍 Step 3: Processing Symptoms with Fuzzy Logic")
         symptom_data = self._symptom_processor.process_symptoms(flowchart_config, symptoms_input)
+        logger.info(f"📊 Processed {len(symptom_data.get('symptoms_processed', {}))} symptoms")
+        logger.info(f"📈 Fuzzy values: {symptom_data.get('padded_values', [])}")
         
-        # Perform fuzzy inference
+        # Step 4: Perform fuzzy inference
+        logger.info(f"🔍 Step 4: Executing Fuzzy Inference Engine")
         fuzzy_score = self._inference_engine.perform_inference(symptom_data['padded_values'])
+        logger.info(f"🎯 Fuzzy inference score: {fuzzy_score:.3f}")
         
-        # Build result
+        # Step 5: Build result
+        logger.info(f"🔍 Step 5: Building Triage Result")
         result = self._result_builder.build_result(flowchart_reason, fuzzy_score, symptom_data)
+        logger.info(f"🏥 TRIAGE RESULT: {result.get('triage_category', 'Unknown')} (Priority {result.get('priority_score', 'Unknown')})")
+        logger.info(f"⏰ Wait Time: {result.get('wait_time', 'Unknown')}")
+        logger.info(f"📊 Fuzzy Score: {result.get('fuzzy_score', 'Unknown')}")
         
-        # Validate result
+        # Step 6: Validate result
+        logger.info(f"🔍 Step 6: Validating Final Result")
         result_validation = TriageValidator.validate_result(result)
         if not result_validation['valid']:
+            logger.error(f"❌ Step 6 Failed: Result validation errors - {result_validation['errors']}")
             raise RuntimeError(f"Invalid result generated: {result_validation['errors']}")
+        logger.info(f"✅ Result validation passed")
+        logger.info(f"✅ Manchester Triage System Assessment Complete")
         
         return result
