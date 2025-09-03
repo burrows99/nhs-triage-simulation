@@ -103,7 +103,7 @@ class SingleLLMTriage(BaseLLMTriageSystem):
             logger.error(f"❌ Step 3 Failed: API call error - {api_call_error}")
             raise RuntimeError(f"HF API call failed: {api_call_error}") from api_call_error
         
-        # Parse JSON response
+        # Parse JSON response with error recovery
         try:
             triage_data = json.loads(response_content)
             logger.info(f"📋 AI Decision parsed successfully")
@@ -111,5 +111,61 @@ class SingleLLMTriage(BaseLLMTriageSystem):
             return triage_data
             
         except json.JSONDecodeError as json_error:
-            logger.error(f"❌ Step 4 Failed: Invalid JSON response - {response_content[:200]}...")
-            raise ValueError(f"Invalid JSON response: {json_error}") from json_error
+            logger.warning(f"⚠️  Initial JSON parsing failed: {json_error}")
+            logger.info(f"🔧 Attempting JSON repair...")
+            
+            # Attempt to repair common JSON issues
+            try:
+                repaired_json = self._repair_json_response(response_content)
+                triage_data = json.loads(repaired_json)
+                logger.info(f"✅ JSON repaired and parsed successfully")
+                logger.info(f"🎯 Raw Decision: {json.dumps(triage_data, separators=(',', ':'))}")
+                return triage_data
+                
+            except (json.JSONDecodeError, Exception) as repair_error:
+                logger.error(f"❌ Step 4 Failed: Invalid JSON response - {response_content[:200]}...")
+                logger.error(f"❌ JSON repair also failed: {repair_error}")
+                raise ValueError(f"Invalid JSON response: {json_error}") from json_error
+    
+    def _repair_json_response(self, json_str: str) -> str:
+        """Attempt to repair common JSON formatting issues in API responses.
+        
+        Args:
+            json_str: The malformed JSON string
+            
+        Returns:
+            Repaired JSON string
+        """
+        import re
+        
+        # Remove any leading/trailing whitespace and non-JSON content
+        json_str = json_str.strip()
+        
+        # Find JSON object boundaries
+        start_idx = json_str.find('{')
+        end_idx = json_str.rfind('}') + 1
+        
+        if start_idx == -1 or end_idx == 0:
+            raise ValueError("No JSON object found in response")
+        
+        json_str = json_str[start_idx:end_idx]
+        
+        # Fix common issues:
+        # 1. Missing comma after number before string (e.g., "confidence": 0. "reasoning")
+        json_str = re.sub(r'(\d+\.?)\s+("\w+"\s*:)', r'\1, \2', json_str)
+        
+        # 2. Missing comma after closing quote before opening quote
+        json_str = re.sub(r'(")\s+("\w+"\s*:)', r'\1, \2', json_str)
+        
+        # 3. Missing colon after field name
+        json_str = re.sub(r'("\w+")\s+("[^"]*"|\d+|true|false|null)', r'\1: \2', json_str)
+        
+        # 4. Fix trailing commas before closing braces
+        json_str = re.sub(r',\s*}', '}', json_str)
+        json_str = re.sub(r',\s*]', ']', json_str)
+        
+        # 5. Ensure proper spacing around colons and commas
+        json_str = re.sub(r'"\s*:\s*', '": ', json_str)
+        json_str = re.sub(r',\s*"', ', "', json_str)
+        
+        return json_str

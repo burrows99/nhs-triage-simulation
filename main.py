@@ -260,6 +260,39 @@ def run_simulation(triage_system, system_name: str, output_dir: str, args: argpa
     return results
 
 
+def generate_comparison_report(results_summary: dict, simulations: list, args: argparse.Namespace):
+    """Generate comprehensive comparison report with logging and markdown output
+    
+    Args:
+        results_summary: Dictionary of simulation results by system name
+        simulations: List of simulation configurations
+        args: Command line arguments
+    """
+    from src.services.report_utils import ReportUtils
+    
+    # Check if report should be generated
+    if not ReportUtils.should_generate_report(results_summary, args.quiet):
+        return
+    
+    # Load detailed NHS metrics for comparison
+    detailed_metrics = ReportUtils.load_detailed_metrics(simulations, results_summary)
+    
+    # Generate systematic logging
+    ReportUtils.generate_systematic_logging(results_summary, detailed_metrics)
+    
+    # Generate and save markdown report
+    report_content = ReportUtils.generate_complete_markdown_report(results_summary, detailed_metrics, args)
+    report_path = os.path.join(args.output_dir if hasattr(args, 'output_dir') else './output/simulation', 'comparison_report.md')
+    
+    saved_path = ReportUtils.save_markdown_report(report_content, report_path)
+    
+    logger.info(f"\n📄 Markdown comparison report saved to: {saved_path}")
+    logger.info("=" * 80)
+
+
+
+
+
 def main():
     """Main function to run comparative hospital simulations"""
     # Parse command line arguments
@@ -312,29 +345,35 @@ def main():
         
 
         
-        # Generate comparative summary
-        if not args.quiet and results_summary:
-            logger.info("📊 COMPARATIVE SIMULATION SUMMARY")
-            logger.info("=" * 80)
+        # Generate comparative summary and markdown report
+        if results_summary:
+            generate_comparison_report(results_summary, simulations, args)
             
-            for system_name, results in results_summary.items():
-                logger.info(f"🔧 {system_name}:")
-                logger.info(f"   📊 Patients Processed: {results['total_patients']}")
-                logger.info(f"   ⏱️  Average Time: {results['avg_time']:.1f} minutes")
+            if not args.quiet:
+                logger.info("📊 COMPARATIVE SIMULATION SUMMARY")
+                logger.info("=" * 80)
                 
-                if not args.skip_plots:  # Only show detailed stats if plots aren't skipped
-                    category_counts = Counter(results['categories'])
-                    logger.info(f"   🏷️  Category Distribution:")
-                    for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
-                        count = category_counts.get(category, 0)
-                        percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
-                        logger.info(f"      {category}: {count} ({percentage:.1f}%)")
-                logger.info("")
-            
-            logger.info("✅ All simulations completed successfully!")
-            logger.info("📁 Results available in:")
-            for sim_config in simulations:
-                logger.info(f"   📂 {sim_config['output_dir']}/")
+                for system_name, results in results_summary.items():
+                    logger.info(f"🔧 {system_name}:")
+                    logger.info(f"   📊 Patients Processed: {results['total_patients']}")
+                    logger.info(f"   ⏱️  Average Time: {results['avg_time']:.1f} minutes")
+                    
+                    if not args.skip_plots:  # Only show detailed stats if plots aren't skipped
+                        category_counts = Counter(results['categories'])
+                        logger.info(f"   🏷️  Category Distribution:")
+                        for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
+                            count = category_counts.get(category, 0)
+                            percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
+                            logger.info(f"      {category}: {count} ({percentage:.1f}%)")
+                    logger.info("")
+                
+                logger.info("✅ All simulations completed successfully!")
+                logger.info("📁 Results available in:")
+                for sim_config in simulations:
+                    logger.info(f"   📂 {sim_config['output_dir']}/")
+                
+                if len(results_summary) > 1:
+                    logger.info(f"📊 Comparison report generated: ./output/simulation/comparison_report.md")
         
         # Print summary for quiet mode
         elif args.quiet and results_summary:

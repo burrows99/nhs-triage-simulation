@@ -248,13 +248,33 @@ class OperationMetrics(BaseMetrics):
                     queue_lengths.append(snapshot.queue_lengths[resource])
             
             if queue_lengths:
-                queue_metrics[resource] = {
-                    'average_queue_length': float(np.mean(queue_lengths)),
-                    'peak_queue_length': int(np.max(queue_lengths)),
-                    'min_queue_length': int(np.min(queue_lengths)),
-                    'queue_length_std_dev': float(np.std(queue_lengths)),
-                    'time_with_queue': float(sum(1 for q in queue_lengths if q > 0) / len(queue_lengths) * 100)
-                }
+                # Filter out any NaN or invalid values
+                valid_queue_lengths = [q for q in queue_lengths if not (pd.isna(q) or np.isnan(q) if isinstance(q, (int, float)) else False)]
+                
+                if valid_queue_lengths:
+                    # Calculate metrics with valid data only
+                    mean_val = np.mean(valid_queue_lengths)
+                    max_val = np.max(valid_queue_lengths)
+                    min_val = np.min(valid_queue_lengths)
+                    std_val = np.std(valid_queue_lengths)
+                    
+                    # Ensure all values are valid before conversion
+                    queue_metrics[resource] = {
+                        'average_queue_length': float(mean_val) if not np.isnan(mean_val) else 0.0,
+                        'peak_queue_length': int(max_val) if not np.isnan(max_val) else 0,
+                        'min_queue_length': int(min_val) if not np.isnan(min_val) else 0,
+                        'queue_length_std_dev': float(std_val) if not np.isnan(std_val) else 0.0,
+                        'time_with_queue': float(sum(1 for q in valid_queue_lengths if q > 0) / len(valid_queue_lengths) * 100) if valid_queue_lengths else 0.0
+                    }
+                else:
+                    # No valid data - provide default values
+                    queue_metrics[resource] = {
+                        'average_queue_length': 0.0,
+                        'peak_queue_length': 0,
+                        'min_queue_length': 0,
+                        'queue_length_std_dev': 0.0,
+                        'time_with_queue': 0.0
+                    }
         
         return queue_metrics
     
@@ -331,7 +351,12 @@ class OperationMetrics(BaseMetrics):
             # Calculate average utilization across all resources
             utilizations = [snapshot.get_utilization(resource) for resource in snapshot.resource_usage]
             if utilizations:
-                total_utilizations.append(np.mean(utilizations))
+                # Filter out any NaN values before calculating mean
+                valid_utilizations = [u for u in utilizations if not np.isnan(u)]
+                if valid_utilizations:
+                    mean_util = np.mean(valid_utilizations)
+                    if not np.isnan(mean_util):
+                        total_utilizations.append(mean_util)
         
         system_metrics = {
             'simulation_duration_minutes': self.end_time - self.start_time if self.end_time and self.start_time else 0,

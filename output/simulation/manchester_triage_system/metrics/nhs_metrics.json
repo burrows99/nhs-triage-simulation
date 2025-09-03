@@ -1,70 +1,70 @@
 {
-  "total_attendances": 40,
-  "active_patients_in_system": 85,
+  "total_attendances": 39,
+  "active_patients_in_system": 97,
   "1_left_before_being_seen_rate_pct": 0.0,
-  "2_reattendance_rate_pct": 235.0,
+  "2_reattendance_rate_pct": 176.9230769230769,
   "3_time_to_initial_assessment_avg_minutes": 0.0,
   "4_time_to_treatment_avg_minutes": 0.0,
-  "5_total_time_in_ae_avg_minutes": 37.481357358653405,
+  "5_total_time_in_ae_avg_minutes": -29.69315667669404,
   "4hour_standard_compliance_pct": 100.0,
-  "attendances_within_4hours": 40,
+  "attendances_within_4hours": 39,
   "attendances_over_4hours": 0,
   "95pct_target_achieved": true,
   "76pct_interim_target_achieved": true,
-  "median_total_time_minutes": 33.56961180735209,
-  "95th_percentile_time_minutes": 160.24950970076614,
-  "admission_rate_pct": 10.0,
+  "median_total_time_minutes": -27.58124247057765,
+  "95th_percentile_time_minutes": 87.95789334278396,
+  "admission_rate_pct": 10.256410256410255,
   "triage_category_distribution": {
     "RED": 1,
-    "ORANGE": 2,
-    "YELLOW": 15,
-    "GREEN": 13,
-    "BLUE": 9
+    "ORANGE": 4,
+    "YELLOW": 14,
+    "GREEN": 15,
+    "BLUE": 5
   },
   "age_group_analysis": {
     "0-17": {
-      "count": 40,
-      "avg_time_minutes": 37.481357358653405,
+      "count": 39,
+      "avg_time_minutes": -29.69315667669404,
       "4hour_compliance_pct": 100.0,
-      "admission_rate_pct": 10.0
+      "admission_rate_pct": 10.256410256410255
     }
   },
   "gender_analysis": {
     "": {
-      "count": 40,
-      "avg_time_minutes": 37.481357358653405,
+      "count": 39,
+      "avg_time_minutes": -29.69315667669404,
       "4hour_compliance_pct": 100.0,
-      "admission_rate_pct": 10.0
+      "admission_rate_pct": 10.256410256410255
     }
   },
   "time_distribution_analysis": {
-    "min_time_minutes": -129.39957627383114,
-    "max_time_minutes": 172.2120282006316,
-    "std_dev_minutes": 87.11809164880052,
+    "min_time_minutes": -195.59856708484313,
+    "max_time_minutes": 118.8973017871619,
+    "std_dev_minutes": 79.88226359070136,
     "quartiles": {
-      "25th_percentile": -13.385559020849229,
-      "50th_percentile": 33.56961180735209,
-      "75th_percentile": 103.05261469506871
+      "25th_percentile": -84.97193996016478,
+      "50th_percentile": -27.58124247057765,
+      "75th_percentile": 29.55174228548566
     },
     "distribution_bins": {
-      "0-60min": 22,
-      "60-120min": 10,
-      "120-240min": 8,
+      "0-60min": 35,
+      "60-120min": 4,
+      "120-240min": 0,
       "240-360min": 0,
       "360+min": 0
     }
   },
   "service_name": "NHSMetrics",
-  "total_records": 40,
-  "active_records": 85,
-  "total_duration_minutes": 709.6237503016424,
+  "total_records": 39,
+  "active_records": 97,
+  "total_duration_minutes": 690.8426646704706,
   "start_time": 0.0,
-  "end_time": 709.6237503016424,
+  "end_time": 690.8426646704706,
   "counters": {
     "lwbs_count": 0,
-    "reattendance_count": 94,
+    "reattendance_count": 69,
     "admissions_count": 4,
-    "total_records": 207,
-    "completed_records": 40
+    "total_records": 182,
+    "completed_records": 39
   }
 }

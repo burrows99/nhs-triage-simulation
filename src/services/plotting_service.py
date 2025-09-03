@@ -252,7 +252,7 @@ class PlottingService:
         ax1.set_ylabel('Queue Length')
         ax1.grid(True, alpha=0.3)
         
-        # Peak queue lengths (convert strings to numbers)
+        # Peak queue lengths (convert strings to numbers and handle NaN)
         peak_queues = []
         for r in resources:
             peak_val = queue_data[r].get('peak_queue_length', 0)
@@ -262,6 +262,9 @@ class PlottingService:
                     peak_val = float(peak_val)
                 except (ValueError, TypeError):
                     peak_val = 0
+            # Handle NaN values
+            if pd.isna(peak_val) or np.isnan(peak_val) if isinstance(peak_val, (int, float)) else False:
+                peak_val = 0
             peak_queues.append(peak_val)
         ax2.bar(resources, peak_queues, color=self.colors['warning'], alpha=0.8)
         ax2.set_title('Peak Queue Length')
