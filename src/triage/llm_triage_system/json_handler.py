@@ -64,12 +64,12 @@ class TriageJSONHandler:
         },
         'reasoning': {
             'type': str,
-            'max_length': 2000,  # Increased for multi-agent detailed reasoning
+            'max_length': 3000,  # Further increased for comprehensive multi-agent reasoning
             'required': True
         },
         'wait_time': {
             'type': str,
-            'max_length': 200,  # Increased for detailed wait time descriptions
+            'max_length': 500,  # Further increased for detailed operational wait time descriptions
             'required': True
         }
     }

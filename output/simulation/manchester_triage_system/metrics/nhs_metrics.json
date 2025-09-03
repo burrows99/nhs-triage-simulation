@@ -1,5 +1,70 @@
 {
-  "error": "No completed patients to analyze",
-  "total_attendances": 57,
-  "active_patients": 57
+  "total_attendances": 43,
+  "active_patients_in_system": 156,
+  "1_left_before_being_seen_rate_pct": 0.0,
+  "2_reattendance_rate_pct": 0.0,
+  "3_time_to_initial_assessment_avg_minutes": 92.59868263610315,
+  "4_time_to_treatment_avg_minutes": 160.18477419455115,
+  "5_total_time_in_ae_avg_minutes": 441.95587338227364,
+  "4hour_standard_compliance_pct": 0.0,
+  "attendances_within_4hours": 0,
+  "attendances_over_4hours": 43,
+  "95pct_target_achieved": false,
+  "76pct_interim_target_achieved": false,
+  "median_total_time_minutes": 436.80359872450447,
+  "95th_percentile_time_minutes": 579.1412934276808,
+  "admission_rate_pct": 6.976744186046512,
+  "triage_category_distribution": {
+    "RED": 0,
+    "ORANGE": 1,
+    "YELLOW": 22,
+    "GREEN": 14,
+    "BLUE": 6
+  },
+  "age_group_analysis": {
+    "0-17": {
+      "count": 43,
+      "avg_time_minutes": 441.95587338227364,
+      "4hour_compliance_pct": 0.0,
+      "admission_rate_pct": 6.976744186046512
+    }
+  },
+  "gender_analysis": {
+    "": {
+      "count": 43,
+      "avg_time_minutes": 441.95587338227364,
+      "4hour_compliance_pct": 0.0,
+      "admission_rate_pct": 6.976744186046512
+    }
+  },
+  "time_distribution_analysis": {
+    "min_time_minutes": 292.76747853363037,
+    "max_time_minutes": 639.327646191544,
+    "std_dev_minutes": 91.91794456158057,
+    "quartiles": {
+      "25th_percentile": 377.1646740737499,
+      "50th_percentile": 436.80359872450447,
+      "75th_percentile": 519.4204500218616
+    },
+    "distribution_bins": {
+      "0-60min": 0,
+      "60-120min": 0,
+      "120-240min": 0,
+      "240-360min": 9,
+      "360+min": 34
+    }
+  },
+  "service_name": "NHSMetrics",
+  "total_records": 43,
+  "active_records": 156,
+  "total_duration_minutes": 703.5299229341346,
+  "start_time": 0.0,
+  "end_time": 703.5299229341346,
+  "counters": {
+    "lwbs_count": 0,
+    "reattendance_count": 0,
+    "admissions_count": 3,
+    "total_records": 199,
+    "completed_records": 43
+  }
 }

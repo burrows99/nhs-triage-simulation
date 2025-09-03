@@ -348,14 +348,23 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             
             Patient Symptoms: {state['symptoms']}
             
-            Provide your analysis in JSON format with:
-            - severity_assessment: Overall severity (low/moderate/high/critical)
-            - primary_symptoms: List of main symptoms
-            - red_flags: Any concerning symptoms requiring immediate attention
-            - differential_diagnosis: Possible conditions to consider
-            - urgency_indicators: Factors suggesting urgency level
+            CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no additional text.
             
-            Respond only with valid JSON.
+            Required JSON format (copy exactly, replacing values):
+            {{
+              "severity_assessment": "high",
+              "primary_symptoms": ["symptom1", "symptom2"],
+              "red_flags": ["flag1", "flag2"],
+              "differential_diagnosis": ["condition1", "condition2"],
+              "urgency_indicators": ["indicator1", "indicator2"]
+            }}
+            
+            Rules:
+            - severity_assessment: Must be exactly one of: low, moderate, high, critical
+            - All arrays must contain strings
+            - Use proper JSON syntax with double quotes
+            
+            Respond with JSON only - no other text.
             """
             
             completion = self.client.chat.completions.create(
@@ -394,14 +403,23 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             Patient Symptoms: {state['symptoms']}
             Patient History: {state['patient_history']}
             
-            Provide your evaluation in JSON format with:
-            - risk_factors: List of identified risk factors
-            - comorbidities: Potential comorbid conditions
-            - medication_interactions: Possible medication concerns
-            - historical_patterns: Relevant patterns from history
-            - risk_stratification: Overall risk level (low/moderate/high)
+            CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no additional text.
             
-            Respond only with valid JSON.
+            Required JSON format (copy exactly, replacing values):
+            {{
+              "risk_factors": ["factor1", "factor2"],
+              "comorbidities": ["condition1", "condition2"],
+              "medication_interactions": ["interaction1", "interaction2"],
+              "historical_patterns": ["pattern1", "pattern2"],
+              "risk_stratification": "moderate"
+            }}
+            
+            Rules:
+            - risk_stratification: Must be exactly one of: low, moderate, high, unknown
+            - All arrays must contain strings
+            - Use proper JSON syntax with double quotes
+            
+            Respond with JSON only - no other text.
             """
             
             completion = self.client.chat.completions.create(
@@ -440,14 +458,24 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             Patient Symptoms: {state['symptoms']}
             Symptom Analysis: {state.get('symptom_analysis', {})}
             
-            Provide your guidelines assessment in JSON format with:
-            - nhs_category_recommendation: Recommended NHS triage category (RED/ORANGE/YELLOW/GREEN/BLUE)
-            - protocol_compliance: Whether case follows standard protocols
-            - guideline_references: Relevant NHS guidelines applied
-            - special_considerations: Any special protocol considerations
-            - escalation_criteria: Criteria that would require escalation
+            CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no additional text.
             
-            Respond only with valid JSON.
+            Required JSON format (copy exactly, replacing values):
+            {{
+              "nhs_category_recommendation": "ORANGE",
+              "protocol_compliance": true,
+              "guideline_references": ["guideline1", "guideline2"],
+              "special_considerations": ["consideration1", "consideration2"],
+              "escalation_criteria": ["criteria1", "criteria2"]
+            }}
+            
+            Rules:
+            - nhs_category_recommendation: Must be exactly one of: RED, ORANGE, YELLOW, GREEN, BLUE
+            - protocol_compliance: Must be boolean true or false
+            - All arrays must contain strings
+            - Use proper JSON syntax with double quotes
+            
+            Respond with JSON only - no other text.
             """
             
             completion = self.client.chat.completions.create(
@@ -486,14 +514,24 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             Operational Context: {state['operational_context']}
             Patient Symptoms: {state['symptoms']}
             
-            Provide your operations analysis in JSON format with:
-            - capacity_status: Current hospital capacity status
-            - resource_availability: Available resources for this case
-            - wait_time_impact: How current conditions affect wait times
-            - throughput_considerations: Patient flow considerations
-            - operational_recommendations: Recommendations based on current load
+            CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no additional text.
             
-            Respond only with valid JSON.
+            Required JSON format (copy exactly, replacing values):
+            {{
+              "capacity_status": "moderate",
+              "resource_availability": ["resource1", "resource2"],
+              "wait_time_impact": "minimal",
+              "throughput_considerations": ["consideration1", "consideration2"],
+              "operational_recommendations": ["recommendation1", "recommendation2"]
+            }}
+            
+            Rules:
+            - capacity_status: Must be one of: low, moderate, high, critical
+            - wait_time_impact: Must be one of: minimal, moderate, significant, severe
+            - All arrays must contain strings
+            - Use proper JSON syntax with double quotes
+            
+            Respond with JSON only - no other text.
             """
             
             completion = self.client.chat.completions.create(
@@ -543,14 +581,23 @@ class MixtureLLMTriage(BaseLLMTriageSystem):
             Recent Trends: {recent_trends}
             Operational Context: {state['operational_context']}
             
-            Provide your trends analysis in JSON format with:
-            - pattern_recognition: Identified patterns relevant to this case
-            - seasonal_factors: Any seasonal or temporal considerations
-            - population_trends: Relevant population health trends
-            - outcome_predictions: Predicted outcomes based on trends
-            - trend_based_recommendations: Recommendations based on trend analysis
+            CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no additional text.
             
-            Respond only with valid JSON.
+            Required JSON format (copy exactly, replacing values):
+            {{
+              "pattern_recognition": ["pattern1", "pattern2"],
+              "seasonal_factors": ["factor1", "factor2"],
+              "population_trends": ["trend1", "trend2"],
+              "outcome_predictions": ["prediction1", "prediction2"],
+              "trend_based_recommendations": ["recommendation1", "recommendation2"]
+            }}
+            
+            Rules:
+            - All fields must be arrays containing strings
+            - Use proper JSON syntax with double quotes
+            - If no data available, use empty arrays []
+            
+            Respond with JSON only - no other text.
             """
             
             completion = self.client.chat.completions.create(
