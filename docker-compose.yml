@@ -1,36 +1,12 @@
 services:
-  # synthea:
-  #   image: intersystemsdc/irisdemo-base-synthea:version-1.3.4
-  #   restart: "no"
-  #   volumes:
-  #     - ./output:/output
-  #   env_file:
-  #     - .env.dev
-  #   command: [
-  #     "-p", "100",
-  #     "--exporter.csv.export=true",
-  #     "--exporter.fhir.export", "false",
-  #     "--exporter.baseDirectory", "/output",
-  #     "--generate.demographics.socioeconomic", "true",
-  #     "--generate.lookup_tables", "true",
-  #     "Massachusetts"
-  #   ]
-  #   networks:
-  #     - triage-network
-
-  triage-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  # Ollama service for LLM inference
+  ollama:
+    image: ollama/ollama:latest
     ports:
-      - "8000:8000"   # Python app
-      - "11434:11434" # Ollama API
+      - "11434:11434"
     volumes:
-      - ./output:/app/output
-      - ./logs:/app/logs
       - ollama_data:/root/.ollama
     environment:
-      - PYTHONPATH=/app
       - OLLAMA_HOST=0.0.0.0
     networks:
       - triage-network
@@ -40,45 +16,32 @@ services:
       timeout: 10s
       retries: 10
       start_period: 300s  # 5 minutes to allow model download
+    command: >
+      sh -c "ollama serve & 
+             sleep 10 && 
+             ollama pull hf.co/mradermacher/docmap-uk-triage-merged-qwen2.5-7b-GGUF:Q2_K && 
+             wait"
 
-  # Hospital simulation service - runs main.py after triage-app is ready
+  # Hospital simulation service - runs main.py after ollama is ready
   hospital-simulation:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: python:3.11-slim
     depends_on:
-      triage-app:
+      ollama:
         condition: service_healthy
     volumes:
+      - .:/app
       - ./output:/app/output
       - ./logs:/app/logs
+    working_dir: /app
     environment:
       - PYTHONPATH=/app
-      - OLLAMA_HOST=triage-app
+      - OLLAMA_API_URL=http://ollama:11434/api/v1
     networks:
       - triage-network
-    command: python main.py
+    command: >
+      sh -c "pip install -r requirements.txt && 
+             python main.py"
     restart: "no"
-
-  # Test service to run LLM triage (optional)
-  triage-test:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      triage-app:
-        condition: service_healthy
-    volumes:
-      - ./output:/app/output
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - OLLAMA_HOST=triage-app
-    networks:
-      - triage-network
-    command: python src/triage/llm_triage_system/llm_triage_system.py
-    profiles:
-      - test
 
 networks:
   triage-network:

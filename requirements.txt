@@ -6,6 +6,6 @@ scipy>=1.7.0
 seaborn>=0.11.0
 scikit-fuzzy
 requests
-ollama
+httpx
 langgraph
 networkx
