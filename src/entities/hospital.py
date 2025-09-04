@@ -5,6 +5,7 @@ from .patient import Patient
 from ..enums.Triage import Priority
 from .sub_entities.triage_assessment import TriageAssessment
 from ..triage_systems.base import BaseTriageSystem
+from ..services.statistics import StatisticsService
 from ..utils.logger import get_logger, EventType, LogLevel
 
 @attr.s(auto_attribs=True)
@@ -117,7 +118,8 @@ class HospitalCore:
         """Assign triaged patient to appropriate priority queue"""
         patient.priority = assessment.priority
         patient.priority_reason = assessment.reason
-        patient.treatment_time = assessment.estimated_treatment_time
+        # Calculate treatment time using NHS service time statistics
+        patient.treatment_time = StatisticsService.nhs_service_time(assessment.priority)
         
         # Get queue position before adding
         queue_position = len(self.priority_queues[assessment.priority]) + 1
@@ -144,7 +146,7 @@ class HospitalCore:
                 "queue_position": queue_position,
                 "queue_lengths": queue_lengths,
                 "assessment_reason": assessment.reason,
-                "estimated_treatment_time": assessment.estimated_treatment_time
+                "calculated_treatment_time": patient.treatment_time
             },
             source="hospital_core"
         )

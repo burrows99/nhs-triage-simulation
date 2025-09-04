@@ -19,15 +19,10 @@ class RandomTriageSystem(BaseTriageSystem):
         # Generate simple reason
         reason = f"Random triage assessment: {patient.condition} assigned {priority.name} priority"
         
-        # Random treatment time based on priority
-        base_time = priority.value * 10
-        treatment_time = base_time * random.uniform(0.8, 1.2)
-        
         # Create assessment
         assessment = TriageAssessment(
             priority=priority,
             reason=reason,
-            estimated_treatment_time=treatment_time,
             timestamp=current_time
         )
         

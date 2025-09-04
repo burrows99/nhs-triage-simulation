@@ -187,8 +187,8 @@ def main():
     preemption_group.add_argument('--disable-preemption', action='store_false', dest='enable_preemption',
                                  help='Disable preemption agent (use standard queue-based assignment)')
     parser.set_defaults(enable_preemption=True)
-    parser.add_argument('--duration', type=int, default=60,
-                       help='Simulation duration in minutes (default: 60)')
+    parser.add_argument('--duration', type=int, default=10080,
+                       help='Simulation duration in minutes (default: 10080 - 1 week)')
     parser.add_argument('--doctors', type=int, default=3,
                        help='Number of doctors (default: 3)')
     parser.add_argument('--triage-system', type=str, default='all',
@@ -224,20 +224,43 @@ def main():
         
         for system_name, sim in simulation_results.items():
             state = sim.simulation_state
-            nhs_metrics = state.calculate_nhs_metrics()
-            mts_summary = state.get_mts_compliance_summary()
+            nhs_metrics = state.metrics_service.calculate_nhs_metrics()
+            mts_summary = state.metrics_service.get_mts_compliance_summary()
             
             print(f"\n🏥 {system_name.upper()} TRIAGE SYSTEM:")
             print(f"   📈 Total Arrivals: {state.total_arrivals}")
             print(f"   ✅ Completed Treatments: {state.total_completed}")
-            print(f"   ⏱️  Average Wait Time: {state.get_average_wait_time():.1f} minutes")
+            print(f"   ⏱️  Average Wait Time: {state.metrics_service.get_average_wait_time():.1f} minutes")
             print(f"   🎯 4-Hour Target Compliance: {nhs_metrics.get('four_hour_target_compliance', 0):.1f}%")
             print(f"   🏥 Overall MTS Compliance: {mts_summary.get('overall_compliance', 0):.1f}%")
             print(f"   🚨 Preemptions: {state.preemptions_count}")
         
+        # Generate comparison charts
+        print(f"\n📊 Generating comparison charts...")
+        try:
+            from .entities.sub_entities.simulation_state import SimulationState
+            
+            # Extract simulation states for comparison
+            comparison_states = {name: sim.simulation_state for name, sim in simulation_results.items()}
+            
+            # Generate comparison plots
+            comparison_plots = SimulationState.plot_comparison_charts(comparison_states)
+            
+            print(f"\n📈 Comparison charts generated:")
+            for chart_name, file_path in comparison_plots.items():
+                if chart_name != 'comparison_report':
+                    chart_display_name = chart_name.replace('_', ' ').title()
+                    print(f"   📊 {chart_display_name}: {file_path}")
+            
+            print(f"\n📋 Comprehensive comparison report: {comparison_plots.get('comparison_report', 'Not generated')}")
+            
+        except Exception as e:
+            print(f"\n⚠️  Warning: Could not generate comparison charts: {e}")
+        
         print(f"\n📁 Results saved in separate directories:")
         for system_name in simulation_results.keys():
             print(f"   📊 {system_name}: output/{system_name}/")
+        print(f"   📊 comparison: output/comparison/")
         
         print(f"\n✨ Comparison complete! Check the output directories for detailed analysis.")
 

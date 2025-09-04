@@ -250,7 +250,7 @@ class HospitalLogger:
         )
     
     def log_triage_assessment(self, timestamp: float, patient_id: str, priority: str, 
-                             reason: str, estimated_time: float) -> None:
+                             reason: str) -> None:
         self.log_event(
             timestamp=timestamp,
             event_type=EventType.TRIAGE_ASSESSMENT,
@@ -258,8 +258,7 @@ class HospitalLogger:
             data={
                 "patient_id": patient_id,
                 "priority": priority,
-                "reason": reason,
-                "estimated_treatment_time": estimated_time
+                "reason": reason
             },
             source="triage_system"
         )

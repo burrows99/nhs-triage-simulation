@@ -80,16 +80,14 @@ class HospitalSimulationEngine:
             source="simulation_engine"
         )
         
-        # Initialize simulation state
-        self.simulation_state.available_doctors = list(range(self.hospital.num_doctors))
+        # Initialize simulation state with doctor IDs matching hospital
+        self.simulation_state.available_doctors = [doctor.id for doctor in self.hospital.doctors]
         self.simulation_state.simulation_duration = 480.0  # Default duration
     
     def _sync_queue_lengths(self) -> None:
         """Sync all queue lengths from hospital to simulation state"""
         queue_lengths = {priority: len(queue) for priority, queue in self.hospital.priority_queues.items()}
         self.simulation_state.update_all_queue_lengths(queue_lengths)
-    
-
     
     def patient_arrival_process(self):
         """Handle patient arrivals"""

@@ -7,5 +7,4 @@ class TriageAssessment:
     """Result of triage assessment"""
     priority: Priority
     reason: str
-    estimated_treatment_time: float
     timestamp: float = 0.0

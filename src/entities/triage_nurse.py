@@ -46,14 +46,10 @@ class TriageNurse:
         # Generate reason based on condition and priority
         reason_text = self._generate_assessment_reason(condition, priority, symptoms)
         
-        # Estimate treatment time based on priority
-        treatment_time = self._estimate_treatment_time(priority, condition, current_time, patient_id)
-        
         # Create assessment
         assessment = TriageAssessment(
             priority=priority,
             reason=reason_text,
-            estimated_treatment_time=treatment_time,
             timestamp=current_time
         )
         
@@ -62,8 +58,7 @@ class TriageNurse:
             timestamp=current_time,
             patient_id=patient_id,
             priority=priority.name,
-            reason=reason_text,
-            estimated_time=treatment_time
+            reason=reason_text
         )
         
         # Log assessment completion
@@ -123,32 +118,7 @@ class TriageNurse:
         symptom_text = f" with symptoms: {', '.join(symptoms)}" if symptoms else ""
         return f"MTS Assessment: {condition}{symptom_text} classified as {priority.name} priority"
     
-    def _estimate_treatment_time(self, priority: Priority, condition: str, current_time: float, patient_id: str) -> float:
-        """Estimate treatment time with logging"""
-        # Base time estimation
-        base_time = priority.value * 10  # Simple mapping
-        variation = random.uniform(0.8, 1.2)
-        estimated_time = base_time * variation
-        
-        # Log time estimation
-        self.logger.log_event(
-            timestamp=current_time,
-            event_type=EventType.TRIAGE_ASSESSMENT,
-            message=f"Treatment time estimated for Patient {patient_id}: {estimated_time:.1f} minutes",
-            data={
-                "patient_id": patient_id,
-                "priority": priority.name,
-                "condition": condition,
-                "base_time": base_time,
-                "variation_factor": variation,
-                "estimated_time": estimated_time,
-                "assessment_step": "time_estimation"
-            },
-            level=LogLevel.DEBUG,
-            source="triage_nurse"
-        )
-        
-        return estimated_time
+
     
     def get_performance_stats(self) -> dict:
         """Get nurse performance statistics"""

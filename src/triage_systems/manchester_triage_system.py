@@ -274,14 +274,10 @@ class ManchesterTriageSystem(BaseTriageSystem):
         # Map to system priority
         priority = self.priority_mapping.get(priority_name, Priority.GREEN)
         
-        # Simple treatment time estimation
-        treatment_time = priority.value * 10
-        
         # Create assessment
         assessment = TriageAssessment(
             priority=priority,
             reason=f"Manchester Triage: {patient.condition} -> {priority_name}",
-            estimated_treatment_time=treatment_time,
             timestamp=current_time
         )
         

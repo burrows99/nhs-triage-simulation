@@ -50,6 +50,11 @@ class SimulationState:
     # History tracking
     state_history: List[Dict] = attr.ib(factory=list)
     
+    def __attrs_post_init__(self):
+        """Initialize metrics service after attrs initialization"""
+        from ...services.metrics import MetricsService
+        self.metrics_service = MetricsService(self)
+    
     def record_history(self) -> None:
         """Record current simulation state in history before any updates"""
         snapshot = self.get_log_summary().copy()
@@ -118,17 +123,7 @@ class SimulationState:
         self.triage_utilization = triage_util
         self.doctor_utilization = doctor_util
     
-    def get_average_wait_time(self) -> float:
-        """Calculate average wait time"""
-        if self.total_completed > 0:
-            return self.total_wait_time / self.total_completed
-        return 0.0
-    
-    def get_average_treatment_time(self) -> float:
-        """Calculate average treatment time"""
-        if self.total_completed > 0:
-            return self.total_treatment_time / self.total_completed
-        return 0.0
+
     
     def get_system_status(self) -> Dict:
         """Get comprehensive system status"""
@@ -142,8 +137,8 @@ class SimulationState:
             'available_doctors': len(self.available_doctors),
             'triage_utilization': self.triage_utilization,
             'doctor_utilization': self.doctor_utilization,
-            'average_wait_time': self.get_average_wait_time(),
-            'average_treatment_time': self.get_average_treatment_time(),
+            'average_wait_time': self.metrics_service.get_average_wait_time(),
+            'average_treatment_time': self.metrics_service.get_average_treatment_time(),
             'preemptions_count': self.preemptions_count
         }
     
@@ -164,164 +159,140 @@ class SimulationState:
         """Get the complete state history"""
         return self.state_history.copy()
     
-    def calculate_nhs_metrics(self) -> Dict:
-        """Calculate NHS-specific performance metrics based on simulation data"""
-        metrics = {}
-        
-        # Core NHS Emergency Department Metrics
-        
-        # 1. 4-Hour Target Performance (NHS England standard: 95% within 4 hours)
-        if self.total_completed > 0:
-            patients_within_4_hours = sum(1 for patient in self.completed_patients 
-                                        if (patient.wait_time + patient.treatment_time) <= 240)  # 4 hours = 240 minutes
-            metrics['four_hour_target_compliance'] = (patients_within_4_hours / self.total_completed) * 100
-            metrics['four_hour_breaches'] = self.total_completed - patients_within_4_hours
-            metrics['four_hour_breach_rate'] = ((self.total_completed - patients_within_4_hours) / self.total_completed) * 100
-        else:
-            metrics['four_hour_target_compliance'] = 0.0
-            metrics['four_hour_breaches'] = 0
-            metrics['four_hour_breach_rate'] = 0.0
-        
-        # 2. Manchester Triage System (MTS) Time Target Compliance
-        mts_compliance = self.calculate_mts_time_target_compliance()
-        metrics.update(mts_compliance)
-        
-        # 3. Patient Flow and Throughput Metrics
-        metrics['total_ed_attendances'] = self.total_arrivals
-        metrics['patients_currently_in_ed'] = self.patients_in_system
-        metrics['ed_occupancy_rate'] = (self.patients_in_system / max(1, self.total_arrivals)) * 100 if self.total_arrivals > 0 else 0.0
-        
-        # 4. Time-based Performance Indicators
-        metrics['average_door_to_doctor_time'] = self.get_average_wait_time()  # Time from arrival to first physician contact
-        metrics['average_ed_length_of_stay'] = self.get_average_wait_time() + self.get_average_treatment_time()
-        metrics['median_wait_time'] = self._calculate_median_wait_time()
-        
-        # 5. Resource Utilization Metrics
-        metrics['doctor_utilization_percentage'] = self.doctor_utilization * 100
-        metrics['triage_utilization_percentage'] = self.triage_utilization * 100
-        metrics['busy_doctors_count'] = len(self.busy_doctors)
-        metrics['available_doctors_count'] = len(self.available_doctors)
-        
-        # 6. Quality and Safety Indicators
-        metrics['preemption_events_count'] = self.preemptions_count
-        if self.total_arrivals > 0:
-            metrics['preemption_rate_per_100_patients'] = (self.preemptions_count / self.total_arrivals) * 100
-        else:
-            metrics['preemption_rate_per_100_patients'] = 0.0
-        
-        # 7. Queue Performance by Priority
-        queue_metrics = {}
-        for priority, length in self.queue_lengths.items():
-            queue_metrics[f'{priority.name.lower()}_queue_length'] = length
-        metrics.update(queue_metrics)
-        
-        # 8. Conversion and Admission Metrics
-        if self.total_arrivals > 0:
-            metrics['ed_conversion_rate'] = (self.total_completed / self.total_arrivals) * 100  # Percentage of patients who complete treatment
-            metrics['patients_still_waiting'] = self.total_arrivals - self.total_completed
-        else:
-            metrics['ed_conversion_rate'] = 0.0
-            metrics['patients_still_waiting'] = 0
-        
-        # 9. Time-based Targets Summary
-        metrics['simulation_duration_minutes'] = self.simulation_duration
-        metrics['current_simulation_time'] = self.current_time
-        metrics['simulation_progress_percentage'] = (self.current_time / self.simulation_duration) * 100 if self.simulation_duration > 0 else 0.0
-        
-        return metrics
+
     
-    def calculate_mts_time_target_compliance(self) -> Dict:
-        """Calculate Manchester Triage System time target compliance by priority"""
-        # Official Manchester Triage System target times (in minutes)
-        mts_targets = {
-            'RED': 0,      # Immediate - seen immediately
-            'ORANGE': 10,  # Very urgent - within 10 minutes
-            'YELLOW': 60,  # Urgent - within 60 minutes (1 hour)
-            'GREEN': 120,  # Standard - within 120 minutes (2 hours)
-            'BLUE': 240    # Non-urgent - within 240 minutes (4 hours)
-        }
+
+    
+    def _plot_mts_analysis(self, nhs_metrics: Dict, output_dir: str) -> str:
+        """Generate MTS compliance analysis chart"""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle('Manchester Triage System Performance Analysis', fontsize=16, fontweight='bold')
         
-        mts_compliance = {}
-        overall_stats = {
-            'total_patients_assessed': 0,
-            'total_compliant_patients': 0,
-            'overall_mts_compliance': 0.0
-        }
+        # Get MTS data
+        mts_data = self._get_mts_chart_data(nhs_metrics)
         
-        for priority, target_time in mts_targets.items():
-            # Get all patients with this priority
+        # Plot compliance chart
+        self._plot_mts_compliance_chart(ax1, mts_data)
+        
+        # Plot queue status chart
+        self._plot_mts_queue_status_chart(ax2, mts_data)
+        
+        # Save chart
+        plt.tight_layout()
+        mts_file = os.path.join(output_dir, 'mts_compliance_analysis.png')
+        plt.savefig(mts_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return mts_file
+    
+    def _get_mts_chart_data(self, nhs_metrics: Dict) -> Dict:
+        """Prepare MTS chart data"""
+        mts_priorities = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
+        mts_targets = [0, 10, 60, 120, 240]  # Official MTS target times in minutes
+        priority_colors = ['red', 'orange', 'yellow', 'green', 'blue']
+        
+        # Get compliance rates
+        compliance_rates = [nhs_metrics.get(f'{p.lower()}_mts_compliance', 0) for p in mts_priorities]
+        
+        # Get current queue lengths
+        current_queue_lengths = []
+        for priority_name in mts_priorities:
+            try:
+                priority_enum = Priority[priority_name]
+                queue_length = self.queue_lengths.get(priority_enum, 0)
+                current_queue_lengths.append(queue_length)
+            except KeyError:
+                current_queue_lengths.append(0)
+        
+        return {
+            'priorities': mts_priorities,
+            'targets': mts_targets,
+            'colors': priority_colors,
+            'compliance_rates': compliance_rates,
+            'queue_lengths': current_queue_lengths
+        }
+    
+    def _plot_mts_compliance_chart(self, ax, mts_data: Dict) -> None:
+        """Plot MTS compliance by priority chart"""
+        priorities = mts_data['priorities']
+        compliance_rates = mts_data['compliance_rates']
+        colors = mts_data['colors']
+        
+        # Create bars
+        bars = ax.bar(priorities, compliance_rates, color=colors, alpha=0.7)
+        
+        # Add target line
+        ax.axhline(y=95, color='black', linestyle='--', label='95% Target')
+        
+        # Configure chart
+        ax.set_ylabel('Compliance Rate (%)')
+        ax.set_title('MTS Time Target Compliance by Priority')
+        ax.set_ylim(0, 100)
+        ax.legend()
+        
+        # Add data labels or no data message
+        if any(rate > 0 for rate in compliance_rates):
+            for bar, rate in zip(bars, compliance_rates):
+                if rate > 0:
+                    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2, 
+                            f'{rate:.1f}%', ha='center', fontweight='bold')
+        else:
+            ax.text(0.5, 0.5, 'No completed patients\nfor compliance calculation', 
+                    transform=ax.transAxes, ha='center', va='center', 
+                    fontsize=12, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
+    def _plot_mts_queue_status_chart(self, ax, mts_data: Dict) -> None:
+        """Plot MTS target times vs actual wait times chart"""
+        priorities = mts_data['priorities']
+        targets = mts_data['targets']
+        colors = mts_data['colors']
+        
+        # Create labels with target times
+        labels = [f'{p}\n({t}min)' for p, t in zip(priorities, targets)]
+        
+        # Plot target times (gray bars)
+        ax.bar(labels, targets, alpha=0.5, color='gray', label='MTS Target Times')
+        
+        # Calculate actual wait times by priority from completed patients
+        actual_wait_times = self._calculate_actual_wait_times_by_priority(priorities)
+        
+        # Plot actual wait times if any patients completed
+        if any(wait_time > 0 for wait_time in actual_wait_times):
+            bars2 = ax.bar(labels, actual_wait_times, alpha=0.7, 
+                          color=colors, label='Actual Average Wait Times', width=0.6)
+            
+            # Add wait time labels
+            for bar, wait_time in zip(bars2, actual_wait_times):
+                if wait_time > 0:
+                    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 5, 
+                           f'{wait_time:.1f}min', ha='center', fontweight='bold', color='navy')
+        else:
+            # Show message when no completed patients
+            ax.text(0.5, 0.5, 'No completed patients\nfor wait time analysis', 
+                   transform=ax.transAxes, ha='center', va='center', 
+                   fontsize=12, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+        
+        # Configure main axis
+        ax.set_ylabel('Time (minutes)')
+        ax.set_title('MTS Target Times vs Actual Wait Times')
+        ax.legend(loc='upper left')
+    
+    def _calculate_actual_wait_times_by_priority(self, priorities: List[str]) -> List[float]:
+        """Calculate average wait times by priority from completed patients"""
+        wait_times_by_priority = {}
+        
+        # Group completed patients by priority and calculate average wait times
+        for priority_name in priorities:
             priority_patients = [p for p in self.completed_patients 
-                               if p.priority and p.priority.name == priority]
+                               if p.priority and p.priority.name == priority_name]
             
             if priority_patients:
-                # Calculate compliance for this priority
-                compliant_patients = sum(1 for p in priority_patients 
-                                       if p.wait_time <= target_time)
-                total_patients = len(priority_patients)
-                compliance_rate = (compliant_patients / total_patients) * 100
-                
-                # Store detailed metrics for this priority
-                mts_compliance[f'{priority.lower()}_mts_compliance'] = compliance_rate
-                mts_compliance[f'{priority.lower()}_mts_breaches'] = total_patients - compliant_patients
-                mts_compliance[f'{priority.lower()}_total_patients'] = total_patients
-                mts_compliance[f'{priority.lower()}_compliant_patients'] = compliant_patients
-                mts_compliance[f'{priority.lower()}_target_time'] = target_time
-                
-                # Add to overall statistics
-                overall_stats['total_patients_assessed'] += total_patients
-                overall_stats['total_compliant_patients'] += compliant_patients
-                
-                # Calculate average wait time for this priority
-                if priority_patients:
-                    avg_wait_time = sum(p.wait_time for p in priority_patients) / len(priority_patients)
-                    mts_compliance[f'{priority.lower()}_avg_wait_time'] = avg_wait_time
-                else:
-                    mts_compliance[f'{priority.lower()}_avg_wait_time'] = 0.0
+                avg_wait_time = sum(p.wait_time for p in priority_patients) / len(priority_patients)
+                wait_times_by_priority[priority_name] = avg_wait_time
             else:
-                # No patients with this priority
-                mts_compliance[f'{priority.lower()}_mts_compliance'] = 0.0
-                mts_compliance[f'{priority.lower()}_mts_breaches'] = 0
-                mts_compliance[f'{priority.lower()}_total_patients'] = 0
-                mts_compliance[f'{priority.lower()}_compliant_patients'] = 0
-                mts_compliance[f'{priority.lower()}_target_time'] = target_time
-                mts_compliance[f'{priority.lower()}_avg_wait_time'] = 0.0
+                wait_times_by_priority[priority_name] = 0.0
         
-        # Calculate overall MTS compliance
-        if overall_stats['total_patients_assessed'] > 0:
-            overall_stats['overall_mts_compliance'] = (
-                overall_stats['total_compliant_patients'] / 
-                overall_stats['total_patients_assessed']
-            ) * 100
-        
-        # Add overall statistics to the result
-        mts_compliance.update(overall_stats)
-        
-        return mts_compliance
-    
-    def get_mts_compliance_summary(self) -> Dict:
-        """Get a summary of MTS compliance for reporting"""
-        compliance_data = self.calculate_mts_time_target_compliance()
-        
-        summary = {
-            'priorities': {},
-            'overall_compliance': compliance_data.get('overall_mts_compliance', 0.0),
-            'total_patients': compliance_data.get('total_patients_assessed', 0),
-            'total_compliant': compliance_data.get('total_compliant_patients', 0)
-        }
-        
-        priorities = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
-        for priority in priorities:
-            key = priority.lower()
-            summary['priorities'][priority] = {
-                'compliance_rate': compliance_data.get(f'{key}_mts_compliance', 0.0),
-                'target_time': compliance_data.get(f'{key}_target_time', 0),
-                'total_patients': compliance_data.get(f'{key}_total_patients', 0),
-                'compliant_patients': compliance_data.get(f'{key}_compliant_patients', 0),
-                'breaches': compliance_data.get(f'{key}_mts_breaches', 0),
-                'avg_wait_time': compliance_data.get(f'{key}_avg_wait_time', 0.0)
-            }
-        
-        return summary
+        return [wait_times_by_priority[priority] for priority in priorities]
     
     def _calculate_median_wait_time(self) -> float:
         """Calculate median wait time for completed patients"""
@@ -354,7 +325,7 @@ class SimulationState:
         fig.suptitle('NHS Emergency Department Performance Dashboard', fontsize=16, fontweight='bold')
         
         # Calculate NHS metrics
-        nhs_metrics = self.calculate_nhs_metrics()
+        nhs_metrics = self.metrics_service.calculate_nhs_metrics()
         
         # 4-Hour Target Compliance
         compliance = nhs_metrics['four_hour_target_compliance']
@@ -387,8 +358,12 @@ class SimulationState:
         }
         # Only create pie chart if we have meaningful data
         if sum(utilization_data.values()) > 0:
-            ax3.pie(utilization_data.values(), labels=utilization_data.keys(), autopct='%1.1f%%', 
-                   colors=['red', 'green', 'orange'], startangle=90)
+            wedges, texts, autotexts = ax3.pie(utilization_data.values(), labels=utilization_data.keys(), 
+                                              autopct='%1.1f%%', colors=['red', 'green', 'orange'], 
+                                              startangle=90, textprops={'fontsize': 10})
+            # Add legend with better positioning
+            ax3.legend(wedges, utilization_data.keys(), title="Resources", 
+                      loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
         else:
             ax3.text(0.5, 0.5, 'No Data Available', ha='center', va='center', transform=ax3.transAxes)
         ax3.set_title('Resource Utilization')
@@ -397,8 +372,8 @@ class SimulationState:
         metrics_text = f"""Simulation Summary:
 • Total Arrivals: {self.total_arrivals}
 • Completed Treatments: {self.total_completed}
-• Average Wait Time: {self.get_average_wait_time():.1f} min
-• Average Treatment Time: {self.get_average_treatment_time():.1f} min
+• Average Wait Time: {self.metrics_service.get_average_wait_time():.1f} min
+• Average Treatment Time: {self.metrics_service.get_average_treatment_time():.1f} min
 • Preemption Events: {self.preemptions_count}
 • ED Conversion Rate: {nhs_metrics['ed_conversion_rate']:.1f}%
 • Simulation Duration: {self.current_time:.1f} / {self.simulation_duration} min"""
@@ -438,8 +413,9 @@ class SimulationState:
             # Doctor Utilization Over Time
             busy_doctors = [entry['busy_doctors'] for entry in self.state_history]
             available_doctors = [entry['available_doctors'] for entry in self.state_history]
+            total_doctors = [b+a for b,a in zip(busy_doctors, available_doctors)]
             ax2.fill_between(times, busy_doctors, alpha=0.6, color='red', label='Busy Doctors')
-            ax2.fill_between(times, busy_doctors, [b+a for b,a in zip(busy_doctors, available_doctors)], 
+            ax2.fill_between(times, busy_doctors, total_doctors, 
                            alpha=0.6, color='green', label='Available Doctors')
             ax2.set_ylabel('Doctor Count')
             ax2.set_title('Doctor Utilization Over Time')
@@ -461,41 +437,7 @@ class SimulationState:
             plot_files['timeline'] = timeline_file
         
         # 3. Manchester Triage System Compliance
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-        fig.suptitle('Manchester Triage System Performance Analysis', fontsize=16, fontweight='bold')
-        
-        # MTS Compliance by Priority
-        mts_priorities = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
-        mts_targets = [0, 10, 30, 90, 120]  # Target times in minutes
-        compliance_rates = [nhs_metrics.get(f'{p.lower()}_mts_compliance', 0) for p in mts_priorities]
-        
-        bars = ax1.bar(mts_priorities, compliance_rates, color=['red', 'orange', 'yellow', 'green', 'blue'], alpha=0.7)
-        ax1.axhline(y=95, color='black', linestyle='--', label='95% Target')
-        ax1.set_ylabel('Compliance Rate (%)')
-        ax1.set_title('MTS Time Target Compliance by Priority')
-        ax1.set_ylim(0, 100)
-        ax1.legend()
-        for bar, rate in zip(bars, compliance_rates):
-            if rate > 0:
-                ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2, 
-                        f'{rate:.1f}%', ha='center', fontweight='bold')
-        
-        # MTS Target Times vs Actual Performance
-        ax2.bar([f'{p}\n({t}min)' for p, t in zip(mts_priorities, mts_targets)], mts_targets, 
-               alpha=0.5, color='gray', label='Target Times')
-        if self.completed_patients:
-            # Calculate average wait times by priority (simplified)
-            avg_waits = [30, 25, 35, 45, 60]  # Placeholder - would need actual patient data
-            ax2.bar([f'{p}\n({t}min)' for p, t in zip(mts_priorities, mts_targets)], avg_waits, 
-                   alpha=0.7, color=['red', 'orange', 'yellow', 'green', 'blue'], label='Actual Wait Times')
-        ax2.set_ylabel('Time (minutes)')
-        ax2.set_title('Target vs Actual Wait Times')
-        ax2.legend()
-        
-        plt.tight_layout()
-        mts_file = os.path.join(output_dir, 'mts_compliance_analysis.png')
-        plt.savefig(mts_file, dpi=300, bbox_inches='tight')
-        plt.close()
+        mts_file = self._plot_mts_analysis(nhs_metrics, output_dir)
         plot_files['mts_analysis'] = mts_file
         
         # 4. Summary Report
@@ -514,9 +456,9 @@ PATIENT STATISTICS:
 • Conversion Rate: {nhs_metrics['ed_conversion_rate']:.1f}%
 
 PERFORMANCE METRICS:
-• Average Wait Time: {self.get_average_wait_time():.1f} minutes
-• Average Treatment Time: {self.get_average_treatment_time():.1f} minutes
-• Median Wait Time: {self._calculate_median_wait_time():.1f} minutes
+• Average Wait Time: {self.metrics_service.get_average_wait_time():.1f} minutes
+• Average Treatment Time: {self.metrics_service.get_average_treatment_time():.1f} minutes
+• Median Wait Time: {self.metrics_service._calculate_median_wait_time():.1f} minutes
 
 NHS TARGETS:
 • 4-Hour Target Compliance: {nhs_metrics['four_hour_target_compliance']:.1f}%
@@ -551,6 +493,475 @@ Report generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         plot_files['report'] = report_file
         
         return plot_files
+    
+    @staticmethod
+    def plot_comparison_charts(simulation_states: Dict[str, 'SimulationState'], 
+                              output_dir: str = "output/comparison") -> Dict[str, str]:
+        """Generate comprehensive comparison charts for multiple simulation states"""
+        os.makedirs(output_dir, exist_ok=True)
+        
+        if len(simulation_states) < 2:
+            raise ValueError("At least 2 simulation states required for comparison")
+        
+        plot_files = {}
+        
+        # Generate all comparison charts
+        plot_files.update(SimulationState._plot_nhs_metrics_comparison(simulation_states, output_dir))
+        plot_files.update(SimulationState._plot_wait_times_comparison(simulation_states, output_dir))
+        plot_files.update(SimulationState._plot_mts_compliance_comparison(simulation_states, output_dir))
+        plot_files.update(SimulationState._plot_resource_utilization_comparison(simulation_states, output_dir))
+        plot_files.update(SimulationState._plot_queue_performance_comparison(simulation_states, output_dir))
+        plot_files.update(SimulationState._plot_preemption_analysis_comparison(simulation_states, output_dir))
+        
+        # Generate summary comparison report
+        report_file = SimulationState._generate_comparison_report(simulation_states, output_dir, plot_files)
+        plot_files['comparison_report'] = report_file
+        
+        return plot_files
+    
+    @staticmethod
+    def _plot_nhs_metrics_comparison(simulation_states: Dict[str, 'SimulationState'], 
+                                   output_dir: str) -> Dict[str, str]:
+        """Plot NHS metrics comparison across simulation states"""
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+        fig.suptitle('NHS Metrics Comparison Across Triage Systems', fontsize=16, fontweight='bold')
+        
+        systems = list(simulation_states.keys())
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(systems)]
+        
+        # 4-Hour Target Compliance
+        compliance_rates = []
+        for system_name, state in simulation_states.items():
+            nhs_metrics = state.metrics_service.calculate_nhs_metrics()
+            compliance_rates.append(nhs_metrics['four_hour_target_compliance'])
+        
+        bars1 = ax1.bar(systems, compliance_rates, color=colors, alpha=0.7)
+        ax1.axhline(y=95, color='red', linestyle='--', label='NHS Target (95%)')
+        ax1.set_ylabel('Compliance (%)')
+        ax1.set_title('4-Hour Target Compliance')
+        ax1.set_ylim(0, 100)
+        ax1.legend()
+        for bar, rate in zip(bars1, compliance_rates):
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2, 
+                    f'{rate:.1f}%', ha='center', fontweight='bold')
+        
+        # ED Conversion Rate
+        conversion_rates = []
+        for system_name, state in simulation_states.items():
+            nhs_metrics = state.metrics_service.calculate_nhs_metrics()
+            conversion_rates.append(nhs_metrics['ed_conversion_rate'])
+        
+        bars2 = ax2.bar(systems, conversion_rates, color=colors, alpha=0.7)
+        ax2.set_ylabel('Conversion Rate (%)')
+        ax2.set_title('ED Conversion Rate (Treatment Completion)')
+        ax2.set_ylim(0, 100)
+        for bar, rate in zip(bars2, conversion_rates):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2, 
+                    f'{rate:.1f}%', ha='center', fontweight='bold')
+        
+        # Doctor Utilization
+        doctor_util = []
+        for system_name, state in simulation_states.items():
+            nhs_metrics = state.metrics_service.calculate_nhs_metrics()
+            doctor_util.append(nhs_metrics['doctor_utilization_percentage'])
+        
+        bars3 = ax3.bar(systems, doctor_util, color=colors, alpha=0.7)
+        ax3.set_ylabel('Utilization (%)')
+        ax3.set_title('Doctor Utilization')
+        ax3.set_ylim(0, 100)
+        for bar, util in zip(bars3, doctor_util):
+            ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2, 
+                    f'{util:.1f}%', ha='center', fontweight='bold')
+        
+        # Preemption Rate
+        preemption_rates = []
+        for system_name, state in simulation_states.items():
+            nhs_metrics = state.metrics_service.calculate_nhs_metrics()
+            preemption_rates.append(nhs_metrics['preemption_rate_per_100_patients'])
+        
+        bars4 = ax4.bar(systems, preemption_rates, color=colors, alpha=0.7)
+        ax4.set_ylabel('Preemptions per 100 Patients')
+        ax4.set_title('Preemption Rate')
+        for bar, rate in zip(bars4, preemption_rates):
+            ax4.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    f'{rate:.1f}', ha='center', fontweight='bold')
+        
+        plt.tight_layout()
+        nhs_file = os.path.join(output_dir, 'nhs_metrics_comparison.png')
+        plt.savefig(nhs_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return {'nhs_metrics_comparison': nhs_file}
+    
+    @staticmethod
+    def _plot_wait_times_comparison(simulation_states: Dict[str, 'SimulationState'], 
+                                  output_dir: str) -> Dict[str, str]:
+        """Plot wait times comparison across simulation states"""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle('Wait Times Comparison Across Triage Systems', fontsize=16, fontweight='bold')
+        
+        systems = list(simulation_states.keys())
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(systems)]
+        
+        # Average Wait Times
+        avg_wait_times = [state.metrics_service.get_average_wait_time() for state in simulation_states.values()]
+        median_wait_times = [state.metrics_service._calculate_median_wait_time() for state in simulation_states.values()]
+        
+        x = range(len(systems))
+        width = 0.35
+        
+        bars1 = ax1.bar([i - width/2 for i in x], avg_wait_times, width, 
+                       label='Average Wait Time', color=colors, alpha=0.7)
+        bars2 = ax1.bar([i + width/2 for i in x], median_wait_times, width, 
+                       label='Median Wait Time', color=colors, alpha=0.5)
+        
+        ax1.set_ylabel('Time (minutes)')
+        ax1.set_title('Average vs Median Wait Times')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(systems)
+        ax1.legend()
+        
+        # Add value labels
+        for bar, time in zip(bars1, avg_wait_times):
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+                    f'{time:.1f}', ha='center', fontweight='bold')
+        for bar, time in zip(bars2, median_wait_times):
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+                    f'{time:.1f}', ha='center', fontweight='bold')
+        
+        # Average Treatment Times
+        avg_treatment_times = [state.metrics_service.get_average_treatment_time() for state in simulation_states.values()]
+        total_times = [avg_wait_times[i] + avg_treatment_times[i] for i in range(len(systems))]
+        
+        bars3 = ax2.bar([i - width/2 for i in x], avg_treatment_times, width, 
+                       label='Treatment Time', color=colors, alpha=0.7)
+        bars4 = ax2.bar([i + width/2 for i in x], total_times, width, 
+                       label='Total Time (Wait + Treatment)', color=colors, alpha=0.5)
+        
+        ax2.set_ylabel('Time (minutes)')
+        ax2.set_title('Treatment Times vs Total Times')
+        ax2.set_xticks(x)
+        ax2.set_xticklabels(systems)
+        ax2.legend()
+        
+        # Add value labels
+        for bar, time in zip(bars3, avg_treatment_times):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+                    f'{time:.1f}', ha='center', fontweight='bold')
+        for bar, time in zip(bars4, total_times):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+                    f'{time:.1f}', ha='center', fontweight='bold')
+        
+        plt.tight_layout()
+        wait_times_file = os.path.join(output_dir, 'wait_times_comparison.png')
+        plt.savefig(wait_times_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return {'wait_times_comparison': wait_times_file}
+    
+    @staticmethod
+    def _plot_mts_compliance_comparison(simulation_states: Dict[str, 'SimulationState'], 
+                                      output_dir: str) -> Dict[str, str]:
+        """Plot MTS compliance comparison across simulation states"""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle('Manchester Triage System Compliance Comparison', fontsize=16, fontweight='bold')
+        
+        systems = list(simulation_states.keys())
+        priorities = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
+        colors = ['red', 'orange', 'yellow', 'green', 'blue']
+        
+        # Overall MTS Compliance
+        overall_compliance = []
+        for system_name, state in simulation_states.items():
+            mts_data = state.metrics_service.calculate_mts_time_target_compliance()
+            overall_compliance.append(mts_data.get('overall_mts_compliance', 0.0))
+        
+        bars1 = ax1.bar(systems, overall_compliance, color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(systems)], alpha=0.7)
+        ax1.axhline(y=95, color='red', linestyle='--', label='95% Target')
+        ax1.set_ylabel('Compliance (%)')
+        ax1.set_title('Overall MTS Compliance')
+        ax1.set_ylim(0, 100)
+        ax1.legend()
+        for bar, rate in zip(bars1, overall_compliance):
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2, 
+                    f'{rate:.1f}%', ha='center', fontweight='bold')
+        
+        # Priority-specific compliance (stacked bar)
+        priority_data = {priority: [] for priority in priorities}
+        for system_name, state in simulation_states.items():
+            mts_data = state.metrics_service.calculate_mts_time_target_compliance()
+            for priority in priorities:
+                compliance = mts_data.get(f'{priority.lower()}_mts_compliance', 0.0)
+                priority_data[priority].append(compliance)
+        
+        x = range(len(systems))
+        width = 0.15
+        for i, priority in enumerate(priorities):
+            bars = ax2.bar([pos + i * width for pos in x], priority_data[priority], 
+                          width, label=priority, color=colors[i], alpha=0.7)
+        
+        ax2.set_ylabel('Compliance (%)')
+        ax2.set_title('MTS Compliance by Priority')
+        ax2.set_xticks([pos + width * 2 for pos in x])
+        ax2.set_xticklabels(systems)
+        ax2.legend()
+        ax2.set_ylim(0, 100)
+        
+        plt.tight_layout()
+        mts_file = os.path.join(output_dir, 'mts_compliance_comparison.png')
+        plt.savefig(mts_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return {'mts_compliance_comparison': mts_file}
+    
+    @staticmethod
+    def _plot_resource_utilization_comparison(simulation_states: Dict[str, 'SimulationState'], 
+                                            output_dir: str) -> Dict[str, str]:
+        """Plot resource utilization comparison across simulation states"""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle('Resource Utilization Comparison', fontsize=16, fontweight='bold')
+        
+        systems = list(simulation_states.keys())
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(systems)]
+        
+        # Doctor Utilization vs Availability
+        busy_doctors = [len(state.busy_doctors) for state in simulation_states.values()]
+        available_doctors = [len(state.available_doctors) for state in simulation_states.values()]
+        
+        x = range(len(systems))
+        width = 0.35
+        
+        bars1 = ax1.bar([i - width/2 for i in x], busy_doctors, width, 
+                       label='Busy Doctors', color='red', alpha=0.7)
+        bars2 = ax1.bar([i + width/2 for i in x], available_doctors, width, 
+                       label='Available Doctors', color='green', alpha=0.7)
+        
+        ax1.set_ylabel('Number of Doctors')
+        ax1.set_title('Doctor Resource Allocation')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(systems)
+        ax1.legend()
+        
+        # Add value labels
+        for bar, count in zip(bars1, busy_doctors):
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    str(count), ha='center', fontweight='bold')
+        for bar, count in zip(bars2, available_doctors):
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    str(count), ha='center', fontweight='bold')
+        
+        # Patients in System vs Completed
+        patients_in_system = [state.patients_in_system for state in simulation_states.values()]
+        patients_completed = [state.total_completed for state in simulation_states.values()]
+        
+        bars3 = ax2.bar([i - width/2 for i in x], patients_in_system, width, 
+                       label='Patients in System', color='orange', alpha=0.7)
+        bars4 = ax2.bar([i + width/2 for i in x], patients_completed, width, 
+                       label='Patients Completed', color='blue', alpha=0.7)
+        
+        ax2.set_ylabel('Number of Patients')
+        ax2.set_title('Patient Flow Status')
+        ax2.set_xticks(x)
+        ax2.set_xticklabels(systems)
+        ax2.legend()
+        
+        # Add value labels
+        for bar, count in zip(bars3, patients_in_system):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+                    str(count), ha='center', fontweight='bold')
+        for bar, count in zip(bars4, patients_completed):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+                    str(count), ha='center', fontweight='bold')
+        
+        plt.tight_layout()
+        resource_file = os.path.join(output_dir, 'resource_utilization_comparison.png')
+        plt.savefig(resource_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return {'resource_utilization_comparison': resource_file}
+    
+    @staticmethod
+    def _plot_queue_performance_comparison(simulation_states: Dict[str, 'SimulationState'], 
+                                         output_dir: str) -> Dict[str, str]:
+        """Plot queue performance comparison across simulation states"""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle('Queue Performance Comparison', fontsize=16, fontweight='bold')
+        
+        systems = list(simulation_states.keys())
+        priorities = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
+        colors = ['red', 'orange', 'yellow', 'green', 'blue']
+        
+        # Current Queue Lengths by Priority
+        queue_data = {priority: [] for priority in priorities}
+        for system_name, state in simulation_states.items():
+            for priority in priorities:
+                queue_length = state.queue_lengths[Priority[priority]]
+                queue_data[priority].append(queue_length)
+        
+        x = range(len(systems))
+        width = 0.15
+        for i, priority in enumerate(priorities):
+            bars = ax1.bar([pos + i * width for pos in x], queue_data[priority], 
+                          width, label=priority, color=colors[i], alpha=0.7)
+            # Add value labels for non-zero values
+            for bar, length in zip(bars, queue_data[priority]):
+                if length > 0:
+                    ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                            str(length), ha='center', fontweight='bold', fontsize=8)
+        
+        ax1.set_ylabel('Queue Length')
+        ax1.set_title('Current Queue Lengths by Priority')
+        ax1.set_xticks([pos + width * 2 for pos in x])
+        ax1.set_xticklabels(systems)
+        ax1.legend()
+        
+        # Total Queue Load
+        total_queue_lengths = []
+        for state in simulation_states.values():
+            total = sum(state.queue_lengths.values())
+            total_queue_lengths.append(total)
+        
+        bars2 = ax2.bar(systems, total_queue_lengths, 
+                       color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(systems)], alpha=0.7)
+        ax2.set_ylabel('Total Queue Length')
+        ax2.set_title('Total Queue Load')
+        
+        for bar, total in zip(bars2, total_queue_lengths):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.2, 
+                    str(total), ha='center', fontweight='bold')
+        
+        plt.tight_layout()
+        queue_file = os.path.join(output_dir, 'queue_performance_comparison.png')
+        plt.savefig(queue_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return {'queue_performance_comparison': queue_file}
+    
+    @staticmethod
+    def _plot_preemption_analysis_comparison(simulation_states: Dict[str, 'SimulationState'], 
+                                           output_dir: str) -> Dict[str, str]:
+        """Plot preemption analysis comparison across simulation states"""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle('Preemption Analysis Comparison', fontsize=16, fontweight='bold')
+        
+        systems = list(simulation_states.keys())
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(systems)]
+        
+        # Total Preemption Events
+        preemption_counts = [state.preemptions_count for state in simulation_states.values()]
+        
+        bars1 = ax1.bar(systems, preemption_counts, color=colors, alpha=0.7)
+        ax1.set_ylabel('Total Preemptions')
+        ax1.set_title('Total Preemption Events')
+        
+        for bar, count in zip(bars1, preemption_counts):
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    str(count), ha='center', fontweight='bold')
+        
+        # Preemption Rate per 100 Patients
+        preemption_rates = []
+        for state in simulation_states.values():
+            if state.total_arrivals > 0:
+                rate = (state.preemptions_count / state.total_arrivals) * 100
+            else:
+                rate = 0.0
+            preemption_rates.append(rate)
+        
+        bars2 = ax2.bar(systems, preemption_rates, color=colors, alpha=0.7)
+        ax2.set_ylabel('Preemptions per 100 Patients')
+        ax2.set_title('Preemption Rate')
+        
+        for bar, rate in zip(bars2, preemption_rates):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05, 
+                    f'{rate:.1f}', ha='center', fontweight='bold')
+        
+        plt.tight_layout()
+        preemption_file = os.path.join(output_dir, 'preemption_analysis_comparison.png')
+        plt.savefig(preemption_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return {'preemption_analysis_comparison': preemption_file}
+    
+    @staticmethod
+    def _generate_comparison_report(simulation_states: Dict[str, 'SimulationState'], 
+                                  output_dir: str, plot_files: Dict[str, str]) -> str:
+        """Generate comprehensive comparison report"""
+        report_content = f"""TRIAGE SYSTEMS COMPARISON REPORT
+{'='*60}
+
+Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Systems Compared: {', '.join(simulation_states.keys())}
+
+"""
+        
+        # Summary table
+        report_content += "PERFORMANCE SUMMARY\n" + "-"*30 + "\n"
+        report_content += f"{'System':<15} {'Arrivals':<10} {'Completed':<10} {'4Hr Comp%':<10} {'Avg Wait':<10} {'Preemptions':<12}\n"
+        report_content += "-"*70 + "\n"
+        
+        for system_name, state in simulation_states.items():
+            nhs_metrics = state.metrics_service.calculate_nhs_metrics()
+            report_content += f"{system_name:<15} {state.total_arrivals:<10} {state.total_completed:<10} "
+            report_content += f"{nhs_metrics['four_hour_target_compliance']:<10.1f} {state.metrics_service.get_average_wait_time():<10.1f} "
+            report_content += f"{state.preemptions_count:<12}\n"
+        
+        # Detailed analysis for each system
+        report_content += "\n\nDETAILED SYSTEM ANALYSIS\n" + "="*40 + "\n"
+        
+        for system_name, state in simulation_states.items():
+            nhs_metrics = state.metrics_service.calculate_nhs_metrics()
+            mts_summary = state.metrics_service.get_mts_compliance_summary()
+            
+            report_content += f"\n{system_name.upper()} SYSTEM:\n" + "-"*25 + "\n"
+            report_content += f"• Total Arrivals: {state.total_arrivals}\n"
+            report_content += f"• Completed Treatments: {state.total_completed}\n"
+            report_content += f"• Patients in System: {state.patients_in_system}\n"
+            report_content += f"• 4-Hour Target Compliance: {nhs_metrics['four_hour_target_compliance']:.1f}%\n"
+            report_content += f"• ED Conversion Rate: {nhs_metrics['ed_conversion_rate']:.1f}%\n"
+            report_content += f"• Average Wait Time: {state.metrics_service.get_average_wait_time():.1f} minutes\n"
+            report_content += f"• Average Treatment Time: {state.metrics_service.get_average_treatment_time():.1f} minutes\n"
+            report_content += f"• Doctor Utilization: {nhs_metrics['doctor_utilization_percentage']:.1f}%\n"
+            report_content += f"• Preemption Events: {state.preemptions_count}\n"
+            report_content += f"• Overall MTS Compliance: {mts_summary['overall_compliance']:.1f}%\n"
+            
+            # Queue status
+            report_content += "\nQueue Status:\n"
+            for priority in ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']:
+                length = state.queue_lengths[Priority[priority]]
+                report_content += f"  - {priority}: {length}\n"
+        
+        # Best performing system analysis
+        report_content += "\n\nPERFORMANCE RANKING\n" + "="*25 + "\n"
+        
+        # Rank by 4-hour compliance
+        compliance_ranking = sorted(simulation_states.items(), 
+                                  key=lambda x: x[1].metrics_service.calculate_nhs_metrics()['four_hour_target_compliance'], 
+                                  reverse=True)
+        report_content += "\nBy 4-Hour Target Compliance:\n"
+        for i, (system_name, state) in enumerate(compliance_ranking, 1):
+            compliance = state.metrics_service.calculate_nhs_metrics()['four_hour_target_compliance']
+            report_content += f"{i}. {system_name}: {compliance:.1f}%\n"
+        
+        # Rank by average wait time (lower is better)
+        wait_time_ranking = sorted(simulation_states.items(), 
+                                 key=lambda x: x[1].metrics_service.get_average_wait_time())
+        report_content += "\nBy Average Wait Time (lower is better):\n"
+        for i, (system_name, state) in enumerate(wait_time_ranking, 1):
+            wait_time = state.metrics_service.get_average_wait_time()
+            report_content += f"{i}. {system_name}: {wait_time:.1f} minutes\n"
+        
+        # Generated files
+        report_content += "\n\nGENERATED COMPARISON CHARTS\n" + "="*35 + "\n"
+        for chart_name, file_path in plot_files.items():
+            if chart_name != 'comparison_report':
+                report_content += f"• {chart_name.replace('_', ' ').title()}: {file_path}\n"
+        
+        # Save report
+        report_file = os.path.join(output_dir, 'triage_systems_comparison_report.txt')
+        with open(report_file, 'w') as f:
+            f.write(report_content)
+        
+        return report_file
      
     def reset(self) -> None:
         """Reset simulation state"""
