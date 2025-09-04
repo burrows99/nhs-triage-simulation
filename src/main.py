@@ -55,7 +55,18 @@ def main():
         event_handler=event_handler
     )
     
-    print("Starting hospital simulation...")
+    # Log simulation start
+    logger.log_event(
+        timestamp=0.0,
+        event_type=EventType.SIMULATION_START,
+        message="Starting hospital simulation",
+        data={
+            "duration": 60,
+            "simulation_type": "hospital_emergency_department"
+        },
+        source="main"
+    )
+    
     sim.run_simulation(duration=60)  # Run for 1 hour
     
     # Log simulation completion
@@ -63,6 +74,7 @@ def main():
         timestamp=60.0,
         event_type=EventType.SIMULATION_END,
         message="Hospital simulation completed successfully",
+        simulation_state=sim.simulation_state,  # Use simulation state from engine
         data={
             "duration": 60,
             "total_events_logged": len(logger.events),
@@ -71,20 +83,27 @@ def main():
         source="main"
     )
     
-    print("\nSimulation completed!")
     sim.print_statistics()
     
-    # Print logging summary
+    # Log summary statistics
     stats = logger.get_summary_stats()
-    print(f"\n=== LOGGING SUMMARY ===")
-    print(f"Total events logged: {stats['total_events']}")
-    print(f"Event types: {list(stats['event_type_counts'].keys())}")
-    print(f"Time range: {stats['time_range']['start']:.1f} - {stats['time_range']['end']:.1f} minutes")
+    logger.log_event(
+        timestamp=60.0,
+        event_type=EventType.SYSTEM_STATE,
+        message="Logging summary statistics",
+        simulation_state=sim.simulation_state,
+        data={
+            "total_events": stats['total_events'],
+            "event_types": list(stats['event_type_counts'].keys()),
+            "time_range": f"{stats['time_range']['start']:.1f} - {stats['time_range']['end']:.1f} minutes",
+            "export_file": "simulation_events.json",
+            "log_file": "hospital_simulation.log"
+        },
+        source="main"
+    )
     
     # Export detailed logs
     logger.export_to_json("simulation_events.json")
-    print(f"\nDetailed logs exported to: simulation_events.json")
-    print(f"Log file saved to: hospital_simulation.log")
 
 if __name__ == "__main__":
     main()

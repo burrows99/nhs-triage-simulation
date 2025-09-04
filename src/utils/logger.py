@@ -66,20 +66,23 @@ class HospitalLogger:
     
     def log_event(self, timestamp: float, event_type: EventType, message: str, 
                   data: Dict[str, Any] = None, level: LogLevel = LogLevel.INFO, 
-                  source: str = "unknown") -> None:
-        """Log a simulation event"""
+                  source: str = "unknown", simulation_state = None) -> None:
+        """Log a simulation event with optional simulation state enhancement"""
         if not self._should_log(level):
             return
             
         if data is None:
             data = {}
+        
+        # Enhance data with simulation state summary
+        enhanced_data = self._enhance_log_data_with_simulation_state(data, simulation_state)
             
         event = LogEvent(
             timestamp=timestamp,
             event_type=event_type,
             level=level,
             message=message,
-            data=data,
+            data=enhanced_data,
             source=source
         )
         
@@ -93,7 +96,19 @@ class HospitalLogger:
         # File logging
         if self.log_to_file:
             log_method = getattr(self.file_logger, level.value.lower())
-            log_method(f"{event_type.value}: {message} | Data: {json.dumps(data)}")
+            # Include simulation time in file logs for better readability
+            file_message = f"Time {timestamp:6.1f}: {event_type.value}: {message} | Data: {json.dumps(enhanced_data)}"
+            log_method(file_message)
+    
+    def _enhance_log_data_with_simulation_state(self, data: dict, simulation_state) -> dict:
+        """Enhance log data with simulation state summary"""
+        enhanced_data = data.copy()
+        
+        # Add simulation state summary if provided
+        if simulation_state is not None:
+            enhanced_data["simulation_state"] = simulation_state.get_log_summary()
+        
+        return enhanced_data
     
     def _format_console_message(self, event: LogEvent) -> str:
         """Format event for console display"""
@@ -105,16 +120,31 @@ class HospitalLogger:
         
         if level_str or source_str:
             base_message += f" {level_str} {source_str}".strip()
+        
+        # Add simulation state summary if present
+        if event.data and "simulation_state" in event.data:
+            sim_state = event.data["simulation_state"]
+            state_summary = (
+                f" | SimState[T:{sim_state['simulation_time']:.1f}, "
+                f"Arr:{sim_state['total_arrivals']}, "
+                f"Comp:{sim_state['total_completed']}, "
+                f"InSys:{sim_state['patients_in_system']}, "
+                f"Busy:{sim_state['busy_doctors']}, "
+                f"Avail:{sim_state['available_doctors']}, "
+                f"Preempt:{sim_state['preemptions_count']}]"
+            )
+            base_message += state_summary
             
         return base_message
     
     # Convenience methods for different event types
     def log_patient_arrival(self, timestamp: float, patient_id: str, condition: str, 
-                           vital_signs: Dict = None) -> None:
+                           vital_signs: Dict = None, simulation_state = None) -> None:
         self.log_event(
             timestamp=timestamp,
             event_type=EventType.PATIENT_ARRIVAL,
             message=f"Patient {patient_id} arrives with {condition}",
+            simulation_state=simulation_state,
             data={"patient_id": patient_id, "condition": condition, "vital_signs": vital_signs or {}},
             source="patient_provider"
         )

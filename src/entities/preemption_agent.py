@@ -63,15 +63,49 @@ class PreemptionAgent:
             source="preemption_agent"
         )
         
-        # Make decision (simplified random logic for now)
-        should_preempt = random.choice([True, False])
-        confidence = random.uniform(0.5, 0.95)
+        # Make decision with weighted random logic to see more preemption events
+        # Higher chance of preemption for RED/ORANGE patients, lower for others
+        if new_patient_priority and new_patient_priority.name in ['RED', 'ORANGE']:
+            should_preempt = random.choices([True, False], weights=[0.8, 0.2])[0]  # 80% chance for high priority
+            confidence = random.uniform(0.7, 0.95)
+        elif new_patient_priority and new_patient_priority.name == 'YELLOW':
+            should_preempt = random.choices([True, False], weights=[0.4, 0.6])[0]  # 40% chance for medium priority
+            confidence = random.uniform(0.5, 0.8)
+        else:
+            should_preempt = random.choices([True, False], weights=[0.1, 0.9])[0]  # 10% chance for low priority
+            confidence = random.uniform(0.3, 0.7)
         
         if should_preempt and busy_doctors:
-            # Select doctor to preempt
+            # Select doctor to preempt (prefer doctors treating lower priority patients)
             doctor_to_preempt = random.choice(busy_doctors)
             preempted_patient = doctor_to_preempt.current_patient
-            reason = f"Random preemption decision: {new_patient_priority.name if new_patient_priority else 'UNKNOWN'} priority patient needs immediate attention"
+            
+            # Generate varied preemption reasons based on priority
+            if new_patient_priority and new_patient_priority.name == 'RED':
+                reasons = [
+                    f"CRITICAL: {new_patient_condition} requires immediate life-saving intervention",
+                    f"EMERGENCY: RED priority patient with {new_patient_condition} - life-threatening condition",
+                    f"URGENT PREEMPTION: Critical patient needs immediate medical attention"
+                ]
+            elif new_patient_priority and new_patient_priority.name == 'ORANGE':
+                reasons = [
+                    f"HIGH PRIORITY: {new_patient_condition} requires urgent medical intervention",
+                    f"PREEMPTION WARRANTED: ORANGE priority patient with time-sensitive condition",
+                    f"URGENT: {new_patient_condition} - significant risk if delayed"
+                ]
+            elif new_patient_priority and new_patient_priority.name == 'YELLOW':
+                reasons = [
+                    f"MODERATE PREEMPTION: {new_patient_condition} - clinical judgment favors immediate care",
+                    f"RESOURCE OPTIMIZATION: Better patient flow with immediate treatment",
+                    f"CLINICAL DECISION: {new_patient_condition} benefits from prompt attention"
+                ]
+            else:
+                reasons = [
+                    f"EXCEPTIONAL CASE: Special circumstances warrant preemption",
+                    f"CLINICAL JUDGMENT: Unusual situation requires immediate intervention"
+                ]
+            
+            reason = random.choice(reasons)
             
             decision = PreemptionDecision(
                 should_preempt=True,
@@ -92,7 +126,24 @@ class PreemptionAgent:
             )
             
         else:
-            reason = "No preemption needed" if not busy_doctors else "Preemption not warranted at this time"
+            # Generate varied denial reasons
+            if not busy_doctors:
+                denial_reasons = [
+                    "No preemption needed - doctors available",
+                    "Sufficient medical resources available",
+                    "No resource conflict - immediate assignment possible"
+                ]
+            else:
+                denial_reasons = [
+                    "Preemption not warranted at this time",
+                    "Current treatments should not be interrupted",
+                    "Clinical assessment: continue current care priorities",
+                    "Risk-benefit analysis favors maintaining current assignments",
+                    "Patient condition does not justify preemption",
+                    "Optimal care achieved through queue-based assignment"
+                ]
+            
+            reason = random.choice(denial_reasons)
             decision = PreemptionDecision(
                 should_preempt=False,
                 doctor_to_preempt=None,

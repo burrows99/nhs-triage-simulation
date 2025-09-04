@@ -6,6 +6,7 @@ from ..entities.hospital import HospitalCore
 from ..entities.patient import Patient
 from ..entities.preemption_agent import PreemptionAgent
 from ..entities.sub_entities.preemption_decision import PreemptionDecision
+from ..entities.sub_entities.simulation_state import SimulationState
 from ..enums.Triage import Priority
 from ..providers.patient import PatientDataProvider
 from ..triage_systems.base import TriageSystem
@@ -29,6 +30,9 @@ class HospitalSimulationEngine:
     doctor_resources: List[simpy.PreemptiveResource] = attr.ib(factory=list)
     triage_resources: simpy.Resource = attr.ib(init=False)
     
+    # Centralized state management
+    simulation_state: SimulationState = attr.ib(factory=SimulationState)
+    
     def __attrs_post_init__(self):
         """Initialize simulation resources"""
         self.logger = get_logger()
@@ -38,6 +42,7 @@ class HospitalSimulationEngine:
             timestamp=0.0,
             event_type=EventType.SIMULATION_START,
             message=f"Simulation engine initialized with {self.hospital.num_doctors} doctors and {self.hospital.triage_nurses} triage nurses",
+            simulation_state=self.simulation_state,
             data={
                 "num_doctors": self.hospital.num_doctors,
                 "triage_nurses": self.hospital.triage_nurses,
@@ -56,6 +61,7 @@ class HospitalSimulationEngine:
                 timestamp=0.0,
                 event_type=EventType.SYSTEM_STATE,
                 message=f"Doctor resource {i} created (PreemptiveResource)",
+                simulation_state=self.simulation_state,
                 data={"doctor_resource_id": i, "capacity": 1},
                 level=LogLevel.DEBUG,
                 source="simulation_engine"
@@ -68,10 +74,22 @@ class HospitalSimulationEngine:
             timestamp=0.0,
             event_type=EventType.SYSTEM_STATE,
             message=f"Triage resource created with capacity {self.hospital.triage_nurses}",
+            simulation_state=self.simulation_state,
             data={"triage_capacity": self.hospital.triage_nurses},
             level=LogLevel.DEBUG,
             source="simulation_engine"
         )
+        
+        # Initialize simulation state
+        self.simulation_state.available_doctors = list(range(self.hospital.num_doctors))
+        self.simulation_state.simulation_duration = 480.0  # Default duration
+    
+    def _sync_queue_lengths(self) -> None:
+        """Sync all queue lengths from hospital to simulation state"""
+        queue_lengths = {priority: len(queue) for priority, queue in self.hospital.priority_queues.items()}
+        self.simulation_state.update_all_queue_lengths(queue_lengths)
+    
+
     
     def patient_arrival_process(self):
         """Handle patient arrivals"""
@@ -80,27 +98,35 @@ class HospitalSimulationEngine:
             if patient is None:
                 break
             
+            # Update simulation state time
+            self.simulation_state.update_time(self.env.now)
+            
             # Update arrival time to simulation time
             patient.arrival_time = self.env.now
             
-            # Register patient
+            # Register patient in both hospital and simulation state
             self.hospital.register_patient(patient, self.env.now)
+            self.simulation_state.register_patient_arrival(patient)
             self.event_handler.on_patient_arrival(patient)
             
             # Start triage process
             self.env.process(self.triage_process(patient))
             
             # Wait for next arrival
-            if hasattr(self.patient_provider, 'get_next_arrival_time'):
+            try:
                 next_time = self.patient_provider.get_next_arrival_time(self.env.now)
                 yield self.env.timeout(next_time - self.env.now)
-            else:
-                yield self.env.timeout(random.expovariate(0.3))  # Default rate
+            except AttributeError:
+                # Provider doesn't implement get_next_arrival_time, use default rate
+                yield self.env.timeout(random.expovariate(0.3))
     
     def triage_process(self, patient: Patient):
         """Triage assessment process"""
         with self.triage_resources.request() as req:
             yield req
+            
+            # Update simulation state time
+            self.simulation_state.update_time(self.env.now)
             
             # Triage assessment with logging
             assessment = self.triage_system.assess_patient(patient, self.env.now)
@@ -111,6 +137,7 @@ class HospitalSimulationEngine:
                 timestamp=self.env.now,
                 event_type=EventType.TRIAGE_ASSESSMENT,
                 message=f"Triage process duration: {triage_time:.1f} minutes for Patient {patient.id}",
+                simulation_state=self.simulation_state,
                 data={
                     "patient_id": patient.id,
                     "triage_duration": triage_time,
@@ -127,12 +154,18 @@ class HospitalSimulationEngine:
             # Assign to queue with current time
             self.hospital.assign_patient_to_queue(patient, assessment, self.env.now)
             
+            # Sync queue lengths to simulation state
+            self._sync_queue_lengths()
+            
             # Check for preemption
             if assessment.priority in [Priority.RED, Priority.ORANGE]:
                 yield self.env.process(self.check_preemption(patient))
     
     def check_preemption(self, new_patient: Patient):
         """Check and execute preemption if needed"""
+        # Update simulation state time
+        self.simulation_state.update_time(self.env.now)
+        
         busy_doctors = self.hospital.get_busy_doctors()
         
         # Log preemption check initiation
@@ -140,6 +173,7 @@ class HospitalSimulationEngine:
             timestamp=self.env.now,
             event_type=EventType.PREEMPTION_DECISION,
             message=f"Preemption check initiated for Patient {new_patient.id}",
+            simulation_state=self.simulation_state,
             data={
                 "patient_id": new_patient.id,
                 "patient_priority": new_patient.priority.name if new_patient.priority else None,
@@ -160,6 +194,7 @@ class HospitalSimulationEngine:
                 timestamp=self.env.now,
                 event_type=EventType.PREEMPTION_DECISION,
                 message=f"No preemption possible - no busy doctors available",
+                simulation_state=self.simulation_state,
                 data={"patient_id": new_patient.id},
                 source="simulation_engine"
             )
@@ -168,12 +203,18 @@ class HospitalSimulationEngine:
     
     def execute_preemption(self, decision: PreemptionDecision):
         """Execute preemption decision"""
+        # Update simulation state time
+        self.simulation_state.update_time(self.env.now)
+        
         doctor_id = decision.doctor_to_preempt
         doctor = next((d for d in self.hospital.doctors if d.id == doctor_id), None)
         
         if doctor and doctor.current_patient:
             interrupted_patient = doctor.current_patient
             new_priority = self.hospital.handle_preemption(interrupted_patient, self.env.now)
+            
+            # Record preemption in simulation state
+            self.simulation_state.record_preemption()
             
             self.event_handler.on_preemption(decision, [interrupted_patient])
         
@@ -194,33 +235,59 @@ class HospitalSimulationEngine:
             
             patient, priority = result
             
+            # Sync queue lengths to simulation state after patient removal
+            self._sync_queue_lengths()
+            
             # Request resource
             with doctor_resource.request(priority=priority.value) as req:
                 try:
                     yield req
                     
-                    # Start treatment
+                    # Update simulation state time
+                    self.simulation_state.update_time(self.env.now)
+                    
+                    # Start treatment - update both hospital and simulation state
                     self.hospital.assign_doctor_to_patient(doctor, patient, self.env.now)
+                    self.simulation_state.assign_doctor_to_patient(doctor.id, patient.id)
                     self.event_handler.on_treatment_start(patient, doctor)
                     
                     # Treatment time
                     yield self.env.timeout(patient.treatment_time)
                     
-                    # Complete treatment
+                    # Update simulation state time after treatment
+                    self.simulation_state.update_time(self.env.now)
+                    
+                    # Complete treatment - update both hospital and simulation state
                     self.hospital.complete_treatment(doctor, patient, self.env.now)
+                    self.simulation_state.release_doctor(doctor.id)
+                    self.simulation_state.register_patient_completion(patient)
                     self.event_handler.on_treatment_complete(patient, doctor, self.env.now)
                     
                 except simpy.Interrupt:
-                    # Handle preemption
+                    # Handle preemption - update simulation state
                     if doctor.current_patient:
                         doctor.current_patient = None
+                        self.simulation_state.release_doctor(doctor.id)
                     doctor.busy = False
     
     def run_simulation(self, duration: int = 480):
         """Run the complete simulation"""
-        print(f"Starting simulation - Duration: {duration} minutes")
-        print(f"Hospital: {self.hospital.num_doctors} doctors, {self.hospital.triage_nurses} triage nurses")
-        print("-" * 80)
+        # Update simulation state with duration
+        self.simulation_state.simulation_duration = duration
+        
+        # Log simulation run start
+        self.logger.log_event(
+            timestamp=0.0,
+            event_type=EventType.SIMULATION_START,
+            message=f"Starting simulation run - Duration: {duration} minutes",
+            simulation_state=self.simulation_state,
+            data={
+                "duration": duration,
+                "num_doctors": self.hospital.num_doctors,
+                "triage_nurses": self.hospital.triage_nurses
+            },
+            source="simulation_engine"
+        )
         
         # Start processes
         self.env.process(self.patient_arrival_process())
@@ -231,29 +298,37 @@ class HospitalSimulationEngine:
         # Run simulation
         self.env.run(until=duration)
         
+        # Final simulation state update
+        self.simulation_state.update_time(self.env.now)
+        
         # Print final statistics
         self.print_statistics()
     
     def print_statistics(self):
-        """Print simulation results"""
-        status = self.hospital.get_hospital_status()
+        """Log simulation results using simulation state"""
+        # Get comprehensive status from simulation state
+        status = self.simulation_state.get_system_status()
         
-        print("\n" + "="*80)
-        print("FINAL SIMULATION RESULTS")
-        print("="*80)
-        
-        print(f"Patients: {status['total_arrivals']} arrived, {status['total_completed']} completed")
-        print(f"Still in system: {status['patients_in_system']}")
-        
-        if self.hospital.completed_patients:
-            avg_wait = sum(p.wait_time for p in self.hospital.completed_patients) / len(self.hospital.completed_patients)
-            print(f"Average wait time: {avg_wait:.1f} minutes")
-        
-        print("\nQueue lengths:")
-        for priority, length in status['queue_lengths'].items():
-            print(f"  {priority}: {length}")
-        
-        print("\nDoctor performance:")
-        for doctor_id, stats in status['doctor_status'].items():
-            print(f"  {doctor_id}: {stats['patients_treated']} patients")
+        # Log final simulation results
+        self.logger.log_event(
+            timestamp=self.env.now,
+            event_type=EventType.SIMULATION_END,
+            message="Final simulation results",
+            simulation_state=self.simulation_state,
+            data={
+                "simulation_time": f"{status['current_time']:.1f} / {self.simulation_state.simulation_duration} minutes",
+                "patients_arrived": status['total_arrivals'],
+                "patients_completed": status['total_completed'],
+                "patients_in_system": status['patients_in_system'],
+                "average_wait_time": status['average_wait_time'],
+                "average_treatment_time": status['average_treatment_time'],
+                "queue_lengths": {priority.name: length for priority, length in status['queue_lengths'].items()},
+                "triage_utilization": status['triage_utilization'],
+                "doctor_utilization": status['doctor_utilization'],
+                "busy_doctors": status['busy_doctors'],
+                "available_doctors": status['available_doctors'],
+                "preemptions_count": status['preemptions_count']
+            },
+            source="simulation_engine"
+        )
 

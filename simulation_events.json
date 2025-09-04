@@ -31,7 +31,62 @@
     "data": {
       "num_doctors": 3,
       "triage_nurses": 1,
-      "simulation_engine": "HospitalSimulationEngine"
+      "simulation_engine": "HospitalSimulationEngine",
+      "simulation_state": {
+        "simulation_time": 0.0,
+        "total_arrivals": 0,
+        "total_completed": 0,
+        "patients_in_system": 0,
+        "busy_doctors": 0,
+        "available_doctors": 0,
+        "preemptions_count": 0,
+        "queue_lengths": {
+          "RED": 0,
+          "ORANGE": 0,
+          "YELLOW": 0,
+          "GREEN": 0,
+          "BLUE": 0
+        }
+      }
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 0.0,
+    "event_type": "SIMULATION_START",
+    "level": "INFO",
+    "message": "Starting hospital simulation",
+    "data": {
+      "duration": 60,
+      "simulation_type": "hospital_emergency_department"
+    },
+    "source": "main"
+  },
+  {
+    "timestamp": 0.0,
+    "event_type": "SIMULATION_START",
+    "level": "INFO",
+    "message": "Starting simulation run - Duration: 60 minutes",
+    "data": {
+      "duration": 60,
+      "num_doctors": 3,
+      "triage_nurses": 1,
+      "simulation_state": {
+        "simulation_time": 0.0,
+        "total_arrivals": 0,
+        "total_completed": 0,
+        "patients_in_system": 0,
+        "busy_doctors": 0,
+        "available_doctors": 3,
+        "preemptions_count": 0,
+        "queue_lengths": {
+          "RED": 0,
+          "ORANGE": 0,
+          "YELLOW": 0,
+          "GREEN": 0,
+          "BLUE": 0
+        }
+      }
     },
     "source": "simulation_engine"
   },
@@ -42,11 +97,11 @@
     "message": "Patient PAT_00001 registered in hospital system",
     "data": {
       "patient_id": "PAT_00001",
-      "condition": "abdominal_pain",
+      "condition": "allergic_reaction",
       "symptoms": [
-        "nausea",
-        "vomiting",
-        "fever"
+        "rash",
+        "swelling",
+        "difficulty_breathing"
       ],
       "arrival_time": 0,
       "total_arrivals": 1
@@ -57,19 +112,30 @@
     "timestamp": 0,
     "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00001 arrives with abdominal_pain",
+    "message": "Patient PAT_00001 arrives with allergic_reaction",
     "data": {
       "patient_id": "PAT_00001",
-      "condition": "abdominal_pain",
+      "condition": "allergic_reaction",
       "vital_signs": {
-        "bp_systolic": 162.9193134973452,
-        "bp_diastolic": 76.8274986105672,
-        "heart_rate": 81.00753084336176,
-        "temperature": 38.19702283373255,
-        "oxygen_saturation": 96.24214122006155
+        "bp_systolic": 121.91247224822821,
+        "bp_diastolic": 51.357695503829554,
+        "heart_rate": 49.0817788829776,
+        "temperature": 37.95007635779323,
+        "oxygen_saturation": 96.51139654634424
       }
     },
     "source": "patient_provider"
+  },
+  {
+    "timestamp": 0,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00001 arrives - allergic_reaction",
+    "data": {
+      "patient_id": "PAT_00001",
+      "condition": "allergic_reaction"
+    },
+    "source": "console_event_handler"
   },
   {
     "timestamp": 0,
@@ -86,12 +152,12 @@
     "timestamp": 0,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00001 assessed as YELLOW priority - MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as YELLOW priority",
+    "message": "Patient PAT_00001 assessed as ORANGE priority - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
     "data": {
       "patient_id": "PAT_00001",
-      "priority": "YELLOW",
-      "reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as YELLOW priority",
-      "estimated_treatment_time": 24.356582240775097
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
+      "estimated_treatment_time": 17.877650780569887
     },
     "source": "triage_system"
   },
@@ -109,52 +175,90 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 2.343256788292624,
-    "event_type": "QUEUE_ASSIGNMENT",
+    "timestamp": 4.023949850963722,
+    "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
-    "message": "Patient PAT_00001 assigned to YELLOW queue (position 1)",
+    "message": "Patient PAT_00001 triaged as ORANGE - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
     "data": {
       "patient_id": "PAT_00001",
-      "priority": "YELLOW",
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 4.023949850963722,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00001 assigned to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "priority": "ORANGE",
       "queue_position": 1
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 2.343256788292624,
+    "timestamp": 4.023949850963722,
     "event_type": "QUEUE_UPDATE",
     "level": "INFO",
-    "message": "Patient PAT_00001 added to YELLOW queue (position 1)",
+    "message": "Patient PAT_00001 added to ORANGE queue (position 1)",
     "data": {
       "patient_id": "PAT_00001",
-      "priority": "YELLOW",
+      "priority": "ORANGE",
       "queue_position": 1,
       "queue_lengths": {
         "RED": 0,
-        "ORANGE": 0,
-        "YELLOW": 1,
+        "ORANGE": 1,
+        "YELLOW": 0,
         "GREEN": 0,
         "BLUE": 0
       },
-      "assessment_reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as YELLOW priority",
-      "estimated_treatment_time": 24.356582240775097
+      "assessment_reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
+      "estimated_treatment_time": 17.877650780569887
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 3,
+    "timestamp": 4.023949850963722,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "No preemption possible - no busy doctors available",
+    "data": {
+      "patient_id": "PAT_00001",
+      "simulation_state": {
+        "simulation_time": 4.023949850963722,
+        "total_arrivals": 1,
+        "total_completed": 0,
+        "patients_in_system": 1,
+        "busy_doctors": 0,
+        "available_doctors": 3,
+        "preemptions_count": 0,
+        "queue_lengths": {
+          "RED": 0,
+          "ORANGE": 1,
+          "YELLOW": 0,
+          "GREEN": 0,
+          "BLUE": 0
+        }
+      }
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 5,
     "event_type": "DOCTOR_ASSIGNMENT",
     "level": "INFO",
-    "message": "Doctor DOC_000 assigned to Patient PAT_00001 (YELLOW)",
+    "message": "Doctor DOC_000 assigned to Patient PAT_00001 (ORANGE)",
     "data": {
       "patient_id": "PAT_00001",
       "doctor_id": "DOC_000",
-      "priority": "YELLOW"
+      "priority": "ORANGE"
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 3,
+    "timestamp": 5,
     "event_type": "DOCTOR_ASSIGNMENT",
     "level": "INFO",
     "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00001",
@@ -163,51 +267,71 @@
       "doctor_name": "Dr. A",
       "doctor_specialization": "Emergency_Medicine_0",
       "patient_id": "PAT_00001",
-      "patient_condition": "abdominal_pain",
-      "patient_priority": "YELLOW",
-      "wait_time": 3,
-      "estimated_treatment_time": 24.356582240775097
+      "patient_condition": "allergic_reaction",
+      "patient_priority": "ORANGE",
+      "wait_time": 5,
+      "estimated_treatment_time": 17.877650780569887
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 4.345677826946216,
+    "timestamp": 5,
+    "event_type": "TREATMENT_START",
+    "level": "INFO",
+    "message": "Dr. A starts treating Patient PAT_00001 (ORANGE)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "priority": "ORANGE"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 5.947498618307089,
     "event_type": "PATIENT_REGISTRATION",
     "level": "INFO",
     "message": "Patient PAT_00002 registered in hospital system",
     "data": {
       "patient_id": "PAT_00002",
-      "condition": "headache",
-      "symptoms": [
-        "dizziness",
-        "light_sensitivity",
-        "nausea"
-      ],
-      "arrival_time": 4.345677826946216,
+      "condition": "routine_checkup",
+      "symptoms": [],
+      "arrival_time": 5.947498618307089,
       "total_arrivals": 2
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 4.345677826946216,
+    "timestamp": 5.947498618307089,
     "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00002 arrives with headache",
+    "message": "Patient PAT_00002 arrives with routine_checkup",
     "data": {
       "patient_id": "PAT_00002",
-      "condition": "headache",
+      "condition": "routine_checkup",
       "vital_signs": {
-        "bp_systolic": 114.47132416542317,
-        "bp_diastolic": 55.19740069241156,
-        "heart_rate": 92.90509974915378,
-        "temperature": 37.19001205205319,
-        "oxygen_saturation": 97.36042411341643
+        "bp_systolic": 124.34480924802664,
+        "bp_diastolic": 52.79190170952023,
+        "heart_rate": 94.63952276857282,
+        "temperature": 37.224607877946305,
+        "oxygen_saturation": 93.6875642024772
       }
     },
     "source": "patient_provider"
   },
   {
-    "timestamp": 4.345677826946216,
+    "timestamp": 5.947498618307089,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00002 arrives - routine_checkup",
+    "data": {
+      "patient_id": "PAT_00002",
+      "condition": "routine_checkup"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 5.947498618307089,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00002",
@@ -218,20 +342,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 4.345677826946216,
+    "timestamp": 5.947498618307089,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00002 assessed as GREEN priority - MTS Assessment: headache with symptoms: dizziness, light_sensitivity, nausea classified as GREEN priority",
+    "message": "Patient PAT_00002 assessed as GREEN priority - MTS Assessment: routine_checkup classified as GREEN priority",
     "data": {
       "patient_id": "PAT_00002",
       "priority": "GREEN",
-      "reason": "MTS Assessment: headache with symptoms: dizziness, light_sensitivity, nausea classified as GREEN priority",
-      "estimated_treatment_time": 47.71614692486884
+      "reason": "MTS Assessment: routine_checkup classified as GREEN priority",
+      "estimated_treatment_time": 41.51606824987077
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 4.345677826946216,
+    "timestamp": 5.947498618307089,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00002 by NURSE_001",
@@ -244,7 +368,19 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 6.3965251988992335,
+    "timestamp": 8.17058211766692,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00002 triaged as GREEN - MTS Assessment: routine_checkup classified as GREEN priority",
+    "data": {
+      "patient_id": "PAT_00002",
+      "priority": "GREEN",
+      "reason": "MTS Assessment: routine_checkup classified as GREEN priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 8.17058211766692,
     "event_type": "QUEUE_ASSIGNMENT",
     "level": "INFO",
     "message": "Patient PAT_00002 assigned to GREEN queue (position 1)",
@@ -256,7 +392,7 @@
     "source": "hospital_core"
   },
   {
-    "timestamp": 6.3965251988992335,
+    "timestamp": 8.17058211766692,
     "event_type": "QUEUE_UPDATE",
     "level": "INFO",
     "message": "Patient PAT_00002 added to GREEN queue (position 1)",
@@ -271,74 +407,59 @@
         "GREEN": 1,
         "BLUE": 0
       },
-      "assessment_reason": "MTS Assessment: headache with symptoms: dizziness, light_sensitivity, nausea classified as GREEN priority",
-      "estimated_treatment_time": 47.71614692486884
+      "assessment_reason": "MTS Assessment: routine_checkup classified as GREEN priority",
+      "estimated_treatment_time": 41.51606824987077
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 7,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_001 assigned to Patient PAT_00002 (GREEN)",
-    "data": {
-      "patient_id": "PAT_00002",
-      "doctor_id": "DOC_001",
-      "priority": "GREEN"
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 7,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_001 (Dr. B) assigned to Patient PAT_00002",
-    "data": {
-      "doctor_id": "DOC_001",
-      "doctor_name": "Dr. B",
-      "doctor_specialization": "Emergency_Medicine_1",
-      "patient_id": "PAT_00002",
-      "patient_condition": "headache",
-      "patient_priority": "GREEN",
-      "wait_time": 2.6543221730537843,
-      "estimated_treatment_time": 47.71614692486884
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 11.734134628641158,
+    "timestamp": 8.761185632905333,
     "event_type": "PATIENT_REGISTRATION",
     "level": "INFO",
     "message": "Patient PAT_00003 registered in hospital system",
     "data": {
       "patient_id": "PAT_00003",
-      "condition": "routine_checkup",
-      "symptoms": [],
-      "arrival_time": 11.734134628641158,
+      "condition": "minor_laceration",
+      "symptoms": [
+        "bleeding",
+        "pain"
+      ],
+      "arrival_time": 8.761185632905333,
       "total_arrivals": 3
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 11.734134628641158,
+    "timestamp": 8.761185632905333,
     "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00003 arrives with routine_checkup",
+    "message": "Patient PAT_00003 arrives with minor_laceration",
     "data": {
       "patient_id": "PAT_00003",
-      "condition": "routine_checkup",
+      "condition": "minor_laceration",
       "vital_signs": {
-        "bp_systolic": 95.54652366580027,
-        "bp_diastolic": 73.32155969745834,
-        "heart_rate": 79.09206824160633,
-        "temperature": 38.49250829223696,
+        "bp_systolic": 86.28149665558486,
+        "bp_diastolic": 94.74059929180187,
+        "heart_rate": 45.16882228115928,
+        "temperature": 35,
         "oxygen_saturation": 100
       }
     },
     "source": "patient_provider"
   },
   {
-    "timestamp": 11.734134628641158,
+    "timestamp": 8.761185632905333,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00003 arrives - minor_laceration",
+    "data": {
+      "patient_id": "PAT_00003",
+      "condition": "minor_laceration"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 8.761185632905333,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00003",
@@ -349,20 +470,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 11.734134628641158,
+    "timestamp": 8.761185632905333,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00003 assessed as BLUE priority - MTS Assessment: routine_checkup classified as BLUE priority",
+    "message": "Patient PAT_00003 assessed as YELLOW priority - MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as YELLOW priority",
     "data": {
       "patient_id": "PAT_00003",
-      "priority": "BLUE",
-      "reason": "MTS Assessment: routine_checkup classified as BLUE priority",
-      "estimated_treatment_time": 58.82151446765273
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as YELLOW priority",
+      "estimated_treatment_time": 31.208134365674553
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 11.734134628641158,
+    "timestamp": 8.761185632905333,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00003 by NURSE_001",
@@ -375,76 +496,183 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 12.71275456261327,
-    "event_type": "PATIENT_REGISTRATION",
+    "timestamp": 9,
+    "event_type": "DOCTOR_ASSIGNMENT",
     "level": "INFO",
-    "message": "Patient PAT_00004 registered in hospital system",
+    "message": "Doctor DOC_001 assigned to Patient PAT_00002 (GREEN)",
     "data": {
-      "patient_id": "PAT_00004",
-      "condition": "chest_pain",
-      "symptoms": [
-        "shortness_of_breath",
-        "sweating",
-        "nausea"
-      ],
-      "arrival_time": 12.71275456261327,
-      "total_arrivals": 4
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "priority": "GREEN"
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 12.71275456261327,
-    "event_type": "PATIENT_ARRIVAL",
+    "timestamp": 9,
+    "event_type": "DOCTOR_ASSIGNMENT",
     "level": "INFO",
-    "message": "Patient PAT_00004 arrives with chest_pain",
+    "message": "Doctor DOC_001 (Dr. B) assigned to Patient PAT_00002",
     "data": {
-      "patient_id": "PAT_00004",
-      "condition": "chest_pain",
-      "vital_signs": {
-        "bp_systolic": 60,
-        "bp_diastolic": 61.343751238299006,
-        "heart_rate": 97.62778034991511,
-        "temperature": 38.39189158463519,
-        "oxygen_saturation": 93.6804642128975
-      }
+      "doctor_id": "DOC_001",
+      "doctor_name": "Dr. B",
+      "doctor_specialization": "Emergency_Medicine_1",
+      "patient_id": "PAT_00002",
+      "patient_condition": "routine_checkup",
+      "patient_priority": "GREEN",
+      "wait_time": 3.0525013816929114,
+      "estimated_treatment_time": 41.51606824987077
     },
-    "source": "patient_provider"
+    "source": "hospital_core"
   },
   {
-    "timestamp": 16.270827890521186,
-    "event_type": "QUEUE_ASSIGNMENT",
+    "timestamp": 9,
+    "event_type": "TREATMENT_START",
     "level": "INFO",
-    "message": "Patient PAT_00003 assigned to BLUE queue (position 1)",
+    "message": "Dr. B starts treating Patient PAT_00002 (GREEN)",
+    "data": {
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "doctor_name": "Dr. B",
+      "priority": "GREEN"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 13.091301208441251,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00003 triaged as YELLOW - MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as YELLOW priority",
     "data": {
       "patient_id": "PAT_00003",
-      "priority": "BLUE",
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as YELLOW priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 13.091301208441251,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00003 assigned to YELLOW queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "priority": "YELLOW",
       "queue_position": 1
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 16.270827890521186,
+    "timestamp": 13.091301208441251,
     "event_type": "QUEUE_UPDATE",
     "level": "INFO",
-    "message": "Patient PAT_00003 added to BLUE queue (position 1)",
+    "message": "Patient PAT_00003 added to YELLOW queue (position 1)",
     "data": {
       "patient_id": "PAT_00003",
-      "priority": "BLUE",
+      "priority": "YELLOW",
       "queue_position": 1,
       "queue_lengths": {
         "RED": 0,
         "ORANGE": 0,
-        "YELLOW": 0,
+        "YELLOW": 1,
         "GREEN": 0,
-        "BLUE": 1
+        "BLUE": 0
       },
-      "assessment_reason": "MTS Assessment: routine_checkup classified as BLUE priority",
-      "estimated_treatment_time": 58.82151446765273
+      "assessment_reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as YELLOW priority",
+      "estimated_treatment_time": 31.208134365674553
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 16.270827890521186,
+    "timestamp": 14,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_002 assigned to Patient PAT_00003 (YELLOW)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "priority": "YELLOW"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 14,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_002 (Dr. C) assigned to Patient PAT_00003",
+    "data": {
+      "doctor_id": "DOC_002",
+      "doctor_name": "Dr. C",
+      "doctor_specialization": "Emergency_Medicine_2",
+      "patient_id": "PAT_00003",
+      "patient_condition": "minor_laceration",
+      "patient_priority": "YELLOW",
+      "wait_time": 5.238814367094667,
+      "estimated_treatment_time": 31.208134365674553
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 14,
+    "event_type": "TREATMENT_START",
+    "level": "INFO",
+    "message": "Dr. C starts treating Patient PAT_00003 (YELLOW)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "doctor_name": "Dr. C",
+      "priority": "YELLOW"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 16.744560823331817,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00004 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00004",
+      "condition": "stroke_symptoms",
+      "symptoms": [
+        "confusion",
+        "weakness",
+        "speech_difficulty"
+      ],
+      "arrival_time": 16.744560823331817,
+      "total_arrivals": 4
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 16.744560823331817,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00004 arrives with stroke_symptoms",
+    "data": {
+      "patient_id": "PAT_00004",
+      "condition": "stroke_symptoms",
+      "vital_signs": {
+        "bp_systolic": 105.87506862283954,
+        "bp_diastolic": 58.61799970353401,
+        "heart_rate": 96.05346111090556,
+        "temperature": 37.19530410862098,
+        "oxygen_saturation": 97.6259353598855
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 16.744560823331817,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00004 arrives - stroke_symptoms",
+    "data": {
+      "patient_id": "PAT_00004",
+      "condition": "stroke_symptoms"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 16.744560823331817,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00004",
@@ -455,20 +683,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 16.270827890521186,
+    "timestamp": 16.744560823331817,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00004 assessed as YELLOW priority - MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as YELLOW priority",
+    "message": "Patient PAT_00004 assessed as RED priority - MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as RED priority",
     "data": {
       "patient_id": "PAT_00004",
-      "priority": "YELLOW",
-      "reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as YELLOW priority",
-      "estimated_treatment_time": 35.415952174305936
+      "priority": "RED",
+      "reason": "MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as RED priority",
+      "estimated_treatment_time": 10.543562981227513
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 16.270827890521186,
+    "timestamp": 16.744560823331817,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00004 by NURSE_001",
@@ -481,105 +709,192 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 17,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_002 assigned to Patient PAT_00003 (BLUE)",
-    "data": {
-      "patient_id": "PAT_00003",
-      "doctor_id": "DOC_002",
-      "priority": "BLUE"
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 17,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_002 (Dr. C) assigned to Patient PAT_00003",
-    "data": {
-      "doctor_id": "DOC_002",
-      "doctor_name": "Dr. C",
-      "doctor_specialization": "Emergency_Medicine_2",
-      "patient_id": "PAT_00003",
-      "patient_condition": "routine_checkup",
-      "patient_priority": "BLUE",
-      "wait_time": 5.265865371358842,
-      "estimated_treatment_time": 58.82151446765273
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 20.197728530923122,
+    "timestamp": 17.415224967613575,
     "event_type": "PATIENT_REGISTRATION",
     "level": "INFO",
     "message": "Patient PAT_00005 registered in hospital system",
     "data": {
       "patient_id": "PAT_00005",
-      "condition": "chest_pain",
+      "condition": "allergic_reaction",
       "symptoms": [
-        "shortness_of_breath",
-        "sweating",
-        "nausea"
+        "rash",
+        "swelling",
+        "difficulty_breathing"
       ],
-      "arrival_time": 20.197728530923122,
+      "arrival_time": 17.415224967613575,
       "total_arrivals": 5
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 20.197728530923122,
+    "timestamp": 17.415224967613575,
     "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00005 arrives with chest_pain",
+    "message": "Patient PAT_00005 arrives with allergic_reaction",
     "data": {
       "patient_id": "PAT_00005",
-      "condition": "chest_pain",
+      "condition": "allergic_reaction",
       "vital_signs": {
-        "bp_systolic": 93.70936425908538,
-        "bp_diastolic": 75.31583137702799,
-        "heart_rate": 87.56345669379328,
-        "temperature": 35.16247391969455,
-        "oxygen_saturation": 98.91343392792945
+        "bp_systolic": 136.94514396866202,
+        "bp_diastolic": 81.15417008924722,
+        "heart_rate": 74.23592287983966,
+        "temperature": 35.64950957723833,
+        "oxygen_saturation": 97.48216384218466
       }
     },
     "source": "patient_provider"
   },
   {
-    "timestamp": 20.939152172595936,
-    "event_type": "QUEUE_ASSIGNMENT",
+    "timestamp": 17.415224967613575,
+    "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00004 assigned to YELLOW queue (position 1)",
+    "message": "Patient PAT_00005 arrives - allergic_reaction",
+    "data": {
+      "patient_id": "PAT_00005",
+      "condition": "allergic_reaction"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 18.04763928689826,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00006 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00006",
+      "condition": "allergic_reaction",
+      "symptoms": [
+        "rash",
+        "swelling",
+        "difficulty_breathing"
+      ],
+      "arrival_time": 18.04763928689826,
+      "total_arrivals": 6
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 18.04763928689826,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00006 arrives with allergic_reaction",
+    "data": {
+      "patient_id": "PAT_00006",
+      "condition": "allergic_reaction",
+      "vital_signs": {
+        "bp_systolic": 126.66116104674302,
+        "bp_diastolic": 96.00397019593518,
+        "heart_rate": 82.9621810999847,
+        "temperature": 36.84367045791835,
+        "oxygen_saturation": 100
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 18.04763928689826,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00006 arrives - allergic_reaction",
+    "data": {
+      "patient_id": "PAT_00006",
+      "condition": "allergic_reaction"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 20.808740248787206,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00004 triaged as RED - MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as RED priority",
     "data": {
       "patient_id": "PAT_00004",
-      "priority": "YELLOW",
+      "priority": "RED",
+      "reason": "MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as RED priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 20.808740248787206,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00004 assigned to RED queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "priority": "RED",
       "queue_position": 1
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 20.939152172595936,
+    "timestamp": 20.808740248787206,
     "event_type": "QUEUE_UPDATE",
     "level": "INFO",
-    "message": "Patient PAT_00004 added to YELLOW queue (position 1)",
+    "message": "Patient PAT_00004 added to RED queue (position 1)",
     "data": {
       "patient_id": "PAT_00004",
-      "priority": "YELLOW",
+      "priority": "RED",
       "queue_position": 1,
       "queue_lengths": {
-        "RED": 0,
+        "RED": 1,
         "ORANGE": 0,
-        "YELLOW": 1,
+        "YELLOW": 0,
         "GREEN": 0,
         "BLUE": 0
       },
-      "assessment_reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as YELLOW priority",
-      "estimated_treatment_time": 35.415952174305936
+      "assessment_reason": "MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as RED priority",
+      "estimated_treatment_time": 10.543562981227513
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 20.939152172595936,
+    "timestamp": 20.808740248787206,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "WARNING",
+    "message": "Preemption APPROVED: CRITICAL: stroke_symptoms requires immediate life-saving intervention",
+    "data": {
+      "decision": true,
+      "reason": "CRITICAL: stroke_symptoms requires immediate life-saving intervention",
+      "new_patient_id": "PAT_00004",
+      "affected_patients": [
+        "PAT_00003"
+      ]
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 20.808740248787206,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "Preemption decision completed: APPROVED (confidence: 0.78)",
+    "data": {
+      "decision": true,
+      "confidence": 0.7823257184545934,
+      "reason": "CRITICAL: stroke_symptoms requires immediate life-saving intervention",
+      "new_patient_id": "PAT_00004",
+      "doctor_to_preempt": "DOC_002",
+      "total_decisions": 1,
+      "approval_rate": 1.0
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 20.808740248787206,
+    "event_type": "PREEMPTION_EXECUTED",
+    "level": "INFO",
+    "message": "PREEMPTION: CRITICAL: stroke_symptoms requires immediate life-saving intervention - Affected: ['PAT_00003']",
+    "data": {
+      "decision_reason": "CRITICAL: stroke_symptoms requires immediate life-saving intervention",
+      "affected_patient_ids": [
+        "PAT_00003"
+      ],
+      "doctor_to_preempt": "DOC_002",
+      "confidence": 0.7823257184545934
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 20.808740248787206,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00005",
@@ -590,20 +905,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 20.939152172595936,
+    "timestamp": 20.808740248787206,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00005 assessed as ORANGE priority - MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as ORANGE priority",
+    "message": "Patient PAT_00005 assessed as YELLOW priority - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
     "data": {
       "patient_id": "PAT_00005",
-      "priority": "ORANGE",
-      "reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as ORANGE priority",
-      "estimated_treatment_time": 16.052194165963666
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+      "estimated_treatment_time": 35.04083781232698
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 20.939152172595936,
+    "timestamp": 20.808740248787206,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00005 by NURSE_001",
@@ -616,25 +931,123 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 23.965031213096267,
-    "event_type": "QUEUE_ASSIGNMENT",
+    "timestamp": 22.877650780569887,
+    "event_type": "TREATMENT_COMPLETE",
     "level": "INFO",
-    "message": "Patient PAT_00005 assigned to ORANGE queue (position 1)",
+    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00001 (wait: 5.0min)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "doctor_id": "DOC_000",
+      "wait_time": 5.0
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 22.877650780569887,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Patient PAT_00001 discharged by Doctor DOC_000",
+    "data": {
+      "patient_id": "PAT_00001",
+      "doctor_id": "DOC_000",
+      "condition": "allergic_reaction",
+      "priority": "ORANGE",
+      "total_wait_time": 22.877650780569887,
+      "actual_treatment_time": 17.877650780569887,
+      "estimated_treatment_time": 17.877650780569887,
+      "interruption_count": 0,
+      "doctor_total_patients": 1,
+      "hospital_total_completed": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 22.877650780569887,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00001 (wait: 5.0min)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "wait_time": 5.0
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 22.877650780569887,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 assigned to Patient PAT_00004 (RED)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "doctor_id": "DOC_000",
+      "priority": "RED"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 22.877650780569887,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00004",
+    "data": {
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "doctor_specialization": "Emergency_Medicine_0",
+      "patient_id": "PAT_00004",
+      "patient_condition": "stroke_symptoms",
+      "patient_priority": "RED",
+      "wait_time": 6.13308995723807,
+      "estimated_treatment_time": 10.543562981227513
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 22.877650780569887,
+    "event_type": "TREATMENT_START",
+    "level": "INFO",
+    "message": "Dr. A starts treating Patient PAT_00004 (RED)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "priority": "RED"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 23.49622126302964,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00005 triaged as YELLOW - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
     "data": {
       "patient_id": "PAT_00005",
-      "priority": "ORANGE",
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 23.49622126302964,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00005 assigned to YELLOW queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00005",
+      "priority": "YELLOW",
       "queue_position": 1
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 23.965031213096267,
+    "timestamp": 23.49622126302964,
     "event_type": "QUEUE_UPDATE",
     "level": "INFO",
-    "message": "Patient PAT_00005 added to ORANGE queue (position 1)",
+    "message": "Patient PAT_00005 added to YELLOW queue (position 1)",
     "data": {
       "patient_id": "PAT_00005",
-      "priority": "ORANGE",
+      "priority": "YELLOW",
       "queue_position": 1,
       "queue_lengths": {
         "RED": 0,
@@ -643,77 +1056,13 @@
         "GREEN": 0,
         "BLUE": 0
       },
-      "assessment_reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as ORANGE priority",
-      "estimated_treatment_time": 16.052194165963666
+      "assessment_reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+      "estimated_treatment_time": 35.04083781232698
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 23.965031213096267,
-    "event_type": "PREEMPTION_DECISION",
-    "level": "INFO",
-    "message": "Preemption DENIED: Preemption not warranted at this time",
-    "data": {
-      "decision": false,
-      "reason": "Preemption not warranted at this time",
-      "new_patient_id": "PAT_00005",
-      "affected_patients": []
-    },
-    "source": "preemption_agent"
-  },
-  {
-    "timestamp": 23.965031213096267,
-    "event_type": "PREEMPTION_DECISION",
-    "level": "INFO",
-    "message": "Preemption decision completed: DENIED (confidence: 0.93)",
-    "data": {
-      "decision": false,
-      "confidence": 0.9254306700510315,
-      "reason": "Preemption not warranted at this time",
-      "new_patient_id": "PAT_00005",
-      "doctor_to_preempt": null,
-      "total_decisions": 1,
-      "approval_rate": 0.0
-    },
-    "source": "preemption_agent"
-  },
-  {
-    "timestamp": 26.3243311809178,
-    "event_type": "PATIENT_REGISTRATION",
-    "level": "INFO",
-    "message": "Patient PAT_00006 registered in hospital system",
-    "data": {
-      "patient_id": "PAT_00006",
-      "condition": "minor_laceration",
-      "symptoms": [
-        "bleeding",
-        "pain"
-      ],
-      "arrival_time": 26.3243311809178,
-      "total_arrivals": 6
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 26.3243311809178,
-    "event_type": "PATIENT_ARRIVAL",
-    "level": "INFO",
-    "message": "Patient PAT_00006 arrives with minor_laceration",
-    "data": {
-      "patient_id": "PAT_00006",
-      "condition": "minor_laceration",
-      "vital_signs": {
-        "bp_systolic": 119.14533796732124,
-        "bp_diastolic": 76.539823938309,
-        "heart_rate": 77.23389065351768,
-        "temperature": 37.22994396293522,
-        "oxygen_saturation": 94.96442620756955
-      }
-    },
-    "source": "patient_provider"
-  },
-  {
-    "timestamp": 26.3243311809178,
+    "timestamp": 23.49622126302964,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00006",
@@ -724,20 +1073,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 26.3243311809178,
+    "timestamp": 23.49622126302964,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00006 assessed as GREEN priority - MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+    "message": "Patient PAT_00006 assessed as YELLOW priority - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
     "data": {
       "patient_id": "PAT_00006",
-      "priority": "GREEN",
-      "reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
-      "estimated_treatment_time": 33.408502628857406
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+      "estimated_treatment_time": 31.202960469167053
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 26.3243311809178,
+    "timestamp": 23.49622126302964,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00006 by NURSE_001",
@@ -750,196 +1099,95 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 27.356582240775097,
-    "event_type": "TREATMENT_COMPLETE",
-    "level": "INFO",
-    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00001 (wait: 3.0min)",
-    "data": {
-      "patient_id": "PAT_00001",
-      "doctor_id": "DOC_000",
-      "wait_time": 3.0
-    },
-    "source": "simulation_engine"
-  },
-  {
-    "timestamp": 27.356582240775097,
-    "event_type": "TREATMENT_COMPLETE",
-    "level": "INFO",
-    "message": "Treatment completed: Patient PAT_00001 discharged by Doctor DOC_000",
-    "data": {
-      "patient_id": "PAT_00001",
-      "doctor_id": "DOC_000",
-      "condition": "abdominal_pain",
-      "priority": "YELLOW",
-      "total_wait_time": 27.356582240775097,
-      "actual_treatment_time": 24.356582240775097,
-      "estimated_treatment_time": 24.356582240775097,
-      "interruption_count": 0,
-      "doctor_total_patients": 1,
-      "hospital_total_completed": 1
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 27.356582240775097,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_000 assigned to Patient PAT_00005 (ORANGE)",
-    "data": {
-      "patient_id": "PAT_00005",
-      "doctor_id": "DOC_000",
-      "priority": "ORANGE"
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 27.356582240775097,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00005",
-    "data": {
-      "doctor_id": "DOC_000",
-      "doctor_name": "Dr. A",
-      "doctor_specialization": "Emergency_Medicine_0",
-      "patient_id": "PAT_00005",
-      "patient_condition": "chest_pain",
-      "patient_priority": "ORANGE",
-      "wait_time": 7.158853709851975,
-      "estimated_treatment_time": 16.052194165963666
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 30.814113297287193,
-    "event_type": "QUEUE_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Patient PAT_00006 assigned to GREEN queue (position 1)",
-    "data": {
-      "patient_id": "PAT_00006",
-      "priority": "GREEN",
-      "queue_position": 1
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 30.814113297287193,
-    "event_type": "QUEUE_UPDATE",
-    "level": "INFO",
-    "message": "Patient PAT_00006 added to GREEN queue (position 1)",
-    "data": {
-      "patient_id": "PAT_00006",
-      "priority": "GREEN",
-      "queue_position": 1,
-      "queue_lengths": {
-        "RED": 0,
-        "ORANGE": 0,
-        "YELLOW": 1,
-        "GREEN": 1,
-        "BLUE": 0
-      },
-      "assessment_reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
-      "estimated_treatment_time": 33.408502628857406
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 43.40877640673877,
-    "event_type": "TREATMENT_COMPLETE",
-    "level": "INFO",
-    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00005 (wait: 7.2min)",
-    "data": {
-      "patient_id": "PAT_00005",
-      "doctor_id": "DOC_000",
-      "wait_time": 7.158853709851975
-    },
-    "source": "simulation_engine"
-  },
-  {
-    "timestamp": 43.40877640673877,
-    "event_type": "TREATMENT_COMPLETE",
-    "level": "INFO",
-    "message": "Treatment completed: Patient PAT_00005 discharged by Doctor DOC_000",
-    "data": {
-      "patient_id": "PAT_00005",
-      "doctor_id": "DOC_000",
-      "condition": "chest_pain",
-      "priority": "ORANGE",
-      "total_wait_time": 23.211047875815645,
-      "actual_treatment_time": 16.05219416596367,
-      "estimated_treatment_time": 16.052194165963666,
-      "interruption_count": 0,
-      "doctor_total_patients": 2,
-      "hospital_total_completed": 2
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 43.40877640673877,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_000 assigned to Patient PAT_00004 (YELLOW)",
-    "data": {
-      "patient_id": "PAT_00004",
-      "doctor_id": "DOC_000",
-      "priority": "YELLOW"
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 43.40877640673877,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00004",
-    "data": {
-      "doctor_id": "DOC_000",
-      "doctor_name": "Dr. A",
-      "doctor_specialization": "Emergency_Medicine_0",
-      "patient_id": "PAT_00004",
-      "patient_condition": "chest_pain",
-      "patient_priority": "YELLOW",
-      "wait_time": 30.696021844125497,
-      "estimated_treatment_time": 35.415952174305936
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 45.73512575401989,
+    "timestamp": 25.747491072234222,
     "event_type": "PATIENT_REGISTRATION",
     "level": "INFO",
     "message": "Patient PAT_00007 registered in hospital system",
     "data": {
       "patient_id": "PAT_00007",
-      "condition": "abdominal_pain",
-      "symptoms": [
-        "nausea",
-        "vomiting",
-        "fever"
-      ],
-      "arrival_time": 45.73512575401989,
+      "condition": "routine_checkup",
+      "symptoms": [],
+      "arrival_time": 25.747491072234222,
       "total_arrivals": 7
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 45.73512575401989,
+    "timestamp": 25.747491072234222,
     "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00007 arrives with abdominal_pain",
+    "message": "Patient PAT_00007 arrives with routine_checkup",
     "data": {
       "patient_id": "PAT_00007",
-      "condition": "abdominal_pain",
+      "condition": "routine_checkup",
       "vital_signs": {
-        "bp_systolic": 196.02656993106913,
-        "bp_diastolic": 74.85031032792931,
-        "heart_rate": 89.70999648476808,
-        "temperature": 37.520229344976904,
-        "oxygen_saturation": 97.5422220925507
+        "bp_systolic": 113.57194912481299,
+        "bp_diastolic": 52.132674888919325,
+        "heart_rate": 60.35070450741075,
+        "temperature": 36.95561014958363,
+        "oxygen_saturation": 97.10028276315794
       }
     },
     "source": "patient_provider"
   },
   {
-    "timestamp": 45.73512575401989,
+    "timestamp": 25.747491072234222,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00007 arrives - routine_checkup",
+    "data": {
+      "patient_id": "PAT_00007",
+      "condition": "routine_checkup"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 27.582915187418727,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00006 triaged as YELLOW - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+    "data": {
+      "patient_id": "PAT_00006",
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 27.582915187418727,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00006 assigned to YELLOW queue (position 2)",
+    "data": {
+      "patient_id": "PAT_00006",
+      "priority": "YELLOW",
+      "queue_position": 2
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 27.582915187418727,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00006 added to YELLOW queue (position 2)",
+    "data": {
+      "patient_id": "PAT_00006",
+      "priority": "YELLOW",
+      "queue_position": 2,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 2,
+        "GREEN": 0,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+      "estimated_treatment_time": 31.202960469167053
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 27.582915187418727,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00007",
@@ -950,20 +1198,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 45.73512575401989,
+    "timestamp": 27.582915187418727,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00007 assessed as ORANGE priority - MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+    "message": "Patient PAT_00007 assessed as BLUE priority - MTS Assessment: routine_checkup classified as BLUE priority",
     "data": {
       "patient_id": "PAT_00007",
-      "priority": "ORANGE",
-      "reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
-      "estimated_treatment_time": 17.965707697847435
+      "priority": "BLUE",
+      "reason": "MTS Assessment: routine_checkup classified as BLUE priority",
+      "estimated_treatment_time": 44.10227327124811
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 45.73512575401989,
+    "timestamp": 27.582915187418727,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00007 by NURSE_001",
@@ -976,104 +1224,99 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 48.4110662872003,
-    "event_type": "QUEUE_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Patient PAT_00007 assigned to ORANGE queue (position 1)",
-    "data": {
-      "patient_id": "PAT_00007",
-      "priority": "ORANGE",
-      "queue_position": 1
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 48.4110662872003,
-    "event_type": "QUEUE_UPDATE",
-    "level": "INFO",
-    "message": "Patient PAT_00007 added to ORANGE queue (position 1)",
-    "data": {
-      "patient_id": "PAT_00007",
-      "priority": "ORANGE",
-      "queue_position": 1,
-      "queue_lengths": {
-        "RED": 0,
-        "ORANGE": 1,
-        "YELLOW": 0,
-        "GREEN": 1,
-        "BLUE": 0
-      },
-      "assessment_reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
-      "estimated_treatment_time": 17.965707697847435
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 48.4110662872003,
-    "event_type": "PREEMPTION_DECISION",
-    "level": "INFO",
-    "message": "Preemption DENIED: Preemption not warranted at this time",
-    "data": {
-      "decision": false,
-      "reason": "Preemption not warranted at this time",
-      "new_patient_id": "PAT_00007",
-      "affected_patients": []
-    },
-    "source": "preemption_agent"
-  },
-  {
-    "timestamp": 48.4110662872003,
-    "event_type": "PREEMPTION_DECISION",
-    "level": "INFO",
-    "message": "Preemption decision completed: DENIED (confidence: 0.77)",
-    "data": {
-      "decision": false,
-      "confidence": 0.7660705756273216,
-      "reason": "Preemption not warranted at this time",
-      "new_patient_id": "PAT_00007",
-      "doctor_to_preempt": null,
-      "total_decisions": 2,
-      "approval_rate": 0.0
-    },
-    "source": "preemption_agent"
-  },
-  {
-    "timestamp": 50.79488894965517,
+    "timestamp": 28.49797809993528,
     "event_type": "PATIENT_REGISTRATION",
     "level": "INFO",
     "message": "Patient PAT_00008 registered in hospital system",
     "data": {
       "patient_id": "PAT_00008",
-      "condition": "minor_laceration",
+      "condition": "allergic_reaction",
       "symptoms": [
-        "bleeding",
-        "pain"
+        "rash",
+        "swelling",
+        "difficulty_breathing"
       ],
-      "arrival_time": 50.79488894965517,
+      "arrival_time": 28.49797809993528,
       "total_arrivals": 8
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 50.79488894965517,
+    "timestamp": 28.49797809993528,
     "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00008 arrives with minor_laceration",
+    "message": "Patient PAT_00008 arrives with allergic_reaction",
     "data": {
       "patient_id": "PAT_00008",
-      "condition": "minor_laceration",
+      "condition": "allergic_reaction",
       "vital_signs": {
-        "bp_systolic": 137.4642373002029,
-        "bp_diastolic": 68.20721816235216,
-        "heart_rate": 67.89950576228276,
-        "temperature": 37.5637638056776,
-        "oxygen_saturation": 96.87698381221567
+        "bp_systolic": 121.94639504866109,
+        "bp_diastolic": 64.43752956279202,
+        "heart_rate": 87.48484214985291,
+        "temperature": 37.30723008031971,
+        "oxygen_saturation": 96.24077685051066
       }
     },
     "source": "patient_provider"
   },
   {
-    "timestamp": 50.79488894965517,
+    "timestamp": 28.49797809993528,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00008 arrives - allergic_reaction",
+    "data": {
+      "patient_id": "PAT_00008",
+      "condition": "allergic_reaction"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 29.939185623671197,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00007 triaged as BLUE - MTS Assessment: routine_checkup classified as BLUE priority",
+    "data": {
+      "patient_id": "PAT_00007",
+      "priority": "BLUE",
+      "reason": "MTS Assessment: routine_checkup classified as BLUE priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 29.939185623671197,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00007 assigned to BLUE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00007",
+      "priority": "BLUE",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 29.939185623671197,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00007 added to BLUE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00007",
+      "priority": "BLUE",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 2,
+        "GREEN": 0,
+        "BLUE": 1
+      },
+      "assessment_reason": "MTS Assessment: routine_checkup classified as BLUE priority",
+      "estimated_treatment_time": 44.10227327124811
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 29.939185623671197,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00008",
@@ -1084,20 +1327,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 50.79488894965517,
+    "timestamp": 29.939185623671197,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00008 assessed as GREEN priority - MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+    "message": "Patient PAT_00008 assessed as ORANGE priority - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
     "data": {
       "patient_id": "PAT_00008",
-      "priority": "GREEN",
-      "reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
-      "estimated_treatment_time": 37.53622663590127
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
+      "estimated_treatment_time": 23.431100816941512
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 50.79488894965517,
+    "timestamp": 29.939185623671197,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00008 by NURSE_001",
@@ -1110,136 +1353,278 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 54.399804111771644,
-    "event_type": "QUEUE_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Patient PAT_00008 assigned to GREEN queue (position 2)",
-    "data": {
-      "patient_id": "PAT_00008",
-      "priority": "GREEN",
-      "queue_position": 2
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 54.399804111771644,
-    "event_type": "QUEUE_UPDATE",
-    "level": "INFO",
-    "message": "Patient PAT_00008 added to GREEN queue (position 2)",
-    "data": {
-      "patient_id": "PAT_00008",
-      "priority": "GREEN",
-      "queue_position": 2,
-      "queue_lengths": {
-        "RED": 0,
-        "ORANGE": 1,
-        "YELLOW": 0,
-        "GREEN": 2,
-        "BLUE": 0
-      },
-      "assessment_reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
-      "estimated_treatment_time": 37.53622663590127
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 54.71614692486884,
-    "event_type": "TREATMENT_COMPLETE",
-    "level": "INFO",
-    "message": "Treatment completed: Doctor DOC_001 finished Patient PAT_00002 (wait: 2.7min)",
-    "data": {
-      "patient_id": "PAT_00002",
-      "doctor_id": "DOC_001",
-      "wait_time": 2.654322173053785
-    },
-    "source": "simulation_engine"
-  },
-  {
-    "timestamp": 54.71614692486884,
-    "event_type": "TREATMENT_COMPLETE",
-    "level": "INFO",
-    "message": "Treatment completed: Patient PAT_00002 discharged by Doctor DOC_001",
-    "data": {
-      "patient_id": "PAT_00002",
-      "doctor_id": "DOC_001",
-      "condition": "headache",
-      "priority": "GREEN",
-      "total_wait_time": 50.37046909792262,
-      "actual_treatment_time": 47.71614692486884,
-      "estimated_treatment_time": 47.71614692486884,
-      "interruption_count": 0,
-      "doctor_total_patients": 1,
-      "hospital_total_completed": 3
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 54.71614692486884,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_001 assigned to Patient PAT_00007 (ORANGE)",
-    "data": {
-      "patient_id": "PAT_00007",
-      "doctor_id": "DOC_001",
-      "priority": "ORANGE"
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 54.71614692486884,
-    "event_type": "DOCTOR_ASSIGNMENT",
-    "level": "INFO",
-    "message": "Doctor DOC_001 (Dr. B) assigned to Patient PAT_00007",
-    "data": {
-      "doctor_id": "DOC_001",
-      "doctor_name": "Dr. B",
-      "doctor_specialization": "Emergency_Medicine_1",
-      "patient_id": "PAT_00007",
-      "patient_condition": "abdominal_pain",
-      "patient_priority": "ORANGE",
-      "wait_time": 8.981021170848948,
-      "estimated_treatment_time": 17.965707697847435
-    },
-    "source": "hospital_core"
-  },
-  {
-    "timestamp": 57.76088555157408,
+    "timestamp": 31.400768892589245,
     "event_type": "PATIENT_REGISTRATION",
     "level": "INFO",
     "message": "Patient PAT_00009 registered in hospital system",
     "data": {
       "patient_id": "PAT_00009",
-      "condition": "abdominal_pain",
+      "condition": "stroke_symptoms",
       "symptoms": [
-        "nausea",
-        "vomiting",
-        "fever"
+        "confusion",
+        "weakness",
+        "speech_difficulty"
       ],
-      "arrival_time": 57.76088555157408,
+      "arrival_time": 31.400768892589245,
       "total_arrivals": 9
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 57.76088555157408,
+    "timestamp": 31.400768892589245,
     "event_type": "PATIENT_ARRIVAL",
     "level": "INFO",
-    "message": "Patient PAT_00009 arrives with abdominal_pain",
+    "message": "Patient PAT_00009 arrives with stroke_symptoms",
     "data": {
       "patient_id": "PAT_00009",
-      "condition": "abdominal_pain",
+      "condition": "stroke_symptoms",
       "vital_signs": {
-        "bp_systolic": 105.23542691388909,
-        "bp_diastolic": 84.37646272539646,
-        "heart_rate": 76.95319208715502,
-        "temperature": 38.60121395435101,
-        "oxygen_saturation": 100
+        "bp_systolic": 160.20613416338463,
+        "bp_diastolic": 82.53368139414803,
+        "heart_rate": 70.19421140720166,
+        "temperature": 36.043647111873355,
+        "oxygen_saturation": 98.58321076003949
       }
     },
     "source": "patient_provider"
   },
   {
-    "timestamp": 57.76088555157408,
+    "timestamp": 31.400768892589245,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00009 arrives - stroke_symptoms",
+    "data": {
+      "patient_id": "PAT_00009",
+      "condition": "stroke_symptoms"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 31.873005444162743,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00010 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00010",
+      "condition": "allergic_reaction",
+      "symptoms": [
+        "rash",
+        "swelling",
+        "difficulty_breathing"
+      ],
+      "arrival_time": 31.873005444162743,
+      "total_arrivals": 10
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 31.873005444162743,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00010 arrives with allergic_reaction",
+    "data": {
+      "patient_id": "PAT_00010",
+      "condition": "allergic_reaction",
+      "vital_signs": {
+        "bp_systolic": 121.73848974464548,
+        "bp_diastolic": 65.84425636768881,
+        "heart_rate": 97.32683145034959,
+        "temperature": 35,
+        "oxygen_saturation": 96.0794083446023
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 31.873005444162743,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00010 arrives - allergic_reaction",
+    "data": {
+      "patient_id": "PAT_00010",
+      "condition": "allergic_reaction"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 33.421213761797404,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00004 (wait: 6.1min)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "doctor_id": "DOC_000",
+      "wait_time": 6.13308995723807
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 33.421213761797404,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Patient PAT_00004 discharged by Doctor DOC_000",
+    "data": {
+      "patient_id": "PAT_00004",
+      "doctor_id": "DOC_000",
+      "condition": "stroke_symptoms",
+      "priority": "RED",
+      "total_wait_time": 16.676652938465587,
+      "actual_treatment_time": 10.543562981227517,
+      "estimated_treatment_time": 10.543562981227513,
+      "interruption_count": 0,
+      "doctor_total_patients": 2,
+      "hospital_total_completed": 2
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 33.421213761797404,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00004 (wait: 6.1min)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "wait_time": 6.13308995723807
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 33.421213761797404,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 assigned to Patient PAT_00003 (ORANGE)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_000",
+      "priority": "ORANGE"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 33.421213761797404,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00003",
+    "data": {
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "doctor_specialization": "Emergency_Medicine_0",
+      "patient_id": "PAT_00003",
+      "patient_condition": "minor_laceration",
+      "patient_priority": "ORANGE",
+      "wait_time": 24.660028128892073,
+      "estimated_treatment_time": 31.208134365674553
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 33.421213761797404,
+    "event_type": "TREATMENT_START",
+    "level": "INFO",
+    "message": "Dr. A starts treating Patient PAT_00003 (ORANGE)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "priority": "ORANGE"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 33.438066163264686,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00008 triaged as ORANGE - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
+    "data": {
+      "patient_id": "PAT_00008",
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 33.438066163264686,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00008 assigned to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00008",
+      "priority": "ORANGE",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 33.438066163264686,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00008 added to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00008",
+      "priority": "ORANGE",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 2,
+        "GREEN": 0,
+        "BLUE": 1
+      },
+      "assessment_reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as ORANGE priority",
+      "estimated_treatment_time": 23.431100816941512
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 33.438066163264686,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "WARNING",
+    "message": "Preemption APPROVED: PREEMPTION WARRANTED: ORANGE priority patient with time-sensitive condition",
+    "data": {
+      "decision": true,
+      "reason": "PREEMPTION WARRANTED: ORANGE priority patient with time-sensitive condition",
+      "new_patient_id": "PAT_00008",
+      "affected_patients": [
+        "PAT_00003"
+      ]
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 33.438066163264686,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "Preemption decision completed: APPROVED (confidence: 0.77)",
+    "data": {
+      "decision": true,
+      "confidence": 0.771312115745368,
+      "reason": "PREEMPTION WARRANTED: ORANGE priority patient with time-sensitive condition",
+      "new_patient_id": "PAT_00008",
+      "doctor_to_preempt": "DOC_000",
+      "total_decisions": 2,
+      "approval_rate": 1.0
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 33.438066163264686,
+    "event_type": "PREEMPTION_EXECUTED",
+    "level": "INFO",
+    "message": "PREEMPTION: PREEMPTION WARRANTED: ORANGE priority patient with time-sensitive condition - Affected: ['PAT_00003']",
+    "data": {
+      "decision_reason": "PREEMPTION WARRANTED: ORANGE priority patient with time-sensitive condition",
+      "affected_patient_ids": [
+        "PAT_00003"
+      ],
+      "doctor_to_preempt": "DOC_000",
+      "confidence": 0.771312115745368
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 33.438066163264686,
     "event_type": "TRIAGE_START",
     "level": "INFO",
     "message": "Triage assessment started for Patient PAT_00009",
@@ -1250,20 +1635,20 @@
     "source": "triage_system"
   },
   {
-    "timestamp": 57.76088555157408,
+    "timestamp": 33.438066163264686,
     "event_type": "TRIAGE_ASSESSMENT",
     "level": "INFO",
-    "message": "Patient PAT_00009 assessed as ORANGE priority - MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+    "message": "Patient PAT_00009 assessed as ORANGE priority - MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as ORANGE priority",
     "data": {
       "patient_id": "PAT_00009",
       "priority": "ORANGE",
-      "reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
-      "estimated_treatment_time": 18.27401184645707
+      "reason": "MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as ORANGE priority",
+      "estimated_treatment_time": 19.343845805180607
     },
     "source": "triage_system"
   },
   {
-    "timestamp": 57.76088555157408,
+    "timestamp": 33.438066163264686,
     "event_type": "TRIAGE_COMPLETE",
     "level": "INFO",
     "message": "Triage assessment completed for Patient PAT_00009 by NURSE_001",
@@ -1276,68 +1661,392 @@
     "source": "triage_nurse"
   },
   {
-    "timestamp": 59.98624278700899,
+    "timestamp": 36.35982931199069,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00009 triaged as ORANGE - MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as ORANGE priority",
+    "data": {
+      "patient_id": "PAT_00009",
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as ORANGE priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 36.35982931199069,
     "event_type": "QUEUE_ASSIGNMENT",
     "level": "INFO",
-    "message": "Patient PAT_00009 assigned to ORANGE queue (position 1)",
+    "message": "Patient PAT_00009 assigned to ORANGE queue (position 2)",
     "data": {
       "patient_id": "PAT_00009",
       "priority": "ORANGE",
-      "queue_position": 1
+      "queue_position": 2
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 59.98624278700899,
+    "timestamp": 36.35982931199069,
     "event_type": "QUEUE_UPDATE",
     "level": "INFO",
-    "message": "Patient PAT_00009 added to ORANGE queue (position 1)",
+    "message": "Patient PAT_00009 added to ORANGE queue (position 2)",
     "data": {
       "patient_id": "PAT_00009",
       "priority": "ORANGE",
-      "queue_position": 1,
+      "queue_position": 2,
       "queue_lengths": {
-        "RED": 0,
-        "ORANGE": 1,
-        "YELLOW": 0,
-        "GREEN": 2,
-        "BLUE": 0
+        "RED": 1,
+        "ORANGE": 2,
+        "YELLOW": 2,
+        "GREEN": 0,
+        "BLUE": 1
       },
-      "assessment_reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
-      "estimated_treatment_time": 18.27401184645707
+      "assessment_reason": "MTS Assessment: stroke_symptoms with symptoms: confusion, weakness, speech_difficulty classified as ORANGE priority",
+      "estimated_treatment_time": 19.343845805180607
     },
     "source": "hospital_core"
   },
   {
-    "timestamp": 59.98624278700899,
+    "timestamp": 36.35982931199069,
     "event_type": "PREEMPTION_DECISION",
     "level": "WARNING",
-    "message": "Preemption APPROVED: Random preemption decision: ORANGE priority patient needs immediate attention",
+    "message": "Preemption APPROVED: URGENT: stroke_symptoms - significant risk if delayed",
     "data": {
       "decision": true,
-      "reason": "Random preemption decision: ORANGE priority patient needs immediate attention",
+      "reason": "URGENT: stroke_symptoms - significant risk if delayed",
       "new_patient_id": "PAT_00009",
       "affected_patients": [
-        "PAT_00004"
+        "PAT_00003"
       ]
     },
     "source": "preemption_agent"
   },
   {
-    "timestamp": 59.98624278700899,
+    "timestamp": 36.35982931199069,
     "event_type": "PREEMPTION_DECISION",
     "level": "INFO",
-    "message": "Preemption decision completed: APPROVED (confidence: 0.64)",
+    "message": "Preemption decision completed: APPROVED (confidence: 0.82)",
     "data": {
       "decision": true,
-      "confidence": 0.6369598922829864,
-      "reason": "Random preemption decision: ORANGE priority patient needs immediate attention",
+      "confidence": 0.8193258506883723,
+      "reason": "URGENT: stroke_symptoms - significant risk if delayed",
       "new_patient_id": "PAT_00009",
-      "doctor_to_preempt": "DOC_000",
+      "doctor_to_preempt": "DOC_002",
       "total_decisions": 3,
-      "approval_rate": 0.3333333333333333
+      "approval_rate": 1.0
     },
     "source": "preemption_agent"
+  },
+  {
+    "timestamp": 36.35982931199069,
+    "event_type": "PREEMPTION_EXECUTED",
+    "level": "INFO",
+    "message": "PREEMPTION: URGENT: stroke_symptoms - significant risk if delayed - Affected: ['PAT_00003']",
+    "data": {
+      "decision_reason": "URGENT: stroke_symptoms - significant risk if delayed",
+      "affected_patient_ids": [
+        "PAT_00003"
+      ],
+      "doctor_to_preempt": "DOC_002",
+      "confidence": 0.8193258506883723
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 36.35982931199069,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00010",
+    "data": {
+      "patient_id": "PAT_00010",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 36.35982931199069,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00010 assessed as YELLOW priority - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+    "data": {
+      "patient_id": "PAT_00010",
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+      "estimated_treatment_time": 27.035074234375397
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 36.35982931199069,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00010 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00010",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 10,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 38.847269331486075,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Patient PAT_00010 triaged as YELLOW - MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+    "data": {
+      "patient_id": "PAT_00010",
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 38.847269331486075,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00010 assigned to YELLOW queue (position 3)",
+    "data": {
+      "patient_id": "PAT_00010",
+      "priority": "YELLOW",
+      "queue_position": 3
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 38.847269331486075,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00010 added to YELLOW queue (position 3)",
+    "data": {
+      "patient_id": "PAT_00010",
+      "priority": "YELLOW",
+      "queue_position": 3,
+      "queue_lengths": {
+        "RED": 1,
+        "ORANGE": 2,
+        "YELLOW": 3,
+        "GREEN": 0,
+        "BLUE": 1
+      },
+      "assessment_reason": "MTS Assessment: allergic_reaction with symptoms: rash, swelling, difficulty_breathing classified as YELLOW priority",
+      "estimated_treatment_time": 27.035074234375397
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 45.20813436567455,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_002 finished Patient PAT_00003 (wait: 24.7min)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "wait_time": 24.660028128892073
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 45.20813436567455,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Patient PAT_00003 discharged by Doctor DOC_002",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "condition": "minor_laceration",
+      "priority": "RED",
+      "total_wait_time": 36.44694873276922,
+      "actual_treatment_time": 11.78692060387715,
+      "estimated_treatment_time": 31.208134365674553,
+      "interruption_count": 2,
+      "doctor_total_patients": 1,
+      "hospital_total_completed": 3
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 45.20813436567455,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_002 finished Patient PAT_00003 (wait: 24.7min)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "doctor_name": "Dr. C",
+      "wait_time": 24.660028128892073
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 45.20813436567455,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_002 assigned to Patient PAT_00003 (RED)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "priority": "RED"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 45.20813436567455,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_002 (Dr. C) assigned to Patient PAT_00003",
+    "data": {
+      "doctor_id": "DOC_002",
+      "doctor_name": "Dr. C",
+      "doctor_specialization": "Emergency_Medicine_2",
+      "patient_id": "PAT_00003",
+      "patient_condition": "minor_laceration",
+      "patient_priority": "RED",
+      "wait_time": 36.44694873276922,
+      "estimated_treatment_time": 31.208134365674553
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 45.20813436567455,
+    "event_type": "TREATMENT_START",
+    "level": "INFO",
+    "message": "Dr. C starts treating Patient PAT_00003 (RED)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "doctor_name": "Dr. C",
+      "priority": "RED"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 50.51606824987077,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_001 finished Patient PAT_00002 (wait: 3.1min)",
+    "data": {
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "wait_time": 3.052501381692913
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 50.51606824987077,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Patient PAT_00002 discharged by Doctor DOC_001",
+    "data": {
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "condition": "routine_checkup",
+      "priority": "GREEN",
+      "total_wait_time": 44.56856963156368,
+      "actual_treatment_time": 41.51606824987077,
+      "estimated_treatment_time": 41.51606824987077,
+      "interruption_count": 0,
+      "doctor_total_patients": 1,
+      "hospital_total_completed": 4
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 50.51606824987077,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_001 finished Patient PAT_00002 (wait: 3.1min)",
+    "data": {
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "doctor_name": "Dr. B",
+      "wait_time": 3.052501381692913
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 50.51606824987077,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_001 assigned to Patient PAT_00008 (ORANGE)",
+    "data": {
+      "patient_id": "PAT_00008",
+      "doctor_id": "DOC_001",
+      "priority": "ORANGE"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 50.51606824987077,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_001 (Dr. B) assigned to Patient PAT_00008",
+    "data": {
+      "doctor_id": "DOC_001",
+      "doctor_name": "Dr. B",
+      "doctor_specialization": "Emergency_Medicine_1",
+      "patient_id": "PAT_00008",
+      "patient_condition": "allergic_reaction",
+      "patient_priority": "ORANGE",
+      "wait_time": 22.01809014993549,
+      "estimated_treatment_time": 23.431100816941512
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 50.51606824987077,
+    "event_type": "TREATMENT_START",
+    "level": "INFO",
+    "message": "Dr. B starts treating Patient PAT_00008 (ORANGE)",
+    "data": {
+      "patient_id": "PAT_00008",
+      "doctor_id": "DOC_001",
+      "doctor_name": "Dr. B",
+      "priority": "ORANGE"
+    },
+    "source": "console_event_handler"
+  },
+  {
+    "timestamp": 60,
+    "event_type": "SIMULATION_END",
+    "level": "INFO",
+    "message": "Final simulation results",
+    "data": {
+      "simulation_time": "60.0 / 60 minutes",
+      "patients_arrived": 10,
+      "patients_completed": 4,
+      "patients_in_system": 6,
+      "average_wait_time": 9.711404866955764,
+      "average_treatment_time": 25.28635409433568,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 3,
+        "GREEN": 0,
+        "BLUE": 1
+      },
+      "triage_utilization": 0.0,
+      "doctor_utilization": 0.0,
+      "busy_doctors": 3,
+      "available_doctors": 3,
+      "preemptions_count": 3,
+      "simulation_state": {
+        "simulation_time": 60,
+        "total_arrivals": 10,
+        "total_completed": 4,
+        "patients_in_system": 6,
+        "busy_doctors": 3,
+        "available_doctors": 3,
+        "preemptions_count": 3,
+        "queue_lengths": {
+          "RED": 0,
+          "ORANGE": 1,
+          "YELLOW": 3,
+          "GREEN": 0,
+          "BLUE": 1
+        }
+      }
+    },
+    "source": "simulation_engine"
   },
   {
     "timestamp": 60.0,
@@ -1346,8 +2055,113 @@
     "message": "Hospital simulation completed successfully",
     "data": {
       "duration": 60,
-      "total_events_logged": 90,
-      "simulation_status": "completed"
+      "total_events_logged": 139,
+      "simulation_status": "completed",
+      "simulation_state": {
+        "simulation_time": 60,
+        "total_arrivals": 10,
+        "total_completed": 4,
+        "patients_in_system": 6,
+        "busy_doctors": 3,
+        "available_doctors": 3,
+        "preemptions_count": 3,
+        "queue_lengths": {
+          "RED": 0,
+          "ORANGE": 1,
+          "YELLOW": 3,
+          "GREEN": 0,
+          "BLUE": 1
+        }
+      }
+    },
+    "source": "main"
+  },
+  {
+    "timestamp": 60,
+    "event_type": "SIMULATION_END",
+    "level": "INFO",
+    "message": "Final simulation results",
+    "data": {
+      "simulation_time": "60.0 / 60 minutes",
+      "patients_arrived": 10,
+      "patients_completed": 4,
+      "patients_in_system": 6,
+      "average_wait_time": 9.711404866955764,
+      "average_treatment_time": 25.28635409433568,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 3,
+        "GREEN": 0,
+        "BLUE": 1
+      },
+      "triage_utilization": 0.0,
+      "doctor_utilization": 0.0,
+      "busy_doctors": 3,
+      "available_doctors": 3,
+      "preemptions_count": 3,
+      "simulation_state": {
+        "simulation_time": 60,
+        "total_arrivals": 10,
+        "total_completed": 4,
+        "patients_in_system": 6,
+        "busy_doctors": 3,
+        "available_doctors": 3,
+        "preemptions_count": 3,
+        "queue_lengths": {
+          "RED": 0,
+          "ORANGE": 1,
+          "YELLOW": 3,
+          "GREEN": 0,
+          "BLUE": 1
+        }
+      }
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 60.0,
+    "event_type": "SYSTEM_STATE",
+    "level": "INFO",
+    "message": "Logging summary statistics",
+    "data": {
+      "total_events": 141,
+      "event_types": [
+        "SIMULATION_START",
+        "SYSTEM_STATE",
+        "PATIENT_REGISTRATION",
+        "PATIENT_ARRIVAL",
+        "TRIAGE_START",
+        "TRIAGE_ASSESSMENT",
+        "TRIAGE_COMPLETE",
+        "QUEUE_ASSIGNMENT",
+        "QUEUE_UPDATE",
+        "PREEMPTION_DECISION",
+        "DOCTOR_ASSIGNMENT",
+        "TREATMENT_START",
+        "PREEMPTION_EXECUTED",
+        "TREATMENT_COMPLETE",
+        "SIMULATION_END"
+      ],
+      "time_range": "0.0 - 60.0 minutes",
+      "export_file": "simulation_events.json",
+      "log_file": "hospital_simulation.log",
+      "simulation_state": {
+        "simulation_time": 60,
+        "total_arrivals": 10,
+        "total_completed": 4,
+        "patients_in_system": 6,
+        "busy_doctors": 3,
+        "available_doctors": 3,
+        "preemptions_count": 3,
+        "queue_lengths": {
+          "RED": 0,
+          "ORANGE": 1,
+          "YELLOW": 3,
+          "GREEN": 0,
+          "BLUE": 1
+        }
+      }
     },
     "source": "main"
   }
