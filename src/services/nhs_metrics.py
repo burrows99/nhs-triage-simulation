@@ -68,27 +68,37 @@ class NHSMetrics(BaseMetrics):
         logger.info(f"🔄 DATA_TRANSFER_START: NHSMetrics.add_patient_arrival() initiated")
         logger.info(f"📊 TRANSFER_SOURCE: Patient object - {str(patient.__dict__)}")
         logger.info(f"📍 TRANSFER_DESTINATION: NHS metrics record storage")
+        logger.info(f"🔍 DEBUG: Patient arrival tracking - ID: {patient.Id} | Arrival Time: {arrival_time:.1f}")
         
         # Check for re-attendance
         is_reattendance = self._check_reattendance(patient.Id, arrival_time)
+        logger.debug(f"🔍 DEBUG: Re-attendance check result for {patient.Id}: {is_reattendance}")
         
         # Store arrival time and re-attendance status on patient object
         patient.arrival_time = arrival_time
         patient.is_reattendance = is_reattendance
+        logger.debug(f"🔍 DEBUG: Set patient.arrival_time = {arrival_time:.1f} for patient {patient.Id}")
         
         logger.info(f"📊 TRANSFER_PAYLOAD: Patient updated - arrival_time={arrival_time}, is_reattendance={is_reattendance}")
         
         # Add patient directly to base metrics (Patient now inherits from BaseRecord)
         self.add_record(patient)
+        logger.debug(f"🔍 DEBUG: Added patient to records. Records count now: {len(self.records)}")
         
         if is_reattendance:
             self.counters['reattendance_count'] += 1
+            logger.debug(f"🔍 DEBUG: Updated reattendance_count to {self.counters['reattendance_count']}")
         
         # Track arrival time for re-attendance checking
         self.patient_history[patient.Id].append(arrival_time)
+        logger.debug(f"🔍 DEBUG: Added arrival time to patient history. History length for {patient.Id}: {len(self.patient_history[patient.Id])}")
         
         logger.info(f"📊 TRANSFER_RESULT: Record stored in metrics - patient_id={patient.Id}, records_count={len(self.records)}")
         logger.info(f"✅ DATA_TRANSFER_SUCCESS: NHS Metrics arrival recorded for patient {patient.Id} at {arrival_time:.2f}min")
+        
+        # Log patient state for debugging
+        logger.info(f"🔍 PATIENT STATE | ID: {patient.Id} | Has arrival_time: {hasattr(patient, 'arrival_time')} | Has departure_time: {hasattr(patient, 'departure_time')}")
+        logger.info(f"🔍 PATIENT TIMING | Arrival: {patient.arrival_time if hasattr(patient, 'arrival_time') else 'NOT_SET'} | Departure: {patient.departure_time if hasattr(patient, 'departure_time') else 'NOT_SET'}")
     
     def add_patient_object(self, patient) -> None:
         """Record patient arrival using Patient object
@@ -151,23 +161,36 @@ class NHSMetrics(BaseMetrics):
             admitted: Whether patient was admitted
             left_without_being_seen: Whether patient left before being seen
         """
+        logger.info(f"🔄 DEPARTURE_START: Recording departure for patient {patient_id} at {departure_time:.1f}min")
+        logger.info(f"📊 DEPARTURE_DETAILS: disposal={disposal}, admitted={admitted}, lwbs={left_without_being_seen}")
+        
         patient_record = self.get_record(patient_id)
         if not patient_record:
+            logger.error(f"❌ DEPARTURE_ERROR: Patient record not found for ID {patient_id}")
             return
+        
+        logger.debug(f"🔍 DEBUG: Found patient record for {patient_id}")
+        logger.debug(f"🔍 DEBUG: Patient arrival time: {patient_record.arrival_time if hasattr(patient_record, 'arrival_time') else 'NOT_SET'}")
         
         patient_record.departure_time = departure_time
         patient_record.disposal = disposal
         patient_record.admitted = admitted
         patient_record.left_without_being_seen = left_without_being_seen
         
+        logger.debug(f"🔍 DEBUG: Updated patient record with departure data")
+        
         if admitted:
             self.counters['admissions_count'] += 1
+            logger.debug(f"🔍 DEBUG: Updated admissions_count to {self.counters['admissions_count']}")
         
         if left_without_being_seen:
             self.counters['lwbs_count'] += 1
+            logger.debug(f"🔍 DEBUG: Updated lwbs_count to {self.counters['lwbs_count']}")
         
         # Complete the record
         self.complete_record(patient_id, departure_time)
+        logger.info(f"✅ DEPARTURE_SUCCESS: Patient {patient_id} departure recorded - Total time: {patient_record.get_total_journey_time():.1f}min")
+        logger.info(f"📊 COMPLETION_STATUS: Completed patients now: {len([p for p in self.records if p.is_completed_journey()])}")
     
     def _check_reattendance(self, patient_id: str, arrival_time: float) -> bool:
         """Check if patient is a re-attendance within the specified window"""
@@ -190,10 +213,21 @@ class NHSMetrics(BaseMetrics):
         Returns:
             Dictionary containing all official NHS metrics and performance indicators
         """
+        logger.info(f"🔄 METRICS_CALCULATION_START: Beginning NHS metrics calculation")
+        logger.info(f"📊 CALCULATION_INPUT: Total records: {len(self.records)}, Active records: {len(self.active_records)}")
+        
         completed_patients = [p for p in self.records if p.is_completed_journey()]
+        logger.info(f"📊 COMPLETION_ANALYSIS: Found {len(completed_patients)} completed patients out of {len(self.records)} total")
+        
+        # Log sample of patient completion status for debugging
+        for i, patient in enumerate(self.records[:5]):  # Log first 5 patients
+            arrival_time = patient.arrival_time if hasattr(patient, 'arrival_time') else 'NONE'
+            departure_time = patient.departure_time if hasattr(patient, 'departure_time') else 'NONE'
+            logger.debug(f"🔍 PATIENT_DEBUG_{i+1}: ID={patient.Id}, completed={patient.is_completed_journey()}, arrival={arrival_time}, departure={departure_time}")
         
         if not completed_patients:
             logger.warning(f"⚠️ CALCULATION_WARNING: No completed patients to analyze")
+            logger.warning(f"⚠️ DIAGNOSTIC: Total records={len(self.records)}, Active records={len(self.active_records)}")
             return {
                 'error': 'No completed patients to analyze',
                 'total_attendances': self.counters['total_records'],
@@ -213,11 +247,19 @@ class NHSMetrics(BaseMetrics):
         
         # Use validated patients for all calculations
         completed_patients = validated_patients
+        logger.info(f"📊 VALIDATION_RESULT: Using {len(completed_patients)} validated patients for calculations")
         
         # Calculate official NHS metrics using direct scipy/numpy calls
         journey_times = [p.get_total_journey_time() for p in completed_patients]
         assessment_times = [p.get_time_to_initial_assessment() for p in completed_patients if p.get_time_to_initial_assessment() > 0]
         treatment_times = [p.get_time_to_treatment() for p in completed_patients if p.get_time_to_treatment() > 0]
+        
+        logger.debug(f"🔍 TIME_CALCULATIONS: Journey times count: {len(journey_times)}, Assessment times count: {len(assessment_times)}, Treatment times count: {len(treatment_times)}")
+        
+        # Log sample journey times for debugging
+        if journey_times:
+            sample_times = journey_times[:3]
+            logger.debug(f"🔍 SAMPLE_JOURNEY_TIMES: {[f'{t:.1f}min' for t in sample_times]}")
         
         # Calculate stats directly using numpy
         journey_time_stats = {
@@ -284,7 +326,8 @@ class NHSMetrics(BaseMetrics):
         # Add base statistics
         metrics.update(self.get_basic_statistics())
         
-
+        logger.info(f"✅ METRICS_CALCULATION_SUCCESS: Calculated {len(metrics)} metrics for {len(completed_patients)} patients")
+        logger.info(f"📊 KEY_METRICS: 4hr_compliance={metrics['4hour_standard_compliance_pct']:.1f}%, avg_time={metrics['5_total_time_in_ae_avg_minutes']:.1f}min, lwbs_rate={metrics['1_left_before_being_seen_rate_pct']:.1f}%")
         
         return metrics
     

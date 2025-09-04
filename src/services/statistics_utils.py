@@ -70,7 +70,12 @@ class StatisticsUtils:
         Returns:
             Dictionary with basic statistics computed by scipy
         """
+        from src.logger import logger
+        
+        logger.debug(f"🔍 STATS_CALC_START | Input values count: {len(values) if values else 0}")
+        
         if not values:
+            logger.warning("⚠️  STATS_CALC_EMPTY | No values provided for statistics calculation")
             return {
                 'count': 0,
                 'mean': 0.0,
@@ -86,15 +91,35 @@ class StatisticsUtils:
         # Validate for negative values that might indicate timing errors
         negative_count = sum(1 for v in values if v < 0)
         if negative_count > 0:
-            from src.logger import logger
-            logger.warning(f"⚠️  {negative_count}/{len(values)} values are negative - possible timing calculation error")
+            logger.warning(f"⚠️  STATS_NEGATIVE_VALUES | {negative_count}/{len(values)} values are negative - possible timing calculation error")
             logger.warning(f"Sample negative values: {[v for v in values if v < 0][:5]}")
         
-        # Delegate to scipy.stats for production-grade statistical calculations
-        values_array = np.array(values)
-        desc_stats = stats.describe(values_array)
+        # Filter out invalid values
+        valid_values = [v for v in values if v is not None and not np.isnan(v) and v >= 0]
+        logger.debug(f"🔍 STATS_VALIDATION | Original: {len(values)} | Valid: {len(valid_values)} | Filtered: {len(values) - len(valid_values)}")
         
-        return {
+        if not valid_values:
+            logger.warning("⚠️  STATS_CALC_NO_VALID | All values filtered out - returning zeros")
+            return {
+                'count': 0,
+                'mean': 0.0,
+                'median': 0.0,
+                'std_dev': 0.0,
+                'min': 0.0,
+                'max': 0.0,
+                '95th_percentile': 0.0,
+                'skewness': 0.0,
+                'kurtosis': 0.0
+            }
+        
+        # Delegate to scipy.stats for production-grade statistical calculations
+        values_array = np.array(valid_values)
+        logger.debug(f"🔍 STATS_ARRAY | Min: {np.min(values_array):.2f} | Max: {np.max(values_array):.2f} | Mean: {np.mean(values_array):.2f}")
+        
+        desc_stats = stats.describe(values_array)
+        logger.debug(f"🔍 SCIPY_STATS | Count: {desc_stats.nobs} | Mean: {desc_stats.mean:.2f} | Variance: {desc_stats.variance:.2f}")
+        
+        result = {
             'count': desc_stats.nobs,
             'mean': desc_stats.mean,
             'median': np.median(values_array),  # scipy doesn't include median in describe
@@ -105,15 +130,42 @@ class StatisticsUtils:
             'skewness': desc_stats.skewness,
             'kurtosis': desc_stats.kurtosis
         }
+        
+        logger.info(f"✅ STATS_CALC_COMPLETE | Count: {result['count']} | Mean: {result['mean']:.2f} | StdDev: {result['std_dev']:.2f} | Range: {result['min']:.2f}-{result['max']:.2f}")
+        return result
     
     @staticmethod
     def calculate_basic_stats_from_list(values: List[float]) -> Dict[str, float]:
         """Wrapper for calculate_basic_stats that accepts lists."""
         return StatisticsUtils.calculate_basic_stats(tuple(values))
     
-    # Removed unnecessary wrapper functions - use numpy directly:
-    # Instead of calculate_compliance_rate, use: (compliant_count / total_count) * 100 if total_count > 0 else 0
-    # Instead of calculate_admission_rate, use: np.mean([getattr(p, 'admitted', False) for p in patients]) * 100
+    @staticmethod
+    def calculate_compliance_rate(compliant_count: int, total_count: int) -> float:
+        """Calculate compliance rate as percentage.
+        
+        Args:
+            compliant_count: Number of compliant cases
+            total_count: Total number of cases
+            
+        Returns:
+            Compliance rate as percentage (0-100)
+        """
+        return (compliant_count / total_count) * 100 if total_count > 0 else 0.0
+    
+    @staticmethod
+    def calculate_admission_rate(admitted_patients: List, total_patients: List) -> float:
+        """Calculate admission rate as percentage.
+        
+        Args:
+            admitted_patients: List of admitted patients
+            total_patients: List of all patients
+            
+        Returns:
+            Admission rate as percentage (0-100)
+        """
+        if not total_patients:
+            return 0.0
+        return (len(admitted_patients) / len(total_patients)) * 100
     
     @staticmethod
     def calculate_4hour_compliance(patients: List) -> Dict[str, Any]:

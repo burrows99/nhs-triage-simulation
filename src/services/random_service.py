@@ -183,8 +183,8 @@ class RandomService:
         Returns:
             Admission processing time with small random variation (±20%)
         """
-        # Base admission processing time for triage-independent processes
-        base_time = 240.0  # 4-hour base admission processing time
+        # Optimized admission processing time for stress testing
+        base_time = 30.0  # 30-minute base admission processing time
         # Add ±20% random variation for realism
         variation = base_time * 0.20
         return random.uniform(base_time - variation, base_time + variation)
@@ -198,8 +198,8 @@ class RandomService:
         Returns:
             Discharge processing time with small random variation (±20%)
         """
-        # Base discharge processing time for triage-independent processes
-        base_time = 90.0  # 1.5-hour base discharge processing time
+        # Optimized discharge processing time for stress testing
+        base_time = 15.0  # 15-minute base discharge processing time
         # Add ±20% random variation for realism
         variation = base_time * 0.20
         return random.uniform(base_time - variation, base_time + variation)
@@ -268,21 +268,21 @@ class RandomService:
             Time in minutes reflecting NHS reality pressures
         """
         # NHS Reality: Triage nurses under pressure, targets frequently missed
-        # Calibrated to achieve realistic NHS performance (59-76% 4-hour compliance)
+        # Calibrated for stress testing with realistic but faster times
         complexity_times = {
-            'simple': (10.0, 30.0),    # Reality: Simple cases delayed but manageable
-            'standard': (20.0, 60.0),  # Reality: Standard cases take longer than target
-            'complex': (40.0, 120.0)   # Reality: Complex cases significantly delayed
+            'simple': (3.0, 8.0),      # Stress test: Simple cases 3-8 minutes
+            'standard': (5.0, 15.0),   # Stress test: Standard cases 5-15 minutes
+            'complex': (10.0, 25.0)    # Stress test: Complex cases 10-25 minutes
         }
         
         min_time, max_time = complexity_times.get(complexity, complexity_times['standard'])
         base_time = random.uniform(min_time, max_time)
         
-        # Add moderate system pressure factor reflecting queue delays and interruptions
-        pressure_factor = random.uniform(1.2, 2.0)  # Moderate to high system strain
+        # Reduced system pressure factor for stress testing
+        pressure_factor = random.uniform(1.1, 1.3)  # Light to moderate system strain
         
-        # Add random queue delay (patients waiting for triage nurse availability)
-        queue_delay = random.uniform(0, 30)  # 0-30 minutes additional queue wait
+        # Reduced queue delay for stress testing
+        queue_delay = random.uniform(0, 5)  # 0-5 minutes additional queue wait
         
         return (base_time * pressure_factor) + queue_delay
     
