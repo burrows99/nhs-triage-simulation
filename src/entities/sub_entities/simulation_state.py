@@ -42,18 +42,30 @@ class SimulationState:
     total_treatment_time: float = 0.0
     preemptions_count: int = 0
     
+    # History tracking
+    state_history: List[Dict] = attr.ib(factory=list)
+    
+    def record_history(self) -> None:
+        """Record current simulation state in history before any updates"""
+        snapshot = self.get_log_summary().copy()
+        snapshot['recorded_at'] = self.current_time
+        self.state_history.append(snapshot)
+    
     def update_time(self, new_time: float) -> None:
         """Update simulation time"""
+        self.record_history()  # Record state before update
         self.current_time = new_time
     
     def register_patient_arrival(self, patient: Patient) -> None:
         """Register a new patient arrival"""
+        self.record_history()  # Record state before update
         self.total_arrivals += 1
         self.patients_in_system += 1
         self.active_patients.append(patient)
     
     def register_patient_completion(self, patient: Patient) -> None:
         """Register patient completion"""
+        self.record_history()  # Record state before update
         self.total_completed += 1
         self.patients_in_system -= 1
         if patient in self.active_patients:
@@ -75,6 +87,7 @@ class SimulationState:
     
     def assign_doctor_to_patient(self, doctor_id: int, patient_id: int) -> None:
         """Assign doctor to patient"""
+        self.record_history()  # Record state before update
         if doctor_id in self.available_doctors:
             self.available_doctors.remove(doctor_id)
         if doctor_id not in self.busy_doctors:
@@ -82,7 +95,8 @@ class SimulationState:
         self.doctor_patient_assignments[doctor_id] = patient_id
     
     def release_doctor(self, doctor_id: int) -> None:
-        """Release doctor from current assignment"""
+        """Release doctor from patient assignment"""
+        self.record_history()  # Record state before update
         if doctor_id in self.busy_doctors:
             self.busy_doctors.remove(doctor_id)
         if doctor_id not in self.available_doctors:
@@ -91,6 +105,7 @@ class SimulationState:
     
     def record_preemption(self) -> None:
         """Record a preemption event"""
+        self.record_history()  # Record state before update
         self.preemptions_count += 1
     
     def update_resource_utilization(self, triage_util: float, doctor_util: float) -> None:
@@ -140,6 +155,10 @@ class SimulationState:
             "queue_lengths": {priority.name: length for priority, length in self.queue_lengths.items()}
         }
     
+    def get_state_history(self) -> List[Dict]:
+        """Get the complete state history"""
+        return self.state_history.copy()
+    
     def reset(self) -> None:
         """Reset simulation state"""
         self.current_time = 0.0
@@ -161,3 +180,6 @@ class SimulationState:
         self.total_wait_time = 0.0
         self.total_treatment_time = 0.0
         self.preemptions_count = 0
+        
+        # Clear state history
+        self.state_history.clear()
