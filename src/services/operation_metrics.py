@@ -428,8 +428,16 @@ class OperationMetrics(BaseMetrics):
                     if not np.isnan(mean_util):
                         total_utilizations.append(mean_util)
         
+        # Calculate simulation duration from snapshots instead of relying on end_time
+        simulation_duration = 0
+        if self.system_snapshots:
+            # Use the time span from first to last snapshot
+            first_time = min(s.timestamp for s in self.system_snapshots)
+            last_time = max(s.timestamp for s in self.system_snapshots)
+            simulation_duration = last_time - first_time
+        
         system_metrics = {
-            'simulation_duration_minutes': self.end_time - self.start_time if self.end_time and self.start_time else 0,
+            'simulation_duration_minutes': simulation_duration,
             'total_snapshots': len(self.system_snapshots)
         }
         

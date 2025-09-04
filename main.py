@@ -53,8 +53,8 @@ Available Triage Systems:
     parser.add_argument(
         '--duration', '-d',
         type=float,
-        default=720,
-        help='Simulation duration in minutes (default: 720 = 12 hours, realistic for NHS A&E analysis)'
+        default=1440,
+        help='Simulation duration in minutes (default: 1440 = 24 hours, realistic for NHS A&E analysis)'
     )
     
     parser.add_argument(
