@@ -54,9 +54,7 @@ class RuleBuilder:
         """
         rules = []
         
-        # Any very severe symptom = RED (Paper: critical conditions)
-        # Reference: Paper emphasizes need for objective system to handle critical cases
-        # Validate input variables match expected configuration
+        # Validate inputs
         if len(symptoms) != 5:
             raise ValueError(
                 f"Expected exactly 5 input variables for FMTS fuzzy system, got {len(symptoms)}. "
@@ -73,6 +71,7 @@ class RuleBuilder:
                         f"Available: {list(symptom.terms.keys())}"
                     )
         
+        # Rule 1: Any very severe symptom -> RED
         very_severe_condition = (
             symptoms[0]['very_severe'] |
             symptoms[1]['very_severe'] |
@@ -82,16 +81,20 @@ class RuleBuilder:
         )
         rules.append(ctrl.Rule(very_severe_condition, triage_category['red']))
         
-        # Multiple severe symptoms = RED (Paper: compound urgency)
-        # Reference: Addresses paper's concern about distinguishing between urgent cases
-        multiple_severe_conditions = [
-            (symptoms[0]['severe'] & symptoms[1]['severe'] & symptoms[2]['severe']),
-            (symptoms[0]['severe'] & symptoms[1]['severe'] & symptoms[3]['severe']),
-            (symptoms[0]['severe'] & symptoms[1]['severe'] & symptoms[4]['severe'])
-        ]
-        
-        for condition in multiple_severe_conditions:
-            rules.append(ctrl.Rule(condition, triage_category['red']))
+        # Rule 2: Three or more severe symptoms -> RED
+        three_severe = (
+            (symptoms[0]['severe'] & symptoms[1]['severe'] & symptoms[2]['severe']) |
+            (symptoms[0]['severe'] & symptoms[1]['severe'] & symptoms[3]['severe']) |
+            (symptoms[0]['severe'] & symptoms[1]['severe'] & symptoms[4]['severe']) |
+            (symptoms[0]['severe'] & symptoms[2]['severe'] & symptoms[3]['severe']) |
+            (symptoms[0]['severe'] & symptoms[2]['severe'] & symptoms[4]['severe']) |
+            (symptoms[0]['severe'] & symptoms[3]['severe'] & symptoms[4]['severe']) |
+            (symptoms[1]['severe'] & symptoms[2]['severe'] & symptoms[3]['severe']) |
+            (symptoms[1]['severe'] & symptoms[2]['severe'] & symptoms[4]['severe']) |
+            (symptoms[1]['severe'] & symptoms[3]['severe'] & symptoms[4]['severe']) |
+            (symptoms[2]['severe'] & symptoms[3]['severe'] & symptoms[4]['severe'])
+        )
+        rules.append(ctrl.Rule(three_severe, triage_category['red']))
         
         return rules
     
@@ -115,28 +118,19 @@ class RuleBuilder:
         rules = []
         
         # Two severe symptoms = ORANGE
-        # Reference: Paper's objective system for distinguishing urgency levels
-        two_severe_combinations = [
-            (symptoms[i]['severe'] & symptoms[j]['severe'])
-            for i in range(5) for j in range(i+1, 5)
-        ]
-        
-        orange_condition = two_severe_combinations[0]
-        for condition in two_severe_combinations[1:]:
-            orange_condition = orange_condition | condition
-        
-        rules.append(ctrl.Rule(orange_condition, triage_category['orange']))
-        
-        # One severe + multiple moderate = ORANGE
-        # Reference: Implements paper's goal of objective triage categorization
-        severe_moderate_conditions = [
-            (symptoms[0]['severe'] & symptoms[1]['moderate'] & symptoms[2]['moderate']),
-            (symptoms[1]['severe'] & symptoms[0]['moderate'] & symptoms[2]['moderate']),
-            (symptoms[2]['severe'] & symptoms[0]['moderate'] & symptoms[1]['moderate'])
-        ]
-        
-        for condition in severe_moderate_conditions:
-            rules.append(ctrl.Rule(condition, triage_category['orange']))
+        two_severe = (
+            (symptoms[0]['severe'] & symptoms[1]['severe']) |
+            (symptoms[0]['severe'] & symptoms[2]['severe']) |
+            (symptoms[0]['severe'] & symptoms[3]['severe']) |
+            (symptoms[0]['severe'] & symptoms[4]['severe']) |
+            (symptoms[1]['severe'] & symptoms[2]['severe']) |
+            (symptoms[1]['severe'] & symptoms[3]['severe']) |
+            (symptoms[1]['severe'] & symptoms[4]['severe']) |
+            (symptoms[2]['severe'] & symptoms[3]['severe']) |
+            (symptoms[2]['severe'] & symptoms[4]['severe']) |
+            (symptoms[3]['severe'] & symptoms[4]['severe'])
+        )
+        rules.append(ctrl.Rule(two_severe, triage_category['orange']))
         
         return rules
     
@@ -158,38 +152,30 @@ class RuleBuilder:
         """
         rules = []
         
-        # Single severe symptom = YELLOW
-        # Reference: Paper's systematic approach to handling single severe symptoms
-        single_severe_conditions = []
-        for i in range(5):
-            # Create condition for symptom i being severe and others not severe
-            other_symptoms_not_severe = [
-                ~symptoms[j]['severe'] for j in range(5) if j != i
-            ]
-            
-            condition = symptoms[i]['severe']
-            for not_severe in other_symptoms_not_severe:
-                condition = condition & not_severe
-            
-            single_severe_conditions.append(condition)
-        
-        # Combine all single severe conditions
-        yellow_condition = single_severe_conditions[0]
-        for condition in single_severe_conditions[1:]:
-            yellow_condition = yellow_condition | condition
-        
-        rules.append(ctrl.Rule(yellow_condition, triage_category['yellow']))
+        # One severe symptom = YELLOW
+        one_severe = (
+            symptoms[0]['severe'] |
+            symptoms[1]['severe'] |
+            symptoms[2]['severe'] |
+            symptoms[3]['severe'] |
+            symptoms[4]['severe']
+        )
+        rules.append(ctrl.Rule(one_severe, triage_category['yellow']))
         
         # Multiple moderate symptoms = YELLOW
-        # Reference: Implements paper's objective categorization for moderate symptoms
-        moderate_combinations = [
-            (symptoms[0]['moderate'] & symptoms[1]['moderate'] & symptoms[2]['moderate']),
-            (symptoms[0]['moderate'] & symptoms[1]['moderate'] & symptoms[3]['moderate']),
-            (symptoms[0]['moderate'] & symptoms[1]['moderate'] & symptoms[4]['moderate'])
-        ]
-        
-        for condition in moderate_combinations:
-            rules.append(ctrl.Rule(condition, triage_category['yellow']))
+        three_moderate = (
+            (symptoms[0]['moderate'] & symptoms[1]['moderate'] & symptoms[2]['moderate']) |
+            (symptoms[0]['moderate'] & symptoms[1]['moderate'] & symptoms[3]['moderate']) |
+            (symptoms[0]['moderate'] & symptoms[1]['moderate'] & symptoms[4]['moderate']) |
+            (symptoms[0]['moderate'] & symptoms[2]['moderate'] & symptoms[3]['moderate']) |
+            (symptoms[0]['moderate'] & symptoms[2]['moderate'] & symptoms[4]['moderate']) |
+            (symptoms[0]['moderate'] & symptoms[3]['moderate'] & symptoms[4]['moderate']) |
+            (symptoms[1]['moderate'] & symptoms[2]['moderate'] & symptoms[3]['moderate']) |
+            (symptoms[1]['moderate'] & symptoms[2]['moderate'] & symptoms[4]['moderate']) |
+            (symptoms[1]['moderate'] & symptoms[3]['moderate'] & symptoms[4]['moderate']) |
+            (symptoms[2]['moderate'] & symptoms[3]['moderate'] & symptoms[4]['moderate'])
+        )
+        rules.append(ctrl.Rule(three_moderate, triage_category['yellow']))
         
         return rules
     
@@ -212,38 +198,15 @@ class RuleBuilder:
         """
         rules = []
         
-        # Single or double moderate symptoms = GREEN
-        # Reference: Paper's systematic approach to non-urgent cases
-        green_conditions = []
-        
-        # Single moderate conditions
-        for i in range(5):
-            # Symptom i is moderate, but not multiple moderate symptoms together
-            other_moderate_pairs = [
-                ~(symptoms[j]['moderate'] & symptoms[k]['moderate'])
-                for j in range(5) for k in range(j+1, 5)
-                if j != i and k != i
-            ]
-            
-            condition = symptoms[i]['moderate']
-            for not_multiple in other_moderate_pairs:
-                condition = condition & not_multiple
-            
-            green_conditions.append(condition)
-        
-        # Double moderate (but not triple)
-        double_moderate_condition = (
-            symptoms[0]['moderate'] & symptoms[1]['moderate'] &
-            ~(symptoms[2]['moderate'] | symptoms[3]['moderate'] | symptoms[4]['moderate'])
+        # Moderate symptoms = GREEN
+        moderate_symptoms = (
+            symptoms[0]['moderate'] |
+            symptoms[1]['moderate'] |
+            symptoms[2]['moderate'] |
+            symptoms[3]['moderate'] |
+            symptoms[4]['moderate']
         )
-        green_conditions.append(double_moderate_condition)
-        
-        # Combine all green conditions
-        final_green_condition = green_conditions[0]
-        for condition in green_conditions[1:]:
-            final_green_condition = final_green_condition | condition
-        
-        rules.append(ctrl.Rule(final_green_condition, triage_category['green']))
+        rules.append(ctrl.Rule(moderate_symptoms, triage_category['green']))
         
         return rules
     
@@ -266,28 +229,25 @@ class RuleBuilder:
         """
         rules = []
         
-        # Only mild symptoms = BLUE
-        # Reference: Paper's systematic approach to minor conditions
-        mild_or_none_conditions = []
-        for symptom in symptoms:
-            mild_or_none_conditions.append(symptom['mild'] | symptom['none'])
+        # Mild symptoms = BLUE
+        mild_symptoms = (
+            symptoms[0]['mild'] |
+            symptoms[1]['mild'] |
+            symptoms[2]['mild'] |
+            symptoms[3]['mild'] |
+            symptoms[4]['mild']
+        )
+        rules.append(ctrl.Rule(mild_symptoms, triage_category['blue']))
         
-        # No moderate or higher symptoms
-        no_moderate_or_higher = []
-        for symptom in symptoms:
-            no_moderate_or_higher.append(
-                ~(symptom['moderate'] | symptom['severe'] | symptom['very_severe'])
-            )
-        
-        # Combine conditions
-        blue_condition = mild_or_none_conditions[0]
-        for condition in mild_or_none_conditions[1:]:
-            blue_condition = blue_condition & condition
-        
-        for condition in no_moderate_or_higher:
-            blue_condition = blue_condition & condition
-        
-        rules.append(ctrl.Rule(blue_condition, triage_category['blue']))
+        # No symptoms = BLUE (default case)
+        no_symptoms = (
+            symptoms[0]['none'] &
+            symptoms[1]['none'] &
+            symptoms[2]['none'] &
+            symptoms[3]['none'] &
+            symptoms[4]['none']
+        )
+        rules.append(ctrl.Rule(no_symptoms, triage_category['blue']))
         
         return rules
     
