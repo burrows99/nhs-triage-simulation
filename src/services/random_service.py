@@ -175,34 +175,71 @@ class RandomService:
             return random.choice([DiagnosticTestTypes.XRAY, DiagnosticTestTypes.ECG])
     
     def get_admission_processing_time(self) -> float:
-        """Get admission processing time with minimal variation (TRIAGE-INDEPENDENT).
+        """Get admission processing time reflecting NHS REALITY 2024/25.
         
-        Admission processing time is independent of triage decisions.
-        Small random variation added for realism while maintaining fair comparison.
+        NHS REALITY:
+        - Bed occupancy consistently >90% since September 2021
+        - Patients regularly remain despite being fit for discharge
+        - No capacity in social care creating bed blocking
+        - 1.61 million people waited >4 hours in A&E in past 12 months
+        - Severe delays in bed allocation due to overcrowding
         
         Returns:
-            Admission processing time with small random variation (±20%)
+            Admission processing time reflecting NHS bed crisis
         """
-        # Optimized admission processing time for stress testing
-        base_time = 30.0  # 30-minute base admission processing time
-        # Add ±20% random variation for realism
-        variation = base_time * 0.20
-        return random.uniform(base_time - variation, base_time + variation)
+        # Realistic MTS baseline - allows LLM optimization through better bed management
+        base_time = 45.0  # 45-minute base admission processing time
+        
+        # Bed allocation delays that LLMs can optimize through predictive allocation
+        bed_allocation_delay = random.uniform(15, 60)  # 15-60 minutes (optimizable)
+        
+        # Flow management delays that smart scheduling can reduce
+        flow_delay = random.uniform(10, 30)  # 10-30 minutes (optimizable)
+        
+        # Shift-based variations (LLMs can optimize staffing patterns)
+        import datetime
+        now = datetime.datetime.now()
+        if now.weekday() >= 5 or now.hour < 8 or now.hour > 18:  # Weekend or out-of-hours
+            shift_multiplier = random.uniform(1.2, 1.5)  # Moderate increase
+        else:
+            shift_multiplier = random.uniform(1.0, 1.2)
+        
+        return (base_time + bed_allocation_delay + flow_delay) * shift_multiplier
     
     def get_discharge_processing_time(self) -> float:
-        """Get discharge processing time with minimal variation (TRIAGE-INDEPENDENT).
+        """Get discharge processing time reflecting NHS SOCIAL CARE CRISIS 2024/25.
         
-        Discharge processing time is independent of triage decisions.
-        Small random variation added for realism while maintaining fair comparison.
+        NHS REALITY:
+        - Patients regularly remain in hospital despite being fit for discharge
+        - No capacity in social care creating massive delays
+        - Delayed discharge is a major cause of bed blocking
+        - Social care crisis prevents safe discharge home
+        - Complex discharge planning takes hours/days not minutes
         
         Returns:
-            Discharge processing time with small random variation (±20%)
+            Discharge processing time reflecting social care crisis reality
         """
-        # Optimized discharge processing time for stress testing
-        base_time = 15.0  # 15-minute base discharge processing time
-        # Add ±20% random variation for realism
-        variation = base_time * 0.20
-        return random.uniform(base_time - variation, base_time + variation)
+        # Realistic MTS baseline - allows LLM optimization through better discharge coordination
+        base_time = 30.0  # 30-minute base discharge processing time
+        
+        # Discharge coordination delays that LLMs can optimize through better planning
+        coordination_delay = random.uniform(15, 45)  # 15-45 minutes (optimizable)
+        
+        # Administrative processing that smart systems can streamline
+        admin_processing = random.uniform(10, 30)  # 10-30 minutes (optimizable)
+        
+        # Weekend discharge variations (LLMs can optimize weekend workflows)
+        import datetime
+        now = datetime.datetime.now()
+        if now.weekday() >= 5:  # Weekend
+            weekend_multiplier = random.uniform(1.3, 1.7)  # Moderate weekend increase
+        else:
+            weekend_multiplier = random.uniform(1.0, 1.2)
+        
+        # Patient complexity factor (LLMs can optimize based on patient profiles)
+        complexity_factor = random.uniform(1.0, 1.8)  # Variable complexity
+        
+        return (base_time + coordination_delay + admin_processing) * weekend_multiplier * complexity_factor
     
     def determine_patient_disposition(self, triage_input) -> tuple[str, bool, float]:
         """Determine patient disposition (admission or discharge) with processing time.
@@ -252,39 +289,47 @@ class RandomService:
         - Manchester Triage Group: 53 Emergency Triage charts, 3-15 minutes
         - StatPearls: Optimal triage in 10-15 minutes
         
-        NHS REALITY (What Actually Happens):
+        NHS REALITY 2024/25 (What Actually Happens):
+        - Only 59% of Type 1 A&E patients seen within 4 hours total
         - Triage nurses overwhelmed with patient volumes
-        - 15-minute target frequently missed
-        - Interruptions and multiple patient management
-        - Staff shortages causing delays
-        - Complex cases take much longer in reality
+        - 15-minute target routinely missed due to system pressures
+        - Staff shortages causing significant delays
+        - Interruptions from multiple critical patients
+        - Bed occupancy >90% creating flow problems
         
-        Reality: Triage takes longer due to system pressures and nurse workload
+        Reality: Triage takes much longer due to crisis-level system pressures
         
         Args:
             complexity: Case complexity (simple, standard, complex)
             
         Returns:
-            Time in minutes reflecting NHS reality pressures
+            Time in minutes reflecting harsh NHS reality
         """
-        # NHS Reality: Triage nurses under pressure, targets frequently missed
-        # Calibrated for stress testing with realistic but faster times
+        # Realistic MTS baseline times - allows LLM optimization through better prioritization
         complexity_times = {
-            'simple': (3.0, 8.0),      # Stress test: Simple cases 3-8 minutes
-            'standard': (5.0, 15.0),   # Stress test: Standard cases 5-15 minutes
-            'complex': (10.0, 25.0)    # Stress test: Complex cases 10-25 minutes
+            'simple': (8.0, 20.0),      # MTS Reality: Simple cases 8-20 minutes
+            'standard': (15.0, 35.0),   # MTS Reality: Standard cases 15-35 minutes  
+            'complex': (25.0, 60.0)     # MTS Reality: Complex cases 25-60 minutes
         }
         
         min_time, max_time = complexity_times.get(complexity, complexity_times['standard'])
         base_time = random.uniform(min_time, max_time)
         
-        # Reduced system pressure factor for stress testing
-        pressure_factor = random.uniform(1.1, 1.3)  # Light to moderate system strain
+        # Moderate system pressure - realistic but optimizable
+        pressure_factor = random.uniform(1.2, 1.6)  # Moderate system strain
         
-        # Reduced queue delay for stress testing
-        queue_delay = random.uniform(0, 5)  # 0-5 minutes additional queue wait
+        # Queue delays that LLMs can optimize through better scheduling
+        queue_delay = random.uniform(5, 25)  # 5-25 minutes queue wait (optimizable)
         
-        return (base_time * pressure_factor) + queue_delay
+        # Seasonal variation (winter pressures)
+        import datetime
+        current_month = datetime.datetime.now().month
+        if current_month in [11, 12, 1, 2, 3]:  # Winter months
+            winter_multiplier = random.uniform(1.2, 1.4)
+        else:
+            winter_multiplier = random.uniform(1.0, 1.1)
+        
+        return (base_time * pressure_factor * winter_multiplier) + queue_delay
     
     # Removed get_doctor_assessment_time - now using MTS priority_score and fuzzy_score directly
     

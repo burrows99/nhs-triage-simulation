@@ -56,6 +56,23 @@ class RuleBuilder:
         
         # Any very severe symptom = RED (Paper: critical conditions)
         # Reference: Paper emphasizes need for objective system to handle critical cases
+        # Validate input variables match expected configuration
+        if len(symptoms) != 5:
+            raise ValueError(
+                f"Expected exactly 5 input variables for FMTS fuzzy system, got {len(symptoms)}. "
+                f"This indicates a configuration mismatch between fuzzy system setup and rule creation."
+            )
+        
+        # Validate that all symptoms have required membership functions
+        required_memberships = ['very_severe', 'severe', 'moderate', 'mild', 'none']
+        for i, symptom in enumerate(symptoms):
+            for membership in required_memberships:
+                if membership not in symptom:
+                    raise ValueError(
+                        f"Symptom {i} ({symptom.label}) missing required membership function '{membership}'. "
+                        f"Available: {list(symptom.terms.keys())}"
+                    )
+        
         very_severe_condition = (
             symptoms[0]['very_severe'] |
             symptoms[1]['very_severe'] |
