@@ -19,16 +19,12 @@ class RandomService:
         ("broken_bone", ["severe_pain", "deformity", "swelling"])
     ]
     
-    def __init__(self, arrival_rate: float = 0.3, max_patients: int = 100):
+    def __init__(self, arrival_rate: float = 0.3):
         self.arrival_rate = arrival_rate
-        self.max_patients = max_patients
         self.patient_count = 0
         self.next_arrival_time = 0.0
     
     def get_next_patient(self) -> Optional[Patient]:
-        if self.patient_count >= self.max_patients:
-            return None
-            
         condition, symptoms = random.choice(self.CONDITIONS)
         
         # Generate realistic vital signs
@@ -55,4 +51,4 @@ class RandomService:
         return self.next_arrival_time
     
     def is_finished(self) -> bool:
-        return self.patient_count >= self.max_patients
+        return False  # Generate patients continuously until simulation time runs out

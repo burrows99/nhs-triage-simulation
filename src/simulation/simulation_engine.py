@@ -1,7 +1,7 @@
 import attr
 import random
 import simpy
-from typing import List
+from typing import List, Optional
 from ..entities.hospital import HospitalCore
 from ..entities.patient import Patient
 from ..entities.preemption_agent import PreemptionAgent
@@ -23,7 +23,7 @@ class HospitalSimulationEngine:
     # Plugins
     patient_provider: PatientDataProvider
     triage_system: TriageSystem
-    preemption_agent: PreemptionAgent
+    preemption_agent: Optional[PreemptionAgent]
     event_handler: HospitalEventHandler
     
     # SimPy Resources
@@ -165,6 +165,24 @@ class HospitalSimulationEngine:
         """Check and execute preemption if needed"""
         # Update simulation state time
         self.simulation_state.update_time(self.env.now)
+        
+        # Skip preemption check if agent is disabled
+        if self.preemption_agent is None:
+            self.logger.log_event(
+                timestamp=self.env.now,
+                event_type=EventType.PREEMPTION_DECISION,
+                message=f"Preemption disabled - Patient {new_patient.id} will use standard queue assignment",
+                simulation_state=self.simulation_state,
+                data={
+                    "patient_id": new_patient.id,
+                    "patient_priority": new_patient.priority.name if new_patient.priority else None,
+                    "preemption_mode": "disabled"
+                },
+                level=LogLevel.DEBUG,
+                source="simulation_engine"
+            )
+            yield self.env.timeout(0)
+            return
         
         busy_doctors = self.hospital.get_busy_doctors()
         
