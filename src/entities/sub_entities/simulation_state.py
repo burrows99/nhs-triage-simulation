@@ -183,25 +183,7 @@ class SimulationState:
             metrics['four_hour_breach_rate'] = 0.0
         
         # 2. Manchester Triage System (MTS) Time Target Compliance
-        mts_targets = {
-            'RED': 0,      # Immediate
-            'ORANGE': 10,  # Very urgent - 10 minutes
-            'YELLOW': 30,  # Urgent - 30 minutes  
-            'GREEN': 90,   # Standard - 90 minutes
-            'BLUE': 120    # Non-urgent - 120 minutes
-        }
-        
-        mts_compliance = {}
-        for priority, target_time in mts_targets.items():
-            priority_patients = [p for p in self.completed_patients if p.priority and p.priority.name == priority]
-            if priority_patients:
-                compliant_patients = sum(1 for p in priority_patients if p.wait_time <= target_time)
-                mts_compliance[f'{priority.lower()}_mts_compliance'] = (compliant_patients / len(priority_patients)) * 100
-                mts_compliance[f'{priority.lower()}_mts_breaches'] = len(priority_patients) - compliant_patients
-            else:
-                mts_compliance[f'{priority.lower()}_mts_compliance'] = 0.0
-                mts_compliance[f'{priority.lower()}_mts_breaches'] = 0
-        
+        mts_compliance = self.calculate_mts_time_target_compliance()
         metrics.update(mts_compliance)
         
         # 3. Patient Flow and Throughput Metrics
@@ -247,6 +229,99 @@ class SimulationState:
         metrics['simulation_progress_percentage'] = (self.current_time / self.simulation_duration) * 100 if self.simulation_duration > 0 else 0.0
         
         return metrics
+    
+    def calculate_mts_time_target_compliance(self) -> Dict:
+        """Calculate Manchester Triage System time target compliance by priority"""
+        # Official Manchester Triage System target times (in minutes)
+        mts_targets = {
+            'RED': 0,      # Immediate - seen immediately
+            'ORANGE': 10,  # Very urgent - within 10 minutes
+            'YELLOW': 60,  # Urgent - within 60 minutes (1 hour)
+            'GREEN': 120,  # Standard - within 120 minutes (2 hours)
+            'BLUE': 240    # Non-urgent - within 240 minutes (4 hours)
+        }
+        
+        mts_compliance = {}
+        overall_stats = {
+            'total_patients_assessed': 0,
+            'total_compliant_patients': 0,
+            'overall_mts_compliance': 0.0
+        }
+        
+        for priority, target_time in mts_targets.items():
+            # Get all patients with this priority
+            priority_patients = [p for p in self.completed_patients 
+                               if p.priority and p.priority.name == priority]
+            
+            if priority_patients:
+                # Calculate compliance for this priority
+                compliant_patients = sum(1 for p in priority_patients 
+                                       if p.wait_time <= target_time)
+                total_patients = len(priority_patients)
+                compliance_rate = (compliant_patients / total_patients) * 100
+                
+                # Store detailed metrics for this priority
+                mts_compliance[f'{priority.lower()}_mts_compliance'] = compliance_rate
+                mts_compliance[f'{priority.lower()}_mts_breaches'] = total_patients - compliant_patients
+                mts_compliance[f'{priority.lower()}_total_patients'] = total_patients
+                mts_compliance[f'{priority.lower()}_compliant_patients'] = compliant_patients
+                mts_compliance[f'{priority.lower()}_target_time'] = target_time
+                
+                # Add to overall statistics
+                overall_stats['total_patients_assessed'] += total_patients
+                overall_stats['total_compliant_patients'] += compliant_patients
+                
+                # Calculate average wait time for this priority
+                if priority_patients:
+                    avg_wait_time = sum(p.wait_time for p in priority_patients) / len(priority_patients)
+                    mts_compliance[f'{priority.lower()}_avg_wait_time'] = avg_wait_time
+                else:
+                    mts_compliance[f'{priority.lower()}_avg_wait_time'] = 0.0
+            else:
+                # No patients with this priority
+                mts_compliance[f'{priority.lower()}_mts_compliance'] = 0.0
+                mts_compliance[f'{priority.lower()}_mts_breaches'] = 0
+                mts_compliance[f'{priority.lower()}_total_patients'] = 0
+                mts_compliance[f'{priority.lower()}_compliant_patients'] = 0
+                mts_compliance[f'{priority.lower()}_target_time'] = target_time
+                mts_compliance[f'{priority.lower()}_avg_wait_time'] = 0.0
+        
+        # Calculate overall MTS compliance
+        if overall_stats['total_patients_assessed'] > 0:
+            overall_stats['overall_mts_compliance'] = (
+                overall_stats['total_compliant_patients'] / 
+                overall_stats['total_patients_assessed']
+            ) * 100
+        
+        # Add overall statistics to the result
+        mts_compliance.update(overall_stats)
+        
+        return mts_compliance
+    
+    def get_mts_compliance_summary(self) -> Dict:
+        """Get a summary of MTS compliance for reporting"""
+        compliance_data = self.calculate_mts_time_target_compliance()
+        
+        summary = {
+            'priorities': {},
+            'overall_compliance': compliance_data.get('overall_mts_compliance', 0.0),
+            'total_patients': compliance_data.get('total_patients_assessed', 0),
+            'total_compliant': compliance_data.get('total_compliant_patients', 0)
+        }
+        
+        priorities = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE']
+        for priority in priorities:
+            key = priority.lower()
+            summary['priorities'][priority] = {
+                'compliance_rate': compliance_data.get(f'{key}_mts_compliance', 0.0),
+                'target_time': compliance_data.get(f'{key}_target_time', 0),
+                'total_patients': compliance_data.get(f'{key}_total_patients', 0),
+                'compliant_patients': compliance_data.get(f'{key}_compliant_patients', 0),
+                'breaches': compliance_data.get(f'{key}_mts_breaches', 0),
+                'avg_wait_time': compliance_data.get(f'{key}_avg_wait_time', 0.0)
+            }
+        
+        return summary
     
     def _calculate_median_wait_time(self) -> float:
         """Calculate median wait time for completed patients"""

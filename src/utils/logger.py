@@ -5,6 +5,14 @@ from enum import Enum
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
+from rich.console import Console
+from rich.text import Text
+from rich.panel import Panel
+from rich.table import Table
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.logging import RichHandler
+from rich.markup import escape
+
 class LogLevel(Enum):
     DEBUG = "DEBUG"
     INFO = "INFO"
@@ -39,24 +47,68 @@ class LogEvent:
     source: str
 
 class HospitalLogger:
-    """Centralized logging system for hospital simulation"""
+    """Unified centralized logging system with rich text formatting"""
     
     def __init__(self, log_to_console: bool = True, log_to_file: bool = False, 
                  log_file_path: str = "simulation.log", min_level: LogLevel = LogLevel.INFO):
-        self.log_to_console = log_to_console
-        self.log_to_file = log_to_file
-        self.log_file_path = log_file_path
         self.min_level = min_level
         self.events: List[LogEvent] = []
         
-        # Setup Python logging if file logging is enabled
-        if self.log_to_file:
-            logging.basicConfig(
-                filename=log_file_path,
-                level=getattr(logging, min_level.value),
-                format='%(asctime)s - %(levelname)s - %(message)s'
-            )
-            self.file_logger = logging.getLogger('hospital_simulation')
+        # Setup unified rich logging
+        handlers = []
+        
+        # Console handler with rich formatting
+        if log_to_console:
+            console = Console(force_terminal=True, color_system="auto")
+            console_handler = RichHandler(console=console, show_time=False, show_path=False, markup=True)
+            console_handler.setLevel(getattr(logging, min_level.value))
+            handlers.append(console_handler)
+        
+        # File handler with rich formatting
+        if log_to_file:
+            file_console = Console(file=open(log_file_path, 'w'), width=120)
+            file_handler = RichHandler(console=file_console, show_time=True, show_path=True)
+            file_handler.setLevel(getattr(logging, min_level.value))
+            handlers.append(file_handler)
+        
+        # Configure unified logger
+        logging.basicConfig(
+            level=getattr(logging, min_level.value),
+            format='%(message)s',
+            handlers=handlers,
+            force=True
+        )
+        
+        self.logger = logging.getLogger('hospital_simulation')
+        self.console = Console(force_terminal=True, color_system="auto") if log_to_console else None
+        
+        # Event type emojis and colors
+        self.event_styles = {
+            EventType.PATIENT_ARRIVAL: {"emoji": "🚑", "color": "blue", "style": "bold"},
+            EventType.PATIENT_REGISTRATION: {"emoji": "📝", "color": "cyan", "style": "normal"},
+            EventType.TRIAGE_START: {"emoji": "🩺", "color": "yellow", "style": "normal"},
+            EventType.TRIAGE_ASSESSMENT: {"emoji": "⚕️", "color": "magenta", "style": "bold"},
+            EventType.TRIAGE_COMPLETE: {"emoji": "✅", "color": "green", "style": "normal"},
+            EventType.QUEUE_ASSIGNMENT: {"emoji": "📋", "color": "cyan", "style": "normal"},
+            EventType.DOCTOR_ASSIGNMENT: {"emoji": "👨‍⚕️", "color": "blue", "style": "bold"},
+            EventType.TREATMENT_START: {"emoji": "🏥", "color": "green", "style": "bold"},
+            EventType.TREATMENT_COMPLETE: {"emoji": "🎉", "color": "bright_green", "style": "bold"},
+            EventType.PREEMPTION_DECISION: {"emoji": "⚡", "color": "red", "style": "bold"},
+            EventType.PREEMPTION_EXECUTED: {"emoji": "🔄", "color": "bright_red", "style": "bold"},
+            EventType.QUEUE_UPDATE: {"emoji": "📊", "color": "white", "style": "dim"},
+            EventType.SYSTEM_STATE: {"emoji": "💻", "color": "white", "style": "dim"},
+            EventType.SIMULATION_START: {"emoji": "🚀", "color": "bright_blue", "style": "bold"},
+            EventType.SIMULATION_END: {"emoji": "🏁", "color": "bright_green", "style": "bold"}
+        }
+        
+        # Priority colors for triage
+        self.priority_colors = {
+            "RED": "bright_red",
+            "ORANGE": "orange3",
+            "YELLOW": "yellow",
+            "GREEN": "green",
+            "BLUE": "blue"
+        }
     
     def _should_log(self, level: LogLevel) -> bool:
         """Check if event should be logged based on minimum level"""
@@ -67,7 +119,7 @@ class HospitalLogger:
     def log_event(self, timestamp: float, event_type: EventType, message: str, 
                   data: Dict[str, Any] = None, level: LogLevel = LogLevel.INFO, 
                   source: str = "unknown", simulation_state = None) -> None:
-        """Log a simulation event with optional simulation state enhancement"""
+        """Log a simulation event with unified rich formatting"""
         if not self._should_log(level):
             return
             
@@ -88,17 +140,10 @@ class HospitalLogger:
         
         self.events.append(event)
         
-        # Console logging
-        if self.log_to_console:
-            formatted_message = self._format_console_message(event)
-            print(formatted_message)
-        
-        # File logging
-        if self.log_to_file:
-            log_method = getattr(self.file_logger, level.value.lower())
-            # Include simulation time in file logs for better readability
-            file_message = f"Time {timestamp:6.1f}: {event_type.value}: {message} | Data: {json.dumps(enhanced_data)}"
-            log_method(file_message)
+        # Unified logging with rich formatting
+        formatted_message = self._format_rich_message(event)
+        log_method = getattr(self.logger, level.value.lower())
+        log_method(formatted_message)
     
     def _enhance_log_data_with_simulation_state(self, data: dict, simulation_state) -> dict:
         """Enhance log data with simulation state summary"""
@@ -110,32 +155,78 @@ class HospitalLogger:
         
         return enhanced_data
     
-    def _format_console_message(self, event: LogEvent) -> str:
-        """Format event for console display"""
-        timestamp_str = f"Time {event.timestamp:6.1f}"
-        level_str = f"[{event.level.value}]" if event.level != LogLevel.INFO else ""
-        source_str = f"({event.source})" if event.source != "unknown" else ""
+    def _format_rich_message(self, event: LogEvent) -> str:
+        """Format event with unified rich markup for both console and file"""
+        # Get event styling
+        style_info = self.event_styles.get(event.event_type, {"emoji": "📄", "color": "white", "style": "normal"})
         
-        base_message = f"{timestamp_str}: {event.message}"
+        # Format timestamp with rich markup
+        timestamp_str = f"[bold cyan]Time {event.timestamp:6.1f}[/bold cyan]"
         
-        if level_str or source_str:
-            base_message += f" {level_str} {source_str}".strip()
+        # Format emoji with color
+        emoji_str = f"[{style_info['color']}] {style_info['emoji']} [/{style_info['color']}]"
+        
+        # Format message with appropriate colors and style
+        color_style = f"{style_info['color']}"
+        if style_info['style'] == 'bold':
+            color_style = f"bold {style_info['color']}"
+        elif style_info['style'] == 'dim':
+            color_style = f"dim {style_info['color']}"
+        
+        message_str = f"[{color_style}]{event.message}[/{color_style}]"
+        
+        # Add priority coloring for triage events
+        if event.event_type in [EventType.TRIAGE_ASSESSMENT, EventType.DOCTOR_ASSIGNMENT, EventType.TREATMENT_START]:
+            message_str = self._colorize_priority_in_markup(event.message, color_style)
+        
+        # Level and source info
+        level_str = ""
+        if event.level != LogLevel.INFO:
+            level_color = self._get_level_color(event.level)
+            level_str = f" [bold {level_color}][{event.level.value}][/bold {level_color}]"
+        
+        source_str = ""
+        if event.source != "unknown":
+            source_str = f" [dim white]({event.source})[/dim white]"
+        
+        # Combine components
+        full_message = f"{timestamp_str}:{emoji_str}{message_str}{level_str}{source_str}"
         
         # Add simulation state summary if present
         if event.data and "simulation_state" in event.data:
             sim_state = event.data["simulation_state"]
-            state_summary = (
-                f" | SimState[T:{sim_state['simulation_time']:.1f}, "
+            state_str = (
+                f" [dim blue]| SimState[T:{sim_state['simulation_time']:.1f}, "
                 f"Arr:{sim_state['total_arrivals']}, "
                 f"Comp:{sim_state['total_completed']}, "
                 f"InSys:{sim_state['patients_in_system']}, "
                 f"Busy:{sim_state['busy_doctors']}, "
                 f"Avail:{sim_state['available_doctors']}, "
-                f"Preempt:{sim_state['preemptions_count']}]"
+                f"Preempt:{sim_state['preemptions_count']}][/dim blue]"
             )
-            base_message += state_summary
-            
-        return base_message
+            full_message += state_str
+        
+        return full_message
+    
+    def _colorize_priority_in_markup(self, message: str, base_style: str) -> str:
+        """Add priority-specific coloring to triage messages using markup"""
+        for priority, color in self.priority_colors.items():
+            if priority in message:
+                # Replace priority word with colored version
+                colored_priority = f"[bold {color}]{priority}[/bold {color}]"
+                message = message.replace(priority, colored_priority)
+        return f"[{base_style}]{message}[/{base_style}]"
+    
+    def _get_level_color(self, level: LogLevel) -> str:
+        """Get color for log level"""
+        level_colors = {
+            LogLevel.DEBUG: "dim white",
+            LogLevel.INFO: "white",
+            LogLevel.WARNING: "yellow",
+            LogLevel.ERROR: "red",
+            LogLevel.CRITICAL: "bright_red"
+        }
+        return level_colors.get(level, "white")
     
     # Convenience methods for different event types
     def log_patient_arrival(self, timestamp: float, patient_id: str, condition: str, 

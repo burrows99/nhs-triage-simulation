@@ -14,21 +14,11 @@ from .triage_systems.random import RandomTriageSystem
 from .triage_systems.manchester_triage_system import ManchesterTriageSystem
 from .utils.logger import initialize_logger, LogLevel, EventType
 
-def main():
-    """Run hospital simulation with optional preemption agent"""
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Hospital Emergency Department Simulation')
-    parser.add_argument('--enable-preemption', action='store_true', 
-                       help='Enable preemption agent for decision making (default: disabled)')
-    parser.add_argument('--duration', type=int, default=60,
-                       help='Simulation duration in minutes (default: 60)')
-    parser.add_argument('--doctors', type=int, default=3,
-                       help='Number of doctors (default: 3)')
-    parser.add_argument('--triage-system', type=str, default='random',
-                       choices=['random', 'manchester'],
-                       help='Triage system to use: random or manchester (default: random)')
-    
-    args = parser.parse_args()
+def run_single_simulation(triage_system_name: str, args):
+    """Run a single simulation with specified triage system"""
+    print(f"\n{'='*60}")
+    print(f"RUNNING SIMULATION: {triage_system_name.upper()} TRIAGE SYSTEM")
+    print(f"{'='*60}")
     
     # Create output/logs directory if it doesn't exist
     logs_dir = "output/logs"
@@ -36,7 +26,6 @@ def main():
     
     # Generate timestamped log filename
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    triage_system_name = args.triage_system
     preemption_status = "preemption" if args.enable_preemption else "no_preemption"
     log_filename = f"hospital_sim_{timestamp}_{triage_system_name}_{preemption_status}_d{args.duration}_doc{args.doctors}.log"
     log_file_path = os.path.join(logs_dir, log_filename)
@@ -60,7 +49,8 @@ def main():
             "log_file": "hospital_simulation.log",
             "preemption_enabled": args.enable_preemption,
             "duration": args.duration,
-            "num_doctors": args.doctors
+            "num_doctors": args.doctors,
+            "triage_system": triage_system_name
         },
         source="main"
     )
@@ -71,13 +61,13 @@ def main():
     # Create components
     patient_provider = RandomService(arrival_rate=0.2)
     
-    # Create triage system based on user choice
-    if args.triage_system == 'random':
+    # Create triage system based on specified type
+    if triage_system_name == 'random':
         triage_system = RandomTriageSystem(system_id="RANDOM_TRIAGE_001")
-    elif args.triage_system == 'manchester':
+    elif triage_system_name == 'manchester':
         triage_system = ManchesterTriageSystem(system_id="MTS_001")
     else:
-        raise ValueError(f"Unknown triage system: {args.triage_system}")
+        raise ValueError(f"Unknown triage system: {triage_system_name}")
     
     # Initialize hospital with specified number of doctors and triage system
     hospital = HospitalCore(num_doctors=args.doctors, triage_system=triage_system)
@@ -102,9 +92,8 @@ def main():
             source="main"
         )
     
+    # Create event handler and simulation engine
     event_handler = ConsoleEventHandler(verbose=True)
-    
-    # Create simulation engine
     sim = SimulationEngine(
         env=env,
         hospital=hospital,
@@ -122,11 +111,13 @@ def main():
         data={
             "duration": args.duration,
             "simulation_type": "hospital_emergency_department",
-            "preemption_enabled": args.enable_preemption
+            "preemption_enabled": args.enable_preemption,
+            "triage_system": triage_system_name
         },
         source="main"
     )
     
+    # Run simulation
     sim.run_simulation(duration=args.duration)
     
     # Log simulation completion
@@ -134,12 +125,13 @@ def main():
         timestamp=float(args.duration),
         event_type=EventType.SIMULATION_END,
         message="Hospital simulation completed successfully",
-        simulation_state=sim.simulation_state,  # Use simulation state from engine
+        simulation_state=sim.simulation_state,
         data={
             "duration": args.duration,
             "total_events_logged": len(logger.events),
             "simulation_status": "completed",
-            "preemption_enabled": args.enable_preemption
+            "preemption_enabled": args.enable_preemption,
+            "triage_system": triage_system_name
         },
         source="main"
     )
@@ -167,7 +159,8 @@ def main():
             "time_range": f"{stats['time_range']['start']:.1f} - {stats['time_range']['end']:.1f} minutes",
             "export_file": json_file_path,
             "log_file": log_file_path,
-            "preemption_enabled": args.enable_preemption
+            "preemption_enabled": args.enable_preemption,
+            "triage_system": triage_system_name
         },
         source="main"
     )
@@ -181,6 +174,72 @@ def main():
     for plot_type, file_path in plot_files.items():
         if plot_type != 'report':  # Don't show report path
             print(f"  {plot_type}: {os.path.basename(file_path)}")
+    
+    return sim
+
+def main():
+    """Run hospital simulation with optional preemption agent"""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Hospital Emergency Department Simulation')
+    preemption_group = parser.add_mutually_exclusive_group()
+    preemption_group.add_argument('--enable-preemption', action='store_true', dest='enable_preemption',
+                                 help='Enable preemption agent for decision making')
+    preemption_group.add_argument('--disable-preemption', action='store_false', dest='enable_preemption',
+                                 help='Disable preemption agent (use standard queue-based assignment)')
+    parser.set_defaults(enable_preemption=True)
+    parser.add_argument('--duration', type=int, default=60,
+                       help='Simulation duration in minutes (default: 60)')
+    parser.add_argument('--doctors', type=int, default=3,
+                       help='Number of doctors (default: 3)')
+    parser.add_argument('--triage-system', type=str, default='all',
+                       choices=['all', 'random', 'manchester'],
+                       help='Triage system to use: all, random, or manchester (default: all)')
+    
+    args = parser.parse_args()
+    
+    # Determine which triage systems to run
+    if args.triage_system == 'all':
+        triage_systems = ['random', 'manchester']
+        print("\n🏥 RUNNING COMPREHENSIVE TRIAGE SYSTEM COMPARISON")
+        print("📊 Both Random and Manchester Triage Systems will be evaluated")
+        print(f"⏱️  Duration: {args.duration} minutes | 👨‍⚕️ Doctors: {args.doctors} | 🚨 Preemption: {'Enabled' if args.enable_preemption else 'Disabled'}")
+    else:
+        triage_systems = [args.triage_system]
+    
+    # Run simulations for each triage system
+    simulation_results = {}
+    for triage_system_name in triage_systems:
+        try:
+            sim = run_single_simulation(triage_system_name, args)
+            simulation_results[triage_system_name] = sim
+        except Exception as e:
+            print(f"❌ Error running {triage_system_name} simulation: {e}")
+            continue
+    
+    # Print comparison summary if multiple systems were run
+    if len(simulation_results) > 1:
+        print(f"\n{'='*80}")
+        print("📊 TRIAGE SYSTEM COMPARISON SUMMARY")
+        print(f"{'='*80}")
+        
+        for system_name, sim in simulation_results.items():
+            state = sim.simulation_state
+            nhs_metrics = state.calculate_nhs_metrics()
+            mts_summary = state.get_mts_compliance_summary()
+            
+            print(f"\n🏥 {system_name.upper()} TRIAGE SYSTEM:")
+            print(f"   📈 Total Arrivals: {state.total_arrivals}")
+            print(f"   ✅ Completed Treatments: {state.total_completed}")
+            print(f"   ⏱️  Average Wait Time: {state.get_average_wait_time():.1f} minutes")
+            print(f"   🎯 4-Hour Target Compliance: {nhs_metrics.get('four_hour_target_compliance', 0):.1f}%")
+            print(f"   🏥 Overall MTS Compliance: {mts_summary.get('overall_compliance', 0):.1f}%")
+            print(f"   🚨 Preemptions: {state.preemptions_count}")
+        
+        print(f"\n📁 Results saved in separate directories:")
+        for system_name in simulation_results.keys():
+            print(f"   📊 {system_name}: output/{system_name}/")
+        
+        print(f"\n✨ Comparison complete! Check the output directories for detailed analysis.")
 
 if __name__ == "__main__":
     main()
