@@ -18,3 +18,4 @@ class Patient:
     interruption_count: int = 0
     assigned_doctor: Optional[int] = None
     treatment_start_time: Optional[float] = None
+    estimated_wait_time: float = 0.0

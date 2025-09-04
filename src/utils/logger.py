@@ -66,10 +66,26 @@ class HospitalLogger:
         
         # File handler with rich formatting
         if log_to_file:
-            file_console = Console(file=open(log_file_path, 'w'), width=120)
-            file_handler = RichHandler(console=file_console, show_time=True, show_path=True)
+            # Create rich text log file with HTML export capability
+            self.log_file_path = log_file_path
+            self.rich_log_file = log_file_path.replace('.log', '_rich.html')
+            
+            # Standard file handler for plain text logs
+            file_handler = logging.FileHandler(log_file_path, mode='w')
             file_handler.setLevel(getattr(logging, min_level.value))
+            file_formatter = logging.Formatter(
+                '%(asctime)s - %(levelname)s - %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+            file_handler.setFormatter(file_formatter)
             handlers.append(file_handler)
+            
+            # Rich console for HTML export (no output, just recording)
+            self.file_console = Console(record=True, width=120, file=None)
+            self.log_to_file_enabled = True
+        else:
+            self.log_to_file_enabled = False
+            self.file_console = None
         
         # Configure unified logger
         logging.basicConfig(
@@ -143,7 +159,14 @@ class HospitalLogger:
         # Unified logging with rich formatting
         formatted_message = self._format_rich_message(event)
         log_method = getattr(self.logger, level.value.lower())
+        
+        # Log to standard logger (console and plain text file)
         log_method(formatted_message)
+        
+        # Also log to rich file console for HTML export
+        if self.log_to_file_enabled:
+            # Don't add timestamp since formatted_message already contains it
+            self.file_console.print(formatted_message)
     
     def _enhance_log_data_with_simulation_state(self, data: dict, simulation_state) -> dict:
         """Enhance log data with simulation state summary"""
@@ -353,6 +376,24 @@ class HospitalLogger:
         
         with open(filename, 'w') as f:
             json.dump(events_data, f, indent=2)
+    
+    def export_rich_html(self, filename: str = None) -> str:
+        """Export rich formatted logs to HTML file"""
+        if not self.log_to_file_enabled or self.file_console is None:
+            return "Rich file logging not enabled"
+        
+        if filename is None:
+            filename = self.rich_log_file
+        
+        # Generate HTML with rich formatting
+        html_content = self.file_console.export_html(
+            inline_styles=True
+        )
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        return f"Rich HTML log exported to: {filename}"
     
     def get_summary_stats(self) -> Dict[str, Any]:
         """Get summary statistics of logged events"""

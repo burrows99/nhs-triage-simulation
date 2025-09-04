@@ -118,8 +118,26 @@ class HospitalCore:
         """Assign triaged patient to appropriate priority queue"""
         patient.priority = assessment.priority
         patient.priority_reason = assessment.reason
-        # Calculate treatment time using NHS service time statistics
+        
+        # Calculate effective queue length (patients ahead of same/higher priority)
+        effective_queue_length = len(self.priority_queues[assessment.priority])
+        
+        # Get number of available doctors
+        available_doctors = len([doc for doc in self.doctors if not doc.busy])
+        
+        # Use queueing theory-based wait time estimation
+        estimated_wait = StatisticsService.estimated_wait_time(
+            priority=assessment.priority,
+            Nq_eff=effective_queue_length,
+            num_doctors=max(1, available_doctors),  # Ensure at least 1 to avoid division by zero
+            stochastic=False  # Use deterministic mean for consistency
+        )
+        
+        # For treatment time, still use the actual service time generation
         patient.treatment_time = StatisticsService.nhs_service_time(assessment.priority)
+        
+        # Store the estimated wait time for potential use
+        patient.estimated_wait_time = estimated_wait
         
         # Get queue position before adding
         queue_position = len(self.priority_queues[assessment.priority]) + 1

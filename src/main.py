@@ -168,6 +168,11 @@ def run_single_simulation(triage_system_name: str, args):
     # Export detailed logs
     logger.export_to_json(json_file_path)
     
+    # Export rich HTML logs
+    html_file_path = log_file_path.replace('.log', '_rich.html')
+    html_result = logger.export_rich_html(html_file_path)
+    print(f"\n📄 {html_result}")
+    
     # Generate plots in system-specific directory
     plot_files = sim.simulation_state.plot_results(system_name=triage_system_name)
     print(f"\nPlots generated in output/{triage_system_name}/:")
@@ -187,8 +192,8 @@ def main():
     preemption_group.add_argument('--disable-preemption', action='store_false', dest='enable_preemption',
                                  help='Disable preemption agent (use standard queue-based assignment)')
     parser.set_defaults(enable_preemption=True)
-    parser.add_argument('--duration', type=int, default=10080,
-                       help='Simulation duration in minutes (default: 10080 - 1 week)')
+    parser.add_argument('--duration', type=int, default=5000,
+                       help='Simulation duration in minutes (default: 5000 - roughly 1/2 week)')
     parser.add_argument('--doctors', type=int, default=3,
                        help='Number of doctors (default: 3)')
     parser.add_argument('--triage-system', type=str, default='all',
