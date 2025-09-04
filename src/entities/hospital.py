@@ -4,6 +4,7 @@ from .doctor import Doctor
 from .patient import Patient
 from ..enums.Triage import Priority
 from .sub_entities.triage_assessment import TriageAssessment
+from ..triage_systems.base import BaseTriageSystem
 from ..utils.logger import get_logger, EventType, LogLevel
 
 @attr.s(auto_attribs=True)
@@ -12,6 +13,7 @@ class HospitalCore:
     
     # Configuration
     num_doctors: int
+    triage_system: BaseTriageSystem
     triage_nurses: int = 1
     
     # State

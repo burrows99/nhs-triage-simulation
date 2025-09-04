@@ -9,7 +9,7 @@ from ..entities.sub_entities.preemption_decision import PreemptionDecision
 from ..entities.sub_entities.simulation_state import SimulationState
 from ..enums.Triage import Priority
 from ..providers.patient import PatientDataProvider
-from ..triage_systems.base import TriageSystem
+from ..triage_systems.base import BaseTriageSystem
 from ..handler.console_event_handler import ConsoleEventHandler as HospitalEventHandler
 from ..utils.logger import get_logger, initialize_logger, EventType, LogLevel
 
@@ -22,7 +22,7 @@ class HospitalSimulationEngine:
     
     # Plugins
     patient_provider: PatientDataProvider
-    triage_system: TriageSystem
+    triage_system: BaseTriageSystem
     preemption_agent: Optional[PreemptionAgent]
     event_handler: HospitalEventHandler
     

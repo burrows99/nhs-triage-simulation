@@ -41,6 +41,27 @@ venv.bak/
 *.log
 simulation_events.json
 hospital_simulation.log
+output/
+!output/.gitkeep
+
+# Additional files that might be tracked
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+.cache/
+.pytest_cache/
+*.egg-info/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
 # OS
 .DS_Store
