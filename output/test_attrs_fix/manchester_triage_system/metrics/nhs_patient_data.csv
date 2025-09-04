@@ -1,0 +1,3 @@
+patient_id,arrival_time,age,gender,triage_category,initial_assessment_start,treatment_start,departure_time,total_time_minutes,time_to_assessment_minutes,time_to_treatment_minutes,meets_4hour_standard,is_reattendance,admitted,disposal,presenting_complaint,left_without_being_seen
+812ebb2d-45d2-4af0-bf97-9c56c807dfe9_sim_824478_0,31.216918586023265,0,,GREEN,33.2733029682063,43.42794689198595,104.32578295105475,73.10886436503148,2.0563843821830368,12.211028305962682,True,False,False,discharged,,False
+ebc7830a-1f07-4388-92f8-5afcae5dbd5a_sim_118343_3,54.00689911206263,0,,GREEN,55.98015369203038,70.88542292512969,107.05296003327943,53.04606092121681,1.973254579967751,16.878523813067062,True,False,False,discharged,,False

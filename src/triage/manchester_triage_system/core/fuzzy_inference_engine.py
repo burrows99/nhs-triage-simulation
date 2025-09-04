@@ -44,11 +44,22 @@ class FuzzyInferenceEngine:
         # Compute fuzzy inference result
         try:
             self._simulation.compute()
-            return self._simulation.output['triage_category']
+            # Get the defuzzified output value from the triage_category variable
+            output_var_name = 'triage_category'
+            if output_var_name in self._simulation.output:
+                return self._simulation.output[output_var_name]
+            else:
+                # If the variable name doesn't exist, get the first (and should be only) output
+                output_keys = list(self._simulation.output.keys())
+                if output_keys:
+                    return self._simulation.output[output_keys[0]]
+                else:
+                    raise KeyError("No output variables found in fuzzy system")
         except Exception as e:
             # No fallbacks - propagate error for proper handling
             raise RuntimeError(
                 f"Fuzzy inference computation failed: {str(e)}. "
                 f"Symptom values: {symptom_values}. "
+                f"Available outputs: {list(self._simulation.output.keys()) if hasattr(self._simulation, 'output') else 'None'}. "
                 "System cannot proceed without valid fuzzy score."
             ) from e

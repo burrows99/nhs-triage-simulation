@@ -87,7 +87,12 @@ class PlottingService:
         Returns:
             Matplotlib figure object
         """
+        logger.info(f"🎨 CHART_START | Creating compliance chart: {title}")
+        logger.debug(f"📊 COMPLIANCE_DATA | Keys: {list(compliance_data.keys()) if isinstance(compliance_data, dict) else 'Not a dict'}")
+        logger.debug(f"💾 SAVE_PATH | {save_path if save_path else 'No save path specified'}")
+        
         fig, ax = plt.subplots(figsize=self.default_figsize)
+        logger.debug(f"🎨 FIGURE_CREATED | Size: {self.default_figsize}")
         
         # Check if this is an error case (no completed patients)
         if 'error' in compliance_data:
@@ -152,10 +157,16 @@ class PlottingService:
                     ha='center', va='top', fontsize=9, style='italic', transform=ax.transData)
         
         plt.tight_layout()
+        logger.debug(f"🎨 LAYOUT_APPLIED | Tight layout applied to compliance chart")
         
         if save_path:
+            logger.info(f"💾 SAVING_CHART | Compliance chart to: {save_path}")
             self._save_figure(fig, save_path)
+            logger.info(f"✅ CHART_SAVED | Compliance chart successfully saved")
+        else:
+            logger.debug(f"📊 CHART_DISPLAY_ONLY | No save path provided, chart for display only")
         
+        logger.info(f"🎨 CHART_COMPLETE | Compliance chart creation finished")
         return fig
     
     def create_utilization_chart(self, utilization_data: Dict[str, Dict[str, float]],
@@ -439,10 +450,13 @@ class PlottingService:
         logger.info(f"🔄 DATA_TRANSFER_START: PlottingService.generate_all_charts() initiated")
         logger.info(f"📊 TRANSFER_SOURCE: Registered metric services - {list(self.metric_services.keys())}")
         logger.info(f"📍 TRANSFER_DESTINATION: Chart files in {output_dir}")
+        logger.debug(f"🎨 PLOT_CONFIG | Style: {self.style} | Default figsize: {self.default_figsize}")
+        logger.debug(f"🎨 COLOR_PALETTE | Available colors: {list(self.colors.keys())}")
         
         os.makedirs(output_dir, exist_ok=True)
         logger.info(f"📊 DIRECTORY_CREATED: {output_dir}")
         generated_charts = {}
+        chart_generation_stats = {'total_attempted': 0, 'successful': 0, 'failed': 0}
         
         # Generate NHS charts if NHS metrics service is registered
         nhs_service = self.get_metric_service('nhs')
@@ -451,23 +465,46 @@ class PlottingService:
                 logger.info(f"🔄 DATA_TRANSFER: Generating NHS charts...")
                 nhs_metrics = nhs_service.calculate_metrics()
                 logger.info(f"📊 TRANSFER_PAYLOAD: NHS data - {str(nhs_metrics)[:200]}...")
+                logger.debug(f"📊 NHS_METRICS_KEYS: {list(nhs_metrics.keys()) if isinstance(nhs_metrics, dict) else 'Not a dict'}")
                 
                 # Compliance chart
+                chart_generation_stats['total_attempted'] += 1
+                logger.info(f"🎯 CHART_1 | Generating NHS compliance chart...")
                 compliance_path = os.path.join(output_dir, 'nhs_compliance.png')
                 self.create_compliance_chart(nhs_metrics, save_path=compliance_path)
                 generated_charts['nhs_compliance'] = compliance_path
+                chart_generation_stats['successful'] += 1
                 logger.info(f"✅ CHART_SUCCESS: NHS compliance chart saved to {compliance_path}")
                 
                 # Triage distribution
                 if 'triage_category_distribution' in nhs_metrics:
+                    chart_generation_stats['total_attempted'] += 1
+                    logger.info(f"🎯 CHART_2 | Generating triage distribution chart...")
                     triage_path = os.path.join(output_dir, 'triage_distribution.png')
                     self.create_triage_distribution_chart(nhs_metrics['triage_category_distribution'], save_path=triage_path)
                     generated_charts['triage_distribution'] = triage_path
+                    chart_generation_stats['successful'] += 1
                     logger.info(f"✅ CHART_SUCCESS: Triage distribution chart saved to {triage_path}")
+                else:
+                    logger.warning(f"⚠️  CHART_SKIP: Triage distribution data not available in NHS metrics")
                 
-                logger.info("Generated NHS charts")
+                # Performance dashboard if comprehensive data available
+                if 'patient_times' in nhs_metrics or 'age_group_analysis' in nhs_metrics:
+                    chart_generation_stats['total_attempted'] += 1
+                    logger.info(f"🎯 CHART_3 | Generating NHS performance dashboard...")
+                    dashboard_path = os.path.join(output_dir, 'nhs_performance_dashboard.png')
+                    self.create_performance_dashboard(nhs_metrics, save_path=dashboard_path)
+                    generated_charts['nhs_performance_dashboard'] = dashboard_path
+                    chart_generation_stats['successful'] += 1
+                    logger.info(f"✅ CHART_SUCCESS: NHS performance dashboard saved to {dashboard_path}")
+                
+                logger.info(f"✅ NHS_CHARTS_COMPLETE | Generated {len([k for k in generated_charts.keys() if 'nhs' in k])} NHS charts")
             except Exception as e:
+                chart_generation_stats['failed'] += 1
                 logger.error(f"❌ CHART_ERROR: Error generating NHS charts: {e}")
+                logger.error(f"🔍 DEBUG | Exception type: {type(e).__name__}")
+        else:
+            logger.warning(f"⚠️  SERVICE_MISSING: NHS metrics service not registered")
         
         # Generate operational charts if operation metrics service is registered
         op_service = self.get_metric_service('operations')
@@ -476,43 +513,73 @@ class PlottingService:
                 logger.info(f"🔄 DATA_TRANSFER: Generating operational charts...")
                 op_metrics = op_service.calculate_metrics()
                 logger.info(f"📊 TRANSFER_PAYLOAD: Operations data - {str(op_metrics)[:200]}...")
+                logger.debug(f"📊 OP_METRICS_KEYS: {list(op_metrics.keys()) if isinstance(op_metrics, dict) else 'Not a dict'}")
                 
                 # Utilization chart
                 if 'utilization' in op_metrics:
+                    chart_generation_stats['total_attempted'] += 1
+                    logger.info(f"🎯 CHART_4 | Generating resource utilization chart...")
                     util_path = os.path.join(output_dir, 'resource_utilization.png')
                     self.create_utilization_chart(op_metrics['utilization'], save_path=util_path)
                     generated_charts['resource_utilization'] = util_path
+                    chart_generation_stats['successful'] += 1
                     logger.info(f"✅ CHART_SUCCESS: Resource utilization chart saved to {util_path}")
+                else:
+                    logger.warning(f"⚠️  CHART_SKIP: Utilization data not available in operational metrics")
                 
                 # Queue analysis
                 if 'queues' in op_metrics:
+                    chart_generation_stats['total_attempted'] += 1
+                    logger.info(f"🎯 CHART_5 | Generating queue analysis chart...")
                     queue_path = os.path.join(output_dir, 'queue_analysis.png')
                     self.create_queue_analysis_chart(op_metrics['queues'], save_path=queue_path)
                     generated_charts['queue_analysis'] = queue_path
+                    chart_generation_stats['successful'] += 1
                     logger.info(f"✅ CHART_SUCCESS: Queue analysis chart saved to {queue_path}")
+                else:
+                    logger.warning(f"⚠️  CHART_SKIP: Queue data not available in operational metrics")
                 
-                logger.info("Generated operational charts")
+                logger.info(f"✅ OP_CHARTS_COMPLETE | Generated {len([k for k in generated_charts.keys() if any(x in k for x in ['utilization', 'queue'])])} operational charts")
             except Exception as e:
+                chart_generation_stats['failed'] += 1
                 logger.error(f"❌ CHART_ERROR: Error generating operational charts: {e}")
+                logger.error(f"🔍 DEBUG | Exception type: {type(e).__name__}")
+        else:
+            logger.warning(f"⚠️  SERVICE_MISSING: Operations metrics service not registered")
         
         # Generate combined dashboard if both services are available
         if nhs_service and op_service:
             try:
+                chart_generation_stats['total_attempted'] += 1
                 logger.info(f"🔄 DATA_TRANSFER: Generating combined dashboard...")
                 nhs_metrics = nhs_service.calculate_metrics()
                 op_metrics = op_service.calculate_metrics()
+                logger.debug(f"📊 COMBINED_DATA | NHS keys: {list(nhs_metrics.keys()) if isinstance(nhs_metrics, dict) else 'None'} | Op keys: {list(op_metrics.keys()) if isinstance(op_metrics, dict) else 'None'}")
                 
+                logger.info(f"🎯 CHART_6 | Generating combined dashboard...")
                 dashboard_path = os.path.join(output_dir, 'combined_dashboard.png')
                 self.create_combined_dashboard(nhs_metrics, op_metrics, save_path=dashboard_path)
                 generated_charts['combined_dashboard'] = dashboard_path
+                chart_generation_stats['successful'] += 1
                 logger.info(f"✅ CHART_SUCCESS: Combined dashboard saved to {dashboard_path}")
                 
-                logger.info("Generated combined dashboard")
+                logger.info(f"✅ COMBINED_DASHBOARD_COMPLETE | Integrated NHS and operational metrics")
             except Exception as e:
+                chart_generation_stats['failed'] += 1
                 logger.error(f"❌ CHART_ERROR: Error generating combined dashboard: {e}")
+                logger.error(f"🔍 DEBUG | Exception type: {type(e).__name__}")
+        else:
+            logger.warning(f"⚠️  DASHBOARD_SKIP: Both NHS and operations services required for combined dashboard")
         
+        # Final statistics and summary
+        logger.info(f"📊 CHART_GENERATION_STATS | Attempted: {chart_generation_stats['total_attempted']} | Successful: {chart_generation_stats['successful']} | Failed: {chart_generation_stats['failed']}")
         logger.info(f"✅ DATA_TRANSFER_SUCCESS: All charts generated - {len(generated_charts)} charts created")
         logger.info(f"📊 FINAL_CHART_PATHS: {generated_charts}")
+        
+        if chart_generation_stats['failed'] > 0:
+            logger.warning(f"⚠️  PARTIAL_SUCCESS: {chart_generation_stats['failed']} chart(s) failed to generate")
+        else:
+            logger.info(f"🎉 FULL_SUCCESS: All attempted charts generated successfully")
         
         return generated_charts
     
@@ -965,9 +1032,19 @@ class PlottingService:
     
     def _save_figure(self, fig: plt.Figure, save_path: str):
         """Save figure to specified path."""
+        logger.debug(f"💾 SAVE_START | Saving figure to: {save_path}")
+        
         # Ensure directory exists
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        save_dir = Path(save_path).parent
+        save_dir.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"📁 DIR_READY | Directory created/verified: {save_dir}")
         
         # Save with high DPI
-        fig.savefig(save_path, dpi=300, bbox_inches='tight', 
-                   facecolor='white', edgecolor='none')
+        try:
+            fig.savefig(save_path, dpi=300, bbox_inches='tight', 
+                       facecolor='white', edgecolor='none')
+            file_size = Path(save_path).stat().st_size
+            logger.debug(f"💾 SAVE_SUCCESS | File saved: {save_path} | Size: {file_size} bytes")
+        except Exception as e:
+            logger.error(f"❌ SAVE_ERROR | Failed to save figure: {e}")
+            raise

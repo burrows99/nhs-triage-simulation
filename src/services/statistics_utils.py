@@ -253,3 +253,29 @@ class StatisticsUtils:
             'compliance_metrics': StatisticsUtils.calculate_4hour_compliance(patients),
             'admission_rate_pct': StatisticsUtils.calculate_admission_rate(patients, patients)
         }
+    
+    @staticmethod
+    def calculate_journey_time_stats(patients: List[Any]) -> Dict[str, Any]:
+        """Calculate journey time statistics for patients
+        
+        Args:
+            patients: List of patient objects with journey time data
+            
+        Returns:
+            Dictionary with journey time statistics
+        """
+        if not patients:
+            return StatisticsUtils.calculate_basic_stats_from_list([])
+        
+        # Extract journey times from patients
+        journey_times = []
+        for patient in patients:
+            try:
+                if patient.departure_time and patient.arrival_time:
+                    journey_time = patient.departure_time - patient.arrival_time
+                    journey_times.append(journey_time)
+            except AttributeError:
+                # Skip patients without required time attributes
+                continue
+        
+        return StatisticsUtils.calculate_basic_stats_from_list(journey_times)

@@ -1,0 +1,70 @@
+{
+  "total_attendances": 2,
+  "active_patients_in_system": 3,
+  "1_left_before_being_seen_rate_pct": 0.0,
+  "2_reattendance_rate_pct": 0.0,
+  "3_time_to_initial_assessment_avg_minutes": 2.014819481075394,
+  "4_time_to_treatment_avg_minutes": 14.544776059514872,
+  "5_total_time_in_ae_avg_minutes": 63.07746264312414,
+  "4hour_standard_compliance_pct": 100.0,
+  "attendances_within_4hours": 2,
+  "attendances_over_4hours": 0,
+  "95pct_target_achieved": true,
+  "76pct_interim_target_achieved": true,
+  "median_total_time_minutes": 63.07746264312414,
+  "95th_percentile_time_minutes": 72.10572419284074,
+  "admission_rate_pct": 100.0,
+  "triage_category_distribution": {
+    "RED": 0,
+    "ORANGE": 0,
+    "YELLOW": 0,
+    "GREEN": 2,
+    "BLUE": 0
+  },
+  "age_group_analysis": {
+    "0-17": {
+      "count": 2,
+      "avg_time_minutes": 63.07746264312414,
+      "4hour_compliance_pct": 100.0,
+      "admission_rate_pct": 100.0
+    }
+  },
+  "gender_analysis": {
+    "": {
+      "count": 2,
+      "avg_time_minutes": 63.07746264312414,
+      "4hour_compliance_pct": 100.0,
+      "admission_rate_pct": 100.0
+    }
+  },
+  "time_distribution_analysis": {
+    "min_time_minutes": 53.04606092121681,
+    "max_time_minutes": 73.10886436503148,
+    "std_dev_minutes": 10.031401721907336,
+    "quartiles": {
+      "25th_percentile": 58.06176178217048,
+      "50th_percentile": 63.07746264312414,
+      "75th_percentile": 68.09316350407781
+    },
+    "distribution_bins": {
+      "0-60min": 1,
+      "60-120min": 1,
+      "120-240min": 0,
+      "240-360min": 0,
+      "360+min": 0
+    }
+  },
+  "service_name": "NHSMetrics",
+  "total_records": 2,
+  "active_records": 3,
+  "total_duration_minutes": 107.05296003327943,
+  "start_time": 0.0,
+  "end_time": 107.05296003327943,
+  "counters": {
+    "lwbs_count": 0,
+    "reattendance_count": 0,
+    "admissions_count": 0,
+    "total_records": 5,
+    "completed_records": 2
+  }
+}
