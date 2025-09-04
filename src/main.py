@@ -8,9 +8,31 @@ from .services.random import RandomService
 from .simulation.simulation_engine import HospitalSimulationEngine as SimulationEngine
 from .handler.console_event_handler import ConsoleEventHandler
 from .entities.triage_nurse import TriageNurse
+from .utils.logger import initialize_logger, LogLevel, EventType
 
 def main():
     """Run a minimal hospital simulation"""
+    # Initialize centralized logging
+    logger = initialize_logger(
+        log_to_console=True,
+        log_to_file=True,
+        log_file_path="hospital_simulation.log",
+        min_level=LogLevel.INFO
+    )
+    
+    # Log simulation start
+    logger.log_event(
+        timestamp=0.0,
+        event_type=EventType.SIMULATION_START,
+        message="Hospital simulation starting - Main execution",
+        data={
+            "simulation_type": "hospital_emergency_department",
+            "logging_enabled": True,
+            "log_file": "hospital_simulation.log"
+        },
+        source="main"
+    )
+    
     # Create simulation environment
     env = simpy.Environment()
     
@@ -19,8 +41,8 @@ def main():
     
     # Create components
     patient_provider = RandomService(arrival_rate=0.2, max_patients=10)
-    triage_system = TriageNurse()
-    preemption_agent = PreemptionAgent()
+    triage_system = TriageNurse(nurse_id="NURSE_001")
+    preemption_agent = PreemptionAgent(agent_id="PREEMPTION_AGENT_001")
     event_handler = ConsoleEventHandler(verbose=True)
     
     # Create simulation engine
@@ -36,8 +58,33 @@ def main():
     print("Starting hospital simulation...")
     sim.run_simulation(duration=60)  # Run for 1 hour
     
+    # Log simulation completion
+    logger.log_event(
+        timestamp=60.0,
+        event_type=EventType.SIMULATION_END,
+        message="Hospital simulation completed successfully",
+        data={
+            "duration": 60,
+            "total_events_logged": len(logger.events),
+            "simulation_status": "completed"
+        },
+        source="main"
+    )
+    
     print("\nSimulation completed!")
     sim.print_statistics()
+    
+    # Print logging summary
+    stats = logger.get_summary_stats()
+    print(f"\n=== LOGGING SUMMARY ===")
+    print(f"Total events logged: {stats['total_events']}")
+    print(f"Event types: {list(stats['event_type_counts'].keys())}")
+    print(f"Time range: {stats['time_range']['start']:.1f} - {stats['time_range']['end']:.1f} minutes")
+    
+    # Export detailed logs
+    logger.export_to_json("simulation_events.json")
+    print(f"\nDetailed logs exported to: simulation_events.json")
+    print(f"Log file saved to: hospital_simulation.log")
 
 if __name__ == "__main__":
     main()

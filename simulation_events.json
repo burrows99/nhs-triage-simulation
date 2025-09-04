@@ -1,0 +1,1354 @@
+[
+  {
+    "timestamp": 0.0,
+    "event_type": "SIMULATION_START",
+    "level": "INFO",
+    "message": "Hospital simulation starting - Main execution",
+    "data": {
+      "simulation_type": "hospital_emergency_department",
+      "logging_enabled": true,
+      "log_file": "hospital_simulation.log"
+    },
+    "source": "main"
+  },
+  {
+    "timestamp": 0.0,
+    "event_type": "SYSTEM_STATE",
+    "level": "INFO",
+    "message": "Hospital initialized with 3 doctors and 1 triage nurses",
+    "data": {
+      "num_doctors": 3,
+      "triage_nurses": 1,
+      "initialization": true
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 0.0,
+    "event_type": "SIMULATION_START",
+    "level": "INFO",
+    "message": "Simulation engine initialized with 3 doctors and 1 triage nurses",
+    "data": {
+      "num_doctors": 3,
+      "triage_nurses": 1,
+      "simulation_engine": "HospitalSimulationEngine"
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 0,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00001 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00001",
+      "condition": "abdominal_pain",
+      "symptoms": [
+        "nausea",
+        "vomiting",
+        "fever"
+      ],
+      "arrival_time": 0,
+      "total_arrivals": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 0,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00001 arrives with abdominal_pain",
+    "data": {
+      "patient_id": "PAT_00001",
+      "condition": "abdominal_pain",
+      "vital_signs": {
+        "bp_systolic": 162.9193134973452,
+        "bp_diastolic": 76.8274986105672,
+        "heart_rate": 81.00753084336176,
+        "temperature": 38.19702283373255,
+        "oxygen_saturation": 96.24214122006155
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 0,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00001",
+    "data": {
+      "patient_id": "PAT_00001",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 0,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00001 assessed as YELLOW priority - MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as YELLOW priority",
+    "data": {
+      "patient_id": "PAT_00001",
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as YELLOW priority",
+      "estimated_treatment_time": 24.356582240775097
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 0,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00001 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00001",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 1,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 2.343256788292624,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00001 assigned to YELLOW queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "priority": "YELLOW",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 2.343256788292624,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00001 added to YELLOW queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "priority": "YELLOW",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 0,
+        "YELLOW": 1,
+        "GREEN": 0,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as YELLOW priority",
+      "estimated_treatment_time": 24.356582240775097
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 3,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 assigned to Patient PAT_00001 (YELLOW)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "doctor_id": "DOC_000",
+      "priority": "YELLOW"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 3,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00001",
+    "data": {
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "doctor_specialization": "Emergency_Medicine_0",
+      "patient_id": "PAT_00001",
+      "patient_condition": "abdominal_pain",
+      "patient_priority": "YELLOW",
+      "wait_time": 3,
+      "estimated_treatment_time": 24.356582240775097
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 4.345677826946216,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00002 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00002",
+      "condition": "headache",
+      "symptoms": [
+        "dizziness",
+        "light_sensitivity",
+        "nausea"
+      ],
+      "arrival_time": 4.345677826946216,
+      "total_arrivals": 2
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 4.345677826946216,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00002 arrives with headache",
+    "data": {
+      "patient_id": "PAT_00002",
+      "condition": "headache",
+      "vital_signs": {
+        "bp_systolic": 114.47132416542317,
+        "bp_diastolic": 55.19740069241156,
+        "heart_rate": 92.90509974915378,
+        "temperature": 37.19001205205319,
+        "oxygen_saturation": 97.36042411341643
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 4.345677826946216,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00002",
+    "data": {
+      "patient_id": "PAT_00002",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 4.345677826946216,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00002 assessed as GREEN priority - MTS Assessment: headache with symptoms: dizziness, light_sensitivity, nausea classified as GREEN priority",
+    "data": {
+      "patient_id": "PAT_00002",
+      "priority": "GREEN",
+      "reason": "MTS Assessment: headache with symptoms: dizziness, light_sensitivity, nausea classified as GREEN priority",
+      "estimated_treatment_time": 47.71614692486884
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 4.345677826946216,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00002 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00002",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 2,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 6.3965251988992335,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00002 assigned to GREEN queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00002",
+      "priority": "GREEN",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 6.3965251988992335,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00002 added to GREEN queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00002",
+      "priority": "GREEN",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 0,
+        "YELLOW": 0,
+        "GREEN": 1,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: headache with symptoms: dizziness, light_sensitivity, nausea classified as GREEN priority",
+      "estimated_treatment_time": 47.71614692486884
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 7,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_001 assigned to Patient PAT_00002 (GREEN)",
+    "data": {
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "priority": "GREEN"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 7,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_001 (Dr. B) assigned to Patient PAT_00002",
+    "data": {
+      "doctor_id": "DOC_001",
+      "doctor_name": "Dr. B",
+      "doctor_specialization": "Emergency_Medicine_1",
+      "patient_id": "PAT_00002",
+      "patient_condition": "headache",
+      "patient_priority": "GREEN",
+      "wait_time": 2.6543221730537843,
+      "estimated_treatment_time": 47.71614692486884
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 11.734134628641158,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00003 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00003",
+      "condition": "routine_checkup",
+      "symptoms": [],
+      "arrival_time": 11.734134628641158,
+      "total_arrivals": 3
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 11.734134628641158,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00003 arrives with routine_checkup",
+    "data": {
+      "patient_id": "PAT_00003",
+      "condition": "routine_checkup",
+      "vital_signs": {
+        "bp_systolic": 95.54652366580027,
+        "bp_diastolic": 73.32155969745834,
+        "heart_rate": 79.09206824160633,
+        "temperature": 38.49250829223696,
+        "oxygen_saturation": 100
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 11.734134628641158,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00003",
+    "data": {
+      "patient_id": "PAT_00003",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 11.734134628641158,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00003 assessed as BLUE priority - MTS Assessment: routine_checkup classified as BLUE priority",
+    "data": {
+      "patient_id": "PAT_00003",
+      "priority": "BLUE",
+      "reason": "MTS Assessment: routine_checkup classified as BLUE priority",
+      "estimated_treatment_time": 58.82151446765273
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 11.734134628641158,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00003 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00003",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 3,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 12.71275456261327,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00004 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00004",
+      "condition": "chest_pain",
+      "symptoms": [
+        "shortness_of_breath",
+        "sweating",
+        "nausea"
+      ],
+      "arrival_time": 12.71275456261327,
+      "total_arrivals": 4
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 12.71275456261327,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00004 arrives with chest_pain",
+    "data": {
+      "patient_id": "PAT_00004",
+      "condition": "chest_pain",
+      "vital_signs": {
+        "bp_systolic": 60,
+        "bp_diastolic": 61.343751238299006,
+        "heart_rate": 97.62778034991511,
+        "temperature": 38.39189158463519,
+        "oxygen_saturation": 93.6804642128975
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 16.270827890521186,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00003 assigned to BLUE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "priority": "BLUE",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 16.270827890521186,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00003 added to BLUE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "priority": "BLUE",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 0,
+        "YELLOW": 0,
+        "GREEN": 0,
+        "BLUE": 1
+      },
+      "assessment_reason": "MTS Assessment: routine_checkup classified as BLUE priority",
+      "estimated_treatment_time": 58.82151446765273
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 16.270827890521186,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00004",
+    "data": {
+      "patient_id": "PAT_00004",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 16.270827890521186,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00004 assessed as YELLOW priority - MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as YELLOW priority",
+    "data": {
+      "patient_id": "PAT_00004",
+      "priority": "YELLOW",
+      "reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as YELLOW priority",
+      "estimated_treatment_time": 35.415952174305936
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 16.270827890521186,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00004 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00004",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 4,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 17,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_002 assigned to Patient PAT_00003 (BLUE)",
+    "data": {
+      "patient_id": "PAT_00003",
+      "doctor_id": "DOC_002",
+      "priority": "BLUE"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 17,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_002 (Dr. C) assigned to Patient PAT_00003",
+    "data": {
+      "doctor_id": "DOC_002",
+      "doctor_name": "Dr. C",
+      "doctor_specialization": "Emergency_Medicine_2",
+      "patient_id": "PAT_00003",
+      "patient_condition": "routine_checkup",
+      "patient_priority": "BLUE",
+      "wait_time": 5.265865371358842,
+      "estimated_treatment_time": 58.82151446765273
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 20.197728530923122,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00005 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00005",
+      "condition": "chest_pain",
+      "symptoms": [
+        "shortness_of_breath",
+        "sweating",
+        "nausea"
+      ],
+      "arrival_time": 20.197728530923122,
+      "total_arrivals": 5
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 20.197728530923122,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00005 arrives with chest_pain",
+    "data": {
+      "patient_id": "PAT_00005",
+      "condition": "chest_pain",
+      "vital_signs": {
+        "bp_systolic": 93.70936425908538,
+        "bp_diastolic": 75.31583137702799,
+        "heart_rate": 87.56345669379328,
+        "temperature": 35.16247391969455,
+        "oxygen_saturation": 98.91343392792945
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 20.939152172595936,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00004 assigned to YELLOW queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "priority": "YELLOW",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 20.939152172595936,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00004 added to YELLOW queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "priority": "YELLOW",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 0,
+        "YELLOW": 1,
+        "GREEN": 0,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as YELLOW priority",
+      "estimated_treatment_time": 35.415952174305936
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 20.939152172595936,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00005",
+    "data": {
+      "patient_id": "PAT_00005",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 20.939152172595936,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00005 assessed as ORANGE priority - MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as ORANGE priority",
+    "data": {
+      "patient_id": "PAT_00005",
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as ORANGE priority",
+      "estimated_treatment_time": 16.052194165963666
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 20.939152172595936,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00005 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00005",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 5,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 23.965031213096267,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00005 assigned to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00005",
+      "priority": "ORANGE",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 23.965031213096267,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00005 added to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00005",
+      "priority": "ORANGE",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 1,
+        "GREEN": 0,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: chest_pain with symptoms: shortness_of_breath, sweating, nausea classified as ORANGE priority",
+      "estimated_treatment_time": 16.052194165963666
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 23.965031213096267,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "Preemption DENIED: Preemption not warranted at this time",
+    "data": {
+      "decision": false,
+      "reason": "Preemption not warranted at this time",
+      "new_patient_id": "PAT_00005",
+      "affected_patients": []
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 23.965031213096267,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "Preemption decision completed: DENIED (confidence: 0.93)",
+    "data": {
+      "decision": false,
+      "confidence": 0.9254306700510315,
+      "reason": "Preemption not warranted at this time",
+      "new_patient_id": "PAT_00005",
+      "doctor_to_preempt": null,
+      "total_decisions": 1,
+      "approval_rate": 0.0
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 26.3243311809178,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00006 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00006",
+      "condition": "minor_laceration",
+      "symptoms": [
+        "bleeding",
+        "pain"
+      ],
+      "arrival_time": 26.3243311809178,
+      "total_arrivals": 6
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 26.3243311809178,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00006 arrives with minor_laceration",
+    "data": {
+      "patient_id": "PAT_00006",
+      "condition": "minor_laceration",
+      "vital_signs": {
+        "bp_systolic": 119.14533796732124,
+        "bp_diastolic": 76.539823938309,
+        "heart_rate": 77.23389065351768,
+        "temperature": 37.22994396293522,
+        "oxygen_saturation": 94.96442620756955
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 26.3243311809178,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00006",
+    "data": {
+      "patient_id": "PAT_00006",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 26.3243311809178,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00006 assessed as GREEN priority - MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+    "data": {
+      "patient_id": "PAT_00006",
+      "priority": "GREEN",
+      "reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+      "estimated_treatment_time": 33.408502628857406
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 26.3243311809178,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00006 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00006",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 6,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 27.356582240775097,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00001 (wait: 3.0min)",
+    "data": {
+      "patient_id": "PAT_00001",
+      "doctor_id": "DOC_000",
+      "wait_time": 3.0
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 27.356582240775097,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Patient PAT_00001 discharged by Doctor DOC_000",
+    "data": {
+      "patient_id": "PAT_00001",
+      "doctor_id": "DOC_000",
+      "condition": "abdominal_pain",
+      "priority": "YELLOW",
+      "total_wait_time": 27.356582240775097,
+      "actual_treatment_time": 24.356582240775097,
+      "estimated_treatment_time": 24.356582240775097,
+      "interruption_count": 0,
+      "doctor_total_patients": 1,
+      "hospital_total_completed": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 27.356582240775097,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 assigned to Patient PAT_00005 (ORANGE)",
+    "data": {
+      "patient_id": "PAT_00005",
+      "doctor_id": "DOC_000",
+      "priority": "ORANGE"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 27.356582240775097,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00005",
+    "data": {
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "doctor_specialization": "Emergency_Medicine_0",
+      "patient_id": "PAT_00005",
+      "patient_condition": "chest_pain",
+      "patient_priority": "ORANGE",
+      "wait_time": 7.158853709851975,
+      "estimated_treatment_time": 16.052194165963666
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 30.814113297287193,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00006 assigned to GREEN queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00006",
+      "priority": "GREEN",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 30.814113297287193,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00006 added to GREEN queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00006",
+      "priority": "GREEN",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 0,
+        "YELLOW": 1,
+        "GREEN": 1,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+      "estimated_treatment_time": 33.408502628857406
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 43.40877640673877,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_000 finished Patient PAT_00005 (wait: 7.2min)",
+    "data": {
+      "patient_id": "PAT_00005",
+      "doctor_id": "DOC_000",
+      "wait_time": 7.158853709851975
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 43.40877640673877,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Patient PAT_00005 discharged by Doctor DOC_000",
+    "data": {
+      "patient_id": "PAT_00005",
+      "doctor_id": "DOC_000",
+      "condition": "chest_pain",
+      "priority": "ORANGE",
+      "total_wait_time": 23.211047875815645,
+      "actual_treatment_time": 16.05219416596367,
+      "estimated_treatment_time": 16.052194165963666,
+      "interruption_count": 0,
+      "doctor_total_patients": 2,
+      "hospital_total_completed": 2
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 43.40877640673877,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 assigned to Patient PAT_00004 (YELLOW)",
+    "data": {
+      "patient_id": "PAT_00004",
+      "doctor_id": "DOC_000",
+      "priority": "YELLOW"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 43.40877640673877,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_000 (Dr. A) assigned to Patient PAT_00004",
+    "data": {
+      "doctor_id": "DOC_000",
+      "doctor_name": "Dr. A",
+      "doctor_specialization": "Emergency_Medicine_0",
+      "patient_id": "PAT_00004",
+      "patient_condition": "chest_pain",
+      "patient_priority": "YELLOW",
+      "wait_time": 30.696021844125497,
+      "estimated_treatment_time": 35.415952174305936
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 45.73512575401989,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00007 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00007",
+      "condition": "abdominal_pain",
+      "symptoms": [
+        "nausea",
+        "vomiting",
+        "fever"
+      ],
+      "arrival_time": 45.73512575401989,
+      "total_arrivals": 7
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 45.73512575401989,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00007 arrives with abdominal_pain",
+    "data": {
+      "patient_id": "PAT_00007",
+      "condition": "abdominal_pain",
+      "vital_signs": {
+        "bp_systolic": 196.02656993106913,
+        "bp_diastolic": 74.85031032792931,
+        "heart_rate": 89.70999648476808,
+        "temperature": 37.520229344976904,
+        "oxygen_saturation": 97.5422220925507
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 45.73512575401989,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00007",
+    "data": {
+      "patient_id": "PAT_00007",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 45.73512575401989,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00007 assessed as ORANGE priority - MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+    "data": {
+      "patient_id": "PAT_00007",
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+      "estimated_treatment_time": 17.965707697847435
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 45.73512575401989,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00007 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00007",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 7,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 48.4110662872003,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00007 assigned to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00007",
+      "priority": "ORANGE",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 48.4110662872003,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00007 added to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00007",
+      "priority": "ORANGE",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 0,
+        "GREEN": 1,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+      "estimated_treatment_time": 17.965707697847435
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 48.4110662872003,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "Preemption DENIED: Preemption not warranted at this time",
+    "data": {
+      "decision": false,
+      "reason": "Preemption not warranted at this time",
+      "new_patient_id": "PAT_00007",
+      "affected_patients": []
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 48.4110662872003,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "Preemption decision completed: DENIED (confidence: 0.77)",
+    "data": {
+      "decision": false,
+      "confidence": 0.7660705756273216,
+      "reason": "Preemption not warranted at this time",
+      "new_patient_id": "PAT_00007",
+      "doctor_to_preempt": null,
+      "total_decisions": 2,
+      "approval_rate": 0.0
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 50.79488894965517,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00008 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00008",
+      "condition": "minor_laceration",
+      "symptoms": [
+        "bleeding",
+        "pain"
+      ],
+      "arrival_time": 50.79488894965517,
+      "total_arrivals": 8
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 50.79488894965517,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00008 arrives with minor_laceration",
+    "data": {
+      "patient_id": "PAT_00008",
+      "condition": "minor_laceration",
+      "vital_signs": {
+        "bp_systolic": 137.4642373002029,
+        "bp_diastolic": 68.20721816235216,
+        "heart_rate": 67.89950576228276,
+        "temperature": 37.5637638056776,
+        "oxygen_saturation": 96.87698381221567
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 50.79488894965517,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00008",
+    "data": {
+      "patient_id": "PAT_00008",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 50.79488894965517,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00008 assessed as GREEN priority - MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+    "data": {
+      "patient_id": "PAT_00008",
+      "priority": "GREEN",
+      "reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+      "estimated_treatment_time": 37.53622663590127
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 50.79488894965517,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00008 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00008",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 8,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 54.399804111771644,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00008 assigned to GREEN queue (position 2)",
+    "data": {
+      "patient_id": "PAT_00008",
+      "priority": "GREEN",
+      "queue_position": 2
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 54.399804111771644,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00008 added to GREEN queue (position 2)",
+    "data": {
+      "patient_id": "PAT_00008",
+      "priority": "GREEN",
+      "queue_position": 2,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 0,
+        "GREEN": 2,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: minor_laceration with symptoms: bleeding, pain classified as GREEN priority",
+      "estimated_treatment_time": 37.53622663590127
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 54.71614692486884,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Doctor DOC_001 finished Patient PAT_00002 (wait: 2.7min)",
+    "data": {
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "wait_time": 2.654322173053785
+    },
+    "source": "simulation_engine"
+  },
+  {
+    "timestamp": 54.71614692486884,
+    "event_type": "TREATMENT_COMPLETE",
+    "level": "INFO",
+    "message": "Treatment completed: Patient PAT_00002 discharged by Doctor DOC_001",
+    "data": {
+      "patient_id": "PAT_00002",
+      "doctor_id": "DOC_001",
+      "condition": "headache",
+      "priority": "GREEN",
+      "total_wait_time": 50.37046909792262,
+      "actual_treatment_time": 47.71614692486884,
+      "estimated_treatment_time": 47.71614692486884,
+      "interruption_count": 0,
+      "doctor_total_patients": 1,
+      "hospital_total_completed": 3
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 54.71614692486884,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_001 assigned to Patient PAT_00007 (ORANGE)",
+    "data": {
+      "patient_id": "PAT_00007",
+      "doctor_id": "DOC_001",
+      "priority": "ORANGE"
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 54.71614692486884,
+    "event_type": "DOCTOR_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Doctor DOC_001 (Dr. B) assigned to Patient PAT_00007",
+    "data": {
+      "doctor_id": "DOC_001",
+      "doctor_name": "Dr. B",
+      "doctor_specialization": "Emergency_Medicine_1",
+      "patient_id": "PAT_00007",
+      "patient_condition": "abdominal_pain",
+      "patient_priority": "ORANGE",
+      "wait_time": 8.981021170848948,
+      "estimated_treatment_time": 17.965707697847435
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 57.76088555157408,
+    "event_type": "PATIENT_REGISTRATION",
+    "level": "INFO",
+    "message": "Patient PAT_00009 registered in hospital system",
+    "data": {
+      "patient_id": "PAT_00009",
+      "condition": "abdominal_pain",
+      "symptoms": [
+        "nausea",
+        "vomiting",
+        "fever"
+      ],
+      "arrival_time": 57.76088555157408,
+      "total_arrivals": 9
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 57.76088555157408,
+    "event_type": "PATIENT_ARRIVAL",
+    "level": "INFO",
+    "message": "Patient PAT_00009 arrives with abdominal_pain",
+    "data": {
+      "patient_id": "PAT_00009",
+      "condition": "abdominal_pain",
+      "vital_signs": {
+        "bp_systolic": 105.23542691388909,
+        "bp_diastolic": 84.37646272539646,
+        "heart_rate": 76.95319208715502,
+        "temperature": 38.60121395435101,
+        "oxygen_saturation": 100
+      }
+    },
+    "source": "patient_provider"
+  },
+  {
+    "timestamp": 57.76088555157408,
+    "event_type": "TRIAGE_START",
+    "level": "INFO",
+    "message": "Triage assessment started for Patient PAT_00009",
+    "data": {
+      "patient_id": "PAT_00009",
+      "nurse_id": "NURSE_001"
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 57.76088555157408,
+    "event_type": "TRIAGE_ASSESSMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00009 assessed as ORANGE priority - MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+    "data": {
+      "patient_id": "PAT_00009",
+      "priority": "ORANGE",
+      "reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+      "estimated_treatment_time": 18.27401184645707
+    },
+    "source": "triage_system"
+  },
+  {
+    "timestamp": 57.76088555157408,
+    "event_type": "TRIAGE_COMPLETE",
+    "level": "INFO",
+    "message": "Triage assessment completed for Patient PAT_00009 by NURSE_001",
+    "data": {
+      "patient_id": "PAT_00009",
+      "nurse_id": "NURSE_001",
+      "total_assessments": 9,
+      "assessment_duration": 2.5
+    },
+    "source": "triage_nurse"
+  },
+  {
+    "timestamp": 59.98624278700899,
+    "event_type": "QUEUE_ASSIGNMENT",
+    "level": "INFO",
+    "message": "Patient PAT_00009 assigned to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00009",
+      "priority": "ORANGE",
+      "queue_position": 1
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 59.98624278700899,
+    "event_type": "QUEUE_UPDATE",
+    "level": "INFO",
+    "message": "Patient PAT_00009 added to ORANGE queue (position 1)",
+    "data": {
+      "patient_id": "PAT_00009",
+      "priority": "ORANGE",
+      "queue_position": 1,
+      "queue_lengths": {
+        "RED": 0,
+        "ORANGE": 1,
+        "YELLOW": 0,
+        "GREEN": 2,
+        "BLUE": 0
+      },
+      "assessment_reason": "MTS Assessment: abdominal_pain with symptoms: nausea, vomiting, fever classified as ORANGE priority",
+      "estimated_treatment_time": 18.27401184645707
+    },
+    "source": "hospital_core"
+  },
+  {
+    "timestamp": 59.98624278700899,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "WARNING",
+    "message": "Preemption APPROVED: Random preemption decision: ORANGE priority patient needs immediate attention",
+    "data": {
+      "decision": true,
+      "reason": "Random preemption decision: ORANGE priority patient needs immediate attention",
+      "new_patient_id": "PAT_00009",
+      "affected_patients": [
+        "PAT_00004"
+      ]
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 59.98624278700899,
+    "event_type": "PREEMPTION_DECISION",
+    "level": "INFO",
+    "message": "Preemption decision completed: APPROVED (confidence: 0.64)",
+    "data": {
+      "decision": true,
+      "confidence": 0.6369598922829864,
+      "reason": "Random preemption decision: ORANGE priority patient needs immediate attention",
+      "new_patient_id": "PAT_00009",
+      "doctor_to_preempt": "DOC_000",
+      "total_decisions": 3,
+      "approval_rate": 0.3333333333333333
+    },
+    "source": "preemption_agent"
+  },
+  {
+    "timestamp": 60.0,
+    "event_type": "SIMULATION_END",
+    "level": "INFO",
+    "message": "Hospital simulation completed successfully",
+    "data": {
+      "duration": 60,
+      "total_events_logged": 90,
+      "simulation_status": "completed"
+    },
+    "source": "main"
+  }
+]

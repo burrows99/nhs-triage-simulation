@@ -20,16 +20,18 @@ class ConsoleEventHandler:
     def on_patient_arrival(self, patient: Patient):
         self._log(f"Patient {patient.id} arrives - {patient.condition}", patient.arrival_time)
     
-    def on_triage_complete(self, patient: Patient, assessment: TriageAssessment):
+    def on_triage_complete(self, patient: Patient, assessment: TriageAssessment, current_time: float = None):
+        timestamp = current_time if current_time is not None else assessment.timestamp
         self._log(f"Patient {patient.id} triaged as {assessment.priority.name} - {assessment.reason}", 
-                 assessment.timestamp)
+                 timestamp)
     
     def on_treatment_start(self, patient: Patient, doctor: Doctor):
         self._log(f"{doctor.name} starts treating Patient {patient.id} ({patient.priority.name})",
                  patient.treatment_start_time or 0.0)
     
-    def on_treatment_complete(self, patient: Patient, doctor: Doctor):
-        self._log(f"{doctor.name} completed Patient {patient.id}")
+    def on_treatment_complete(self, patient: Patient, doctor: Doctor, current_time: float = None):
+        timestamp = current_time if current_time is not None else 0.0
+        self._log(f"{doctor.name} completed Patient {patient.id}", timestamp)
     
     def on_preemption(self, decision: PreemptionDecision, affected_patients: List[Patient]):
         self._log(f"PREEMPTION: {decision.reason} - Affected: {[p.id for p in affected_patients]}")

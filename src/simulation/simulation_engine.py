@@ -10,6 +10,7 @@ from ..enums.Triage import Priority
 from ..providers.patient import PatientDataProvider
 from ..triage_systems.base import TriageSystem
 from ..handler.console_event_handler import ConsoleEventHandler as HospitalEventHandler
+from ..utils.logger import get_logger, initialize_logger, EventType, LogLevel
 
 @attr.s(auto_attribs=True)
 class HospitalSimulationEngine:
@@ -30,14 +31,47 @@ class HospitalSimulationEngine:
     
     def __attrs_post_init__(self):
         """Initialize simulation resources"""
+        self.logger = get_logger()
+        
+        # Log simulation initialization
+        self.logger.log_event(
+            timestamp=0.0,
+            event_type=EventType.SIMULATION_START,
+            message=f"Simulation engine initialized with {self.hospital.num_doctors} doctors and {self.hospital.triage_nurses} triage nurses",
+            data={
+                "num_doctors": self.hospital.num_doctors,
+                "triage_nurses": self.hospital.triage_nurses,
+                "simulation_engine": "HospitalSimulationEngine"
+            },
+            source="simulation_engine"
+        )
+        
         # Create doctor resources
-        for _ in range(self.hospital.num_doctors):
-            self.doctor_resources.append(
-                simpy.PreemptiveResource(self.env, capacity=1)
+        for i in range(self.hospital.num_doctors):
+            resource = simpy.PreemptiveResource(self.env, capacity=1)
+            self.doctor_resources.append(resource)
+            
+            # Log resource creation
+            self.logger.log_event(
+                timestamp=0.0,
+                event_type=EventType.SYSTEM_STATE,
+                message=f"Doctor resource {i} created (PreemptiveResource)",
+                data={"doctor_resource_id": i, "capacity": 1},
+                level=LogLevel.DEBUG,
+                source="simulation_engine"
             )
         
         # Create triage resource
         self.triage_resources = simpy.Resource(self.env, capacity=self.hospital.triage_nurses)
+        
+        self.logger.log_event(
+            timestamp=0.0,
+            event_type=EventType.SYSTEM_STATE,
+            message=f"Triage resource created with capacity {self.hospital.triage_nurses}",
+            data={"triage_capacity": self.hospital.triage_nurses},
+            level=LogLevel.DEBUG,
+            source="simulation_engine"
+        )
     
     def patient_arrival_process(self):
         """Handle patient arrivals"""
@@ -50,7 +84,7 @@ class HospitalSimulationEngine:
             patient.arrival_time = self.env.now
             
             # Register patient
-            self.hospital.register_patient(patient)
+            self.hospital.register_patient(patient, self.env.now)
             self.event_handler.on_patient_arrival(patient)
             
             # Start triage process
@@ -68,17 +102,30 @@ class HospitalSimulationEngine:
         with self.triage_resources.request() as req:
             yield req
             
-            # Triage time
+            # Triage assessment with logging
+            assessment = self.triage_system.assess_patient(patient, self.env.now)
             triage_time = random.uniform(2, 5)
+            
+            # Log triage duration
+            self.logger.log_event(
+                timestamp=self.env.now,
+                event_type=EventType.TRIAGE_ASSESSMENT,
+                message=f"Triage process duration: {triage_time:.1f} minutes for Patient {patient.id}",
+                data={
+                    "patient_id": patient.id,
+                    "triage_duration": triage_time,
+                    "triage_start_time": self.env.now
+                },
+                level=LogLevel.DEBUG,
+                source="simulation_engine"
+            )
+            
             yield self.env.timeout(triage_time)
             
-            # Assess patient
-            assessment = self.triage_system.assess_patient(patient)
-            assessment.timestamp = self.env.now
+            self.event_handler.on_triage_complete(patient, assessment, self.env.now)
             
-            # Assign to queue
-            self.hospital.assign_patient_to_queue(patient, assessment)
-            self.event_handler.on_triage_complete(patient, assessment)
+            # Assign to queue with current time
+            self.hospital.assign_patient_to_queue(patient, assessment, self.env.now)
             
             # Check for preemption
             if assessment.priority in [Priority.RED, Priority.ORANGE]:
@@ -88,12 +135,34 @@ class HospitalSimulationEngine:
         """Check and execute preemption if needed"""
         busy_doctors = self.hospital.get_busy_doctors()
         
+        # Log preemption check initiation
+        self.logger.log_event(
+            timestamp=self.env.now,
+            event_type=EventType.PREEMPTION_DECISION,
+            message=f"Preemption check initiated for Patient {new_patient.id}",
+            data={
+                "patient_id": new_patient.id,
+                "patient_priority": new_patient.priority.name if new_patient.priority else None,
+                "busy_doctors_count": len(busy_doctors)
+            },
+            level=LogLevel.DEBUG,
+            source="simulation_engine"
+        )
+        
         if busy_doctors:
-            decision = self.preemption_agent.should_preempt(new_patient, busy_doctors)
+            decision = self.preemption_agent.should_preempt(new_patient, busy_doctors, self.env.now)
             decision.timestamp = self.env.now
             
             if decision.should_preempt and decision.doctor_to_preempt:
                 yield self.env.process(self.execute_preemption(decision))
+        else:
+            self.logger.log_event(
+                timestamp=self.env.now,
+                event_type=EventType.PREEMPTION_DECISION,
+                message=f"No preemption possible - no busy doctors available",
+                data={"patient_id": new_patient.id},
+                source="simulation_engine"
+            )
         
         yield self.env.timeout(0)
     
@@ -139,7 +208,7 @@ class HospitalSimulationEngine:
                     
                     # Complete treatment
                     self.hospital.complete_treatment(doctor, patient, self.env.now)
-                    self.event_handler.on_treatment_complete(patient, doctor)
+                    self.event_handler.on_treatment_complete(patient, doctor, self.env.now)
                     
                 except simpy.Interrupt:
                     # Handle preemption
