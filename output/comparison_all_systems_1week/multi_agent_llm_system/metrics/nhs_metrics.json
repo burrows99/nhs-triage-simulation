@@ -1,0 +1,70 @@
+{
+  "total_attendances": 477,
+  "active_patients_in_system": 16,
+  "1_left_before_being_seen_rate_pct": 0.0,
+  "2_reattendance_rate_pct": 0.0,
+  "3_time_to_initial_assessment_avg_minutes": 2.1888743837631055,
+  "4_time_to_treatment_avg_minutes": 18.727260464132744,
+  "5_total_time_in_ae_avg_minutes": 229.32756260110628,
+  "4hour_standard_compliance_pct": 66.0377358490566,
+  "attendances_within_4hours": 315,
+  "attendances_over_4hours": 162,
+  "95pct_target_achieved": false,
+  "76pct_interim_target_achieved": false,
+  "median_total_time_minutes": 208.14721172698808,
+  "95th_percentile_time_minutes": 372.0785006701233,
+  "admission_rate_pct": 100.0,
+  "triage_category_distribution": {
+    "RED": 0,
+    "ORANGE": 0,
+    "YELLOW": 477,
+    "GREEN": 0,
+    "BLUE": 0
+  },
+  "age_group_analysis": {
+    "0-17": {
+      "count": 477,
+      "avg_time_minutes": 229.32756260110628,
+      "4hour_compliance_pct": 66.0377358490566,
+      "admission_rate_pct": 100.0
+    }
+  },
+  "gender_analysis": {
+    "": {
+      "count": 477,
+      "avg_time_minutes": 229.32756260110628,
+      "4hour_compliance_pct": 66.0377358490566,
+      "admission_rate_pct": 100.0
+    }
+  },
+  "time_distribution_analysis": {
+    "min_time_minutes": 109.20292991973952,
+    "max_time_minutes": 491.6331125727429,
+    "std_dev_minutes": 75.08587390461328,
+    "quartiles": {
+      "25th_percentile": 171.80668234990299,
+      "50th_percentile": 208.14721172698808,
+      "75th_percentile": 269.63493006044155
+    },
+    "distribution_bins": {
+      "0-60min": 0,
+      "60-120min": 6,
+      "120-240min": 309,
+      "240-360min": 126,
+      "360+min": 36
+    }
+  },
+  "service_name": "NHSMetrics",
+  "total_records": 477,
+  "active_records": 16,
+  "total_duration_minutes": 10076.220806720252,
+  "start_time": 0.0,
+  "end_time": 10076.220806720252,
+  "counters": {
+    "lwbs_count": 0,
+    "reattendance_count": 0,
+    "admissions_count": 145,
+    "total_records": 493,
+    "completed_records": 477
+  }
+}
