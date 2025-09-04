@@ -59,10 +59,13 @@ class SingleLLMTriage(BaseLLMTriageSystem):
             else:
                 logger.info(f"📊 No operational context available")
             
-            # Step 2: Build prompt
+            # Step 2: Build prompt with chat history context
             logger.info(f"🔍 Step 2: Building Clinical Prompt")
-            prompt = get_full_triage_prompt(symptoms, operational_context)
+            chat_context = self._build_chat_context()
+            prompt = get_full_triage_prompt(symptoms, operational_context + chat_context)
             logger.info(f"📝 Prompt generated: {len(prompt)} chars for model {self.model_name}")
+            if chat_context:
+                logger.info(f"🧠 Chat context included: {len(self.chat_history)} previous decisions")
             
             # Step 3: Query API with retry logic for malformed JSON
             logger.info(f"🔍 Step 3: Querying AI Model for Triage Decision")
@@ -97,6 +100,10 @@ class SingleLLMTriage(BaseLLMTriageSystem):
             
             triage_data = json_result.data
             self._log_triage_result(triage_data)
+            
+            # Step 5: Add to chat history for future context
+            logger.info(f"🔍 Step 5: Adding to Chat History")
+            self._add_to_chat_history(symptoms, operational_context, triage_data)
             
         except Exception as api_error:
             logger.error(f"❌ Triage failed: {api_error}")

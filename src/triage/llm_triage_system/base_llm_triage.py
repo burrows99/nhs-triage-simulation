@@ -57,6 +57,10 @@ class BaseLLMTriageSystem(ABC):
         self.nhs_metrics = nhs_metrics
         self.client = None
         
+        # Initialize minimal chat history for improved model performance
+        self.chat_history = []
+        self.max_history_length = 5  # Keep last 5 triage decisions for context
+        
         self._initialize_client()
         
         # Initialize triage categories mapping
@@ -379,6 +383,67 @@ class BaseLLMTriageSystem(ABC):
         except (ValueError, TypeError) as type_error:
             logger.error(f"❌ Step 5 Failed: Invalid data types - {type_error}")
             raise ValueError(f"Invalid data types: {type_error}") from type_error
+    
+    def _add_to_chat_history(self, symptoms: str, operational_context: str, triage_data: Dict[str, Any]) -> None:
+        """
+        Add triage decision to chat history for improved model performance.
+        
+        Args:
+            symptoms: Patient symptoms that were triaged
+            operational_context: Hospital operational context provided to model
+            triage_data: Validated triage decision data
+        """
+        # Create comprehensive history entry with all context
+        history_entry = {
+            "symptoms": symptoms[:200],  # Truncate long symptoms
+            "operational_context": operational_context[:300] if operational_context else "",  # Include hospital context
+            "category": triage_data['triage_category'],
+            "priority": triage_data['priority_score'],
+            "wait_time": triage_data.get('wait_time', ''),
+            "confidence": triage_data.get('confidence', 0.0),
+            "reasoning": triage_data['reasoning'][:200]  # Slightly longer reasoning
+        }
+        
+        # Add to history and maintain max length
+        self.chat_history.append(history_entry)
+        if len(self.chat_history) > self.max_history_length:
+            self.chat_history.pop(0)  # Remove oldest entry
+        
+        logger.debug(f"📝 Added to chat history (total: {len(self.chat_history)} entries)")
+    
+    def _build_chat_context(self) -> str:
+        """
+        Build chat context from recent triage decisions to improve model performance.
+        
+        Returns:
+            Formatted string with recent triage examples for model context
+        """
+        if not self.chat_history:
+            return ""
+        
+        context_parts = ["\n🧠 RECENT TRIAGE DECISIONS (for context and consistency):\n"]
+        
+        for i, entry in enumerate(self.chat_history, 1):
+            context_parts.append(
+                f"{i}. Symptoms: {entry['symptoms']}\n"
+            )
+            
+            # Include operational context if available
+            if entry.get('operational_context'):
+                context_parts.append(
+                    f"   Hospital Context: {entry['operational_context']}\n"
+                )
+            
+            context_parts.append(
+                f"   Decision: {entry['category']} (Priority {entry['priority']})\n"
+                f"   Wait Time: {entry.get('wait_time', 'N/A')}\n"
+                f"   Confidence: {entry.get('confidence', 0.0):.1%}\n"
+                f"   Reasoning: {entry['reasoning']}\n\n"
+            )
+        
+        context_parts.append("📋 Use these examples to maintain consistency in your triage decisions based on similar symptoms and hospital conditions.\n")
+        
+        return "".join(context_parts)
     
     def _log_triage_result(self, triage_data: Dict[str, Any]) -> None:
         """
