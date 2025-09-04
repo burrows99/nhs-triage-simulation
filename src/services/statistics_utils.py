@@ -39,23 +39,18 @@ class StatisticsUtils:
             total_time = patient.get_total_journey_time()
             
             if total_time < 0:
-                logger.warning(f"⚠️  Invalid timing for patient {patient.Id}: "
-                             f"arrival={patient.arrival_time:.2f}, departure={patient.departure_time:.2f}, "
-                             f"total={total_time:.2f}")
                 return False
                 
             if total_time > 1440:  # 24 hours in minutes
-                logger.warning(f"⚠️  Unrealistic journey time for patient {patient.Id}: {total_time:.2f} minutes")
+                pass
             
             return True
         
         valid_patients = [p for p in patients if is_valid_patient(p)]
         invalid_count = len(patients) - len(valid_patients)
         
-        if invalid_count > 0:
-            logger.error(f"❌ {invalid_count}/{len(patients)} patients have invalid timing data")
-        
-        logger.error(f"✅ {len(valid_patients)} patients have valid timing data")
+        # Return valid patients without verbose logging
+        pass
         
         return valid_patients
     
@@ -72,10 +67,7 @@ class StatisticsUtils:
         """
         from src.logger import logger
         
-        logger.debug(f"🔍 STATS_CALC_START | Input values count: {len(values) if values else 0}")
-        
         if not values:
-            logger.warning("⚠️  STATS_CALC_EMPTY | No values provided for statistics calculation")
             return {
                 'count': 0,
                 'mean': 0.0,
@@ -88,18 +80,10 @@ class StatisticsUtils:
                 'kurtosis': 0.0
             }
         
-        # Validate for negative values that might indicate timing errors
-        negative_count = sum(1 for v in values if v < 0)
-        if negative_count > 0:
-            logger.warning(f"⚠️  STATS_NEGATIVE_VALUES | {negative_count}/{len(values)} values are negative - possible timing calculation error")
-            logger.warning(f"Sample negative values: {[v for v in values if v < 0][:5]}")
-        
         # Filter out invalid values
         valid_values = [v for v in values if v is not None and not np.isnan(v) and v >= 0]
-        logger.debug(f"🔍 STATS_VALIDATION | Original: {len(values)} | Valid: {len(valid_values)} | Filtered: {len(values) - len(valid_values)}")
         
         if not valid_values:
-            logger.warning("⚠️  STATS_CALC_NO_VALID | All values filtered out - returning zeros")
             return {
                 'count': 0,
                 'mean': 0.0,
@@ -114,10 +98,8 @@ class StatisticsUtils:
         
         # Delegate to scipy.stats for production-grade statistical calculations
         values_array = np.array(valid_values)
-        logger.debug(f"🔍 STATS_ARRAY | Min: {np.min(values_array):.2f} | Max: {np.max(values_array):.2f} | Mean: {np.mean(values_array):.2f}")
         
         desc_stats = stats.describe(values_array)
-        logger.debug(f"🔍 SCIPY_STATS | Count: {desc_stats.nobs} | Mean: {desc_stats.mean:.2f} | Variance: {desc_stats.variance:.2f}")
         
         result = {
             'count': desc_stats.nobs,
@@ -131,7 +113,6 @@ class StatisticsUtils:
             'kurtosis': desc_stats.kurtosis
         }
         
-        logger.info(f"✅ STATS_CALC_COMPLETE | Count: {result['count']} | Mean: {result['mean']:.2f} | StdDev: {result['std_dev']:.2f} | Range: {result['min']:.2f}-{result['max']:.2f}")
         return result
     
     @staticmethod

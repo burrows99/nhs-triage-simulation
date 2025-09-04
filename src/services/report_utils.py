@@ -31,7 +31,7 @@ class ReportUtils:
         """
         if len(results_summary) <= 1:
             if not quiet:
-                logger.info("⏭️  Skipping comparison report - only one system result available")
+                print("Skipping comparison report - only one system result available")
             return False
         return True
     
@@ -58,7 +58,7 @@ class ReportUtils:
                         with open(metrics_file, 'r') as f:
                             detailed_metrics[system_name] = json.load(f)
                     except Exception as e:
-                        logger.warning(f"⚠️  Could not load detailed metrics for {system_name}: {e}")
+                        print(f"Warning: Could not load detailed metrics for {system_name}: {e}")
                         detailed_metrics[system_name] = {'error': f'Could not load metrics: {e}'}
                 else:
                     detailed_metrics[system_name] = {'error': 'Metrics file not found'}
@@ -73,7 +73,7 @@ class ReportUtils:
             results_summary: Dictionary of simulation results by system name
             detailed_metrics: Dictionary of detailed NHS metrics by system name
         """
-        logger.info("🏥 PERFORMANCE COMPARISON:")
+        print("🏥 PERFORMANCE COMPARISON:")
         
         for system_name, results in results_summary.items():
             metrics = detailed_metrics.get(system_name, {})
@@ -83,14 +83,14 @@ class ReportUtils:
                 median_time = metrics.get('median_total_time_minutes', 'N/A')
                 admission_rate = metrics.get('admission_rate_pct', 'N/A')
                 
-                logger.info(f"   {system_name}:")
-                logger.info(f"     • Patients: {results['total_patients']}")
-                logger.info(f"     • Avg Time: {results['avg_time']:.1f} min")
-                logger.info(f"     • Median Time: {median_time if median_time == 'N/A' else f'{median_time:.1f} min'}")
-                logger.info(f"     • 4-Hour Compliance: {compliance if compliance == 'N/A' else f'{compliance:.1f}%'}")
-                logger.info(f"     • Admission Rate: {admission_rate if admission_rate == 'N/A' else f'{admission_rate:.1f}%'}")
+                print(f"   {system_name}:")
+                print(f"     • Patients: {results['total_patients']}")
+                print(f"     • Avg Time: {results['avg_time']:.1f} min")
+                print(f"     • Median Time: {median_time if median_time == 'N/A' else f'{median_time:.1f} min'}")
+                print(f"     • 4-Hour Compliance: {compliance if compliance == 'N/A' else f'{compliance:.1f}%'}")
+                print(f"     • Admission Rate: {admission_rate if admission_rate == 'N/A' else f'{admission_rate:.1f}%'}")
             else:
-                logger.info(f"   {system_name}: {metrics['error']}")
+                print(f"   {system_name}: {metrics['error']}")
     
     @staticmethod
     def log_triage_distribution(results_summary: Dict[str, Any]):
@@ -99,18 +99,18 @@ class ReportUtils:
         Args:
             results_summary: Dictionary of simulation results by system name
         """
-        logger.info("\n🏷️  TRIAGE DISTRIBUTION COMPARISON:")
+        print("\n🏷️  TRIAGE DISTRIBUTION COMPARISON:")
         
         for system_name, results in results_summary.items():
             if results['total_patients'] > 0:
                 category_counts = Counter(results['categories'])
-                logger.info(f"   {system_name}:")
+                print(f"   {system_name}:")
                 
                 for category in [TriageCategories.RED, TriageCategories.ORANGE, 
                                TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
                     count = category_counts.get(category, 0)
                     percentage = (count / results['total_patients'] * 100)
-                    logger.info(f"     • {category}: {count} ({percentage:.1f}%)")
+                    print(f"     • {category}: {count} ({percentage:.1f}%)")
     
     @staticmethod
     def generate_systematic_logging(results_summary: Dict[str, Any], detailed_metrics: Dict[str, Dict]):
@@ -120,8 +120,8 @@ class ReportUtils:
             results_summary: Dictionary of simulation results by system name
             detailed_metrics: Dictionary of detailed NHS metrics by system name
         """
-        logger.info("📊 SYSTEMATIC COMPARISON ANALYSIS")
-        logger.info("=" * 80)
+        print("📊 SYSTEMATIC COMPARISON ANALYSIS")
+        print("=" * 80)
         
         ReportUtils.log_performance_comparison(results_summary, detailed_metrics)
         ReportUtils.log_triage_distribution(results_summary)

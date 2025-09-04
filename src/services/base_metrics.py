@@ -30,8 +30,6 @@ class BaseMetrics(ABC):
         self.counters: Dict[str, int] = defaultdict(int)
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
-        
-        logger.info(f"{self.name} metrics service initialized")
     
     def add_record(self, record: BaseRecord) -> None:
         """Add a record to active tracking
@@ -40,7 +38,7 @@ class BaseMetrics(ABC):
             record: Record to add
         """
         if record.record_id in self.active_records:
-            logger.warning(f"Record {record.record_id} already exists, updating")
+            pass  # Record already exists, updating
         
         self.active_records[record.record_id] = record
         self.counters['total_records'] += 1
@@ -60,7 +58,6 @@ class BaseMetrics(ABC):
             Completed record or None if not found
         """
         if record_id not in self.active_records:
-            logger.warning(f"Record {record_id} not found in active records")
             return None
         
         record = self.active_records[record_id]
@@ -129,18 +126,15 @@ class BaseMetrics(ABC):
             metrics = self.calculate_metrics()
             with open(json_filepath, 'w') as f:
                 json.dump(metrics, f, indent=2, default=str)
-            logger.info(f"{self.name} metrics exported to {json_filepath}")
         
         if csv_filepath:
             if not self.records:
-                logger.info(f"No {self.name} records to export")
                 return
             
             # Convert records to DataFrame
             data = [self._record_to_dict(record) for record in self.records]
             df = pd.DataFrame(data)
             df.to_csv(csv_filepath, index=False)
-            logger.info(f"{self.name} records exported to {csv_filepath}")
     
     def _record_to_dict(self, record: BaseRecord) -> Dict[str, Any]:
         """Convert a record to dictionary for export

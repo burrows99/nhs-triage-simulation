@@ -48,19 +48,19 @@ class SingleLLMTriage(BaseLLMTriageSystem):
         
         try:
             # Step 1: Generate operational context
-            logger.info(f"🔍 Step 1: Gathering Operational Context")
+            # Step 1: Gathering Operational Context
             operational_context = ""
             if self.operation_metrics and self.nhs_metrics:
                 current_time = 0.0
                 if self.operation_metrics.system_snapshots:
                     current_time = self.operation_metrics.system_snapshots[-1].timestamp
                 operational_context = self._generate_operational_context(current_time)
-                logger.info(f"📊 Operational context included: {len(operational_context)} chars")
+                pass  # Operational context included
             else:
-                logger.info(f"📊 No operational context available")
+                pass  # No operational context available
             
             # Step 2: Build prompt with chat history context
-            logger.info(f"🔍 Step 2: Building Clinical Prompt")
+            # Step 2: Building Clinical Prompt
             chat_context = self._build_chat_context()
             prompt = get_full_triage_prompt(symptoms, operational_context + chat_context)
             logger.info(f"📝 Prompt generated: {len(prompt)} chars for model {self.model_name}")
@@ -68,7 +68,7 @@ class SingleLLMTriage(BaseLLMTriageSystem):
                 logger.info(f"🧠 Chat context included: {len(self.chat_history)} previous decisions")
             
             # Step 3: Query API with retry logic for malformed JSON
-            logger.info(f"🔍 Step 3: Querying AI Model for Triage Decision")
+            # Step 3: Querying AI Model for Triage Decision
             max_retries = 2
             json_result = None
             
@@ -81,7 +81,7 @@ class SingleLLMTriage(BaseLLMTriageSystem):
                 raw_response = self._query_single_model(prompt)
                 
                 # Step 4: Process JSON response with production handler
-                logger.info(f"🔍 Step 4: Processing JSON Response (Attempt {attempt + 1})")
+                # Processing JSON Response
                 json_result = self.json_handler.process_response(raw_response, retry_count=attempt)
                 
                 if json_result.quality != ResponseQuality.FAILED and json_result.data is not None:
@@ -93,7 +93,7 @@ class SingleLLMTriage(BaseLLMTriageSystem):
                     raise ValueError(error_msg)
             
             # Log quality metrics
-            logger.info(f"✅ JSON processed (Quality: {json_result.quality.value}, Time: {json_result.processing_time_ms:.1f}ms)")
+            # JSON processed successfully
             if json_result.warnings:
                 for warning in json_result.warnings:
                     logger.warning(f"⚠️  {warning}")
@@ -102,7 +102,7 @@ class SingleLLMTriage(BaseLLMTriageSystem):
             self._log_triage_result(triage_data)
             
             # Step 5: Add to chat history for future context
-            logger.info(f"🔍 Step 5: Adding to Chat History")
+            # Step 5: Adding to Chat History
             self._add_to_chat_history(symptoms, operational_context, triage_data)
             
         except Exception as api_error:
@@ -141,8 +141,7 @@ class SingleLLMTriage(BaseLLMTriageSystem):
             completion = self.client.chat.completions.create(**api_params)
             
             response_content = completion.choices[0].message.content
-            logger.info(f"✅ AI Response received: {len(response_content)} chars")
-            logger.debug(f"🔍 Raw response: {response_content[:200]}...")
+            # AI Response received
             
             return response_content
             

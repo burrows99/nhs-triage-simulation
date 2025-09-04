@@ -66,10 +66,6 @@ class OperationMetrics(BaseMetrics):
         Returns:
             Created ResourceEvent
         """
-        logger.info(f"🔄 DATA_TRANSFER_START: OperationMetrics.record_resource_event() initiated")
-        logger.info(f"📊 TRANSFER_SOURCE: ResourceEvent - {event_type} for {resource_name} by {entity_id}")
-        logger.info(f"📍 TRANSFER_DESTINATION: Operation metrics event storage")
-        
         event_id = f"{resource_name}_{event_type}_{entity_id}_{timestamp}"
         
         event = ResourceEvent(
@@ -86,18 +82,13 @@ class OperationMetrics(BaseMetrics):
         
         self.resource_events.append(event)
         self.add_record(event)
-        logger.info(f"📊 TRANSFER_RESULT: Event stored - total_events={len(self.resource_events)}")
         
         # Update performance tracking
         if event_type == 'acquire' and event.wait_time > 0:
             self.wait_times[resource_name].append(event.wait_time)
-            logger.info(f"📊 WAIT_TIME_UPDATE: {resource_name} wait_time={event.wait_time:.2f}min added")
         
         if event_type == 'release' and event.service_time > 0:
             self.service_times[resource_name].append(event.service_time)
-            logger.info(f"📊 SERVICE_TIME_UPDATE: {resource_name} service_time={event.service_time:.2f}min added")
-        
-        logger.info(f"✅ DATA_TRANSFER_SUCCESS: Resource event recorded for {resource_name} {event_type} at {timestamp:.2f}")
         
         return event
     
@@ -116,9 +107,6 @@ class OperationMetrics(BaseMetrics):
         Returns:
             Created SystemSnapshot
         """
-        logger.info(f"📸 SYSTEM_SNAPSHOT: Recording snapshot at time {timestamp:.2f}")
-        logger.debug(f"📊 SNAPSHOT_DATA | Usage: {resource_usage} | Capacity: {resource_capacity} | Queues: {queue_lengths}")
-        
         # Generate unique snapshot ID using timestamp and counter
         self.snapshot_counter += 1
         snapshot_id = f"snapshot_{timestamp}_{self.snapshot_counter}"
@@ -135,31 +123,16 @@ class OperationMetrics(BaseMetrics):
         self.system_snapshots.append(snapshot)
         self.add_record(snapshot)
         
-        # Update real-time metrics with detailed logging
+        # Update real-time metrics
         for resource_name in resource_usage:
             utilization = snapshot.get_utilization(resource_name)
             self.current_utilization[resource_name] = utilization
             
-            logger.debug(f"📈 UTILIZATION_UPDATE | {resource_name}: {utilization:.1f}% ({resource_usage[resource_name]}/{resource_capacity.get(resource_name, 0)})")
-            
             # Track peak utilization
             if resource_name not in self.peak_utilization or utilization > self.peak_utilization[resource_name]:
                 self.peak_utilization[resource_name] = utilization
-                logger.info(f"🔝 NEW_PEAK_UTILIZATION | {resource_name}: {utilization:.1f}%")
-            
-            # Log queue status
-            queue_len = queue_lengths.get(resource_name, 0)
-            if queue_len > 0:
-                logger.warning(f"⏳ QUEUE_DETECTED | {resource_name}: {queue_len} entities waiting")
-            
-            # Log high utilization warnings
-            if utilization > 90:
-                logger.warning(f"⚠️  HIGH_UTILIZATION | {resource_name}: {utilization:.1f}%")
-            elif utilization > 75:
-                logger.info(f"📈 MODERATE_UTILIZATION | {resource_name}: {utilization:.1f}%")
         
         self.last_snapshot_time = timestamp
-        logger.info(f"✅ SNAPSHOT_COMPLETE | ID: {snapshot_id} | Total snapshots: {len(self.system_snapshots)}")
         return snapshot
     
     # Removed should_take_snapshot method - using synchronized monitoring instead
@@ -215,35 +188,22 @@ class OperationMetrics(BaseMetrics):
     def _calculate_utilization_metrics(self) -> Dict[str, Any]:
         """Calculate resource utilization metrics"""
         if not self.system_snapshots:
-            logger.warning("⚠️  No system snapshots available for utilization calculation")
             return {}
-        
-        logger.info(f"🔍 UTILIZATION_CALC_START | Processing {len(self.system_snapshots)} snapshots")
         
         # Get all resource names
         all_resources = set()
         for snapshot in self.system_snapshots:
             all_resources.update(snapshot.resource_usage.keys())
         
-        logger.info(f"📊 RESOURCES_FOUND | Count: {len(all_resources)} | Resources: {sorted(all_resources)}")
-        
         utilization_metrics = {}
         
         for resource in all_resources:
             utilizations = []
-            usage_samples = []
-            capacity_samples = []
             
             for snapshot in self.system_snapshots:
                 if resource in snapshot.resource_usage:
                     util = snapshot.get_utilization(resource)
                     utilizations.append(util)
-                    usage_samples.append(snapshot.resource_usage[resource])
-                    capacity_samples.append(snapshot.resource_capacity.get(resource, 0))
-            
-            logger.debug(f"📈 {resource.upper()}_ANALYSIS | Samples: {len(utilizations)} | "
-                        f"Usage range: {min(usage_samples) if usage_samples else 0}-{max(usage_samples) if usage_samples else 0} | "
-                        f"Capacity: {capacity_samples[0] if capacity_samples else 0}")
             
             if utilizations:
                 avg_util = float(np.mean(utilizations))
@@ -258,37 +218,18 @@ class OperationMetrics(BaseMetrics):
                     'current_utilization_pct': float(self.current_utilization.get(resource, 0)),
                     'utilization_std_dev': std_util
                 }
-                
-                logger.info(f"✅ {resource.upper()}_METRICS | Avg: {avg_util:.1f}% | Peak: {peak_util:.1f}% | Min: {min_util:.1f}% | StdDev: {std_util:.1f}%")
-                
-                # Log performance insights
-                if avg_util > 80:
-                    logger.warning(f"⚠️  {resource.upper()}_HIGH_AVG_UTILIZATION | Average utilization {avg_util:.1f}% indicates potential bottleneck")
-                elif avg_util < 20:
-                    logger.info(f"📉 {resource.upper()}_LOW_UTILIZATION | Average utilization {avg_util:.1f}% indicates underutilization")
-                    
-                if std_util > 25:
-                    logger.warning(f"📊 {resource.upper()}_HIGH_VARIABILITY | Utilization std dev {std_util:.1f}% indicates inconsistent load")
-            else:
-                logger.warning(f"⚠️  No utilization data for resource: {resource}")
         
-        logger.info(f"🔍 UTILIZATION_CALC_COMPLETE | Processed {len(utilization_metrics)} resources")
         return utilization_metrics
     
     def _calculate_queue_metrics(self) -> Dict[str, Any]:
         """Calculate queue performance metrics"""
         if not self.system_snapshots:
-            logger.warning("⚠️  No system snapshots available for queue calculation")
             return {}
-        
-        logger.info(f"⏳ QUEUE_CALC_START | Processing {len(self.system_snapshots)} snapshots")
         
         # Get all resource names
         all_resources = set()
         for snapshot in self.system_snapshots:
             all_resources.update(snapshot.queue_lengths.keys())
-        
-        logger.info(f"📊 QUEUE_RESOURCES | Count: {len(all_resources)} | Resources: {sorted(all_resources)}")
         
         queue_metrics = {}
         
@@ -298,13 +239,9 @@ class OperationMetrics(BaseMetrics):
                 if resource in snapshot.queue_lengths:
                     queue_lengths.append(snapshot.queue_lengths[resource])
             
-            logger.debug(f"⏳ {resource.upper()}_QUEUE_DATA | Total samples: {len(queue_lengths)}")
-            
             if queue_lengths:
                 # Filter out any NaN or invalid values
                 valid_queue_lengths = [q for q in queue_lengths if not (pd.isna(q) or np.isnan(q) if isinstance(q, (int, float)) else False)]
-                
-                logger.debug(f"⏳ {resource.upper()}_VALID_DATA | Valid samples: {len(valid_queue_lengths)} | Range: {min(valid_queue_lengths) if valid_queue_lengths else 0}-{max(valid_queue_lengths) if valid_queue_lengths else 0}")
                 
                 if valid_queue_lengths:
                     # Calculate metrics with valid data only
@@ -322,19 +259,8 @@ class OperationMetrics(BaseMetrics):
                         'queue_length_std_dev': float(std_val) if not np.isnan(std_val) else 0.0,
                         'time_with_queue': float(time_with_queue) if valid_queue_lengths else 0.0
                     }
-                    
-                    logger.info(f"✅ {resource.upper()}_QUEUE_METRICS | Avg: {mean_val:.1f} | Peak: {max_val} | Time w/ Queue: {time_with_queue:.1f}%")
-                    
-                    # Log queue performance insights
-                    if mean_val > 5:
-                        logger.warning(f"⚠️  {resource.upper()}_HIGH_AVG_QUEUE | Average queue length {mean_val:.1f} indicates congestion")
-                    if max_val > 10:
-                        logger.warning(f"🔴 {resource.upper()}_PEAK_QUEUE_HIGH | Peak queue length {max_val} indicates severe bottleneck")
-                    if time_with_queue > 50:
-                        logger.warning(f"⏰ {resource.upper()}_FREQUENT_QUEUING | Queue present {time_with_queue:.1f}% of time")
                 else:
                     # No valid data - provide default values
-                    logger.warning(f"⚠️  {resource.upper()}_NO_VALID_QUEUE_DATA | Using default values")
                     queue_metrics[resource] = {
                         'average_queue_length': 0.0,
                         'peak_queue_length': 0,
@@ -342,10 +268,7 @@ class OperationMetrics(BaseMetrics):
                         'queue_length_std_dev': 0.0,
                         'time_with_queue': 0.0
                     }
-            else:
-                logger.debug(f"⏳ {resource.upper()}_NO_QUEUE_DATA | No queue data found")
         
-        logger.info(f"⏳ QUEUE_CALC_COMPLETE | Processed {len(queue_metrics)} resources")
         return queue_metrics
     
     def _calculate_throughput_metrics(self) -> Dict[str, Any]:

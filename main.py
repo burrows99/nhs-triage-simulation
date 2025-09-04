@@ -195,7 +195,7 @@ def run_simulation(triage_system, system_name: str, output_dir: str, args: argpa
     Returns:
         Simulation results dictionary
     """
-    logger.info(f"🏥 Starting {system_name} Simulation")
+    print(f"Starting {system_name} Simulation")
     logger.info(f"📁 Output Directory: {output_dir}")
     
     # Create initial triage system instance
@@ -235,25 +235,25 @@ def run_simulation(triage_system, system_name: str, output_dir: str, args: argpa
     # No need to manually set up metrics for LLM-based systems
     
     if not args.quiet:
-        logger.info(f"📊 Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")
+        print(f"Config: {hospital.sim_duration/60:.1f}h | {hospital.arrival_rate}/h | {hospital.nurses}N {hospital.doctors}D {hospital.beds}B | {len(hospital.patients)} patients")
         logger.info(f"🔧 Triage System: {system_name}")
         if args.seed:
             logger.info(f"🎲 Random Seed: {args.seed}")
     
     results = hospital.run()
     
-    logger.info(f"📊 {system_name} Results:")
-    logger.info(f"  Total Patients: {results['total_patients']}")
-    logger.info(f"  Average Time: {results['avg_time']:.1f} minutes")
+    print(f"{system_name} Results:")
+    print(f"  Total Patients: {results['total_patients']}")
+    print(f"  Average Time: {results['avg_time']:.1f} minutes")
     
     category_counts = Counter(results['categories'])
-    logger.info(f"🏷️ Triage Category Distribution:")
+    print(f"Triage Category Distribution:")
     for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
         count = category_counts.get(category, 0)
         percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
-        logger.info(f"    {category}: {count} patients ({percentage:.1f}%)")
+        print(f"    {category}: {count} patients ({percentage:.1f}%)")
     
-    logger.info(f"✅ {system_name} simulation completed!")
+    print(f"{system_name} simulation completed!")
     logger.info(f"📁 Results saved to: {output_dir}")
     logger.info("=" * 80)
     
@@ -315,8 +315,8 @@ def main():
         logging.getLogger().setLevel(getattr(logging, args.log_level))
     
     if not args.quiet:
-        logger.info("🏥 Starting Comparative Hospital Simulation")
-        logger.info(f"🔄 Running systems: {', '.join(args.systems)}")
+        print("Starting Comparative Hospital Simulation")
+        print(f"Running systems: {', '.join(args.systems)}")
         logger.info("=" * 80)
     
     try:
@@ -350,30 +350,30 @@ def main():
             generate_comparison_report(results_summary, simulations, args)
             
             if not args.quiet:
-                logger.info("📊 COMPARATIVE SIMULATION SUMMARY")
-                logger.info("=" * 80)
+                print("COMPARATIVE SIMULATION SUMMARY")
+                print("=" * 80)
                 
                 for system_name, results in results_summary.items():
-                    logger.info(f"🔧 {system_name}:")
-                    logger.info(f"   📊 Patients Processed: {results['total_patients']}")
-                    logger.info(f"   ⏱️  Average Time: {results['avg_time']:.1f} minutes")
+                    print(f"{system_name}:")
+                    print(f"   Patients Processed: {results['total_patients']}")
+                    print(f"   Average Time: {results['avg_time']:.1f} minutes")
                     
                     if not args.skip_plots:  # Only show detailed stats if plots aren't skipped
                         category_counts = Counter(results['categories'])
-                        logger.info(f"   🏷️  Category Distribution:")
+                        print(f"   Category Distribution:")
                         for category in [TriageCategories.RED, TriageCategories.ORANGE, TriageCategories.YELLOW, TriageCategories.GREEN, TriageCategories.BLUE]:
                             count = category_counts.get(category, 0)
                             percentage = (count / results['total_patients'] * 100) if results['total_patients'] > 0 else 0
-                            logger.info(f"      {category}: {count} ({percentage:.1f}%)")
-                    logger.info("")
+                            print(f"      {category}: {count} ({percentage:.1f}%)")
+                    print("")
                 
-                logger.info("✅ All simulations completed successfully!")
+                print("All simulations completed successfully!")
                 logger.info("📁 Results available in:")
                 for sim_config in simulations:
                     logger.info(f"   📂 {sim_config['output_dir']}/")
                 
                 if len(results_summary) > 1:
-                    logger.info(f"📊 Comparison report generated: ./output/simulation/comparison_report.md")
+                    print(f"Comparison report generated: ./output/simulation/comparison_report.md")
         
         # Print summary for quiet mode
         elif args.quiet and results_summary:
@@ -382,7 +382,7 @@ def main():
             print(f"Completed: {len(results_summary)} systems, {total_patients} total patients, {avg_time:.1f}min avg time")
         
     except KeyboardInterrupt:
-        logger.info("⏹️ Simulation interrupted by user")
+        print("Simulation interrupted by user")
     except Exception as e:
         logger.error(f"❌ Simulation failed: {e}")
         import traceback

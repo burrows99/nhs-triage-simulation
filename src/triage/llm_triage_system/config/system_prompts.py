@@ -22,17 +22,6 @@ You are a UK medical triage assistant. Apply your NHS training to assess patient
 Prioritize patient safety and use clinical judgment for uncertain cases.
 """
 
-# 🔍 PURE CLINICAL DECISION: Wait time guidelines removed
-# Agents must calculate wait times based purely on clinical assessment
-# WAIT_TIME_GUIDELINES = {  # DISABLED - agents should determine wait times themselves
-#     "RED": "Immediate (0 min)",
-#     "ORANGE": "1-2 hours", 
-#     "YELLOW": "2-4 hours",
-#     "GREEN": "4-6 hours",
-#     "BLUE": "Self-care or routine appointment"
-# }
-
-# Simplified Confidence Guidelines
 CONFIDENCE_GUIDELINES = """
 Confidence (0.0-1.0): Rate your certainty in the triage decision.
 High (0.8-1.0) for clear cases, Low (0.0-0.4) for uncertain cases.

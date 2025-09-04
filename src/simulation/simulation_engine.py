@@ -47,21 +47,15 @@ class SimulationEngine:
     def initialize_environment(self):
         """Initialize the SimPy environment and resources."""
         self.env = simpy.Environment()
-        logger.info(f"🔍 DEBUG: SimPy environment created at time {self.env.now}")
         
         # Initialize resources based on configuration
         for resource_name, capacity in self.resources.items():
             if resource_name in self.priority_resources:
                 # Priority resources for entities with different priorities
                 self.simpy_resources[resource_name] = simpy.PriorityResource(self.env, capacity=capacity)
-                logger.debug(f"🔍 DEBUG: Created PriorityResource {resource_name} with capacity {capacity}")
             else:
                 # Regular resources
                 self.simpy_resources[resource_name] = simpy.Resource(self.env, capacity=capacity)
-                logger.debug(f"🔍 DEBUG: Created Resource {resource_name} with capacity {capacity}")
-        
-        logger.info(f"🏗️  Resources initialized: {', '.join([f'{k}: {v}' for k, v in self.resources.items()])}")
-        logger.info(f"🔍 DEBUG: Total {len(self.simpy_resources)} resources created: {list(self.simpy_resources.keys())}")
     
 
     
@@ -72,8 +66,6 @@ class SimulationEngine:
             arrival_process_func: Function that generates patient arrivals
         """
         self.arrival_callback = arrival_process_func
-        logger.info(f"🚪 ARRIVAL PROCESS SCHEDULED | Rate: {self.arrival_rate} arrivals/hour | Duration: {self.duration}min")
-        logger.debug(f"🔍 DEBUG: Scheduling arrival process at time {self.env.now}")
         self.env.process(arrival_process_func())
     
     # Removed schedule_monitoring method - using synchronized monitoring instead
@@ -98,25 +90,14 @@ class SimulationEngine:
         
         try:
             self._execute_simulation_loop()
-            logger.info(f"🔍 DEBUG: Simulation loop completed at time {self.env.now}")
-            
-            # Log final resource states
-            final_states = []
-            for name, resource in self.simpy_resources.items():
-                final_states.append(f"{name.title()}: {resource.count}/{resource.capacity}")
-            logger.info(f"🔍 DEBUG: Final resource states - {', '.join(final_states)}")
-            
             return self._generate_simulation_results()
         except Exception as e:
             logger.error(f"❌ Simulation failed: {e}")
-            logger.error(f"🔍 DEBUG: Simulation failed at time {self.env.now}")
             raise
     
     def _log_simulation_start(self):
         """Log simulation startup information."""
-        logger.info(f"🚀 STARTING SIMULATION: {self.duration/60:.1f}h duration with {self.arrival_rate} arrivals/hour")
-        logger.info(f"▶️  Simulation started at {self.format_sim_time(self.env.now)}")
-        logger.info(f"📊 Real-time monitoring enabled (5-minute intervals)")
+        print(f"Starting simulation: {self.duration/60:.1f}h duration with {self.arrival_rate} arrivals/hour")
     
     def _execute_simulation_loop(self):
         """Execute the main simulation loop with progress tracking."""
@@ -139,17 +120,8 @@ class SimulationEngine:
     def _log_progress_update(self, next_progress):
         """Log progress update with resource utilization."""
         progress_pct = (self.env.now / self.duration) * 100
-        logger.info(f"📊 PROGRESS: {progress_pct:.0f}% complete at {self.format_sim_time(self.env.now)} | Entities processed: {self.entity_count}")
-        
-        resource_status = self._get_resource_status_summary()
-        logger.info(f"📈 Resource utilization: {', '.join(resource_status)}")
-        
-        # Enhanced progress logging with detailed resource states
-        detailed_status = []
-        for name, resource in self.simpy_resources.items():
-            utilization = (resource.count / resource.capacity * 100) if resource.capacity > 0 else 0
-            detailed_status.append(f"{name.title()}: {resource.count}/{resource.capacity} ({utilization:.1f}%) Q:{len(resource.queue)}")
-        logger.info(f"🔍 DETAILED PROGRESS | {' | '.join(detailed_status)} | Avg Time: {self.total_time/self.entity_count if self.entity_count > 0 else 0:.1f}min")
+        if progress_pct % 25 == 0:  # Only log every 25%
+            print(f"Progress: {progress_pct:.0f}% complete | Entities processed: {self.entity_count}")
     
     def _get_resource_status_summary(self):
         """Get current resource status for logging."""
@@ -165,16 +137,6 @@ class SimulationEngine:
         
         self._log_simulation_completion(avg_time)
         
-        # Enhanced results logging
-        logger.info(f"🔍 DETAILED RESULTS | Entities: {self.entity_count} | Total Time: {self.total_time:.1f}min | Avg: {avg_time:.1f}min")
-        logger.info(f"🔍 CATEGORY BREAKDOWN | Categories: {len(set(self.categories))} unique | Total records: {len(self.categories)}")
-        
-        # Log category distribution if available
-        if self.categories:
-            from collections import Counter
-            category_counts = Counter(self.categories)
-            logger.info(f"📊 CATEGORY DISTRIBUTION | {dict(category_counts)}")
-        
         results = {
             'total_entities': self.entity_count,
             'avg_time': avg_time,
@@ -185,36 +147,11 @@ class SimulationEngine:
                                    for name, res in self.simpy_resources.items()}
         }
         
-        logger.debug(f"🔍 FULL RESULTS OBJECT | {results}")
         return results
     
     def _log_simulation_completion(self, avg_time):
         """Log simulation completion information."""
-        logger.info(f"🏁 SIMULATION COMPLETE at {self.format_sim_time(self.env.now)}!")
-        logger.info(f"📊 Final Results: {self.entity_count} entities processed, average time: {avg_time:.1f}min")
-        
-        resource_states = []
-        for name, resource in self.simpy_resources.items():
-            resource_states.append(f"{name.title()}: {resource.count}/{resource.capacity}")
-        logger.info(f"🏭 Final resource state: {', '.join(resource_states)}")
-        
-        # Enhanced completion logging with throughput analysis
-        throughput = self.entity_count / (self.duration / 60) if self.duration > 0 else 0  # entities per hour
-        logger.info(f"📈 THROUGHPUT ANALYSIS | {throughput:.2f} entities/hour | Expected: {self.arrival_rate:.2f}/hour")
-        
-        # Log potential issues
-        if self.entity_count == 0:
-            logger.warning(f"⚠️  NO ENTITIES COMPLETED! Check arrival process and resource allocation.")
-        elif throughput < self.arrival_rate * 0.8:  # Less than 80% of expected throughput
-            logger.warning(f"⚠️  LOW THROUGHPUT DETECTED | Actual: {throughput:.2f}/h vs Expected: {self.arrival_rate:.2f}/h")
-        
-        # Log final queue states
-        queue_states = []
-        for name, resource in self.simpy_resources.items():
-            if len(resource.queue) > 0:
-                queue_states.append(f"{name.title()}: {len(resource.queue)} waiting")
-        if queue_states:
-            logger.warning(f"⚠️  ENTITIES STILL WAITING | {', '.join(queue_states)}")
+        print(f"Simulation completed: {self.entity_count} entities processed, average time: {avg_time:.1f}min")
     
     def update_entity_completion(self, total_time: float, category: str = None):
         """Update counters when an entity completes its journey.
@@ -227,10 +164,6 @@ class SimulationEngine:
         self.total_time += total_time
         if category:
             self.categories.append(category)
-        
-        # Enhanced logging for entity completion tracking
-        logger.info(f"🎯 ENTITY COMPLETED | ID: {self.entity_count} | Total Time: {total_time:.1f}min | Category: {category} | Sim Time: {self.env.now:.1f}")
-        logger.debug(f"📊 COMPLETION STATS | Total Entities: {self.entity_count} | Avg Time: {self.total_time/self.entity_count:.1f}min | Categories: {len(self.categories)}")
     
     # Removed collect_monitoring_data method - using synchronized monitoring instead
     
@@ -300,18 +233,12 @@ class SimulationEngine:
         if 0 <= timeout_duration < 0.001:
             logger.warning(f"⚠️  Very small timeout_duration={timeout_duration:.6f} for context='{context}'. Check calculation logic.")
         
-        # Enhanced logging for yield operations
-        logger.debug(f"⏱️  YIELD START | Duration: {timeout_duration:.3f}min | Context: {context} | Time: {self.env.now:.1f}")
-        
         # Capture resource state before yielding
         if monitoring_callback:
             monitoring_callback(f"Before {context}")
         
         # Perform the actual yield
         yield self.env.timeout(timeout_duration)
-        
-        # Enhanced logging for yield completion
-        logger.debug(f"⏱️  YIELD COMPLETE | Duration: {timeout_duration:.3f}min | Context: {context} | Time: {self.env.now:.1f}")
         
         # Capture resource state after yielding
         if monitoring_callback:
@@ -340,22 +267,6 @@ class SimulationEngine:
         # Use callback for domain-specific event recording
         if event_recorder:
             event_recorder(event_record)
-        
-        # Enhanced debug logging for all resource events
-        logger.debug(f"🔍 RESOURCE EVENT | Type: {event_type.upper()} | Resource: {resource_name} | "
-                    f"Entity: {entity_id} | Time: {self.env.now:.1f} | Extra: {kwargs}")
-        
-        # Additional detailed logging for resource state tracking
-        if resource_name in self.simpy_resources:
-            resource = self.simpy_resources[resource_name]
-            logger.info(f"🏥 RESOURCE {event_type.upper()} | {resource_name.title()} | Entity: {entity_id} | "
-                       f"Usage: {resource.count}/{resource.capacity} | Queue: {len(resource.queue)} | Time: {self.env.now:.1f}")
-        
-        # Log critical resource bottlenecks
-        if resource_name in self.simpy_resources:
-            resource = self.simpy_resources[resource_name]
-            if len(resource.queue) > 5:  # Threshold for bottleneck detection
-                logger.warning(f"⚠️  BOTTLENECK DETECTED | {resource_name.title()} queue length: {len(resource.queue)} | Time: {self.env.now:.1f}")
     
     def capture_monitoring_snapshot(self, context: str = "", resource_mapping: Dict[str, str] = None,
                                   capacity_mapping: Dict[str, int] = None, 
@@ -405,12 +316,7 @@ class SimulationEngine:
     
     def _log_snapshot_info(self, context, snapshot_data):
         """Log basic snapshot information."""
-        logger.info(f"📸 SNAPSHOT CAPTURED | Time: {self.env.now:.1f} | Context: {context}")
-        logger.info(f"   📊 Resource Usage: {snapshot_data['resource_usage']}")
-        logger.info(f"   🏥 Resource Capacity: {snapshot_data['resource_capacity']}")
-        logger.info(f"   📋 Queue Lengths: {snapshot_data['queue_lengths']}")
-        logger.debug(f"📸 SYNC SNAPSHOT | Time: {self.env.now:.1f} | Context: {context} | "
-                    f"Usage: {snapshot_data['resource_usage']} | Capacity: {snapshot_data['resource_capacity']} | Queues: {snapshot_data['queue_lengths']}")
+        pass
     
     def _calculate_utilization(self, snapshot_data):
         """Calculate resource utilization percentages."""
@@ -426,8 +332,7 @@ class SimulationEngine:
     
     def _log_utilization_info(self, context, utilization_data):
         """Log utilization information."""
-        logger.info(f"   📊 Resource Utilization: {utilization_data}")
-        logger.debug(f"📊 SYNC UTILIZATION | {context} | {utilization_data}")
+        pass
     
     def _record_metrics(self, metrics_recorder, snapshot_data, entity_count, context):
         """Record metrics using the provided callback."""
@@ -450,4 +355,4 @@ class SimulationEngine:
                 capacity = capacity_mapping.get(logical_name, 0)
                 resource_status.append(f"{logical_name.title()}: {resource.count}/{capacity} (Q:{len(resource.queue)})")
         
-        logger.debug(f"Monitor | Time: {self.env.now:6.1f} | {context} | {' | '.join(resource_status)} | Entities: {entity_count}")
+        pass

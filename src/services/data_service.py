@@ -9,7 +9,6 @@ import os
 from typing import Dict, List, Optional, Any, Type
 from functools import partial
 
-from src.logger import logger, log_data_transfer
 from src.models.synthea_models import (
     Allergy, CarePlan, Condition, Encounter, ImagingStudy,
     Immunization, Medication, Observation, Organization,
@@ -31,13 +30,11 @@ class DataService:
     organizations: List[Organization] = attr.Factory(list)
     providers: List[Provider] = attr.Factory(list)
     payers: List[Payer] = attr.Factory(list)
-        
-    @log_data_transfer("DataService.load_and_construct_data")
+    
     def load_and_construct_data(self) -> None:
         """Load all CSV files and construct models with relationships."""
         # Step 1: Load all raw data
         raw_data = self._load_all_csvs()
-        logger.info(f"📊 TRANSFER_PAYLOAD: CSV data loaded - {dict((k, len(v) if isinstance(v, list) else str(type(v))) for k, v in raw_data.items())}")
         
         # Step 2: Create models using pandas and generic factory - eliminate custom wrappers
         model_mapping = {
@@ -100,7 +97,6 @@ class DataService:
         self.providers = providers
         self.payers = payers
     
-    @log_data_transfer("DataService.get_all_patients")
     def get_all_patients(self, deep: bool = False) -> List[Patient]:
         """Get all patients with optional deep relationships.
         
@@ -123,17 +119,13 @@ class DataService:
     
     def _load_all_csvs(self) -> Dict[str, List[Dict[str, Any]]]:
         """Load all CSV files into raw data dictionaries."""
-        logger.info(f"🔄 DATA_TRANSFER: _load_all_csvs() scanning {self.csv_folder}")
         raw_data = {}
         csv_files = glob.glob(os.path.join(self.csv_folder, "*.csv"))
-        logger.info(f"📊 TRANSFER_SOURCE: Found {len(csv_files)} CSV files: {[os.path.basename(f) for f in csv_files]}")
         
         for csv_file in csv_files:
             filename = os.path.basename(csv_file).replace(".csv", "")
             try:
-                logger.info(f"🔄 DATA_TRANSFER: Loading {csv_file}...")
                 df = pd.read_csv(csv_file)
-                logger.info(f"📊 TRANSFER_PAYLOAD: DataFrame loaded - shape: {df.shape}, columns: {list(df.columns)}")
                 
                 # Convert to list of dictionaries with NaN handling
                 records = []
@@ -141,11 +133,9 @@ class DataService:
                     row_dict = {k: (None if pd.isna(v) else v) for k, v in row.to_dict().items()}
                     records.append(row_dict)
                 raw_data[filename] = records
-                logger.info(f"📊 TRANSFER_RESULT: {filename} converted - {len(records)} records, sample: {str(records[0] if records else 'None')}")
             except Exception as e:
-                logger.error(f"❌ DATA_TRANSFER_ERROR: Error loading {csv_file}: {e}")
+                print(f"Error loading {csv_file}: {e}")
                 
-        logger.info(f"✅ DATA_TRANSFER_SUCCESS: _load_all_csvs() completed - {len(raw_data)} datasets loaded")
         return raw_data
     
     def _create_models_generic(self, records: List[Dict[str, Any]], model_class: Type) -> List:
@@ -170,7 +160,7 @@ class DataService:
                 model_instance = model_class(**row.to_dict())
                 successful_models.append(model_instance)
             except Exception as e:
-                logger.error(f"Error creating {model_class.__name__}: {e}")
+                print(f"Error creating {model_class.__name__}: {e}")
                 continue
         
         return successful_models

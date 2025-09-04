@@ -517,67 +517,32 @@ class SimpleHospital:
                 symptoms_text += "Symptoms include: " + ", ".join(symptom_descriptions)
             
             logger.info(f"🤖 USING LLM TRIAGE SYSTEM")
-            logger.info(f"📝 Natural Language Input: '{symptoms_text[:100]}{'...' if len(symptoms_text) > 100 else ''}'")
-            logger.info(f"🔄 Delegating to LLM Triage System...")
-            
             result = self.triage_system.triage_patient(symptoms_text)
-            
-            logger.info(f"✅ LLM Triage System completed successfully")
         else:
             # Manchester Triage System expects structured inputs
-            logger.info(f"🏥 USING MANCHESTER TRIAGE SYSTEM")
-            logger.info(f"📋 Flowchart Selected: {flowchart_reason}")
-            logger.info(f"📝 Structured Input: {symptoms_input}")
-            logger.info(f"🔄 Delegating to Manchester Triage System...")
-            
             result = self.triage_system.triage_patient(
                 flowchart_reason=flowchart_reason,
                 symptoms_input=symptoms_input,
                 patient_id=patient.Id
             )
-            
-            logger.info(f"✅ Manchester Triage System completed successfully")
         
         # Calculate processing delay
         triage_end_time = time.time()
         processing_delay = triage_end_time - triage_start_time
         
-        logger.info(f"📊 TRIAGE RESULT PROCESSING")
-        logger.info(f"⏱️ Processing Time: {processing_delay:.3f} seconds")
-        
         # Handle triage result based on system type
         from src.models.triage_result import TriageResult
         
-        logger.info(f"🔄 DATA_TRANSFER: Processing triage system response...")
-        logger.info(f"📊 TRANSFER_PAYLOAD: Raw result - {str(result)[:500]}...")
-        
         if isinstance(self.triage_system, (SingleLLMTriage, MixtureLLMTriage)):
             # LLM system already returns TriageResult object
-            logger.info(f"🔄 DATA_TRANSFER: LLM result is TriageResult object")
             triage_result = result
-            logger.info(f"📋 LLM Result Type: TriageResult object")
-            logger.info(f"📊 TRANSFER_RESULT: TriageResult object - {str(triage_result.__dict__)}")
         else:
             # MTS system returns dictionary, convert to TriageResult
-            logger.info(f"🔄 DATA_TRANSFER: Converting MTS dictionary to TriageResult")
-            logger.info(f"📊 TRANSFER_PAYLOAD: MTS dict - {str(result)}")
             triage_result = TriageResult.from_raw_result(result, "MTS")
-            logger.info(f"📋 MTS Result Type: Dictionary converted to TriageResult")
-            logger.info(f"📊 TRANSFER_RESULT: Converted TriageResult - {str(triage_result.__dict__)}")
         
         # Extract core values for backward compatibility
-        logger.info(f"🔄 DATA_TRANSFER: Extracting core values from TriageResult...")
         category = triage_result.triage_category
         priority = triage_result.priority_score
-        logger.info(f"📊 TRANSFER_RESULT: Extracted values - category={category}, priority={priority}")
-        
-        logger.info(f"🎯 FINAL TRIAGE DECISION SUMMARY")
-        logger.info(f"🏥 Category: {category}")
-        logger.info(f"📊 Priority: {priority}")
-        logger.info(f"⏰ Wait Time: {triage_result.wait_time}")
-        logger.info(f"🔍 System Used: {type(self.triage_system).__name__}")
-        logger.info(f"✅ TRIAGE ASSESSMENT COMPLETE")
-        logger.info(f"{'='*60}")
         
         # Return standardized result
         return category, priority, triage_result, processing_delay
