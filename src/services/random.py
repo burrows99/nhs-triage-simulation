@@ -1,4 +1,5 @@
 import random
+import math
 from typing import Optional
 from ..entities.patient import Patient
 from ..entities.sub_entities.vital_signs import VitalSigns
@@ -46,7 +47,16 @@ class RandomService:
         )
     
     def get_next_arrival_time(self, current_time: float) -> float:
-        inter_arrival = random.expovariate(self.arrival_rate)
+        """Time-dependent Poisson arrival process with realistic peak hours"""
+        # Calculate time-dependent arrival rate with daily periodicity
+        # Peak at 10:00 AM (600 minutes from midnight) with 24-hour cycle
+        daily_minutes = 1440  # 24 hours = 1440 minutes
+        peak_time = 600  # 10:00 AM in minutes from midnight
+        time_in_day = current_time % daily_minutes  # Get time within current day
+        time_dependent_rate = self.arrival_rate * (1 + 0.5 * math.exp(-((time_in_day - peak_time)/120)**2))
+        
+        # Generate inter-arrival time using time-dependent rate
+        inter_arrival = random.expovariate(time_dependent_rate)
         self.next_arrival_time = current_time + inter_arrival
         return self.next_arrival_time
     

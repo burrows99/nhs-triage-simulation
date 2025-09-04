@@ -392,7 +392,7 @@ class SimulationState:
         
         # 2. State History Timeline (if available)
         if self.state_history:
-            fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(14, 12))
+            fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(14, 16))
             fig.suptitle('Simulation State History Timeline', fontsize=16, fontweight='bold')
             
             times = [entry['recorded_at'] for entry in self.state_history]
@@ -425,10 +425,48 @@ class SimulationState:
             # Preemption Events Over Time
             ax3.step(times, preemptions, 'purple', linewidth=2, where='post')
             ax3.fill_between(times, preemptions, alpha=0.3, color='purple', step='post')
-            ax3.set_xlabel('Simulation Time (minutes)')
             ax3.set_ylabel('Cumulative Preemptions')
             ax3.set_title('Preemption Events Over Time')
             ax3.grid(True, alpha=0.3)
+            
+            # Actual Arrival Rate from Patient History
+            # Calculate instantaneous arrival rate using patient arrival times
+            arrival_times = [p.arrival_time for p in self.active_patients + self.completed_patients]
+            arrival_times.sort()
+            
+            # Calculate arrival rate in time windows
+            window_size = 30  # 30-minute windows
+            time_windows = []
+            actual_arrival_rates = []
+            
+            if arrival_times:
+                current_window_start = 0
+                max_time = max(times) if times else self.current_time
+                
+                while current_window_start < max_time:
+                    window_end = current_window_start + window_size
+                    # Count arrivals in this window
+                    arrivals_in_window = sum(1 for t in arrival_times 
+                                           if current_window_start <= t < window_end)
+                    # Convert to rate per minute
+                    rate = arrivals_in_window / window_size if window_size > 0 else 0
+                    
+                    time_windows.append(current_window_start + window_size/2)  # Center of window
+                    actual_arrival_rates.append(rate)
+                    current_window_start += window_size
+                
+                ax4.plot(time_windows, actual_arrival_rates, 'orange', linewidth=2, 
+                        label='Actual Arrival Rate', marker='o', markersize=4)
+                ax4.fill_between(time_windows, actual_arrival_rates, alpha=0.3, color='orange')
+            else:
+                ax4.text(0.5, 0.5, 'No patient arrival data available', 
+                        transform=ax4.transAxes, ha='center', va='center')
+            
+            ax4.set_xlabel('Simulation Time (minutes)')
+            ax4.set_ylabel('Arrival Rate (patients/min)')
+            ax4.set_title('Actual Patient Arrival Rate Over Time')
+            ax4.legend()
+            ax4.grid(True, alpha=0.3)
             
             plt.tight_layout()
             timeline_file = os.path.join(output_dir, 'state_history_timeline.png')
