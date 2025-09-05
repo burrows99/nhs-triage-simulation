@@ -1,5 +1,7 @@
 import logging
 import json
+import attr
+import types
 from datetime import datetime
 from enum import Enum
 from typing import Dict, Any, Optional, List
@@ -30,6 +32,8 @@ class EventType(Enum):
     DOCTOR_ASSIGNMENT = "DOCTOR_ASSIGNMENT"
     TREATMENT_START = "TREATMENT_START"
     TREATMENT_COMPLETE = "TREATMENT_COMPLETE"
+    TEST_COMPLETE = "TEST_COMPLETE"
+    BED_DISCHARGE = "BED_DISCHARGE"
     PREEMPTION_DECISION = "PREEMPTION_DECISION"
     PREEMPTION_EXECUTED = "PREEMPTION_EXECUTED"
     QUEUE_UPDATE = "QUEUE_UPDATE"
@@ -45,6 +49,64 @@ class LogEvent:
     message: str
     data: Dict[str, Any]
     source: str
+
+class HospitalJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder for hospital simulation objects"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._seen_objects = set()
+    
+    def default(self, obj):
+        # Prevent circular references
+        obj_id = id(obj)
+        if obj_id in self._seen_objects:
+            return f"<Circular reference to {obj.__class__.__name__}>"
+        
+        # Handle mappingproxy (class attributes)
+        if isinstance(obj, types.MappingProxyType):
+            return dict(obj)
+        # Priority 1: Use summary method if available
+        elif hasattr(obj, 'get_summary'):
+            self._seen_objects.add(obj_id)
+            try:
+                result = obj.get_summary()
+                self._seen_objects.remove(obj_id)
+                return result
+            except:
+                self._seen_objects.remove(obj_id)
+                return f"<{obj.__class__.__name__}: summary failed>"
+        # Priority 2: Use attr.asdict for attrs classes
+        elif attr.has(obj):
+            self._seen_objects.add(obj_id)
+            try:
+                result = attr.asdict(obj, recurse=False)
+                self._seen_objects.remove(obj_id)
+                return result
+            except:
+                self._seen_objects.remove(obj_id)
+                return f"<{obj.__class__.__name__}: attrs conversion failed>"
+        # Priority 3: Fallback to __dict__
+        elif hasattr(obj, '__dict__'):
+            self._seen_objects.add(obj_id)
+            try:
+                # Only include basic types to avoid circular references
+                result = {k: v for k, v in obj.__dict__.items() 
+                         if isinstance(v, (str, int, float, bool, type(None)))}
+                self._seen_objects.remove(obj_id)
+                return result
+            except:
+                self._seen_objects.remove(obj_id)
+                return f"<{obj.__class__.__name__}: dict conversion failed>"
+        # Handle functions and methods
+        elif callable(obj):
+            return f"<{obj.__class__.__name__}: {getattr(obj, '__name__', 'unnamed')}>"
+        # Handle other non-serializable types
+        elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes)):
+            try:
+                return list(obj)[:10]  # Limit to first 10 items to prevent huge outputs
+            except:
+                return f"<{obj.__class__.__name__}: iteration failed>"
+        return super().default(obj)
 
 class HospitalLogger:
     """Unified centralized logging system with rich text formatting"""
@@ -81,7 +143,8 @@ class HospitalLogger:
             handlers.append(file_handler)
             
             # Rich console for HTML export (no output, just recording)
-            self.file_console = Console(record=True, width=120, file=None)
+            import io
+            self.file_console = Console(record=True, width=120, file=io.StringIO())
             self.log_to_file_enabled = True
         else:
             self.log_to_file_enabled = False
@@ -163,9 +226,9 @@ class HospitalLogger:
         # Log to standard logger (console and plain text file)
         log_method(formatted_message)
         
-        # Also log to rich file console for HTML export
-        if self.log_to_file_enabled:
-            # Don't add timestamp since formatted_message already contains it
+        # Also log to rich file console for HTML export (record only, no console output)
+        if self.log_to_file_enabled and self.file_console:
+            # Record for HTML export without console output
             self.file_console.print(formatted_message)
     
     def _enhance_log_data_with_simulation_state(self, data: dict, simulation_state) -> dict:
@@ -375,7 +438,7 @@ class HospitalLogger:
             events_data.append(event_dict)
         
         with open(filename, 'w') as f:
-            json.dump(events_data, f, indent=2)
+            json.dump(events_data, f, cls=HospitalJSONEncoder, indent=2)
     
     def export_rich_html(self, filename: str = None) -> str:
         """Export rich formatted logs to HTML file"""

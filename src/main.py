@@ -117,26 +117,55 @@ def run_single_simulation(triage_system_name: str, args):
         source="main"
     )
     
-    # Run simulation
-    sim.run_simulation(duration=args.duration)
-    
-    # Log simulation completion
-    logger.log_event(
-        timestamp=float(args.duration),
-        event_type=EventType.SIMULATION_END,
-        message="Hospital simulation completed successfully",
-        simulation_state=sim.simulation_state,
-        data={
-            "duration": args.duration,
-            "total_events_logged": len(logger.events),
-            "simulation_status": "completed",
-            "preemption_enabled": args.enable_preemption,
-            "triage_system": triage_system_name
-        },
-        source="main"
-    )
-    
-    sim.print_statistics()
+    # Run simulation with error handling
+    try:
+        sim.run_simulation(duration=args.duration)
+        
+        # Log simulation completion
+        logger.log_event(
+            timestamp=float(args.duration),
+            event_type=EventType.SIMULATION_END,
+            message="Hospital simulation completed successfully",
+            simulation_state=sim.simulation_state,
+            data={
+                "duration": args.duration,
+                "total_events_logged": len(logger.events),
+                "simulation_status": "completed",
+                "preemption_enabled": args.enable_preemption,
+                "triage_system": triage_system_name
+            },
+            source="main"
+        )
+        
+        sim.print_statistics()
+        
+    except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        
+        # Log the error with full traceback
+        logger.log_event(
+            timestamp=sim.env.now if hasattr(sim, 'env') else 0.0,
+            event_type=EventType.SYSTEM_STATE,
+            message=f"Simulation error: {str(e)}",
+            simulation_state=sim.simulation_state if hasattr(sim, 'simulation_state') else None,
+            data={
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "traceback": error_traceback,
+                "simulation_status": "failed",
+                "preemption_enabled": args.enable_preemption,
+                "triage_system": triage_system_name
+            },
+            source="main"
+        )
+        
+        print(f"❌ Error running {triage_system_name.lower()} simulation: {e}")
+        print(f"Full traceback logged to: {log_file_path}")
+        print("\nFull traceback:")
+        print(error_traceback)
+        
+        return None  # Return None to indicate failure
     
     # Create system-specific output directory
     system_output_dir = os.path.join("output", triage_system_name)
@@ -214,11 +243,11 @@ def main():
     # Run simulations for each triage system
     simulation_results = {}
     for triage_system_name in triage_systems:
-        try:
-            sim = run_single_simulation(triage_system_name, args)
+        sim = run_single_simulation(triage_system_name, args)
+        if sim is not None:
             simulation_results[triage_system_name] = sim
-        except Exception as e:
-            print(f"❌ Error running {triage_system_name} simulation: {e}")
+        else:
+            print(f"⚠️  Skipping {triage_system_name} simulation due to error")
             continue
     
     # Print comparison summary if multiple systems were run

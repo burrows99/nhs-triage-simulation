@@ -38,9 +38,27 @@ class SimulationState:
     available_doctors: List[int] = attr.ib(factory=list)
     doctor_patient_assignments: Dict[int, Optional[int]] = attr.ib(factory=dict)
     
+    # MRI machine state
+    busy_mri_machines: List[int] = attr.ib(factory=list)
+    available_mri_machines: List[int] = attr.ib(factory=list)
+    mri_patient_assignments: Dict[int, Optional[int]] = attr.ib(factory=dict)
+    
+    # Blood test nurse state
+    busy_blood_nurses: List[int] = attr.ib(factory=list)
+    available_blood_nurses: List[int] = attr.ib(factory=list)
+    blood_nurse_patient_assignments: Dict[int, Optional[int]] = attr.ib(factory=dict)
+    
+    # Bed state
+    busy_beds: List[int] = attr.ib(factory=list)
+    available_beds: List[int] = attr.ib(factory=list)
+    bed_patient_assignments: Dict[int, Optional[int]] = attr.ib(factory=dict)
+    
     # Resource utilization
     triage_utilization: float = 0.0
     doctor_utilization: float = 0.0
+    mri_utilization: float = 0.0
+    blood_nurse_utilization: float = 0.0
+    bed_utilization: float = 0.0
     
     # Statistics
     total_wait_time: float = 0.0
@@ -113,15 +131,74 @@ class SimulationState:
             self.available_doctors.append(doctor_id)
         self.doctor_patient_assignments[doctor_id] = None
     
+    def assign_mri_to_patient(self, mri_id: int, patient_id: int) -> None:
+        """Assign MRI machine to patient"""
+        self.record_history()  # Record state before update
+        if mri_id in self.available_mri_machines:
+            self.available_mri_machines.remove(mri_id)
+        if mri_id not in self.busy_mri_machines:
+            self.busy_mri_machines.append(mri_id)
+        self.mri_patient_assignments[mri_id] = patient_id
+    
+    def release_mri(self, mri_id: int) -> None:
+        """Release MRI machine from patient assignment"""
+        self.record_history()  # Record state before update
+        if mri_id in self.busy_mri_machines:
+            self.busy_mri_machines.remove(mri_id)
+        if mri_id not in self.available_mri_machines:
+            self.available_mri_machines.append(mri_id)
+        self.mri_patient_assignments[mri_id] = None
+    
+    def assign_blood_nurse_to_patient(self, nurse_id: int, patient_id: int) -> None:
+        """Assign blood test nurse to patient"""
+        self.record_history()  # Record state before update
+        if nurse_id in self.available_blood_nurses:
+            self.available_blood_nurses.remove(nurse_id)
+        if nurse_id not in self.busy_blood_nurses:
+            self.busy_blood_nurses.append(nurse_id)
+        self.blood_nurse_patient_assignments[nurse_id] = patient_id
+    
+    def release_blood_nurse(self, nurse_id: int) -> None:
+        """Release blood test nurse from patient assignment"""
+        self.record_history()  # Record state before update
+        if nurse_id in self.busy_blood_nurses:
+            self.busy_blood_nurses.remove(nurse_id)
+        if nurse_id not in self.available_blood_nurses:
+            self.available_blood_nurses.append(nurse_id)
+        self.blood_nurse_patient_assignments[nurse_id] = None
+    
+    def assign_bed_to_patient(self, bed_id: int, patient_id: int) -> None:
+        """Assign bed to patient"""
+        self.record_history()  # Record state before update
+        if bed_id in self.available_beds:
+            self.available_beds.remove(bed_id)
+        if bed_id not in self.busy_beds:
+            self.busy_beds.append(bed_id)
+        self.bed_patient_assignments[bed_id] = patient_id
+    
+    def release_bed(self, bed_id: int) -> None:
+        """Release bed from patient assignment"""
+        self.record_history()  # Record state before update
+        if bed_id in self.busy_beds:
+            self.busy_beds.remove(bed_id)
+        if bed_id not in self.available_beds:
+            self.available_beds.append(bed_id)
+        self.bed_patient_assignments[bed_id] = None
+    
     def record_preemption(self) -> None:
         """Record a preemption event"""
         self.record_history()  # Record state before update
         self.preemptions_count += 1
     
-    def update_resource_utilization(self, triage_util: float, doctor_util: float) -> None:
+    def update_resource_utilization(self, triage_util: float, doctor_util: float, 
+                                   mri_util: float = 0.0, blood_nurse_util: float = 0.0, 
+                                   bed_util: float = 0.0) -> None:
         """Update resource utilization metrics"""
         self.triage_utilization = triage_util
         self.doctor_utilization = doctor_util
+        self.mri_utilization = mri_util
+        self.blood_nurse_utilization = blood_nurse_util
+        self.bed_utilization = bed_util
     
 
     
@@ -135,8 +212,17 @@ class SimulationState:
             'queue_lengths': dict(self.queue_lengths),
             'busy_doctors': len(self.busy_doctors),
             'available_doctors': len(self.available_doctors),
+            'busy_mri_machines': len(self.busy_mri_machines),
+            'available_mri_machines': len(self.available_mri_machines),
+            'busy_blood_nurses': len(self.busy_blood_nurses),
+            'available_blood_nurses': len(self.available_blood_nurses),
+            'busy_beds': len(self.busy_beds),
+            'available_beds': len(self.available_beds),
             'triage_utilization': self.triage_utilization,
             'doctor_utilization': self.doctor_utilization,
+            'mri_utilization': self.mri_utilization,
+            'blood_nurse_utilization': self.blood_nurse_utilization,
+            'bed_utilization': self.bed_utilization,
             'average_wait_time': self.metrics_service.get_average_wait_time(),
             'average_treatment_time': self.metrics_service.get_average_treatment_time(),
             'preemptions_count': self.preemptions_count
@@ -151,6 +237,12 @@ class SimulationState:
             "patients_in_system": self.patients_in_system,
             "busy_doctors": len(self.busy_doctors),
             "available_doctors": len(self.available_doctors),
+            "busy_mri_machines": len(self.busy_mri_machines),
+            "available_mri_machines": len(self.available_mri_machines),
+            "busy_blood_nurses": len(self.busy_blood_nurses),
+            "available_blood_nurses": len(self.available_blood_nurses),
+            "busy_beds": len(self.busy_beds),
+            "available_beds": len(self.available_beds),
             "preemptions_count": self.preemptions_count,
             "queue_lengths": {priority.name: length for priority, length in self.queue_lengths.items()}
         }
@@ -1017,8 +1109,23 @@ Systems Compared: {', '.join(simulation_states.keys())}
         self.available_doctors.clear()
         self.doctor_patient_assignments.clear()
         
+        self.busy_mri_machines.clear()
+        self.available_mri_machines.clear()
+        self.mri_patient_assignments.clear()
+        
+        self.busy_blood_nurses.clear()
+        self.available_blood_nurses.clear()
+        self.blood_nurse_patient_assignments.clear()
+        
+        self.busy_beds.clear()
+        self.available_beds.clear()
+        self.bed_patient_assignments.clear()
+        
         self.triage_utilization = 0.0
         self.doctor_utilization = 0.0
+        self.mri_utilization = 0.0
+        self.blood_nurse_utilization = 0.0
+        self.bed_utilization = 0.0
         self.total_wait_time = 0.0
         self.total_treatment_time = 0.0
         self.preemptions_count = 0

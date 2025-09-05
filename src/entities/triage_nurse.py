@@ -13,9 +13,10 @@ class TriageNurse:
     
     def assess_patient(self, patient, current_time: float = 0.0) -> TriageAssessment:
         """Assess patient using MTS priorities with comprehensive logging"""
-        patient_id = getattr(patient, 'id', 'UNKNOWN')
-        condition = getattr(patient, 'condition', 'unknown')
-        symptoms = getattr(patient, 'symptoms', [])
+        patient_data = attr.asdict(patient) if attr.has(patient.__class__) else {}
+        patient_id = patient_data.get('id', 'UNKNOWN')
+        condition = patient_data.get('condition', 'unknown')
+        symptoms = patient_data.get('symptoms', [])
         
         # Log triage start
         self.logger.log_triage_start(

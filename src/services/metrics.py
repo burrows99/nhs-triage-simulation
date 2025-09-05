@@ -51,9 +51,29 @@ class MetricsService:
         
         # 5. Resource Utilization Metrics
         metrics['doctor_utilization_percentage'] = self.simulation_state.doctor_utilization * 100
+        metrics['mri_utilization_percentage'] = self.simulation_state.mri_utilization * 100
+        metrics['blood_nurse_utilization_percentage'] = self.simulation_state.blood_nurse_utilization * 100
+        metrics['bed_utilization_percentage'] = self.simulation_state.bed_utilization * 100
         metrics['triage_utilization_percentage'] = self.simulation_state.triage_utilization * 100
+        
+        # Resource counts
         metrics['busy_doctors_count'] = len(self.simulation_state.busy_doctors)
         metrics['available_doctors_count'] = len(self.simulation_state.available_doctors)
+        metrics['busy_mri_machines_count'] = len(self.simulation_state.busy_mri_machines)
+        metrics['available_mri_machines_count'] = len(self.simulation_state.available_mri_machines)
+        metrics['busy_blood_nurses_count'] = len(self.simulation_state.busy_blood_nurses)
+        metrics['available_blood_nurses_count'] = len(self.simulation_state.available_blood_nurses)
+        metrics['busy_beds_count'] = len(self.simulation_state.busy_beds)
+        metrics['available_beds_count'] = len(self.simulation_state.available_beds)
+        
+        # Overall resource efficiency
+        total_resources = (len(self.simulation_state.busy_doctors) + len(self.simulation_state.available_doctors) +
+                          len(self.simulation_state.busy_mri_machines) + len(self.simulation_state.available_mri_machines) +
+                          len(self.simulation_state.busy_blood_nurses) + len(self.simulation_state.available_blood_nurses) +
+                          len(self.simulation_state.busy_beds) + len(self.simulation_state.available_beds))
+        busy_resources = (len(self.simulation_state.busy_doctors) + len(self.simulation_state.busy_mri_machines) +
+                         len(self.simulation_state.busy_blood_nurses) + len(self.simulation_state.busy_beds))
+        metrics['overall_resource_utilization_percentage'] = (busy_resources / max(1, total_resources)) * 100
         
         # 6. Quality and Safety Indicators
         metrics['preemption_events_count'] = self.simulation_state.preemptions_count

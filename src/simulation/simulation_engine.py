@@ -28,6 +28,9 @@ class HospitalSimulationEngine:
     
     # SimPy Resources
     doctor_resources: List[simpy.PreemptiveResource] = attr.ib(factory=list)
+    mri_resources: List[simpy.PreemptiveResource] = attr.ib(factory=list)
+    blood_nurse_resources: List[simpy.PreemptiveResource] = attr.ib(factory=list)
+    bed_resources: List[simpy.Resource] = attr.ib(factory=list)  # Non-preemptive
     triage_resources: simpy.Resource = attr.ib(init=False)
     
     # Centralized state management
@@ -41,10 +44,13 @@ class HospitalSimulationEngine:
         self.logger.log_event(
             timestamp=0.0,
             event_type=EventType.SIMULATION_START,
-            message=f"Simulation engine initialized with {self.hospital.num_doctors} doctors and {self.hospital.triage_nurses} triage nurses",
+            message=f"Simulation engine initialized with {self.hospital.num_doctors} doctors, {self.hospital.num_mri_machines} MRI machines, {self.hospital.num_blood_nurses} blood nurses, {self.hospital.num_beds} beds, and {self.hospital.triage_nurses} triage nurses",
             simulation_state=self.simulation_state,
             data={
                 "num_doctors": self.hospital.num_doctors,
+                "num_mri_machines": self.hospital.num_mri_machines,
+                "num_blood_nurses": self.hospital.num_blood_nurses,
+                "num_beds": self.hospital.num_beds,
                 "triage_nurses": self.hospital.triage_nurses,
                 "simulation_engine": "HospitalSimulationEngine"
             },
@@ -67,6 +73,54 @@ class HospitalSimulationEngine:
                 source="simulation_engine"
             )
         
+        # Create MRI machine resources
+        for i in range(self.hospital.num_mri_machines):
+            resource = simpy.PreemptiveResource(self.env, capacity=1)
+            self.mri_resources.append(resource)
+            
+            # Log resource creation
+            self.logger.log_event(
+                timestamp=0.0,
+                event_type=EventType.SYSTEM_STATE,
+                message=f"MRI resource {i} created (PreemptiveResource)",
+                simulation_state=self.simulation_state,
+                data={"mri_resource_id": i, "capacity": 1},
+                level=LogLevel.DEBUG,
+                source="simulation_engine"
+            )
+        
+        # Create blood nurse resources
+        for i in range(self.hospital.num_blood_nurses):
+            resource = simpy.PreemptiveResource(self.env, capacity=1)
+            self.blood_nurse_resources.append(resource)
+            
+            # Log resource creation
+            self.logger.log_event(
+                timestamp=0.0,
+                event_type=EventType.SYSTEM_STATE,
+                message=f"Blood nurse resource {i} created (PreemptiveResource)",
+                simulation_state=self.simulation_state,
+                data={"blood_nurse_resource_id": i, "capacity": 1},
+                level=LogLevel.DEBUG,
+                source="simulation_engine"
+            )
+        
+        # Create bed resources (non-preemptive)
+        for i in range(self.hospital.num_beds):
+            resource = simpy.Resource(self.env, capacity=1)
+            self.bed_resources.append(resource)
+            
+            # Log resource creation
+            self.logger.log_event(
+                timestamp=0.0,
+                event_type=EventType.SYSTEM_STATE,
+                message=f"Bed resource {i} created (Non-preemptive Resource)",
+                simulation_state=self.simulation_state,
+                data={"bed_resource_id": i, "capacity": 1, "preemptive": False},
+                level=LogLevel.DEBUG,
+                source="simulation_engine"
+            )
+        
         # Create triage resource
         self.triage_resources = simpy.Resource(self.env, capacity=self.hospital.triage_nurses)
         
@@ -80,14 +134,24 @@ class HospitalSimulationEngine:
             source="simulation_engine"
         )
         
+        # Test resources are managed by hospital's test_resource_manager
+        # No SimPy resources needed - hospital handles allocation and preemption
+        
         # Initialize simulation state with doctor IDs matching hospital
         self.simulation_state.available_doctors = [doctor.id for doctor in self.hospital.doctors]
         self.simulation_state.simulation_duration = 480.0  # Default duration
     
     def _sync_queue_lengths(self) -> None:
         """Sync all queue lengths from hospital to simulation state"""
-        queue_lengths = {priority: len(queue) for priority, queue in self.hospital.priority_queues.items()}
-        self.simulation_state.update_all_queue_lengths(queue_lengths)
+        try:
+            queue_lengths = {priority: len(queue) for priority, queue in self.hospital.priority_queues.items()}
+            self.simulation_state.update_all_queue_lengths(queue_lengths)
+        except TypeError as e:
+            print(f"DEBUG: Error in _sync_queue_lengths: {e}")
+            print(f"DEBUG: priority_queues type: {type(self.hospital.priority_queues)}")
+            for priority, queue in self.hospital.priority_queues.items():
+                print(f"DEBUG: Priority {priority}: type={type(queue)}, value={queue}")
+            raise
     
     def patient_arrival_process(self):
         """Handle patient arrivals"""
@@ -200,7 +264,17 @@ class HospitalSimulationEngine:
         )
         
         if busy_doctors:
-            decision = self.preemption_agent.should_preempt(new_patient, busy_doctors, self.env.now)
+            # Get busy MRI machines and blood nurses
+            busy_mri_machines = [mri for mri in self.hospital.mri_machines if mri.busy]
+            busy_blood_nurses = [nurse for nurse in self.hospital.blood_nurses if nurse.busy]
+            
+            decision = self.preemption_agent.should_preempt(
+                new_patient, 
+                busy_doctors, 
+                busy_mri_machines, 
+                busy_blood_nurses, 
+                self.env.now
+            )
             decision.timestamp = self.env.now
             
             if decision.should_preempt and decision.doctor_to_preempt:
@@ -222,17 +296,40 @@ class HospitalSimulationEngine:
         # Update simulation state time
         self.simulation_state.update_time(self.env.now)
         
-        doctor_id = decision.doctor_to_preempt
-        doctor = next((d for d in self.hospital.doctors if d.id == doctor_id), None)
+        affected_patients = []
         
-        if doctor and doctor.current_patient:
-            interrupted_patient = doctor.current_patient
-            new_priority = self.hospital.handle_preemption(interrupted_patient, self.env.now)
-            
-            # Record preemption in simulation state
+        # Handle doctor preemption
+        if decision.doctor_to_preempt:
+            doctor = decision.doctor_to_preempt
+            if doctor.current_patient:
+                interrupted_patient = doctor.current_patient
+                new_priority = self.hospital.handle_preemption(interrupted_patient, self.env.now)
+                affected_patients.append(interrupted_patient)
+        
+        # Handle MRI machine preemption
+        if decision.mri_machine_to_preempt:
+            mri_machine = decision.mri_machine_to_preempt
+            if mri_machine.current_patient:
+                interrupted_patient = mri_machine.current_patient
+                # Stop current MRI scan and requeue patient
+                mri_machine.busy = False
+                mri_machine.current_patient = None
+                affected_patients.append(interrupted_patient)
+        
+        # Handle blood test nurse preemption
+        if decision.blood_nurse_to_preempt:
+            nurse = decision.blood_nurse_to_preempt
+            if nurse.current_patient:
+                interrupted_patient = nurse.current_patient
+                # Stop current blood test and requeue patient
+                nurse.busy = False
+                nurse.current_patient = None
+                affected_patients.append(interrupted_patient)
+        
+        # Record preemption in simulation state
+        if affected_patients:
             self.simulation_state.record_preemption()
-            
-            self.event_handler.on_preemption(decision, [interrupted_patient])
+            self.event_handler.on_preemption(decision, affected_patients)
         
         yield self.env.timeout(0)
     
@@ -267,6 +364,8 @@ class HospitalSimulationEngine:
                     self.simulation_state.assign_doctor_to_patient(doctor.id, patient.id)
                     self.event_handler.on_treatment_start(patient, doctor)
                     
+
+                    
                     # Treatment time
                     yield self.env.timeout(patient.treatment_time)
                     
@@ -286,6 +385,172 @@ class HospitalSimulationEngine:
                         self.simulation_state.release_doctor(doctor.id)
                     doctor.busy = False
     
+    def mri_process(self, mri_id: int):
+        """MRI machine process"""
+        mri_machine = self.hospital.mri_machines[mri_id]
+        mri_resource = self.mri_resources[mri_id]
+        
+        while True:
+            # Get next patient needing MRI
+            result = self.hospital.get_next_patient_for_treatment()
+            
+            if result is None:
+                yield self.env.timeout(1)  # Wait and try again
+                continue
+            
+            patient, priority = result
+            
+            # Check if patient needs MRI test
+            from ..entities.testing.mri_test import MRITest
+            needs_mri = any(isinstance(test, MRITest) for test in patient.test_results) if patient.test_results else False
+            
+            if not needs_mri:
+                # Put patient back in queue for other resources
+                self.hospital.priority_queues[priority].insert(0, patient)
+                yield self.env.timeout(0.1)
+                continue
+            
+            # Sync queue lengths to simulation state after patient removal
+            self._sync_queue_lengths()
+            
+            # Request MRI resource
+            with mri_resource.request(priority=priority.value) as req:
+                try:
+                    yield req
+                    
+                    # Update simulation state time
+                    self.simulation_state.update_time(self.env.now)
+                    
+                    # Start MRI scan
+                    self.hospital.assign_mri_to_patient(mri_machine, patient, self.env.now)
+                    self.event_handler.on_treatment_start(patient, mri_machine)
+                    
+                    # MRI scan time (typically 30-60 minutes)
+                    scan_time = random.uniform(30, 60)
+                    yield self.env.timeout(scan_time)
+                    
+                    # Update simulation state time after scan
+                    self.simulation_state.update_time(self.env.now)
+                    
+                    # Complete MRI scan
+                    updated_patient = mri_machine.complete_mri_scan(patient, self.env.now, self.logger)
+                    self.simulation_state.register_patient_completion(updated_patient)
+                    self.event_handler.on_treatment_complete(updated_patient, mri_machine, self.env.now)
+                    
+                except simpy.Interrupt:
+                    # Handle preemption
+                    if mri_machine.current_patient:
+                        mri_machine.current_patient = None
+                    mri_machine.busy = False
+    
+    def blood_nurse_process(self, nurse_id: int):
+        """Blood test nurse process"""
+        blood_nurse = self.hospital.blood_nurses[nurse_id]
+        nurse_resource = self.blood_nurse_resources[nurse_id]
+        
+        while True:
+            # Get next patient needing blood test
+            result = self.hospital.get_next_patient_for_treatment()
+            
+            if result is None:
+                yield self.env.timeout(1)  # Wait and try again
+                continue
+            
+            patient, priority = result
+            
+            # Check if patient needs blood test
+            from ..entities.testing.blood_test import BloodTest
+            needs_blood_test = any(isinstance(test, BloodTest) for test in patient.test_results) if patient.test_results else False
+            
+            if not needs_blood_test:
+                # Put patient back in queue for other resources
+                self.hospital.priority_queues[priority].insert(0, patient)
+                yield self.env.timeout(0.1)
+                continue
+            
+            # Sync queue lengths to simulation state after patient removal
+            self._sync_queue_lengths()
+            
+            # Request blood nurse resource
+            with nurse_resource.request(priority=priority.value) as req:
+                try:
+                    yield req
+                    
+                    # Update simulation state time
+                    self.simulation_state.update_time(self.env.now)
+                    
+                    # Start blood test
+                    self.hospital.assign_blood_nurse_to_patient(blood_nurse, patient, self.env.now)
+                    self.event_handler.on_treatment_start(patient, blood_nurse)
+                    
+                    # Blood test time (typically 15-30 minutes)
+                    test_time = random.uniform(15, 30)
+                    yield self.env.timeout(test_time)
+                    
+                    # Update simulation state time after test
+                    self.simulation_state.update_time(self.env.now)
+                    
+                    # Complete blood test
+                    updated_patient = blood_nurse.complete_blood_test(patient, self.env.now, self.logger)
+                    self.simulation_state.register_patient_completion(updated_patient)
+                    self.event_handler.on_treatment_complete(updated_patient, blood_nurse, self.env.now)
+                    
+                except simpy.Interrupt:
+                    # Handle preemption
+                    if blood_nurse.current_patient:
+                        blood_nurse.current_patient = None
+                    blood_nurse.busy = False
+    
+    def bed_process(self, bed_id: int):
+        """Bed process (non-preemptive)"""
+        bed = self.hospital.beds[bed_id]
+        bed_resource = self.bed_resources[bed_id]
+        
+        while True:
+            # Get next patient needing bed
+            result = self.hospital.get_next_patient_for_treatment()
+            
+            if result is None:
+                yield self.env.timeout(1)  # Wait and try again
+                continue
+            
+            patient, priority = result
+            
+            # Check if patient needs bed (after treatment/tests)
+            needs_bed = hasattr(patient, 'needs_admission') and patient.needs_admission
+            
+            if not needs_bed:
+                # Put patient back in queue for other resources
+                self.hospital.priority_queues[priority].insert(0, patient)
+                yield self.env.timeout(0.1)
+                continue
+            
+            # Sync queue lengths to simulation state after patient removal
+            self._sync_queue_lengths()
+            
+            # Request bed resource (non-preemptive)
+            with bed_resource.request() as req:
+                yield req
+                
+                # Update simulation state time
+                self.simulation_state.update_time(self.env.now)
+                
+                # Assign bed to patient
+                self.hospital.assign_bed_to_patient(bed, patient, self.env.now)
+                self.event_handler.on_treatment_start(patient, bed)
+                
+                # Bed stay time (varies widely, 1-24 hours)
+                stay_time = random.uniform(60, 1440)  # 1-24 hours in minutes
+                yield self.env.timeout(stay_time)
+                
+                # Update simulation state time after stay
+                self.simulation_state.update_time(self.env.now)
+                
+                # Discharge patient from bed
+                updated_patient = bed.discharge_patient(patient, self.env.now, self.logger)
+                self.simulation_state.register_patient_completion(updated_patient)
+                self.event_handler.on_treatment_complete(updated_patient, bed, self.env.now)
+    
     def run_simulation(self, duration: int = 480):
         """Run the complete simulation"""
         # Update simulation state with duration
@@ -300,6 +565,9 @@ class HospitalSimulationEngine:
             data={
                 "duration": duration,
                 "num_doctors": self.hospital.num_doctors,
+                "num_mri_machines": self.hospital.num_mri_machines,
+                "num_blood_nurses": self.hospital.num_blood_nurses,
+                "num_beds": self.hospital.num_beds,
                 "triage_nurses": self.hospital.triage_nurses
             },
             source="simulation_engine"
@@ -308,8 +576,21 @@ class HospitalSimulationEngine:
         # Start processes
         self.env.process(self.patient_arrival_process())
         
+        # Start doctor processes
         for i in range(self.hospital.num_doctors):
             self.env.process(self.doctor_process(i))
+        
+        # Start MRI machine processes
+        for i in range(self.hospital.num_mri_machines):
+            self.env.process(self.mri_process(i))
+        
+        # Start blood nurse processes
+        for i in range(self.hospital.num_blood_nurses):
+            self.env.process(self.blood_nurse_process(i))
+        
+        # Start bed processes
+        for i in range(self.hospital.num_beds):
+            self.env.process(self.bed_process(i))
         
         # Run simulation
         self.env.run(until=duration)
