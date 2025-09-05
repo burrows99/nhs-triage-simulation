@@ -209,3 +209,39 @@ class MetricsService:
             return (wait_times[n//2 - 1] + wait_times[n//2]) / 2
         else:
             return wait_times[n//2]
+    
+    def calculate_wait_times_by_priority(self) -> Dict[str, float]:
+        """Calculate current average wait times by priority"""
+        from ..enums.Triage import Priority
+        wait_times_by_priority = {}
+        
+        for priority in Priority:
+            priority_name = priority.name
+            priority_patients = [p for p in self.simulation_state.completed_patients 
+                               if p.priority and p.priority == priority]
+            
+            if priority_patients:
+                avg_wait_time = sum(p.wait_time for p in priority_patients) / len(priority_patients)
+                wait_times_by_priority[f'{priority_name.lower()}_wait_time'] = avg_wait_time
+            else:
+                wait_times_by_priority[f'{priority_name.lower()}_wait_time'] = 0.0
+                
+        return wait_times_by_priority
+    
+    def calculate_treatment_times_by_priority(self) -> Dict[str, float]:
+        """Calculate current average treatment times by priority"""
+        from ..enums.Triage import Priority
+        treatment_times_by_priority = {}
+        
+        for priority in Priority:
+            priority_name = priority.name
+            priority_patients = [p for p in self.simulation_state.completed_patients 
+                               if p.priority and p.priority == priority]
+            
+            if priority_patients:
+                avg_treatment_time = sum(p.treatment_time for p in priority_patients) / len(priority_patients)
+                treatment_times_by_priority[f'{priority_name.lower()}_treatment_time'] = avg_treatment_time
+            else:
+                treatment_times_by_priority[f'{priority_name.lower()}_treatment_time'] = 0.0
+                
+        return treatment_times_by_priority

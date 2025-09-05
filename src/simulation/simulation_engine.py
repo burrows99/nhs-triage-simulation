@@ -267,15 +267,10 @@ class HospitalSimulationEngine:
         )
         
         if busy_doctors:
-            # Get busy MRI machines and blood nurses
-            busy_mri_machines = [mri for mri in self.hospital.mri_machines if mri.busy]
-            busy_blood_nurses = [nurse for nurse in self.hospital.blood_nurses if nurse.busy]
-            
             decision = self.preemption_agent.should_preempt(
                 new_patient, 
-                busy_doctors, 
-                busy_mri_machines, 
-                busy_blood_nurses, 
+                self.simulation_state,
+                self.hospital,
                 self.env.now
             )
             decision.timestamp = self.env.now

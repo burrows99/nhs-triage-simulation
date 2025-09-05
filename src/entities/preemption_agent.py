@@ -7,6 +7,8 @@ from .doctor import Doctor
 from .MRI_machine import MRI_Machine
 from .blood_test_nurse import BloodTestNurse
 from .patient import Patient
+from .sub_entities.simulation_state import SimulationState
+from .hospital import HospitalCore
 
 class PreemptionAgent:
     """AI agent for making preemption decisions across all hospital resources"""
@@ -19,15 +21,14 @@ class PreemptionAgent:
         self.preemptions_approved = 0
         self.preemptions_denied = 0
     
-    def should_preempt(self, new_patient: 'Patient', busy_doctors: List['Doctor'], 
-                      busy_mri_machines: List['MRI_Machine'] = None, 
-                      busy_blood_nurses: List['BloodTestNurse'] = None, 
-                      current_time: float = 0.0) -> 'PreemptionDecision':
+    def should_preempt(self, new_patient: 'Patient', simulation_state: 'SimulationState', 
+                      hospital: 'HospitalCore', current_time: float = 0.0) -> 'PreemptionDecision':
         """Decide whether to preempt any hospital resource for a higher priority patient"""
         
-        # Initialize empty lists if not provided
-        busy_mri_machines = busy_mri_machines or []
-        busy_blood_nurses = busy_blood_nurses or []
+        # Extract busy resources from hospital using dedicated methods
+        busy_doctors = hospital.get_busy_doctors()
+        busy_mri_machines = MRI_Machine.get_busy_machines(hospital.mri_machines)
+        busy_blood_nurses = BloodTestNurse.get_busy_nurses(hospital.blood_nurses)
         
         # Log evaluation start
         self._log_evaluation_start(new_patient, busy_doctors, busy_mri_machines, busy_blood_nurses, current_time)

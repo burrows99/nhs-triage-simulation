@@ -230,7 +230,10 @@ class SimulationState:
     
     def get_log_summary(self) -> Dict:
         """Get compact simulation state summary for logging"""
-        return {
+        wait_times_by_priority = self.metrics_service.calculate_wait_times_by_priority()
+        treatment_times_by_priority = self.metrics_service.calculate_treatment_times_by_priority()
+        
+        summary = {
             "simulation_time": self.current_time,
             "total_arrivals": self.total_arrivals,
             "total_completed": self.total_completed,
@@ -244,8 +247,17 @@ class SimulationState:
             "busy_beds": len(self.busy_beds),
             "available_beds": len(self.available_beds),
             "preemptions_count": self.preemptions_count,
-            "queue_lengths": {priority.name: length for priority, length in self.queue_lengths.items()}
+            "queue_lengths": {priority.name: length for priority, length in self.queue_lengths.items()},
+            "average_wait_time": self.metrics_service.get_average_wait_time(),
+            "median_wait_time": self.metrics_service._calculate_median_wait_time(),
+            "average_treatment_time": self.metrics_service.get_average_treatment_time()
         }
+        
+        # Add priority-specific wait and treatment times
+        summary.update(wait_times_by_priority)
+        summary.update(treatment_times_by_priority)
+        
+        return summary
     
     def get_state_history(self) -> List[Dict]:
         """Get the complete state history"""
@@ -490,7 +502,7 @@ class SimulationState:
         
         # 2. State History Timeline (if available)
         if self.state_history:
-            fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(4, 2, figsize=(20, 20))
+            fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8), (ax9, ax10)) = plt.subplots(5, 2, figsize=(20, 25))
             fig.suptitle('Simulation State History Timeline', fontsize=16, fontweight='bold')
             
             times = [entry['recorded_at'] for entry in self.state_history]
@@ -627,6 +639,41 @@ class SimulationState:
                 ax8.text(0.5, 0.5, 'No utilization data available', 
                         transform=ax8.transAxes, ha='center', va='center')
             ax8.grid(True, alpha=0.3)
+            
+            # Wait Time Trends by Priority Over Time
+            priority_colors = {'red': '#cc0000', 'orange': '#ff6600', 'yellow': '#cccc00', 
+                             'green': '#009900', 'blue': '#0066cc'}
+            priority_markers = {'red': 'o', 'orange': 's', 'yellow': '^', 'green': 'D', 'blue': 'v'}
+            priority_linestyles = {'red': '-', 'orange': '--', 'yellow': '-.', 'green': ':', 'blue': '-'}
+            
+            for priority in Priority:
+                priority_name = priority.name.lower()
+                wait_times = [entry.get(f'{priority_name}_wait_time', 0.0) for entry in self.state_history]
+                # Plot all priorities, even if they have zero values
+                ax9.plot(times, wait_times, color=priority_colors[priority_name], 
+                        label=f'{priority.name} Priority', linewidth=2.5, 
+                        marker=priority_markers[priority_name], markersize=4,
+                        linestyle=priority_linestyles[priority_name], alpha=0.8)
+            
+            ax9.set_ylabel('Wait Time (minutes)')
+            ax9.set_title('Wait Time Trends by Priority Over Time')
+            ax9.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax9.grid(True, alpha=0.3)
+            
+            # Treatment Time Trends by Priority Over Time
+            for priority in Priority:
+                priority_name = priority.name.lower()
+                treatment_times = [entry.get(f'{priority_name}_treatment_time', 0.0) for entry in self.state_history]
+                # Plot all priorities, even if they have zero values
+                ax10.plot(times, treatment_times, color=priority_colors[priority_name], 
+                         label=f'{priority.name} Priority', linewidth=2.5, 
+                         marker=priority_markers[priority_name], markersize=4,
+                         linestyle=priority_linestyles[priority_name], alpha=0.8)
+            
+            ax10.set_ylabel('Treatment Time (minutes)')
+            ax10.set_title('Treatment Time Trends by Priority Over Time')
+            ax10.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax10.grid(True, alpha=0.3)
             
             plt.tight_layout()
             timeline_file = os.path.join(output_dir, 'state_history_timeline.png')
