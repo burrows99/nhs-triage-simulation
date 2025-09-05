@@ -137,8 +137,11 @@ class HospitalSimulationEngine:
         # Test resources are managed by hospital's test_resource_manager
         # No SimPy resources needed - hospital handles allocation and preemption
         
-        # Initialize simulation state with doctor IDs matching hospital
+        # Initialize simulation state with resource IDs matching hospital
         self.simulation_state.available_doctors = [doctor.id for doctor in self.hospital.doctors]
+        self.simulation_state.available_mri_machines = [mri.id for mri in self.hospital.mri_machines]
+        self.simulation_state.available_blood_nurses = [nurse.id for nurse in self.hospital.blood_nurses]
+        self.simulation_state.available_beds = [bed.id for bed in self.hospital.beds]
         self.simulation_state.simulation_duration = 480.0  # Default duration
     
     def _sync_queue_lengths(self) -> None:
@@ -423,6 +426,7 @@ class HospitalSimulationEngine:
                     
                     # Start MRI scan
                     self.hospital.assign_mri_to_patient(mri_machine, patient, self.env.now)
+                    self.simulation_state.assign_mri_to_patient(mri_machine.id, patient.id)
                     self.event_handler.on_treatment_start(patient, mri_machine)
                     
                     # MRI scan time (typically 30-60 minutes)
@@ -434,6 +438,7 @@ class HospitalSimulationEngine:
                     
                     # Complete MRI scan
                     updated_patient = mri_machine.complete_mri_scan(patient, self.env.now, self.logger)
+                    self.simulation_state.release_mri(mri_machine.id)
                     self.simulation_state.register_patient_completion(updated_patient)
                     self.event_handler.on_treatment_complete(updated_patient, mri_machine, self.env.now)
                     
@@ -442,6 +447,7 @@ class HospitalSimulationEngine:
                     if mri_machine.current_patient:
                         mri_machine.current_patient = None
                     mri_machine.busy = False
+                    self.simulation_state.release_mri(mri_machine.id)
     
     def blood_nurse_process(self, nurse_id: int):
         """Blood test nurse process"""
@@ -481,6 +487,7 @@ class HospitalSimulationEngine:
                     
                     # Start blood test
                     self.hospital.assign_blood_nurse_to_patient(blood_nurse, patient, self.env.now)
+                    self.simulation_state.assign_blood_nurse_to_patient(blood_nurse.id, patient.id)
                     self.event_handler.on_treatment_start(patient, blood_nurse)
                     
                     # Blood test time (typically 15-30 minutes)
@@ -492,6 +499,7 @@ class HospitalSimulationEngine:
                     
                     # Complete blood test
                     updated_patient = blood_nurse.complete_blood_test(patient, self.env.now, self.logger)
+                    self.simulation_state.release_blood_nurse(blood_nurse.id)
                     self.simulation_state.register_patient_completion(updated_patient)
                     self.event_handler.on_treatment_complete(updated_patient, blood_nurse, self.env.now)
                     
@@ -500,6 +508,7 @@ class HospitalSimulationEngine:
                     if blood_nurse.current_patient:
                         blood_nurse.current_patient = None
                     blood_nurse.busy = False
+                    self.simulation_state.release_blood_nurse(blood_nurse.id)
     
     def bed_process(self, bed_id: int):
         """Bed process (non-preemptive)"""
@@ -537,6 +546,7 @@ class HospitalSimulationEngine:
                 
                 # Assign bed to patient
                 self.hospital.assign_bed_to_patient(bed, patient, self.env.now)
+                self.simulation_state.assign_bed_to_patient(bed.id, patient.id)
                 self.event_handler.on_treatment_start(patient, bed)
                 
                 # Bed stay time (varies widely, 1-24 hours)
@@ -548,6 +558,7 @@ class HospitalSimulationEngine:
                 
                 # Discharge patient from bed
                 updated_patient = bed.discharge_patient(patient, self.env.now, self.logger)
+                self.simulation_state.release_bed(bed.id)
                 self.simulation_state.register_patient_completion(updated_patient)
                 self.event_handler.on_treatment_complete(updated_patient, bed, self.env.now)
     

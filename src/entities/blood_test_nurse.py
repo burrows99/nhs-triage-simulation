@@ -49,7 +49,8 @@ class BloodTestNurse:
                         pco2=random.uniform(35, 45),
                         po2=random.uniform(80, 100),
                         hco3=random.uniform(22, 28),
-                        base_excess=random.uniform(-2, 2)
+                        base_excess=random.uniform(-2, 2),
+                        o2_sat=random.uniform(95, 100)
                     )
                 elif test_panel == BloodTestType.CARDIAC_MARKERS:
                     test.add_cardiac_results(

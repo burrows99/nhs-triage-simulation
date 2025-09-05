@@ -446,16 +446,22 @@ class SimulationState:
         utilization_data = {
             'Busy Doctors': max(1, len(self.busy_doctors)),
             'Available Doctors': max(1, len(self.available_doctors)),
-            'Patients in System': max(1, self.patients_in_system)
+            'Busy MRI Machines': max(1, len(self.busy_mri_machines)),
+            'Available MRI Machines': max(1, len(self.available_mri_machines)),
+            'Busy Blood Nurses': max(1, len(self.busy_blood_nurses)),
+            'Available Blood Nurses': max(1, len(self.available_blood_nurses)),
+            'Busy Beds': max(1, len(self.busy_beds)),
+            'Available Beds': max(1, len(self.available_beds))
         }
         # Only create pie chart if we have meaningful data
         if sum(utilization_data.values()) > 0:
+            colors = ['#ff4444', '#44ff44', '#4444ff', '#44ffff', '#ff44ff', '#ffff44', '#ff8844', '#88ff44']
             wedges, texts, autotexts = ax3.pie(utilization_data.values(), labels=utilization_data.keys(), 
-                                              autopct='%1.1f%%', colors=['red', 'green', 'orange'], 
-                                              startangle=90, textprops={'fontsize': 10})
+                                              autopct='%1.1f%%', colors=colors[:len(utilization_data)], 
+                                              startangle=90, textprops={'fontsize': 8})
             # Add legend with better positioning
             ax3.legend(wedges, utilization_data.keys(), title="Resources", 
-                      loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+                      loc="center left", bbox_to_anchor=(1, 0, 0.5, 1), fontsize=8)
         else:
             ax3.text(0.5, 0.5, 'No Data Available', ha='center', va='center', transform=ax3.transAxes)
         ax3.set_title('Resource Utilization')
@@ -484,7 +490,7 @@ class SimulationState:
         
         # 2. State History Timeline (if available)
         if self.state_history:
-            fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(14, 16))
+            fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(4, 2, figsize=(20, 20))
             fig.suptitle('Simulation State History Timeline', fontsize=16, fontweight='bold')
             
             times = [entry['recorded_at'] for entry in self.state_history]
@@ -506,20 +512,56 @@ class SimulationState:
             busy_doctors = [entry['busy_doctors'] for entry in self.state_history]
             available_doctors = [entry['available_doctors'] for entry in self.state_history]
             total_doctors = [b+a for b,a in zip(busy_doctors, available_doctors)]
-            ax2.fill_between(times, busy_doctors, alpha=0.6, color='red', label='Busy Doctors')
+            ax2.fill_between(times, busy_doctors, alpha=0.6, color='#ff4444', label='Busy Doctors')
             ax2.fill_between(times, busy_doctors, total_doctors, 
-                           alpha=0.6, color='green', label='Available Doctors')
+                           alpha=0.6, color='#44ff44', label='Available Doctors')
             ax2.set_ylabel('Doctor Count')
             ax2.set_title('Doctor Utilization Over Time')
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
-            # Preemption Events Over Time
-            ax3.step(times, preemptions, 'purple', linewidth=2, where='post')
-            ax3.fill_between(times, preemptions, alpha=0.3, color='purple', step='post')
-            ax3.set_ylabel('Cumulative Preemptions')
-            ax3.set_title('Preemption Events Over Time')
+            # MRI Machine Utilization Over Time
+            busy_mri = [entry['busy_mri_machines'] for entry in self.state_history]
+            available_mri = [entry['available_mri_machines'] for entry in self.state_history]
+            total_mri = [b+a for b,a in zip(busy_mri, available_mri)]
+            ax3.fill_between(times, busy_mri, alpha=0.6, color='#4444ff', label='Busy MRI Machines')
+            ax3.fill_between(times, busy_mri, total_mri, 
+                           alpha=0.6, color='#44ffff', label='Available MRI Machines')
+            ax3.set_ylabel('MRI Machine Count')
+            ax3.set_title('MRI Machine Utilization Over Time')
+            ax3.legend()
             ax3.grid(True, alpha=0.3)
+            
+            # Blood Nurse Utilization Over Time
+            busy_nurses = [entry['busy_blood_nurses'] for entry in self.state_history]
+            available_nurses = [entry['available_blood_nurses'] for entry in self.state_history]
+            total_nurses = [b+a for b,a in zip(busy_nurses, available_nurses)]
+            ax4.fill_between(times, busy_nurses, alpha=0.6, color='#ff44ff', label='Busy Blood Nurses')
+            ax4.fill_between(times, busy_nurses, total_nurses, 
+                           alpha=0.6, color='#ffff44', label='Available Blood Nurses')
+            ax4.set_ylabel('Blood Nurse Count')
+            ax4.set_title('Blood Nurse Utilization Over Time')
+            ax4.legend()
+            ax4.grid(True, alpha=0.3)
+            
+            # Bed Utilization Over Time
+            busy_beds = [entry['busy_beds'] for entry in self.state_history]
+            available_beds = [entry['available_beds'] for entry in self.state_history]
+            total_beds = [b+a for b,a in zip(busy_beds, available_beds)]
+            ax5.fill_between(times, busy_beds, alpha=0.6, color='#ff8844', label='Busy Beds')
+            ax5.fill_between(times, busy_beds, total_beds, 
+                           alpha=0.6, color='#88ff44', label='Available Beds')
+            ax5.set_ylabel('Bed Count')
+            ax5.set_title('Bed Utilization Over Time')
+            ax5.legend()
+            ax5.grid(True, alpha=0.3)
+            
+            # Preemption Events Over Time
+            ax6.step(times, preemptions, 'purple', linewidth=2, where='post')
+            ax6.fill_between(times, preemptions, alpha=0.3, color='purple', step='post')
+            ax6.set_ylabel('Cumulative Preemptions')
+            ax6.set_title('Preemption Events Over Time')
+            ax6.grid(True, alpha=0.3)
             
             # Actual Arrival Rate from Patient History
             # Calculate instantaneous arrival rate using patient arrival times
@@ -547,18 +589,44 @@ class SimulationState:
                     actual_arrival_rates.append(rate)
                     current_window_start += window_size
                 
-                ax4.plot(time_windows, actual_arrival_rates, 'orange', linewidth=2, 
+                ax7.plot(time_windows, actual_arrival_rates, 'orange', linewidth=2, 
                         label='Actual Arrival Rate', marker='o', markersize=4)
-                ax4.fill_between(time_windows, actual_arrival_rates, alpha=0.3, color='orange')
+                ax7.fill_between(time_windows, actual_arrival_rates, alpha=0.3, color='orange')
             else:
-                ax4.text(0.5, 0.5, 'No patient arrival data available', 
-                        transform=ax4.transAxes, ha='center', va='center')
+                ax7.text(0.5, 0.5, 'No patient arrival data available', 
+                        transform=ax7.transAxes, ha='center', va='center')
             
-            ax4.set_xlabel('Simulation Time (minutes)')
-            ax4.set_ylabel('Arrival Rate (patients/min)')
-            ax4.set_title('Actual Patient Arrival Rate Over Time')
-            ax4.legend()
-            ax4.grid(True, alpha=0.3)
+            ax7.set_xlabel('Simulation Time (minutes)')
+            ax7.set_ylabel('Arrival Rate (patients/min)')
+            ax7.set_title('Actual Patient Arrival Rate Over Time')
+            ax7.legend()
+            ax7.grid(True, alpha=0.3)
+            
+            # Resource Utilization Summary (ax8)
+            # Calculate average utilization percentages for each resource
+            if times:
+                avg_doctor_util = (sum(busy_doctors) / sum(total_doctors)) * 100 if sum(total_doctors) > 0 else 0
+                avg_mri_util = (sum(busy_mri) / sum(total_mri)) * 100 if sum(total_mri) > 0 else 0
+                avg_nurse_util = (sum(busy_nurses) / sum(total_nurses)) * 100 if sum(total_nurses) > 0 else 0
+                avg_bed_util = (sum(busy_beds) / sum(total_beds)) * 100 if sum(total_beds) > 0 else 0
+                
+                resources = ['Doctors', 'MRI Machines', 'Blood Nurses', 'Beds']
+                utilizations = [avg_doctor_util, avg_mri_util, avg_nurse_util, avg_bed_util]
+                colors = ['#ff4444', '#4444ff', '#ff44ff', '#ff8844']
+                
+                bars = ax8.bar(resources, utilizations, color=colors, alpha=0.7)
+                ax8.set_ylabel('Average Utilization (%)')
+                ax8.set_title('Average Resource Utilization Summary')
+                ax8.set_ylim(0, 100)
+                
+                # Add value labels on bars
+                for bar, util in zip(bars, utilizations):
+                    ax8.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1, 
+                            f'{util:.1f}%', ha='center', fontweight='bold')
+            else:
+                ax8.text(0.5, 0.5, 'No utilization data available', 
+                        transform=ax8.transAxes, ha='center', va='center')
+            ax8.grid(True, alpha=0.3)
             
             plt.tight_layout()
             timeline_file = os.path.join(output_dir, 'state_history_timeline.png')
@@ -848,23 +916,21 @@ Report generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     def _plot_resource_utilization_comparison(simulation_states: Dict[str, 'SimulationState'], 
                                             output_dir: str) -> Dict[str, str]:
         """Plot resource utilization comparison across simulation states"""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(20, 12))
         fig.suptitle('Resource Utilization Comparison', fontsize=16, fontweight='bold')
         
         systems = list(simulation_states.keys())
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(systems)]
-        
-        # Doctor Utilization vs Availability
-        busy_doctors = [len(state.busy_doctors) for state in simulation_states.values()]
-        available_doctors = [len(state.available_doctors) for state in simulation_states.values()]
-        
         x = range(len(systems))
         width = 0.35
         
+        # Doctor Utilization
+        busy_doctors = [len(state.busy_doctors) for state in simulation_states.values()]
+        available_doctors = [len(state.available_doctors) for state in simulation_states.values()]
+        
         bars1 = ax1.bar([i - width/2 for i in x], busy_doctors, width, 
-                       label='Busy Doctors', color='red', alpha=0.7)
+                       label='Busy Doctors', color='#ff4444', alpha=0.7)
         bars2 = ax1.bar([i + width/2 for i in x], available_doctors, width, 
-                       label='Available Doctors', color='green', alpha=0.7)
+                       label='Available Doctors', color='#44ff44', alpha=0.7)
         
         ax1.set_ylabel('Number of Doctors')
         ax1.set_title('Doctor Resource Allocation')
@@ -872,7 +938,6 @@ Report generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         ax1.set_xticklabels(systems)
         ax1.legend()
         
-        # Add value labels
         for bar, count in zip(bars1, busy_doctors):
             ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
                     str(count), ha='center', fontweight='bold')
@@ -880,27 +945,70 @@ Report generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
                     str(count), ha='center', fontweight='bold')
         
-        # Patients in System vs Completed
-        patients_in_system = [state.patients_in_system for state in simulation_states.values()]
-        patients_completed = [state.total_completed for state in simulation_states.values()]
+        # MRI Machine Utilization
+        busy_mri = [len(state.busy_mri_machines) for state in simulation_states.values()]
+        available_mri = [len(state.available_mri_machines) for state in simulation_states.values()]
         
-        bars3 = ax2.bar([i - width/2 for i in x], patients_in_system, width, 
-                       label='Patients in System', color='orange', alpha=0.7)
-        bars4 = ax2.bar([i + width/2 for i in x], patients_completed, width, 
-                       label='Patients Completed', color='blue', alpha=0.7)
+        bars3 = ax2.bar([i - width/2 for i in x], busy_mri, width, 
+                       label='Busy MRI Machines', color='#4444ff', alpha=0.7)
+        bars4 = ax2.bar([i + width/2 for i in x], available_mri, width, 
+                       label='Available MRI Machines', color='#44ffff', alpha=0.7)
         
-        ax2.set_ylabel('Number of Patients')
-        ax2.set_title('Patient Flow Status')
+        ax2.set_ylabel('Number of MRI Machines')
+        ax2.set_title('MRI Machine Resource Allocation')
         ax2.set_xticks(x)
         ax2.set_xticklabels(systems)
         ax2.legend()
         
-        # Add value labels
-        for bar, count in zip(bars3, patients_in_system):
-            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+        for bar, count in zip(bars3, busy_mri):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
                     str(count), ha='center', fontweight='bold')
-        for bar, count in zip(bars4, patients_completed):
-            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, 
+        for bar, count in zip(bars4, available_mri):
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    str(count), ha='center', fontweight='bold')
+        
+        # Blood Nurse Utilization
+        busy_nurses = [len(state.busy_blood_nurses) for state in simulation_states.values()]
+        available_nurses = [len(state.available_blood_nurses) for state in simulation_states.values()]
+        
+        bars5 = ax3.bar([i - width/2 for i in x], busy_nurses, width, 
+                       label='Busy Blood Nurses', color='#ff44ff', alpha=0.7)
+        bars6 = ax3.bar([i + width/2 for i in x], available_nurses, width, 
+                       label='Available Blood Nurses', color='#ffff44', alpha=0.7)
+        
+        ax3.set_ylabel('Number of Blood Nurses')
+        ax3.set_title('Blood Nurse Resource Allocation')
+        ax3.set_xticks(x)
+        ax3.set_xticklabels(systems)
+        ax3.legend()
+        
+        for bar, count in zip(bars5, busy_nurses):
+            ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    str(count), ha='center', fontweight='bold')
+        for bar, count in zip(bars6, available_nurses):
+            ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    str(count), ha='center', fontweight='bold')
+        
+        # Bed Utilization
+        busy_beds = [len(state.busy_beds) for state in simulation_states.values()]
+        available_beds = [len(state.available_beds) for state in simulation_states.values()]
+        
+        bars7 = ax4.bar([i - width/2 for i in x], busy_beds, width, 
+                       label='Busy Beds', color='#ff8844', alpha=0.7)
+        bars8 = ax4.bar([i + width/2 for i in x], available_beds, width, 
+                       label='Available Beds', color='#88ff44', alpha=0.7)
+        
+        ax4.set_ylabel('Number of Beds')
+        ax4.set_title('Bed Resource Allocation')
+        ax4.set_xticks(x)
+        ax4.set_xticklabels(systems)
+        ax4.legend()
+        
+        for bar, count in zip(bars7, busy_beds):
+            ax4.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    str(count), ha='center', fontweight='bold')
+        for bar, count in zip(bars8, available_beds):
+            ax4.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
                     str(count), ha='center', fontweight='bold')
         
         plt.tight_layout()
