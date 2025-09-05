@@ -35,8 +35,7 @@ def main():
     # Display plots
     if simulation.hospital.plotting_service:
         print("Generating plots...")
-        simulation.hospital.plotting_service.plot_queue_lengths()
-        simulation.hospital.plotting_service.plot_current_patients()
+        simulation.hospital.plotting_service.generate_all_plots()
 
 
 if __name__ == "__main__":
