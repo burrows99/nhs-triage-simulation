@@ -200,8 +200,6 @@ class SimulationState:
         self.blood_nurse_utilization = blood_nurse_util
         self.bed_utilization = bed_util
     
-
-    
     def get_system_status(self) -> Dict:
         """Get comprehensive system status"""
         return {
@@ -263,9 +261,260 @@ class SimulationState:
         """Get the complete state history"""
         return self.state_history.copy()
     
-
+    def get_complete_summary(self) -> Dict:
+        """Get comprehensive summary of the simulation state including current patients, 
+        history analysis, resource utilization, and trends"""
+        
+        # Base system status
+        summary = {
+            'timestamp': self.current_time,
+            'simulation_progress': {
+                'current_time': self.current_time,
+                'duration': self.simulation_duration,
+                'progress_percentage': (self.current_time / self.simulation_duration) * 100 if self.simulation_duration > 0 else 0.0,
+                'time_remaining': max(0, self.simulation_duration - self.current_time)
+            }
+        }
+        
+        # Current patient information
+        summary['current_patients'] = {
+            'total_in_system': self.patients_in_system,
+            'active_patients_count': len(self.active_patients),
+            'completed_patients_count': len(self.completed_patients),
+            'total_arrivals': self.total_arrivals,
+            'total_completed': self.total_completed
+        }
+        
+        # Active patients details
+        if self.active_patients:
+            active_patient_details = []
+            for patient in self.active_patients:
+                patient_info = {
+                    'id': patient.id,
+                    'priority': patient.priority.name if patient.priority else 'Unknown',
+                    'arrival_time': patient.arrival_time,
+                    'wait_time': patient.wait_time,
+                    'current_stage': getattr(patient, 'current_stage', 'Unknown'),
+                    'time_in_system': self.current_time - patient.arrival_time
+                }
+                active_patient_details.append(patient_info)
+            summary['active_patients_details'] = active_patient_details
+        else:
+            summary['active_patients_details'] = []
+        
+        # Queue status by priority
+        summary['queue_status'] = {
+            'current_queues': {priority.name: length for priority, length in self.queue_lengths.items()},
+            'total_queued': sum(self.queue_lengths.values())
+        }
+        
+        # Resource utilization summary
+        summary['resource_utilization'] = {
+            'doctors': {
+                'busy': len(self.busy_doctors),
+                'available': len(self.available_doctors),
+                'total': len(self.busy_doctors) + len(self.available_doctors),
+                'utilization_percentage': self.doctor_utilization * 100,
+                'assignments': dict(self.doctor_patient_assignments)
+            },
+            'mri_machines': {
+                'busy': len(self.busy_mri_machines),
+                'available': len(self.available_mri_machines),
+                'total': len(self.busy_mri_machines) + len(self.available_mri_machines),
+                'utilization_percentage': self.mri_utilization * 100,
+                'assignments': dict(self.mri_patient_assignments)
+            },
+            'blood_nurses': {
+                'busy': len(self.busy_blood_nurses),
+                'available': len(self.available_blood_nurses),
+                'total': len(self.busy_blood_nurses) + len(self.available_blood_nurses),
+                'utilization_percentage': self.blood_nurse_utilization * 100,
+                'assignments': dict(self.blood_nurse_patient_assignments)
+            },
+            'beds': {
+                'busy': len(self.busy_beds),
+                'available': len(self.available_beds),
+                'total': len(self.busy_beds) + len(self.available_beds),
+                'utilization_percentage': self.bed_utilization * 100,
+                'assignments': dict(self.bed_patient_assignments)
+            },
+            'triage': {
+                'utilization_percentage': self.triage_utilization * 100
+            }
+        }
+        
+        # NHS performance metrics
+        nhs_metrics = self.metrics_service.calculate_nhs_metrics()
+        summary['nhs_performance'] = {
+            'four_hour_compliance': nhs_metrics.get('four_hour_target_compliance', 0.0),
+            'four_hour_breaches': nhs_metrics.get('four_hour_breaches', 0),
+            'ed_conversion_rate': nhs_metrics.get('ed_conversion_rate', 0.0),
+            'average_door_to_doctor_time': nhs_metrics.get('average_door_to_doctor_time', 0.0),
+            'average_ed_length_of_stay': nhs_metrics.get('average_ed_length_of_stay', 0.0),
+            'median_wait_time': nhs_metrics.get('median_wait_time', 0.0)
+        }
+        
+        # MTS compliance summary
+        mts_summary = self.metrics_service.get_mts_compliance_summary()
+        summary['mts_compliance'] = {
+            'overall_compliance': mts_summary.get('overall_compliance', 0.0),
+            'total_patients_assessed': mts_summary.get('total_patients', 0),
+            'total_compliant': mts_summary.get('total_compliant', 0),
+            'by_priority': mts_summary.get('priorities', {})
+        }
+        
+        # Wait and treatment time analysis
+        wait_times_by_priority = self.metrics_service.calculate_wait_times_by_priority()
+        treatment_times_by_priority = self.metrics_service.calculate_treatment_times_by_priority()
+        summary['time_analysis'] = {
+            'overall': {
+                'average_wait_time': self.metrics_service.get_average_wait_time(),
+                'average_treatment_time': self.metrics_service.get_average_treatment_time(),
+                'median_wait_time': self.metrics_service._calculate_median_wait_time()
+            },
+            'by_priority': {
+                'wait_times': wait_times_by_priority,
+                'treatment_times': treatment_times_by_priority
+            }
+        }
+        
+        # Quality indicators
+        summary['quality_indicators'] = {
+            'preemption_events': self.preemptions_count,
+            'preemption_rate_per_100_patients': nhs_metrics.get('preemption_rate_per_100_patients', 0.0)
+        }
+        
+        # Historical trends analysis (if history available)
+        if self.state_history:
+            summary['trends_analysis'] = self._analyze_historical_trends()
+        else:
+            summary['trends_analysis'] = {'message': 'No historical data available for trend analysis'}
+        
+        return summary
     
-
+    def _analyze_historical_trends(self) -> Dict:
+        """Analyze trends from state history"""
+        if not self.state_history:
+            return {'message': 'No historical data available'}
+        
+        trends = {
+            'data_points': len(self.state_history),
+            'time_range': {
+                'start': self.state_history[0].get('recorded_at', 0),
+                'end': self.state_history[-1].get('recorded_at', 0)
+            }
+        }
+        
+        # Patient flow trends
+        arrivals_trend = [entry.get('total_arrivals', 0) for entry in self.state_history]
+        completed_trend = [entry.get('total_completed', 0) for entry in self.state_history]
+        in_system_trend = [entry.get('patients_in_system', 0) for entry in self.state_history]
+        
+        trends['patient_flow'] = {
+            'arrivals': {
+                'current': arrivals_trend[-1] if arrivals_trend else 0,
+                'peak': max(arrivals_trend) if arrivals_trend else 0,
+                'trend_direction': self._calculate_trend_direction(arrivals_trend)
+            },
+            'completed': {
+                'current': completed_trend[-1] if completed_trend else 0,
+                'peak': max(completed_trend) if completed_trend else 0,
+                'trend_direction': self._calculate_trend_direction(completed_trend)
+            },
+            'in_system': {
+                'current': in_system_trend[-1] if in_system_trend else 0,
+                'peak': max(in_system_trend) if in_system_trend else 0,
+                'trend_direction': self._calculate_trend_direction(in_system_trend)
+            }
+        }
+        
+        # Resource utilization trends
+        doctor_busy_trend = [entry.get('busy_doctors', 0) for entry in self.state_history]
+        mri_busy_trend = [entry.get('busy_mri_machines', 0) for entry in self.state_history]
+        nurse_busy_trend = [entry.get('busy_blood_nurses', 0) for entry in self.state_history]
+        bed_busy_trend = [entry.get('busy_beds', 0) for entry in self.state_history]
+        
+        trends['resource_utilization'] = {
+            'doctors': {
+                'current_busy': doctor_busy_trend[-1] if doctor_busy_trend else 0,
+                'peak_busy': max(doctor_busy_trend) if doctor_busy_trend else 0,
+                'trend_direction': self._calculate_trend_direction(doctor_busy_trend)
+            },
+            'mri_machines': {
+                'current_busy': mri_busy_trend[-1] if mri_busy_trend else 0,
+                'peak_busy': max(mri_busy_trend) if mri_busy_trend else 0,
+                'trend_direction': self._calculate_trend_direction(mri_busy_trend)
+            },
+            'blood_nurses': {
+                'current_busy': nurse_busy_trend[-1] if nurse_busy_trend else 0,
+                'peak_busy': max(nurse_busy_trend) if nurse_busy_trend else 0,
+                'trend_direction': self._calculate_trend_direction(nurse_busy_trend)
+            },
+            'beds': {
+                'current_busy': bed_busy_trend[-1] if bed_busy_trend else 0,
+                'peak_busy': max(bed_busy_trend) if bed_busy_trend else 0,
+                'trend_direction': self._calculate_trend_direction(bed_busy_trend)
+            }
+        }
+        
+        # Wait time trends by priority
+        priority_wait_trends = {}
+        for priority in Priority:
+            priority_name = priority.name.lower()
+            wait_times = [entry.get(f'{priority_name}_wait_time', 0.0) for entry in self.state_history]
+            if any(wt > 0 for wt in wait_times):  # Only include if there's actual data
+                priority_wait_trends[priority.name] = {
+                    'current': wait_times[-1] if wait_times else 0.0,
+                    'peak': max(wait_times) if wait_times else 0.0,
+                    'average': sum(wait_times) / len(wait_times) if wait_times else 0.0,
+                    'trend_direction': self._calculate_trend_direction(wait_times)
+                }
+        
+        trends['wait_time_trends'] = priority_wait_trends
+        
+        # Preemption trends
+        preemption_trend = [entry.get('preemptions_count', 0) for entry in self.state_history]
+        trends['preemptions'] = {
+            'current': preemption_trend[-1] if preemption_trend else 0,
+            'total_events': max(preemption_trend) if preemption_trend else 0,
+            'trend_direction': self._calculate_trend_direction(preemption_trend)
+        }
+        
+        return trends
+    
+    def _calculate_trend_direction(self, data_series: List[float]) -> str:
+        """Calculate trend direction from a data series"""
+        if len(data_series) < 2:
+            return 'insufficient_data'
+        
+        # Use last 5 points or all points if less than 5
+        recent_points = data_series[-min(5, len(data_series)):]
+        
+        if len(recent_points) < 2:
+            return 'insufficient_data'
+        
+        # Simple linear trend calculation
+        x_values = list(range(len(recent_points)))
+        n = len(recent_points)
+        
+        # Calculate slope using least squares
+        sum_x = sum(x_values)
+        sum_y = sum(recent_points)
+        sum_xy = sum(x * y for x, y in zip(x_values, recent_points))
+        sum_x2 = sum(x * x for x in x_values)
+        
+        if n * sum_x2 - sum_x * sum_x == 0:
+            return 'stable'
+        
+        slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
+        
+        # Determine trend direction
+        if abs(slope) < 0.1:  # Threshold for considering stable
+            return 'stable'
+        elif slope > 0:
+            return 'increasing'
+        else:
+            return 'decreasing'
     
     def _plot_mts_analysis(self, nhs_metrics: Dict, output_dir: str) -> str:
         """Generate MTS compliance analysis chart"""
