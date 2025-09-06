@@ -8,8 +8,8 @@ from entities.base import BaseEntity
 
 @dataclass(slots=True)
 class Patient(BaseEntity):
-    required_resource: ResourceType
     arrival_time: float
+    required_resource: Optional[ResourceType] = None
     priority: Priority = field(default=Priority.NON_URGENT)
     status: PatientStatus = field(default=PatientStatus.ARRIVED)
     start_wait_time: Optional[float] = field(default=None)

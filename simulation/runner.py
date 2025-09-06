@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 import simpy
 from entities.hospital import Hospital
 from services.patient_factory import PatientFactory
+from enums.resource_type import ResourceType
 
 
 @dataclass(slots=True)
@@ -20,17 +21,23 @@ class SimulationRunner:
     env: simpy.Environment = field(init=False)
     hospital: Hospital = field(init=False)
     patient_factory: PatientFactory = field(init=False)
+    doctor_res: simpy.PreemptiveResource = field(init=False)
+    mri_res: simpy.PreemptiveResource = field(init=False)
+    bed_res: simpy.Resource = field(init=False)
 
     def __post_init__(self) -> None:
         self.env = simpy.Environment()
         self.hospital = Hospital(
-            env=self.env,
             num_doctors=self.config.num_doctors,
             num_mri=self.config.num_mri,
             num_beds=self.config.num_beds,
             seed=self.config.seed,
         )
         self.patient_factory = PatientFactory()
+        # Instantiate shared resources managed by the simulation engine
+        self.doctor_res = simpy.PreemptiveResource(self.env, capacity=self.config.num_doctors)
+        self.mri_res = simpy.PreemptiveResource(self.env, capacity=self.config.num_mri)
+        self.bed_res = simpy.Resource(self.env, capacity=self.config.num_beds)
 
     def _driver(self):
         # Generate one patient at a time using lognormal interarrival times until the time horizon
@@ -41,18 +48,56 @@ class SimulationRunner:
             if float(self.env.now) + inter > horizon:
                 break
             yield self.env.timeout(inter)
-            p = self.patient_factory.new_patient(float(self.env.now))
-            self.env.process(self.hospital.admit_patient(p))
+            # start a patient flow process
+            self.env.process(self._service_pipeline())
+
+    def _service_pipeline(self):
+        now = float(self.env.now)
+        patient = self.patient_factory.new_patient(now)
+        # arrival and queuing
+        rtype = self.hospital.on_patient_arrival(patient, now)
+        planned_service = self.hospital.prepare_for_queue(patient, rtype, now)
+        # choose resource
+        if rtype == ResourceType.DOCTOR:
+            res = self.doctor_res
+        elif rtype == ResourceType.MRI:
+            res = self.mri_res
+        else:
+            res = self.bed_res
+        # request and serve with agent-driven preemption control and proper preemption handling
+        while True:
+            now = float(self.env.now)
+            is_preemptive = isinstance(res, simpy.PreemptiveResource)
+            priority_value = int(patient.priority)
+            preempt_flag = self.hospital.should_preempt(patient, rtype, now) if is_preemptive else False
+            req_evt = res.request(priority=priority_value, preempt=preempt_flag) if is_preemptive else res.request()
+            with req_evt:
+                yield req_evt
+                start = float(self.env.now)
+                self.hospital.on_service_start(patient, rtype, start, planned_service)
+                try:
+                    yield self.env.timeout(planned_service)
+                except simpy.Interrupt:
+                    # interrupted by a higher-priority request; record and requeue
+                    self.hospital.on_service_preempted(patient, rtype, float(self.env.now))
+                    # requeue patient for the same resource to resume later
+                    planned_service = self.hospital.prepare_for_queue(patient, rtype, float(self.env.now))
+                    # try again
+                    continue
+                else:
+                    # service completed without preemption
+                    self.hospital.on_service_complete(patient, rtype, float(self.env.now))
+                    break
 
     def run(self) -> None:
         # Start the driver that generates patients; let all processes finish
         self.env.process(self._driver())
         self.env.run()
         # After all processes complete, finalize data persistence and plotting
-        self.hospital.finalize()
+        self.hospital.finalize(sim_duration=self.config.sim_duration)
 
 
 if __name__ == "__main__":
-    cfg = SimulationConfig(num_doctors=2, num_mri=1, num_beds=3, sim_duration=200.0, seed=42)
+    cfg = SimulationConfig(num_doctors=2, num_mri=1, num_beds=3, sim_duration=500.0, seed=42)
     sim = SimulationRunner(cfg)
     sim.run()

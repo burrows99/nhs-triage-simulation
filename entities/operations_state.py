@@ -22,7 +22,7 @@ class QueueEntry:
 class PatientState:
     id: int
     status: PatientStatus
-    required_resource: ResourceType
+    required_resource: Optional[ResourceType]
     arrival_time: float
     priority: Optional[Priority] = None
     service_start_time: Optional[float] = None
@@ -35,7 +35,7 @@ class OperationsState:
     queues: Dict[ResourceType, List[QueueEntry]] = field(default_factory=dict)
     patients: Dict[int, PatientState] = field(default_factory=dict)
 
-    def copy(self) -> OperationsState:
+    def copy(self) -> 'OperationsState':
         # Manual deep copy to keep dataclasses with slots lightweight
         new_resources = {k: ResourceState(v.resource_type, v.capacity, v.in_use) for k, v in self.resources.items()}
         new_queues = {k: [QueueEntry(e.patient_id, e.priority, e.arrival_time, e.required_resource) for e in v] for k, v in self.queues.items()}
