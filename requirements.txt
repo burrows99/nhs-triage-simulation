@@ -1,29 +1,3 @@
-# Core simulation framework
-simpy>=4.0.1
-
-# Data manipulation and analysis
-numpy>=1.24.0
-pandas>=2.0.0
-
-# Plotting and visualization
-matplotlib>=3.7.0
-seaborn>=0.12.0
-
-# Type checking and validation
-pydantic>=2.0.0
-typing-extensions>=4.5.0
-
-# HTTP requests for mock API
-requests>=2.31.0
-
-# Statistical distributions
-scipy>=1.10.0
-
-# Data classes and validation
-dataclasses-json>=0.6.0
-
-# Enum support
-enum34>=1.1.10
-
-# Logging
-loguru>=0.7.0
+simpy==4.1.1
+numpy==2.2.1
+matplotlib==3.9.2
