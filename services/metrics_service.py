@@ -3,27 +3,33 @@ from dataclasses import dataclass, field
 from typing import Sequence, Any, Mapping
 from pathlib import Path
 import logging
+import json
 import numpy as np
 import matplotlib
+
+from enums.priority import Priority
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from services.logger_service import LoggerService
+from enums.resource_type import ResourceType
+from enums.patient_status import PatientStatus
+from entities.operations_state import OperationsState
 
 # Use an Any-typed alias to satisfy strict type checkers for plotting calls
 _mpl: Any = plt
 
 # Simple palette
 _RESOURCE_COLORS = {
-    "DOCTOR": "#2563eb",
-    "MRI": "#16a34a",
-    "BED": "#f59e0b",
+    ResourceType.DOCTOR: "#2563eb",
+    ResourceType.MRI: "#16a34a",
+    ResourceType.BED: "#f59e0b"
 }
 _PRIORITY_COLORS = {
-    "IMMEDIATE": "#dc2626",
-    "VERY_URGENT": "#ea580c",
-    "URGENT": "#d97706",
-    "STANDARD": "#2563eb",
-    "NON_URGENT": "#16a34a",
+    Priority.IMMEDIATE: "#dc2626",
+    Priority.VERY_URGENT: "#ea580c",
+    Priority.URGENT: "#d97706",
+    Priority.STANDARD: "#2563eb",
+    Priority.NON_URGENT: "#16a34a",
 }
 
 @dataclass(slots=True)
@@ -120,6 +126,8 @@ class PlottingService:
 class MetricsService:
     logger: logging.Logger = field(init=False, repr=False, compare=False)
     plotter: PlottingService = field(init=False, repr=False, compare=False)
+    # New: ingestible history of OperationsState snapshots
+    history: list[OperationsState] = field(default_factory=list, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         self.logger = LoggerService.get_logger(__name__)
@@ -131,6 +139,14 @@ class MetricsService:
             return 0.0, 0.0
         return float(np.mean(arr)), float(np.median(arr))
 
+    # --- Ingestion API ---
+    def ingest(self, state: OperationsState) -> None:
+        """Ingest a snapshot of OperationsState for later metric computation.
+        A copy is stored to ensure immutability of historical data.
+        """
+        self.history.append(state.copy())
+
+    # --- Plotting helpers (unchanged) ---
     def plot_wait_times(self, wait_times: Sequence[float], out_path: str | Path) -> None:
         out_path = Path(out_path)
         avg, med = self.average_and_median(wait_times)
@@ -217,3 +233,214 @@ class MetricsService:
         parts = [f"{k}: avg={a:.2f}, med={m:.2f}" for k, (a, m) in avgs_meds.items()]
         title = "System Load By Priority Over Time (" + "; ".join(parts) + ")"
         self.plotter.multi_line(series_by_priority, title, "time", "patients", out_path)
+
+    # --- Computation from ingested history ---
+    def compute_and_export(self, output_dir: str | Path, sim_duration: float) -> None:
+        out_path = Path(output_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        horizon = float(sim_duration) if float(sim_duration) > 0 else 1.0
+        hist = list(self.history)
+        if not hist:
+            stats: dict[str, object] = {
+                "definition": "Total time in A&E from arrival to admission/transfer/discharge",
+                "count": 0,
+                "avg": 0.0,
+                "median": 0.0,
+                "min": 0.0,
+                "max": 0.0,
+                "wait_times": [],
+                "queue_wait_times": [],
+                "modeled_expected_queue_wait": {"DOCTOR": 0.0, "MRI": 0.0, "BED": 0.0},
+                "resource_utilization": {"DOCTOR": 0.0, "MRI": 0.0, "BED": 0.0},
+            }
+            with open(out_path / "wait_times.json", "w", encoding="utf-8") as f:
+                json.dump(stats, f, indent=2)
+            # empty plots
+            self.plot_wait_times([], out_path / "wait_times.svg")
+            self.plot_wait_times_by_priority({}, out_path / "wait_times_by_priority.svg")
+            self.plot_per_patient_waits([], [], [], out_path / "per_patient_waits.svg")
+            self.plot_resource_utilization([0.0, 0.0, 0.0], out_path / "resource_utilization.svg")
+            self.plot_resource_inuse_timeline({"DOCTOR": [], "MRI": [], "BED": []}, out_path / "resource_inuse_timeline.svg")
+            self.plot_queue_length_timeline({"DOCTOR": [], "MRI": [], "BED": []}, out_path / "queue_length_timeline.svg")
+            self.plot_system_load_timeline([], out_path / "system_load_timeline.svg")
+            self.plot_system_load_by_priority_timeline({}, out_path / "system_load_by_priority_timeline.svg")
+            self.plot_service_times_hist_by_resource({}, out_path / "service_times_by_resource.svg")
+            self.plot_service_times_timeline({}, {}, out_path / "service_times_timeline.svg")
+            return
+        # Sort by time
+        hist.sort(key=lambda s: float(s.time))
+        # Timelines derived from history
+        inuse_series: dict[str, list[tuple[float, float]]] = {"DOCTOR": [], "MRI": [], "BED": []}
+        qlen_series: dict[str, list[tuple[float, float]]] = {"DOCTOR": [], "MRI": [], "BED": []}
+        system_load_series: list[tuple[float, float]] = []
+        prio_labels = ["IMMEDIATE", "VERY_URGENT", "URGENT", "STANDARD", "NON_URGENT"]
+        system_load_by_priority: dict[str, list[tuple[float, float]]] = {lbl: [] for lbl in prio_labels}
+        # Utilization area from stepwise integration of in_use over time
+        inuse_area: dict[ResourceType, float] = {ResourceType.DOCTOR: 0.0, ResourceType.MRI: 0.0, ResourceType.BED: 0.0}
+        # Per-patient and per-resource episode tracking
+        arrival_by_pid: dict[int, float] = {}
+        prio_by_pid: dict[int, str] = {}
+        first_service_start_by_pid: dict[int, float] = {}
+        discharge_time_by_pid: dict[int, float] = {}
+        # Active service episodes keyed by patient id -> (rtype, start_time)
+        active_episode: dict[int, tuple[ResourceType, float]] = {}
+        # Episodes by resource
+        episode_durations_by_res: dict[str, list[float]] = {"DOCTOR": [], "MRI": [], "BED": []}
+        episode_starts_by_res: dict[str, list[float]] = {"DOCTOR": [], "MRI": [], "BED": []}
+        # Track previous snapshot for integration and state transitions
+        prev = None
+        prev_status: dict[int, PatientStatus] = {}
+        for st in hist:
+            t = float(st.time)
+            # timelines
+            inuse_series["DOCTOR"].append((t, float(st.resources[ResourceType.DOCTOR].in_use)))
+            inuse_series["MRI"].append((t, float(st.resources[ResourceType.MRI].in_use)))
+            inuse_series["BED"].append((t, float(st.resources[ResourceType.BED].in_use)))
+            qlen_series["DOCTOR"].append((t, float(len(st.queues[ResourceType.DOCTOR]))))
+            qlen_series["MRI"].append((t, float(len(st.queues[ResourceType.MRI]))))
+            qlen_series["BED"].append((t, float(len(st.queues[ResourceType.BED]))))
+            load = float(sum(1 for p in st.patients.values() if p.status != PatientStatus.DISCHARGED))
+            system_load_series.append((t, load))
+            # by-priority counts
+            prio_counts = {lbl: 0 for lbl in prio_labels}
+            for p in st.patients.values():
+                if p.status != PatientStatus.DISCHARGED and getattr(p, "priority", None) is not None:
+                    lbl = getattr(p.priority, "name", None)
+                    if lbl in prio_counts:
+                        prio_counts[lbl] += 1
+            for lbl in prio_labels:
+                system_load_by_priority[lbl].append((t, float(prio_counts[lbl])))
+            # utilization area integration (step function across prev->current)
+            if prev is not None:
+                dt = t - float(prev.time)
+                if dt > 0:
+                    inuse_area[ResourceType.DOCTOR] += float(prev.resources[ResourceType.DOCTOR].in_use) * dt
+                    inuse_area[ResourceType.MRI] += float(prev.resources[ResourceType.MRI].in_use) * dt
+                    inuse_area[ResourceType.BED] += float(prev.resources[ResourceType.BED].in_use) * dt
+            # patient-level transitions
+            for pid, pst in st.patients.items():
+                if pid not in arrival_by_pid:
+                    arrival_by_pid[pid] = float(pst.arrival_time)
+                if pid not in prio_by_pid and getattr(pst, "priority", None) is not None:
+                    prio_by_pid[pid] = getattr(pst.priority, "name", "UNKNOWN")
+                prev_st = prev_status.get(pid)
+                # detect service start
+                if pst.status == PatientStatus.IN_SERVICE and prev_st != PatientStatus.IN_SERVICE:
+                    rtype = pst.required_resource
+                    if rtype is not None:
+                        active_episode[pid] = (rtype, t)
+                        episode_starts_by_res[rtype.name].append(t)
+                        if pid not in first_service_start_by_pid:
+                            first_service_start_by_pid[pid] = t
+                # detect service end (left IN_SERVICE)
+                if prev_st == PatientStatus.IN_SERVICE and pst.status != PatientStatus.IN_SERVICE:
+                    start_info = active_episode.pop(pid, None)
+                    if start_info is not None:
+                        rtype_started, t_start = start_info
+                        dur = max(0.0, t - t_start)
+                        episode_durations_by_res[rtype_started.name].append(dur)
+                # detect discharge
+                if pst.status == PatientStatus.DISCHARGED and pid not in discharge_time_by_pid:
+                    discharge_time_by_pid[pid] = t
+                # update trackers
+                prev_status[pid] = pst.status
+            prev = st
+        # close any still-active episodes at horizon
+        final_time = float(hist[-1].time)
+        if final_time < horizon:
+            final_time = horizon
+        for pid, (rtype, t_start) in list(active_episode.items()):
+            dur = max(0.0, final_time - t_start)
+            episode_durations_by_res[rtype.name].append(dur)
+        # compute waits and queue waits from derived per-patient times
+        waits: list[float] = []
+        queue_waits: list[float] = []
+        wait_times_by_priority: dict[str, list[float]] = {}
+        per_patient_discharge_times: list[float] = []
+        per_patient_priorities: list[str] = []
+        for pid, arr in arrival_by_pid.items():
+            if pid in discharge_time_by_pid:
+                total = float(discharge_time_by_pid[pid] - arr)
+                waits.append(total)
+                pstr = prio_by_pid.get(pid, "UNKNOWN")
+                wait_times_by_priority.setdefault(pstr, []).append(total)
+                per_patient_discharge_times.append(float(discharge_time_by_pid[pid]))
+                per_patient_priorities.append(pstr)
+            if pid in first_service_start_by_pid:
+                qwt = float(first_service_start_by_pid[pid] - arr)
+                if qwt >= 0.0:
+                    queue_waits.append(qwt)
+        # Erlang C modeled expected queue wait per resource
+        res_cfg = {
+            ResourceType.DOCTOR: 0,
+            ResourceType.MRI: 0,
+            ResourceType.BED: 0,
+        }
+        # infer capacities from last snapshot
+        last = hist[-1]
+        res_cfg[ResourceType.DOCTOR] = int(last.resources[ResourceType.DOCTOR].capacity)
+        res_cfg[ResourceType.MRI] = int(last.resources[ResourceType.MRI].capacity)
+        res_cfg[ResourceType.BED] = int(last.resources[ResourceType.BED].capacity)
+        def erlang_c_expected_wq(lmbda: float, mu: float, c: int) -> float:
+            if c <= 0 or mu <= 0.0 or lmbda <= 0.0 or lmbda >= c * mu:
+                return 0.0
+            rho = lmbda / (c * mu)
+            # compute P0
+            inv_mu = 1.0 / mu
+            sum_terms = 0.0
+            a = lmbda * inv_mu
+            fact = 1.0
+            for n in range(0, c):
+                if n > 0:
+                    fact *= n
+                sum_terms += (a ** n) / fact
+            fact *= c
+            sum_terms += (a ** c) / (fact * (1 - rho))
+            p0 = 1.0 / sum_terms
+            pc = ((a ** c) / (fact * (1 - rho))) * p0
+            Pw = pc
+            return float(Pw / (c * mu - lmbda))
+        modeled_expected_queue_wait: dict[str, float] = {}
+        utilizations: list[float] = []
+        for rtype, c in res_cfg.items():
+            durations = episode_durations_by_res[rtype.name]
+            lmbda = (len(durations) / max(1.0, horizon))
+            mu = (1.0 / float(np.mean(durations))) if len(durations) else 0.0
+            wq = erlang_c_expected_wq(lmbda, mu, c)
+            modeled_expected_queue_wait[rtype.name] = float(wq)
+            # utilization from in_use area integration
+            area = inuse_area[rtype]
+            util = float(area / (max(1.0, hist[-1].time) * max(1, c)))
+            utilizations.append(util)
+        # aggregate stats
+        avg = float(np.mean(waits)) if len(waits) else 0.0
+        med = float(np.median(waits)) if len(waits) else 0.0
+        stats = {
+            "definition": "Total time in A&E from arrival to admission/transfer/discharge",
+            "count": len(waits),
+            "avg": avg,
+            "median": med,
+            "min": float(min(waits)) if len(waits) else 0.0,
+            "max": float(max(waits)) if len(waits) else 0.0,
+            "wait_times": waits,
+            "queue_wait_times": queue_waits,
+            "modeled_expected_queue_wait": modeled_expected_queue_wait,
+            "resource_utilization": {
+                "DOCTOR": utilizations[0] if len(utilizations) > 0 else 0.0,
+                "MRI": utilizations[1] if len(utilizations) > 1 else 0.0,
+                "BED": utilizations[2] if len(utilizations) > 2 else 0.0,
+            },
+        }
+        with open(out_path / "wait_times.json", "w", encoding="utf-8") as f:
+            json.dump(stats, f, indent=2)
+        # Plots
+        self.plot_wait_times(waits, out_path / "wait_times.svg")
+        self.plot_wait_times_by_priority(wait_times_by_priority, out_path / "wait_times_by_priority.svg")
+        self.plot_per_patient_waits(per_patient_discharge_times, waits, per_patient_priorities, out_path / "per_patient_waits.svg")
+        self.plot_resource_utilization(utilizations, out_path / "resource_utilization.svg")
+        self.plot_resource_inuse_timeline(inuse_series, out_path / "resource_inuse_timeline.svg")
+        self.plot_queue_length_timeline(qlen_series, out_path / "queue_length_timeline.svg")
+        self.plot_system_load_timeline(system_load_series, out_path / "system_load_timeline.svg")
+        self.plot_system_load_by_priority_timeline(system_load_by_priority, out_path / "system_load_by_priority_timeline.svg")
+        self.plot_service_times_hist_by_resource(episode_durations_by_res, out_path / "service_times_by_resource.svg")
+        self.plot_service_times_timeline(episode_starts_by_res, episode_durations_by_res, out_path / "service_times_timeline.svg")
