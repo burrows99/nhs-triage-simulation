@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from typing import cast
 import simpy
 from entities.hospital import Hospital
 from services.patient_factory import PatientFactory
@@ -70,7 +71,11 @@ class SimulationRunner:
             is_preemptive = isinstance(res, simpy.PreemptiveResource)
             priority_value = int(patient.priority)
             preempt_flag = self.hospital.should_preempt(patient, rtype, now) if is_preemptive else False
-            req_evt = res.request(priority=priority_value, preempt=preempt_flag) if is_preemptive else res.request()
+            if is_preemptive:
+                pre_res = cast(simpy.PreemptiveResource, res)
+                req_evt = pre_res.request(priority=priority_value, preempt=preempt_flag)
+            else:
+                req_evt = res.request()
             with req_evt:
                 yield req_evt
                 start = float(self.env.now)
@@ -86,8 +91,20 @@ class SimulationRunner:
                     continue
                 else:
                     # service completed without preemption
-                    self.hospital.on_service_complete(patient, rtype, float(self.env.now))
-                    break
+                    next_r = self.hospital.on_service_complete(patient, rtype, float(self.env.now))
+                    if next_r is None:
+                        break
+                    # route to next stage and continue the loop
+                    rtype = next_r
+                    planned_service = self.hospital.prepare_for_queue(patient, rtype, float(self.env.now))
+                    # choose resource for next stage
+                    if rtype == ResourceType.DOCTOR:
+                        res = self.doctor_res
+                    elif rtype == ResourceType.MRI:
+                        res = self.mri_res
+                    else:
+                        res = self.bed_res
+                    continue
 
     def run(self) -> None:
         # Start the driver that generates patients; let all processes finish
@@ -98,6 +115,6 @@ class SimulationRunner:
 
 
 if __name__ == "__main__":
-    cfg = SimulationConfig(num_doctors=2, num_mri=1, num_beds=3, sim_duration=500.0, seed=42)
+    cfg = SimulationConfig(num_doctors=2, num_mri=1, num_beds=3, sim_duration=120.0, seed=42)
     sim = SimulationRunner(cfg)
     sim.run()

@@ -48,3 +48,29 @@ class PreemptionAgent:
         decision = PreemptionDecision(False, None, None)
         self.logger.debug("Preemption decided: %s", decision.should_preempt)
         return decision
+
+    # New: initial resource recommendation to guide first-stage assignment at triage
+    def recommend_initial_resource(self, patient: Patient) -> Optional[ResourceType]:
+        """Heuristic initial resource recommendation.
+        Returns a ResourceType when a strong signal exists, else None to allow default (DOCTOR).
+        """
+        s = getattr(patient, "symptoms", None)
+        pr: Optional[Priority] = getattr(patient, "priority", None)
+        try:
+            # If life-threatening indicators, see a doctor immediately
+            if s is not None:
+                if s.consciousness_impairment >= 0.9 or s.respiration_distress >= 0.9 or s.bleeding >= 0.9:
+                    self.logger.debug("Initial resource recommended=DOCTOR for patient=%s due to critical vital signal", patient.id)
+                    return ResourceType.DOCTOR
+                # Significant trauma with high pain -> prioritize MRI imaging first
+                if s.trauma_severity >= 0.85 and (pr in (Priority.VERY_URGENT, Priority.URGENT, Priority.IMMEDIATE)):
+                    self.logger.debug("Initial resource recommended=MRI for patient=%s due to high trauma severity", patient.id)
+                    return ResourceType.MRI
+            # Priority alone can force DOCTOR
+            if pr in (Priority.IMMEDIATE, Priority.VERY_URGENT):
+                self.logger.debug("Initial resource recommended=DOCTOR for patient=%s due to high priority=%s", patient.id, getattr(pr, "name", pr))
+                return ResourceType.DOCTOR
+        except Exception as e:
+            self.logger.debug("Initial resource recommendation error for patient=%s: %s", patient.id, e)
+        # No strong signal; allow default path
+        return None

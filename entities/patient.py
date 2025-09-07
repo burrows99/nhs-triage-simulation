@@ -5,6 +5,7 @@ from enums.priority import Priority
 from enums.resource_type import ResourceType
 from enums.patient_status import PatientStatus
 from entities.base import BaseEntity
+from services.manchester_triage import ManchesterSymptoms
 
 @dataclass(slots=True)
 class Patient(BaseEntity):
@@ -15,6 +16,8 @@ class Patient(BaseEntity):
     start_wait_time: Optional[float] = field(default=None)
     service_start_time: Optional[float] = field(default=None)
     service_end_time: Optional[float] = field(default=None)
+    # Triage data captured by nurse and later used by doctor for follow-up allocation
+    symptoms: Optional[ManchesterSymptoms] = field(default=None)
 
     def __post_init__(self) -> None:
         BaseEntity.__post_init__(self)

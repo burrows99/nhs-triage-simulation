@@ -1,14 +1,19 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enums.priority import Priority
+from enums.resource_type import ResourceType
 from entities.base import BaseEntity
 from entities.patient import Patient
 from services.manchester_triage import ManchesterTriageSystem, ManchesterSymptoms
+from services.preemption_agent import PreemptionAgent, PreemptionDecision
 
 @dataclass(slots=True)
 class TriageNurse(BaseEntity):
+    agent: PreemptionAgent = field(init=False, repr=False, compare=False)
+
     def __post_init__(self) -> None:
         BaseEntity.__post_init__(self)
+        self.agent = PreemptionAgent()
 
     def assign_priority(self, symptoms_score: float) -> Priority:
         # Minimal stand-in for MTS categorisation: use a simple threshold mapping.
@@ -28,6 +33,7 @@ class TriageNurse(BaseEntity):
     def assess_and_assign_priority(self, patient: Patient) -> Priority:
         """Assess a patient and assign a triage priority using a simplified MTS classifier.
         Generates a basic symptoms profile (in lieu of full clinical data) and classifies it.
+        Also sets patient's initial required resource guided by agent recommendation, defaulting to DOCTOR.
         """
         # Deterministic pseudo-random profile from patient id for reproducibility
         def prng(a: int) -> float:
@@ -52,9 +58,34 @@ class TriageNurse(BaseEntity):
         )
         mts = ManchesterTriageSystem()
         pr = mts.classify(symptoms)
+        # Store triage outputs on patient
+        patient.symptoms = symptoms
+        patient.priority = pr
+        # Attempt an initial resource recommendation via embedded agent
+        initial = self.agent.recommend_initial_resource(patient)
+        patient.required_resource = initial if initial is not None else ResourceType.DOCTOR
         self.logger.info(
             f"Triage assessed patient {patient.id} -> priority={pr.name} "
             f"[resp={respiration_distress:.2f}, bleed={bleeding:.2f}, cons={consciousness_impairment:.2f}, "
-            f"pain={pain:.2f}, temp={temperature_anomaly:.2f}, trauma={trauma_severity:.2f}]"
+            f"pain={pain:.2f}, temp={temperature_anomaly:.2f}, trauma={trauma_severity:.2f}] "
+            f"initial_resource={getattr(patient.required_resource, 'name', patient.required_resource)}"
         )
         return pr
+
+    def recommend_preemption(self, patient: Patient, ops_state: object) -> PreemptionDecision:
+        """Return a preemption recommendation for the patient's currently required resource.
+        Randomized for now via the embedded agent, but constrained by resource preemptibility.
+        Only DOCTOR and MRI are considered preemptible; BED is not.
+        """
+        rtype = patient.required_resource
+        # Non-preemptible or unknown resource -> never preempt
+        if rtype is None or not rtype.preemptible:
+            self.logger.debug("Preemption not allowed for resource %s; returning no-preempt decision", getattr(rtype, 'name', rtype))
+            return PreemptionDecision(False, rtype, None)
+        # Delegate randomized decision to the embedded agent
+        decision = self.agent.decide(patient, ops_state)
+        # Ensure the decision targets the patient's current required resource when preempting
+        if decision.should_preempt and decision.resource_type != rtype:
+            # align to current resource context
+            return PreemptionDecision(True, rtype, decision.target_index)
+        return decision
