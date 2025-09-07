@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 import logging
-from typing import Optional
+from typing import Optional, Any, Dict, List, cast
 import numpy as np
 from enums.resource_type import ResourceType
 from enums.priority import Priority
@@ -34,25 +34,75 @@ class PreemptionAgent:
         )
         return score
 
+    def _compute_rule_based_decision(self, patient: Patient, ops_state_summary: Dict[str, Any]) -> PreemptionDecision:
+        # Deterministic rule-based policy using current state summary
+        pr: Optional[Priority] = getattr(patient, "priority", None)
+        rtype: Optional[ResourceType] = getattr(patient, "required_resource", None)
+        if pr is None or rtype is None:
+            return PreemptionDecision(False, None, None)
+        # Only consider preemption for preemptible resources
+        if not rtype.preemptible:
+            return PreemptionDecision(False, None, None)
+        # Extract queue information for the patient's required resource
+        queues: Dict[str, List[Dict[str, Any]]] = cast(Dict[str, List[Dict[str, Any]]], ops_state_summary.get("queues", {}))
+        q_list: List[Dict[str, Any]] = queues.get(rtype.name, [])
+        # For high priority patients, preempt if queue is non-empty and all servers are busy
+        resources: Dict[str, Dict[str, Any]] = cast(Dict[str, Dict[str, Any]], ops_state_summary.get("resources", {}))
+        res_info: Dict[str, Any] = resources.get(rtype.name, {})
+        in_use = int((res_info.get("in_use", 0) or 0))
+        capacity = int((res_info.get("capacity", 0) or 0))
+        queue_len = int((res_info.get("queue_len", len(q_list)) or len(q_list)))
+        # Rule thresholds: IMMEDIATE always, VERY_URGENT when heavily loaded
+        if pr == Priority.IMMEDIATE:
+            # pick the lowest-priority target in queue (last position)
+            if queue_len > 0 and in_use >= capacity and capacity > 0:
+                target_idx = queue_len - 1
+                return PreemptionDecision(True, rtype, target_idx)
+            return PreemptionDecision(False, None, None)
+        if pr == Priority.VERY_URGENT:
+            # preempt only if load > 90% and queue exists
+            util = float(in_use) / float(capacity) if capacity > 0 else 0.0
+            if queue_len > 0 and util >= 0.9 and capacity > 0:
+                target_idx = queue_len - 1
+                return PreemptionDecision(True, rtype, target_idx)
+            return PreemptionDecision(False, None, None)
+        # Lower priorities do not trigger preemption in this baseline
+        return PreemptionDecision(False, None, None)
+
     def decide(self, patient: Patient, ops_state: object) -> PreemptionDecision:
-        # Randomized policy for now; later integrate AI policy
+        # If ops_state exposes get_summary, use it for deterministic decision; otherwise fallback to random mock
+        summary: Optional[Dict[str, Any]]
+        try:
+            summary_raw = ops_state.get_summary()  # type: ignore[attr-defined]
+            summary = cast(Optional[Dict[str, Any]], summary_raw if isinstance(summary_raw, dict) else None)
+        except Exception:
+            summary = None
+        if isinstance(summary, dict):
+            decision = self._compute_rule_based_decision(patient, summary)
+            rname = getattr(getattr(patient, "required_resource", None), "name", "")
+            resources = cast(Dict[str, Dict[str, Any]], (summary.get("resources", {}) or {}))
+            self.logger.debug(
+                "Rule-based preemption decision for patient=%s: %s %s idx=%s (resource load=%s)",
+                patient.id,
+                decision.should_preempt,
+                getattr(decision.resource_type, "name", None),
+                decision.target_index,
+                resources.get(rname, {}),
+            )
+            return decision
+        # Fallback to stochastic mock policy
         score = self.mock_fetch(patient, ops_state)
         if score > 0.7 and patient.priority in (Priority.IMMEDIATE, Priority.VERY_URGENT):
-            # choose a resource type matching patient's need, and a placeholder index 0
-            rtype = ResourceType.DOCTOR if patient.required_resource == ResourceType.DOCTOR else (
-                ResourceType.MRI if patient.required_resource == ResourceType.MRI else ResourceType.BED
-            )
-            decision = PreemptionDecision(True, rtype, 0)
-            self.logger.info("Preemption decided: %s on %s (target_index=%d)", decision.should_preempt, rtype.name, decision.target_index)
-            return decision
-        decision = PreemptionDecision(False, None, None)
-        self.logger.debug("Preemption decided: %s", decision.should_preempt)
-        return decision
+            rtype = patient.required_resource or ResourceType.DOCTOR
+            if not rtype.preemptible:
+                return PreemptionDecision(False, None, None)
+            return PreemptionDecision(True, rtype, 0)
+        return PreemptionDecision(False, None, None)
 
     # New: initial resource recommendation to guide first-stage assignment at triage
-    def recommend_initial_resource(self, patient: Patient) -> Optional[ResourceType]:
+    def recommend_initial_resource(self, patient: Patient) -> ResourceType:
         """Heuristic initial resource recommendation.
-        Returns a ResourceType when a strong signal exists, else None to allow default (DOCTOR).
+        Returns a ResourceType when a strong signal exists; defaults to DOCTOR otherwise.
         """
         s = getattr(patient, "symptoms", None)
         pr: Optional[Priority] = getattr(patient, "priority", None)
@@ -72,5 +122,6 @@ class PreemptionAgent:
                 return ResourceType.DOCTOR
         except Exception as e:
             self.logger.debug("Initial resource recommendation error for patient=%s: %s", patient.id, e)
-        # No strong signal; allow default path
-        return None
+        # No strong signal -> default to DOCTOR
+        self.logger.debug("No strong signal; defaulting initial resource to DOCTOR for patient=%s", patient.id)
+        return ResourceType.DOCTOR

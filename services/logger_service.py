@@ -35,9 +35,9 @@ class LoggerService:
 
     @classmethod
     def get_logger(cls, name: Optional[str] = None) -> logging.Logger:
-        # Return a named logger; ensure base is initialized to avoid missing handlers
+        # Require explicit initialization; do not auto-initialize silently
         if not cls._initialized:
-            # Fallback: initialize to current working directory ./output if not explicitly set
-            default_dir = Path.cwd() / "output"
-            cls.initialize(default_dir)
+            raise RuntimeError(
+                "LoggerService not initialized. Call LoggerService.initialize(output_dir) before requesting loggers."
+            )
         return logging.getLogger(name)

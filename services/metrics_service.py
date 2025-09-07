@@ -6,6 +6,9 @@ import logging
 import json
 import numpy as np
 import matplotlib
+# removed redundant alias import
+# from enums.resource_type import ResourceType as _RT
+# from enums.priority import Priority as _PR
 
 from enums.priority import Priority
 matplotlib.use("Agg")
@@ -39,6 +42,29 @@ class PlottingService:
     def __post_init__(self) -> None:
         self.logger = LoggerService.get_logger(__name__)
 
+    def _resolve_color(self, label: Any) -> str | None:
+        # Accept either enum labels or their string names
+        try:
+            from enums.resource_type import ResourceType as rt_cls
+            from enums.priority import Priority as pr_cls
+        except Exception:
+            rt_cls = ResourceType  # fallback to already imported enums
+            pr_cls = Priority
+        if isinstance(label, rt_cls):
+            return _RESOURCE_COLORS.get(label)
+        if isinstance(label, pr_cls):
+            return _PRIORITY_COLORS.get(label)
+        if isinstance(label, str):
+            if label in rt_cls.__members__:
+                return _RESOURCE_COLORS.get(rt_cls[label])
+            if label in pr_cls.__members__:
+                return _PRIORITY_COLORS.get(pr_cls[label])
+        return None
+
+    # Public wrapper to avoid accessing the protected resolver outside this class
+    def resolve_color(self, label: Any) -> str | None:
+        return self._resolve_color(label)
+
     def hist(self, values: Sequence[float], title: str, xlabel: str, ylabel: str, out_path: str | Path) -> None:
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,8 +85,9 @@ class PlottingService:
         self.logger.debug("Plotting multi-histogram to %s", str(out_path))
         _mpl.figure(figsize=(7,5), dpi=120)
         for label, vals in series.items():
-            color = _PRIORITY_COLORS.get(label, None) or _RESOURCE_COLORS.get(label, None)
-            _mpl.hist(vals, bins=20, alpha=0.5, label=label, color=color)
+            color = (self._resolve_color(label) or "#6b7280")
+            label_str = getattr(label, "name", str(label))
+            _mpl.hist(vals, bins=20, alpha=0.5, label=label_str, color=color)
         _mpl.title(title)
         _mpl.xlabel(xlabel)
         _mpl.ylabel(ylabel)
@@ -92,10 +119,10 @@ class PlottingService:
         self.logger.debug("Plotting multi-line chart to %s", str(out_path))
         _mpl.figure(figsize=(8,5), dpi=120)
         for label, xy in series.items():
-            color = _RESOURCE_COLORS.get(label, None) or _PRIORITY_COLORS.get(label, None)
+            color = self._resolve_color(label) or "#6b7280"
             if len(xy):
                 x, y = zip(*sorted(xy))
-                _mpl.plot(x, y, label=label, color=color)
+                _mpl.plot(x, y, label=getattr(label, "name", str(label)), color=color)
         _mpl.title(title)
         _mpl.xlabel(xlabel)
         _mpl.ylabel(ylabel)
@@ -170,9 +197,15 @@ class MetricsService:
 
     # New: per-patient wait time scatter (colored by priority)
     def plot_per_patient_waits(self, discharge_times: Sequence[float], wait_times: Sequence[float], priorities: Sequence[str], out_path: str | Path) -> None:
-        colors = [ _PRIORITY_COLORS.get(p, "#6b7280") for p in priorities ]
+        # Map priority names to colors robustly
+        mapped_colors: list[str] = []
+        for p in priorities:
+            try:
+                mapped_colors.append(_PRIORITY_COLORS[Priority[p]])
+            except Exception:
+                mapped_colors.append("#6b7280")
         title = "Per-Patient Wait Times (colored by priority)"
-        self.plotter.scatter(discharge_times, wait_times, title, "discharge time", "total time in system", out_path, colors)
+        self.plotter.scatter(discharge_times, wait_times, title, "discharge time", "total time in system", out_path, mapped_colors)
 
     # New: timelines for resource in-use and queue lengths
     def plot_resource_inuse_timeline(self, series_by_resource: Mapping[str, Sequence[tuple[float, float]]], out_path: str | Path) -> None:
@@ -212,7 +245,7 @@ class MetricsService:
         _mpl.figure(figsize=(8,5), dpi=120)
         for rlabel, xs in start_times_by_resource.items():
             ys = durations_by_resource.get(rlabel, [])
-            color = _RESOURCE_COLORS.get(rlabel, None)
+            color = self.plotter.resolve_color(rlabel) or "#6b7280"
             if xs and ys:
                 _mpl.scatter(xs, ys, s=12, alpha=0.8, label=rlabel, c=color)
         _mpl.title("Service Durations Over Time (by resource)")
@@ -234,61 +267,106 @@ class MetricsService:
         title = "System Load By Priority Over Time (" + "; ".join(parts) + ")"
         self.plotter.multi_line(series_by_priority, title, "time", "patients", out_path)
 
-    # --- Computation from ingested history ---
-    def compute_and_export(self, output_dir: str | Path, sim_duration: float) -> None:
-        out_path = Path(output_dir)
-        out_path.mkdir(parents=True, exist_ok=True)
-        horizon = float(sim_duration) if float(sim_duration) > 0 else 1.0
-        hist = list(self.history)
-        if not hist:
-            stats: dict[str, object] = {
-                "definition": "Total time in A&E from arrival to admission/transfer/discharge",
-                "count": 0,
-                "avg": 0.0,
-                "median": 0.0,
-                "min": 0.0,
-                "max": 0.0,
-                "wait_times": [],
-                "queue_wait_times": [],
-                "modeled_expected_queue_wait": {"DOCTOR": 0.0, "MRI": 0.0, "BED": 0.0},
-                "resource_utilization": {"DOCTOR": 0.0, "MRI": 0.0, "BED": 0.0},
-            }
-            with open(out_path / "wait_times.json", "w", encoding="utf-8") as f:
-                json.dump(stats, f, indent=2)
-            # empty plots
-            self.plot_wait_times([], out_path / "wait_times.svg")
-            self.plot_wait_times_by_priority({}, out_path / "wait_times_by_priority.svg")
-            self.plot_per_patient_waits([], [], [], out_path / "per_patient_waits.svg")
-            self.plot_resource_utilization([0.0, 0.0, 0.0], out_path / "resource_utilization.svg")
-            self.plot_resource_inuse_timeline({"DOCTOR": [], "MRI": [], "BED": []}, out_path / "resource_inuse_timeline.svg")
-            self.plot_queue_length_timeline({"DOCTOR": [], "MRI": [], "BED": []}, out_path / "queue_length_timeline.svg")
-            self.plot_system_load_timeline([], out_path / "system_load_timeline.svg")
-            self.plot_system_load_by_priority_timeline({}, out_path / "system_load_by_priority_timeline.svg")
-            self.plot_service_times_hist_by_resource({}, out_path / "service_times_by_resource.svg")
-            self.plot_service_times_timeline({}, {}, out_path / "service_times_timeline.svg")
-            return
-        # Sort by time
-        hist.sort(key=lambda s: float(s.time))
-        # Timelines derived from history
+    # -------------------- Refactor helpers --------------------
+    @staticmethod
+    def _prepare_prio_labels() -> list[str]:
+        # Derive labels directly from Priority enum to avoid hardcoding and ensure correct ordering
+        return [p.name for p in sorted(Priority, key=lambda x: int(x.value))]
+
+    @staticmethod
+    def _erlang_c_expected_wq(lmbda: float, mu: float, c: int) -> float:
+        if c <= 0 or mu <= 0.0 or lmbda <= 0.0 or lmbda >= c * mu:
+            return 0.0
+        rho = lmbda / (c * mu)
+        inv_mu = 1.0 / mu
+        sum_terms = 0.0
+        a = lmbda * inv_mu
+        fact = 1.0
+        for n in range(0, c):
+            if n > 0:
+                fact *= n
+            sum_terms += (a ** n) / fact
+        fact *= c
+        sum_terms += (a ** c) / (fact * (1 - rho))
+        p0 = 1.0 / sum_terms
+        pc = ((a ** c) / (fact * (1 - rho))) * p0
+        Pw = pc
+        return float(Pw / (c * mu - lmbda))
+
+    @staticmethod
+    def _infer_capacities(last: OperationsState) -> dict[ResourceType, int]:
+        return {
+            ResourceType.DOCTOR: int(last.resources[ResourceType.DOCTOR].capacity),
+            ResourceType.MRI: int(last.resources[ResourceType.MRI].capacity),
+            ResourceType.BED: int(last.resources[ResourceType.BED].capacity),
+        }
+
+    def _handle_empty_history(self, out_path: Path) -> None:
+        stats: dict[str, object] = {
+            "definition": "Total time in A&E from arrival to admission/transfer/discharge",
+            "count": 0,
+            "avg": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "wait_times": [],
+            "queue_wait_times": [],
+            "modeled_expected_queue_wait": {"DOCTOR": 0.0, "MRI": 0.0, "BED": 0.0},
+            "resource_utilization": {"DOCTOR": 0.0, "MRI": 0.0, "BED": 0.0},
+        }
+        with open(out_path / "wait_times.json", "w", encoding="utf-8") as f:
+            json.dump(stats, f, indent=2)
+        # Save empty plots into structured subfolders only
+        # timeline subfolders
+        self.plot_per_patient_waits([], [], [], out_path / "timeline" / "wait_times" / "per_patient_waits.svg")
+        self.plot_resource_inuse_timeline({"DOCTOR": [], "MRI": [], "BED": []}, out_path / "timeline" / "resource_utilizations" / "resource_inuse_timeline.svg")
+        self.plot_queue_length_timeline({"DOCTOR": [], "MRI": [], "BED": []}, out_path / "timeline" / "resource_utilizations" / "queue_length_timeline.svg")
+        self.plot_system_load_timeline([], out_path / "timeline" / "system" / "system_load_timeline.svg")
+        self.plot_system_load_by_priority_timeline({}, out_path / "timeline" / "system" / "system_load_by_priority_timeline.svg")
+        self.plot_service_times_timeline({}, {}, out_path / "timeline" / "service_times" / "service_times_timeline.svg")
+        # average/median subfolders
+        self.plot_wait_times([], out_path / "average" / "wait_times" / "wait_times.svg")
+        self.plot_wait_times_by_priority({}, out_path / "average" / "wait_times" / "wait_times_by_priority.svg")
+        self.plot_resource_utilization([0.0, 0.0, 0.0], out_path / "average" / "resource_utilizations" / "resource_utilization.svg")
+        self.plot_service_times_hist_by_resource({}, out_path / "average" / "service_times" / "service_times_by_resource.svg")
+        # duplicate into median folder as requested
+        self.plot_wait_times([], out_path / "median" / "wait_times" / "wait_times.svg")
+        self.plot_wait_times_by_priority({}, out_path / "median" / "wait_times" / "wait_times_by_priority.svg")
+        self.plot_resource_utilization([0.0, 0.0, 0.0], out_path / "median" / "resource_utilizations" / "resource_utilization.svg")
+        self.plot_service_times_hist_by_resource({}, out_path / "median" / "service_times" / "service_times_by_resource.svg")
+
+    # New: restore computation helpers and exporter
+    def _compute_timelines_and_episodes(
+        self,
+        hist: list[OperationsState],
+        prio_labels: list[str],
+        horizon: float,
+    ) -> tuple[
+        dict[str, list[tuple[float, float]]],
+        dict[str, list[tuple[float, float]]],
+        list[tuple[float, float]],
+        dict[str, list[tuple[float, float]]],
+        dict[ResourceType, float],
+        dict[str, list[float]],
+        dict[str, list[float]],
+        dict[int, float],
+        dict[int, str],
+        dict[int, float],
+        dict[int, float],
+    ]:
         inuse_series: dict[str, list[tuple[float, float]]] = {"DOCTOR": [], "MRI": [], "BED": []}
         qlen_series: dict[str, list[tuple[float, float]]] = {"DOCTOR": [], "MRI": [], "BED": []}
         system_load_series: list[tuple[float, float]] = []
-        prio_labels = ["IMMEDIATE", "VERY_URGENT", "URGENT", "STANDARD", "NON_URGENT"]
         system_load_by_priority: dict[str, list[tuple[float, float]]] = {lbl: [] for lbl in prio_labels}
-        # Utilization area from stepwise integration of in_use over time
         inuse_area: dict[ResourceType, float] = {ResourceType.DOCTOR: 0.0, ResourceType.MRI: 0.0, ResourceType.BED: 0.0}
-        # Per-patient and per-resource episode tracking
         arrival_by_pid: dict[int, float] = {}
         prio_by_pid: dict[int, str] = {}
         first_service_start_by_pid: dict[int, float] = {}
         discharge_time_by_pid: dict[int, float] = {}
-        # Active service episodes keyed by patient id -> (rtype, start_time)
         active_episode: dict[int, tuple[ResourceType, float]] = {}
-        # Episodes by resource
         episode_durations_by_res: dict[str, list[float]] = {"DOCTOR": [], "MRI": [], "BED": []}
         episode_starts_by_res: dict[str, list[float]] = {"DOCTOR": [], "MRI": [], "BED": []}
-        # Track previous snapshot for integration and state transitions
-        prev = None
+        prev: OperationsState | None = None
         prev_status: dict[int, PatientStatus] = {}
         for st in hist:
             t = float(st.time)
@@ -345,14 +423,34 @@ class MetricsService:
                 # update trackers
                 prev_status[pid] = pst.status
             prev = st
-        # close any still-active episodes at horizon
+        # close any still-active episodes at horizon or final time
         final_time = float(hist[-1].time)
         if final_time < horizon:
             final_time = horizon
         for pid, (rtype, t_start) in list(active_episode.items()):
             dur = max(0.0, final_time - t_start)
             episode_durations_by_res[rtype.name].append(dur)
-        # compute waits and queue waits from derived per-patient times
+        return (
+            inuse_series,
+            qlen_series,
+            system_load_series,
+            system_load_by_priority,
+            inuse_area,
+            episode_durations_by_res,
+            episode_starts_by_res,
+            arrival_by_pid,
+            prio_by_pid,
+            first_service_start_by_pid,
+            discharge_time_by_pid,
+        )
+
+    def _derive_patient_waits(
+        self,
+        arrival_by_pid: dict[int, float],
+        prio_by_pid: dict[int, str],
+        first_service_start_by_pid: dict[int, float],
+        discharge_time_by_pid: dict[int, float],
+    ) -> tuple[list[float], list[float], dict[str, list[float]], list[float], list[str]]:
         waits: list[float] = []
         queue_waits: list[float] = []
         wait_times_by_priority: dict[str, list[float]] = {}
@@ -370,49 +468,46 @@ class MetricsService:
                 qwt = float(first_service_start_by_pid[pid] - arr)
                 if qwt >= 0.0:
                     queue_waits.append(qwt)
-        # Erlang C modeled expected queue wait per resource
-        res_cfg = {
-            ResourceType.DOCTOR: 0,
-            ResourceType.MRI: 0,
-            ResourceType.BED: 0,
-        }
-        # infer capacities from last snapshot
-        last = hist[-1]
-        res_cfg[ResourceType.DOCTOR] = int(last.resources[ResourceType.DOCTOR].capacity)
-        res_cfg[ResourceType.MRI] = int(last.resources[ResourceType.MRI].capacity)
-        res_cfg[ResourceType.BED] = int(last.resources[ResourceType.BED].capacity)
-        def erlang_c_expected_wq(lmbda: float, mu: float, c: int) -> float:
-            if c <= 0 or mu <= 0.0 or lmbda <= 0.0 or lmbda >= c * mu:
-                return 0.0
-            rho = lmbda / (c * mu)
-            # compute P0
-            inv_mu = 1.0 / mu
-            sum_terms = 0.0
-            a = lmbda * inv_mu
-            fact = 1.0
-            for n in range(0, c):
-                if n > 0:
-                    fact *= n
-                sum_terms += (a ** n) / fact
-            fact *= c
-            sum_terms += (a ** c) / (fact * (1 - rho))
-            p0 = 1.0 / sum_terms
-            pc = ((a ** c) / (fact * (1 - rho))) * p0
-            Pw = pc
-            return float(Pw / (c * mu - lmbda))
+        return waits, queue_waits, wait_times_by_priority, per_patient_discharge_times, per_patient_priorities
+
+    def _compute_modeled_queue_wait_and_utilizations(
+        self,
+        episode_durations_by_res: dict[str, list[float]],
+        inuse_area: dict[ResourceType, float],
+        capacities: dict[ResourceType, int],
+        last_time: float,
+        horizon: float,
+    ) -> tuple[dict[str, float], list[float]]:
         modeled_expected_queue_wait: dict[str, float] = {}
         utilizations: list[float] = []
-        for rtype, c in res_cfg.items():
+        for rtype, c in capacities.items():
             durations = episode_durations_by_res[rtype.name]
             lmbda = (len(durations) / max(1.0, horizon))
             mu = (1.0 / float(np.mean(durations))) if len(durations) else 0.0
-            wq = erlang_c_expected_wq(lmbda, mu, c)
+            wq = self._erlang_c_expected_wq(lmbda, mu, c)
             modeled_expected_queue_wait[rtype.name] = float(wq)
-            # utilization from in_use area integration
             area = inuse_area[rtype]
-            util = float(area / (max(1.0, hist[-1].time) * max(1, c)))
+            util = float(area / (max(1.0, last_time) * max(1, c)))
             utilizations.append(util)
-        # aggregate stats
+        return modeled_expected_queue_wait, utilizations
+
+    def _export_stats_and_plots(
+        self,
+        out_path: Path,
+        waits: list[float],
+        queue_waits: list[float],
+        modeled_expected_queue_wait: dict[str, float],
+        utilizations: list[float],
+        inuse_series: Mapping[str, Sequence[tuple[float, float]]],
+        qlen_series: Mapping[str, Sequence[tuple[float, float]]],
+        system_load_series: Sequence[tuple[float, float]],
+        system_load_by_priority: Mapping[str, Sequence[tuple[float, float]]],
+        episode_durations_by_res: Mapping[str, Sequence[float]],
+        episode_starts_by_res: Mapping[str, Sequence[float]],
+        wait_times_by_priority: Mapping[str, Sequence[float]],
+        per_patient_discharge_times: Sequence[float],
+        per_patient_priorities: Sequence[str],
+    ) -> None:
         avg = float(np.mean(waits)) if len(waits) else 0.0
         med = float(np.median(waits)) if len(waits) else 0.0
         stats = {
@@ -433,14 +528,77 @@ class MetricsService:
         }
         with open(out_path / "wait_times.json", "w", encoding="utf-8") as f:
             json.dump(stats, f, indent=2)
-        # Plots
-        self.plot_wait_times(waits, out_path / "wait_times.svg")
-        self.plot_wait_times_by_priority(wait_times_by_priority, out_path / "wait_times_by_priority.svg")
-        self.plot_per_patient_waits(per_patient_discharge_times, waits, per_patient_priorities, out_path / "per_patient_waits.svg")
-        self.plot_resource_utilization(utilizations, out_path / "resource_utilization.svg")
-        self.plot_resource_inuse_timeline(inuse_series, out_path / "resource_inuse_timeline.svg")
-        self.plot_queue_length_timeline(qlen_series, out_path / "queue_length_timeline.svg")
-        self.plot_system_load_timeline(system_load_series, out_path / "system_load_timeline.svg")
-        self.plot_system_load_by_priority_timeline(system_load_by_priority, out_path / "system_load_by_priority_timeline.svg")
-        self.plot_service_times_hist_by_resource(episode_durations_by_res, out_path / "service_times_by_resource.svg")
-        self.plot_service_times_timeline(episode_starts_by_res, episode_durations_by_res, out_path / "service_times_timeline.svg")
+        # Save plots into structured subfolders only
+        # timeline subfolders
+        self.plot_per_patient_waits(per_patient_discharge_times, waits, per_patient_priorities, out_path / "timeline" / "wait_times" / "per_patient_waits.svg")
+        self.plot_resource_inuse_timeline(inuse_series, out_path / "timeline" / "resource_utilizations" / "resource_inuse_timeline.svg")
+        self.plot_queue_length_timeline(qlen_series, out_path / "timeline" / "resource_utilizations" / "queue_length_timeline.svg")
+        self.plot_system_load_timeline(system_load_series, out_path / "timeline" / "system" / "system_load_timeline.svg")
+        self.plot_system_load_by_priority_timeline(system_load_by_priority, out_path / "timeline" / "system" / "system_load_by_priority_timeline.svg")
+        self.plot_service_times_timeline(episode_starts_by_res, episode_durations_by_res, out_path / "timeline" / "service_times" / "service_times_timeline.svg")
+        # average/median subfolders
+        self.plot_wait_times(waits, out_path / "average" / "wait_times" / "wait_times.svg")
+        self.plot_wait_times_by_priority(wait_times_by_priority, out_path / "average" / "wait_times" / "wait_times_by_priority.svg")
+        self.plot_resource_utilization(utilizations, out_path / "average" / "resource_utilizations" / "resource_utilization.svg")
+        self.plot_service_times_hist_by_resource(episode_durations_by_res, out_path / "average" / "service_times" / "service_times_by_resource.svg")
+        # duplicate into median folder as requested
+        self.plot_wait_times(waits, out_path / "median" / "wait_times" / "wait_times.svg")
+        self.plot_wait_times_by_priority(wait_times_by_priority, out_path / "median" / "wait_times" / "wait_times_by_priority.svg")
+        self.plot_resource_utilization(utilizations, out_path / "median" / "resource_utilizations" / "resource_utilization.svg")
+        self.plot_service_times_hist_by_resource(episode_durations_by_res, out_path / "median" / "service_times" / "service_times_by_resource.svg")
+
+    # --- Computation from ingested history ---
+    def compute_and_export(self, output_dir: str | Path, sim_duration: float) -> None:
+        out_path = Path(output_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        horizon = float(sim_duration) if float(sim_duration) > 0 else 1.0
+        hist = list(self.history)
+        if not hist:
+            self._handle_empty_history(out_path)
+            return
+        # Sort by time
+        hist.sort(key=lambda s: float(s.time))
+        prio_labels = self._prepare_prio_labels()
+        (
+            inuse_series,
+            qlen_series,
+            system_load_series,
+            system_load_by_priority,
+            inuse_area,
+            episode_durations_by_res,
+            episode_starts_by_res,
+            arrival_by_pid,
+            prio_by_pid,
+            first_service_start_by_pid,
+            discharge_time_by_pid,
+        ) = self._compute_timelines_and_episodes(hist, prio_labels, horizon)
+        waits, queue_waits, wait_times_by_priority, per_patient_discharge_times, per_patient_priorities = self._derive_patient_waits(
+            arrival_by_pid,
+            prio_by_pid,
+            first_service_start_by_pid,
+            discharge_time_by_pid,
+        )
+        capacities = self._infer_capacities(hist[-1])
+        modeled_expected_queue_wait, utilizations = self._compute_modeled_queue_wait_and_utilizations(
+            episode_durations_by_res,
+            inuse_area,
+            capacities,
+            float(hist[-1].time),
+            horizon,
+        )
+        self._export_stats_and_plots(
+            out_path,
+            waits,
+            queue_waits,
+            modeled_expected_queue_wait,
+            utilizations,
+            inuse_series,
+            qlen_series,
+            system_load_series,
+            system_load_by_priority,
+            episode_durations_by_res,
+            episode_starts_by_res,
+            wait_times_by_priority,
+            per_patient_discharge_times,
+            per_patient_priorities,
+        )

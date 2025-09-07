@@ -34,17 +34,31 @@ class Hospital:
     _alloc_idx: int = field(default=0, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        self._validate_config()
+        self._setup_output_and_logging()
+        self._init_resources()
+        self._init_operations_state()
+        self._init_services()
+
+    # ---- Initialization helpers ----
+    def _validate_config(self) -> None:
         if self.num_doctors <= 0 or self.num_mri <= 0 or self.num_beds <= 0:
             raise ValueError("All resource counts must be positive integers for a viable system configuration")
+
+    def _setup_output_and_logging(self) -> None:
         # Prepare output directory and logging
         self.output_dir = Path(__file__).resolve().parents[1] / "output"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         LoggerService.initialize(self.output_dir)
         self.logger = LoggerService.get_logger(__name__)
+
+    def _init_resources(self) -> None:
         # Resources (domain-level references, not SimPy resources)
         self.doctors = [Doctor(i) for i in range(self.num_doctors)]
         self.mri_machines = [MRIMachine(i) for i in range(self.num_mri)]
         self.beds = [Bed(i) for i in range(self.num_beds)]
+
+    def _init_operations_state(self) -> None:
         # initialize detailed operations state
         resources = {
             ResourceType.DOCTOR: ResourceState(ResourceType.DOCTOR, self.num_doctors, 0),
@@ -57,6 +71,8 @@ class Hospital:
             ResourceType.BED: [],
         }
         self.operations_state = OperationsState(time=0.0, resources=resources, queues=queues, patients={})
+
+    def _init_services(self) -> None:
         # services
         self.triage = TriageNurse(0)
         self.time_service = TimeService(self.seed)
@@ -91,11 +107,10 @@ class Hospital:
         pst = self.operations_state.patients[patient.id]
         pst.priority = patient.priority
         pst.status = PatientStatus.TRIAGED
-        # Determine required resource based on triage output (should be DOCTOR per user requirement)
+        # Determine required resource based on triage output (must be provided by triage/agent)
         if patient.required_resource is None:
-            rtype = ResourceType.DOCTOR
-        else:
-            rtype = patient.required_resource
+            raise ValueError("Patient required_resource not set by triage")
+        rtype = patient.required_resource
         patient.required_resource = rtype
         pst.required_resource = rtype
         self.logger.debug("Patient %s triaged with priority=%s, first resource=%s", patient.id, str(patient.priority), rtype.name)
@@ -169,6 +184,10 @@ class Hospital:
             float(now), patient.id, rtype.name, str(decision.should_preempt), str(decision.target_index)
         )
         return bool(decision.should_preempt)
+
+    def is_preemptive_resource(self, rtype: ResourceType) -> bool:
+        """Whether the given resource type is modeled as preemptive in the system."""
+        return rtype.preemptible
 
     def on_service_preempted(self, patient: Patient, rtype: ResourceType, now: float) -> None:
         self.set_time(now)

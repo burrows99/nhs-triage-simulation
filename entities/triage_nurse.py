@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enums.priority import Priority
-from enums.resource_type import ResourceType
 from entities.base import BaseEntity
 from entities.patient import Patient
 from services.manchester_triage import ManchesterTriageSystem, ManchesterSymptoms
@@ -33,7 +32,7 @@ class TriageNurse(BaseEntity):
     def assess_and_assign_priority(self, patient: Patient) -> Priority:
         """Assess a patient and assign a triage priority using a simplified MTS classifier.
         Generates a basic symptoms profile (in lieu of full clinical data) and classifies it.
-        Also sets patient's initial required resource guided by agent recommendation, defaulting to DOCTOR.
+        Also sets patient's initial required resource guided by agent recommendation; must be explicitly provided.
         """
         # Deterministic pseudo-random profile from patient id for reproducibility
         def prng(a: int) -> float:
@@ -61,9 +60,9 @@ class TriageNurse(BaseEntity):
         # Store triage outputs on patient
         patient.symptoms = symptoms
         patient.priority = pr
-        # Attempt an initial resource recommendation via embedded agent
+        # Attempt an initial resource recommendation via embedded agent (must not be None)
         initial = self.agent.recommend_initial_resource(patient)
-        patient.required_resource = initial if initial is not None else ResourceType.DOCTOR
+        patient.required_resource = initial
         self.logger.info(
             f"Triage assessed patient {patient.id} -> priority={pr.name} "
             f"[resp={respiration_distress:.2f}, bleed={bleeding:.2f}, cons={consciousness_impairment:.2f}, "
@@ -78,9 +77,12 @@ class TriageNurse(BaseEntity):
         Only DOCTOR and MRI are considered preemptible; BED is not.
         """
         rtype = patient.required_resource
-        # Non-preemptible or unknown resource -> never preempt
-        if rtype is None or not rtype.preemptible:
-            self.logger.debug("Preemption not allowed for resource %s; returning no-preempt decision", getattr(rtype, 'name', rtype))
+        # required_resource must be present
+        if rtype is None:
+            raise ValueError("Patient has no required_resource set; cannot make preemption recommendation")
+        # Non-preemptible resource -> never preempt
+        if not rtype.preemptible:
+            self.logger.debug("Preemption not allowed for resource %s; returning no-preempt decision", rtype.name)
             return PreemptionDecision(False, rtype, None)
         # Delegate randomized decision to the embedded agent
         decision = self.agent.decide(patient, ops_state)
