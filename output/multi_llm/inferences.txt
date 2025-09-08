@@ -1,0 +1,12 @@
+doctor avg wait 1.6 min is low (threshold: 12.0 min)
+doctor underutilized at 41.6%
+mri avg wait 0.0 min is low (threshold: 24.0 min)
+mri underutilized at 9.6%
+ultrasound avg wait 8.9 min is low (threshold: 16.0 min)
+ultrasound underutilized at 34.3%
+bed avg wait 7.6 min is low (threshold: 48.0 min)
+Urgent MRI cases: 2 total patients needed urgent MRI and bed
+Out of 2, 2 bypassed doctor and went directly to MRI (100.0% bypass rate)
+Model accuracy (mock eval): Simulated 100.0% (set factor: 70.0%), difference: 0.300
+Mock eval details: 2 urgent cases evaluated, 2 correctly bypassed doctor
+Mock evaluation: Assessed routing accuracy for urgent MRI cases using simulation outcomes as proxy for Synthea synthetic data and LLM responses. Ground truth: bypass doctor for urgent cases.

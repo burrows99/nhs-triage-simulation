@@ -1,0 +1,12 @@
+doctor: lowest avg wait 1.6 min in multi_llm
+doctor: highest utilization 76.6% in single_llm
+mri: lowest avg wait 0.0 min in rule_based
+mri: highest utilization 21.5% in rule_based
+ultrasound: lowest avg wait 1.3 min in single_llm
+ultrasound: highest utilization 35.7% in rule_based
+bed: lowest avg wait 4.2 min in rule_based
+bed: highest utilization 95.8% in single_llm
+Urgent MRI bypass: highest rate 100.0% in multi_llm
+Most urgent MRI cases handled: 4 in rule_based
+Model accuracy: highest simulated accuracy 100.0% in multi_llm
+Model accuracy: closest to set factor (diff 0.000) in rule_based
