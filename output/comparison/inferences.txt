@@ -1,12 +1,86 @@
-doctor: lowest avg wait 1.6 min in multi_llm
-doctor: highest utilization 76.6% in single_llm
-mri: lowest avg wait 0.0 min in rule_based
-mri: highest utilization 21.5% in rule_based
-ultrasound: lowest avg wait 1.3 min in single_llm
-ultrasound: highest utilization 35.7% in rule_based
-bed: lowest avg wait 4.2 min in rule_based
-bed: highest utilization 95.8% in single_llm
-Urgent MRI bypass: highest rate 100.0% in multi_llm
-Most urgent MRI cases handled: 4 in rule_based
-Model accuracy: highest simulated accuracy 100.0% in multi_llm
-Model accuracy: closest to set factor (diff 0.000) in rule_based
+=== COMPREHENSIVE SCENARIO COMPARISON ===
+Comparing 3 scenarios: rule_based, single_llm, multi_llm
+
+--- RESOURCE PERFORMANCE COMPARISON ---
+
+DOCTOR RESOURCE COMPARISON:
+  Wait Time Ranking (best to worst):
+    1. single_llm: 117.90 min 🏆 BEST
+    2. rule_based: 173.90 min
+    3. multi_llm: 287.11 min ❌ WORST
+  Performance Gap: 143.5% difference between best and worst
+  Utilization Ranking (highest to lowest):
+    1. single_llm: 100.3% ⚠️  HIGH
+    2. rule_based: 100.2% ⚠️  HIGH
+    3. multi_llm: 100.1% ⚠️  HIGH
+
+MRI RESOURCE COMPARISON:
+  Wait Time Ranking (best to worst):
+    1. multi_llm: 7.98 min 🏆 BEST
+    2. single_llm: 32.92 min
+    3. rule_based: 77.71 min ❌ WORST
+  Performance Gap: 874.1% difference between best and worst
+  Utilization Ranking (highest to lowest):
+    1. rule_based: 74.2% ✅ OPTIMAL
+    2. single_llm: 56.0% ✅ OPTIMAL
+    3. multi_llm: 37.3% 📉 LOW
+
+ULTRASOUND RESOURCE COMPARISON:
+  Wait Time Ranking (best to worst):
+    1. single_llm: 63.09 min 🏆 BEST
+    2. multi_llm: 86.25 min
+    3. rule_based: 117.09 min ❌ WORST
+  Performance Gap: 85.6% difference between best and worst
+  Utilization Ranking (highest to lowest):
+    1. rule_based: 91.4% ⚠️  HIGH
+    2. multi_llm: 88.6% ✅ OPTIMAL
+    3. single_llm: 80.1% ✅ OPTIMAL
+
+BED RESOURCE COMPARISON:
+  Wait Time Ranking (best to worst):
+    1. multi_llm: 302.74 min 🏆 BEST
+    2. rule_based: 483.16 min
+    3. single_llm: 491.39 min ❌ WORST
+  Performance Gap: 62.3% difference between best and worst
+  Utilization Ranking (highest to lowest):
+    1. multi_llm: 101.5% ⚠️  HIGH
+    2. single_llm: 101.3% ⚠️  HIGH
+    3. rule_based: 99.3% ⚠️  HIGH
+
+--- URGENT CARE ROUTING COMPARISON ---
+Urgent MRI Bypass Rate Ranking:
+  1. single_llm: 78.2% ✅ GOOD
+  2. multi_llm: 71.7% ✅ GOOD
+  3. rule_based: 0.0% ❌ POOR
+
+Urgent Cases Volume:
+  rule_based: 120.0 urgent MRI cases
+  single_llm: 110.0 urgent MRI cases
+  multi_llm: 99.0 urgent MRI cases
+
+--- MODEL ACCURACY COMPARISON ---
+Simulated Accuracy Ranking:
+  1. single_llm: 78.2%
+  2. multi_llm: 71.7%
+  3. rule_based: 0.0%
+
+Accuracy Deviation from Expected (closest to furthest):
+  1. rule_based: 0.000 deviation 🏆 EXCELLENT
+  2. multi_llm: 0.017 deviation 🏆 EXCELLENT
+  3. single_llm: 0.018 deviation 🏆 EXCELLENT
+
+--- OVERALL PERFORMANCE SUMMARY ---
+Overall Performance Ranking (weighted by wait times, routing accuracy, and model accuracy):
+  1. multi_llm: Score 16 🥇
+  2. rule_based: Score 13 🥈
+  3. single_llm: Score 13 🥉
+
+--- RECOMMENDATIONS ---
+🎯 RECOMMENDED SCENARIO: multi_llm
+   Rationale: Best overall balance of wait times, routing accuracy, and model performance
+⚠️  AVOID: single_llm shows poorest overall performance
+
+💡 IMPROVEMENT OPPORTUNITIES:
+  rule_based: reduce wait times for doctor, mri, ultrasound, bed; improve urgent case routing accuracy
+  single_llm: reduce wait times for doctor, ultrasound, bed
+  multi_llm: reduce wait times for doctor, ultrasound, bed; optimize utilization of mri

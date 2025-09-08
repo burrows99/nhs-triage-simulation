@@ -1,12 +1,99 @@
-doctor avg wait 9.9 min is low (threshold: 12.0 min)
-mri avg wait 0.0 min is low (threshold: 24.0 min)
-mri underutilized at 2.4%
-ultrasound avg wait 1.3 min is low (threshold: 16.0 min)
-ultrasound underutilized at 27.3%
-bed avg wait 28.5 min is low (threshold: 48.0 min)
-bed heavily utilized at 95.8%
-Urgent MRI cases: 2 total patients needed urgent MRI and bed
-Out of 2, 1 bypassed doctor and went directly to MRI (50.0% bypass rate)
-Model accuracy (mock eval): Simulated 50.0% (set factor: 80.0%), difference: 0.300
-Mock eval details: 2 urgent cases evaluated, 1 correctly bypassed doctor
-Mock evaluation: Assessed routing accuracy for urgent MRI cases using simulation outcomes as proxy for Synthea synthetic data and LLM responses. Ground truth: bypass doctor for urgent cases.
+=== DETAILED SIMULATION ANALYSIS ===
+
+--- RESOURCE PERFORMANCE ANALYSIS ---
+
+DOCTOR RESOURCE:
+  Wait Times: Average 117.90 min, Median 24.49 min (Service time: 15 min)
+  ⚠️  HIGH WAIT TIME: 7.86x service time (threshold: 1.5x)
+      This indicates potential bottleneck - consider increasing capacity
+  Queue Statistics: Max 3, Average 3.00, Std Dev 0.05
+  ✅ MANAGEABLE QUEUES: Peak within acceptable limits
+  Utilization: 100.32%
+  ⚠️  HIGH UTILIZATION: Risk of service degradation and longer waits
+      Recommendation: Increase capacity or optimize workflow
+
+MRI RESOURCE:
+  Wait Times: Average 32.92 min, Median 7.58 min (Service time: 30 min)
+  📊 MODERATE WAIT TIME: 1.10x service time - within acceptable range
+  Queue Statistics: Max 1, Average 0.55, Std Dev 0.50
+  ✅ MANAGEABLE QUEUES: Peak within acceptable limits
+  Utilization: 55.97%
+  ✅ OPTIMAL UTILIZATION: Good balance between efficiency and service quality
+
+ULTRASOUND RESOURCE:
+  Wait Times: Average 63.09 min, Median 15.63 min (Service time: 20 min)
+  ⚠️  HIGH WAIT TIME: 3.15x service time (threshold: 1.5x)
+      This indicates potential bottleneck - consider increasing capacity
+  Queue Statistics: Max 1, Average 0.79, Std Dev 0.41
+  ✅ MANAGEABLE QUEUES: Peak within acceptable limits
+  Utilization: 80.08%
+  ✅ OPTIMAL UTILIZATION: Good balance between efficiency and service quality
+
+BED RESOURCE:
+  Wait Times: Average 491.39 min, Median 59.86 min (Service time: 60 min)
+  ⚠️  HIGH WAIT TIME: 8.19x service time (threshold: 1.5x)
+      This indicates potential bottleneck - consider increasing capacity
+  Queue Statistics: Max 5, Average 4.98, Std Dev 0.29
+  ✅ MANAGEABLE QUEUES: Peak within acceptable limits
+  Utilization: 101.33%
+  ⚠️  HIGH UTILIZATION: Risk of service degradation and longer waits
+      Recommendation: Increase capacity or optimize workflow
+
+--- COMPREHENSIVE PATIENT ROUTING ANALYSIS ---
+🚨 URGENT MRI CASES ANALYSIS:
+  Total Urgent Cases: 110 patients (red triage + MRI needed)
+  Direct MRI Routing: 86 patients bypassed doctor (78.2% bypass rate)
+  Doctor-First Routing: 24 patients went to doctor first (21.8%)
+  📊 GOOD URGENT ROUTING: Moderate bypass rate with room for improvement
+
+📋 COMPREHENSIVE ROUTING PATHWAY ANALYSIS:
+  Total Patients Processed: 2040
+
+  🏥 ROUTING PATHWAYS BREAKDOWN:
+    • Doctor-Only Path: 1527 patients (74.9%)
+      └─ No imaging required, direct to bed after doctor consultation
+    • Doctor → MRI → Bed: 0 patients (0.0%)
+      └─ Standard MRI pathway through doctor first
+    • Doctor → Ultrasound → Bed: 427 patients (20.9%)
+      └─ Standard ultrasound pathway through doctor first
+    • Doctor → Both Imaging → Bed: 0 patients (0.0%)
+      └─ Complex cases requiring both MRI and ultrasound
+    • Direct MRI Access: 86 patients (4.2%)
+      └─ Bypassed doctor consultation for urgent cases
+    • Direct Ultrasound Access: 0 patients (0.0%)
+      └─ Direct ultrasound routing (if implemented)
+
+  🚨 TRIAGE DISTRIBUTION:
+    • Red (Critical): 218 patients (10.7%)
+    • Orange (Urgent): 306 patients (15.0%)
+    • Yellow (Less Urgent): 479 patients (23.5%)
+    • Green (Non-Urgent): 541 patients (26.5%)
+    • Blue (Lowest Priority): 496 patients (24.3%)
+
+  🔬 IMAGING REQUIREMENTS:
+    • MRI Required: 110 patients (5.4%)
+    • Ultrasound Required: 444 patients (21.8%)
+    • Both Imaging Required: 22 patients (1.1%)
+    • No Imaging Required: 1508 patients (73.9%)
+
+  📊 ROUTING EFFICIENCY INSIGHTS:
+    📝 Direct ultrasound routing not implemented - all ultrasound via doctor
+    ✅ Efficient doctor-only pathway for 1527 patients requiring no imaging
+    🔄 Complex cases: 22 patients required multiple imaging modalities
+
+  💡 PATHWAY OPTIMIZATION RECOMMENDATIONS:
+    • Consider implementing direct ultrasound routing for appropriate cases
+    • Evaluate opportunities for more direct MRI access beyond urgent cases
+    • High proportion of doctor-only cases - ensure adequate doctor capacity
+    • Optimize scheduling for patients requiring multiple imaging studies
+
+--- MODEL ACCURACY EVALUATION ---
+Routing Accuracy Assessment:
+  Simulated Accuracy: 78.2%
+  Expected Accuracy: 80.0%
+  Accuracy Difference: 0.018 (2.3% deviation)
+  Sample Size: 110 urgent cases evaluated
+  Correct Decisions: 86 out of 110 cases
+✅ EXCELLENT MODEL PERFORMANCE: Accuracy very close to expected
+
+Technical Note: Comprehensive evaluation: Assessed routing patterns across all patient pathways including urgent MRI routing, direct imaging access, doctor-only pathways, and triage-based routing efficiency. Ground truth: bypass doctor for urgent cases, optimize pathways based on patient needs.
