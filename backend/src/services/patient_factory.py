@@ -74,8 +74,8 @@ class PatientFactory:
     
     def create_patient(self, target_priority: Optional[Priority] = None) -> Patient:
         """Create a single patient with optional target priority"""
-        # Generate basic patient info
-        name: str = self.fake.name()
+        # Generate basic patient info - use first_name + last_name to avoid titles like "Dr."
+        name: str = f"{self.fake.first_name()} {self.fake.last_name()}"
         
         # Generate symptoms based on target priority or random
         if target_priority:

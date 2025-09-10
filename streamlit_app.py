@@ -29,14 +29,15 @@ st.markdown("""
 
 def load_simulation_data(file_path: str) -> Optional[Dict[str, Any]]:
     """Load simulation data from JSON file"""
+    backend_path = os.path.join('backend', os.path.basename(file_path))
     try:
-        with open(file_path, 'r') as f:
+        with open(backend_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        st.error(f"Simulation file not found: {file_path}")
+        st.error(f"Simulation file not found: {backend_path}")
         return None
     except json.JSONDecodeError:
-        st.error(f"Invalid JSON file: {file_path}")
+        st.error(f"Invalid JSON file: {backend_path}")
         return None
 
 def get_priority_color(priority: str) -> str:
@@ -130,12 +131,12 @@ def display_hospital_status(events: List[Dict[str, Any]]):
             </div>
             """, unsafe_allow_html=True)
 
-def display_hospital_layout(active_patients: Dict[str, Any], resource_status: Dict[str, List[str]], processed_patients: Optional[List[Dict[str, Any]]] = None):
+def display_hospital_layout(active_patients: Dict[str, Any], resource_status: Dict[str, List[str]], processed_patients: Optional[List[Dict[str, Any]]] = None, simulation_data: Optional[Dict[str, Any]] = None, current_event: Optional[Dict[str, Any]] = None):
     """Display visual hospital layout with resources and patient queues"""
     st.markdown("### 🏥 Hospital Layout with Live Patient Queues")
     
-    # Create columns for different areas - ordered: Triage, Doctors, Equipment, Beds, Processed
-    col1, col2, col3, col4, col5 = st.columns(5)
+    # Create columns for different areas - ordered: Triage, Routing Agent, Doctors, Equipment, Beds, Processed
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     
     with col1:
         st.markdown("#### 🚪 Entrance & Triage")
@@ -181,6 +182,95 @@ def display_hospital_layout(active_patients: Dict[str, Any], resource_status: Di
                 """, unsafe_allow_html=True)
     
     with col2:
+        st.markdown("#### 🤖 Routing Agent")
+        
+        # Check if current event is a routing decision
+        if current_event and current_event.get('event_type') == 'ROUTING_DECISION':
+            details = current_event.get('details', {})
+            assign_doctor = details.get('assign_doctor', False)
+            assign_bed = details.get('assign_bed', False)
+            patient_name = current_event.get('patient_name', 'Unknown')
+            priority = current_event.get('priority', 'unknown')
+            
+            st.markdown(f"""
+            <div style="background: #fff3e0; padding: 12px; border-radius: 8px; margin: 5px 0; border: 2px solid #ff9800; min-height: 120px;">
+                <h5 style="color: #f57c00; margin: 0 0 8px 0;">🤖 Processing Decision</h5>
+                <p style="margin: 5px 0; font-size: 12px;"><strong>👤 Patient:</strong> {patient_name}</p>
+                <p style="margin: 5px 0; font-size: 12px;"><strong>🚨 Priority:</strong> {priority.upper()}</p>
+                <div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 8px 0;">
+                    <p style="margin: 3px 0; font-size: 11px;">👨‍⚕️ <strong>Doctor:</strong> <span style="color: {'green' if assign_doctor else 'red'}; font-weight: bold;">{'✅ YES' if assign_doctor else '❌ NO'}</span></p>
+                    <p style="margin: 3px 0; font-size: 11px;">🛏️ <strong>Urgent Bed:</strong> <span style="color: {'green' if assign_bed else 'red'}; font-weight: bold;">{'✅ YES' if assign_bed else '❌ NO'}</span></p>
+                </div>
+                <p style="margin: 5px 0; font-size: 10px; color: #666; font-style: italic;">💡 {('High priority: Both doctor and bed' if assign_bed else 'Standard: Doctor only')}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        elif current_event and current_event.get('event_type') == 'TRIAGE_COMPLETE':
+            patient_name = current_event.get('patient_name', 'Unknown')
+            priority = current_event.get('priority', 'unknown')
+            
+            st.markdown(f"""
+            <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 5px 0; border: 2px solid #2196f3; min-height: 120px;">
+                <h5 style="color: #1976d2; margin: 0 0 8px 0;">🤖 Awaiting Patient</h5>
+                <p style="margin: 5px 0; font-size: 12px;"><strong>👤 From Triage:</strong> {patient_name}</p>
+                <p style="margin: 5px 0; font-size: 12px;"><strong>🚨 Priority:</strong> {priority.upper()}</p>
+                <div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 8px 0;">
+                    <p style="margin: 3px 0; font-size: 11px; color: #666;">⏳ Analyzing patient priority...</p>
+                    <p style="margin: 3px 0; font-size: 11px; color: #666;">🔄 Determining routing decision...</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # Find routing decision for current patient if available
+            current_patient_routing = None
+            current_patient_name = current_event.get('patient_name') if current_event else None
+            
+            if current_patient_name and simulation_data and 'events' in simulation_data:
+                # Look for routing decision for the current patient
+                for event in simulation_data['events']:
+                    if (event.get('event_type') == 'ROUTING_DECISION' and 
+                        event.get('patient_name') == current_patient_name):
+                        current_patient_routing = event
+                        break
+            
+            # If no current patient routing found, get the most recent routing decision
+            if not current_patient_routing and simulation_data and 'events' in simulation_data:
+                for event in reversed(simulation_data['events']):
+                    if event.get('event_type') == 'ROUTING_DECISION':
+                        current_patient_routing = event
+                        break
+            
+            latest_routing_decision = current_patient_routing
+            
+            if latest_routing_decision:
+                details = latest_routing_decision.get('details', {})
+                assign_doctor = details.get('assign_doctor', False)
+                assign_bed = details.get('assign_bed', False)
+                patient_name = latest_routing_decision.get('patient_name', 'Unknown')
+                priority = latest_routing_decision.get('priority', 'unknown')
+                
+                st.markdown(f"""
+                <div style="background: #fff3e0; padding: 12px; border-radius: 8px; margin: 5px 0; border: 2px solid #ff9800; min-height: 120px;">
+                    <h5 style="color: #f57c00; margin: 0 0 8px 0;">🤖 Current Decision</h5>
+                    <p style="margin: 5px 0; font-size: 12px;"><strong>👤 Patient:</strong> {patient_name}</p>
+                    <p style="margin: 5px 0; font-size: 12px;"><strong>🚨 Priority:</strong> {priority.upper()}</p>
+                    <div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 8px 0;">
+                        <p style="margin: 3px 0; font-size: 11px;">👨‍⚕️ <strong>Doctor:</strong> <span style="color: {'green' if assign_doctor else 'red'}; font-weight: bold;">{'✅ YES' if assign_doctor else '❌ NO'}</span></p>
+                        <p style="margin: 3px 0; font-size: 11px;">🛏️ <strong>Urgent Bed:</strong> <span style="color: {'green' if assign_bed else 'red'}; font-weight: bold;">{'✅ YES' if assign_bed else '❌ NO'}</span></p>
+                    </div>
+                    <p style="margin: 5px 0; font-size: 10px; color: #666; font-style: italic;">💡 {('High priority: Both doctor and bed' if assign_bed else 'Standard: Doctor only')}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; margin: 5px 0; border: 2px solid #cccccc; min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                    <div style="text-align: center;">
+                        <h5 style="color: #666; margin: 0;">🤖 Routing Agent</h5>
+                        <p style="color: #999; font-size: 12px; margin: 5px 0;">⏳ Waiting for patients</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    with col3:
         st.markdown("#### 👨‍⚕️ Doctors")
         doctors = ["Dr. Emergency", "Dr. Heart", "Dr. General"]
         
@@ -246,14 +336,14 @@ def display_hospital_layout(active_patients: Dict[str, Any], resource_status: Di
                      </div>
                      """, unsafe_allow_html=True)
     
-    with col3:
-        st.markdown("#### 🔬 Equipment")
-        
-        # MRI Machines
-        st.markdown("**🔬 MRI Machines**")
-        mri_machines = ["MRI-1", "MRI-2"]
-        
-        for mri in mri_machines:
+    with col4:
+         st.markdown("#### 🔬 Equipment")
+         
+         # MRI Machines
+         st.markdown("**🔬 MRI Machines**")
+         mri_machines = ["MRI-1", "MRI-2"]
+         
+         for mri in mri_machines:
             # Get patients using this MRI
             mri_patients = resource_status.get(mri, [])
             
@@ -291,53 +381,53 @@ def display_hospital_layout(active_patients: Dict[str, Any], resource_status: Di
                     </div>
                     """, unsafe_allow_html=True)
         
-        # Ultrasonic Machines
-        st.markdown("**🔊 Ultrasonic Machines**")
-        ultrasonic_machines = ["Ultrasonic-1", "Ultrasonic-2"]
-        
-        for ultrasonic in ultrasonic_machines:
-            # Get patients using this Ultrasonic
-            ultrasonic_patients = resource_status.get(ultrasonic, [])
-            
-            with st.container():
-                # Get patient details for this Ultrasonic
-                ultrasonic_patient_cards: List[str] = []
-                for p in ultrasonic_patients:
-                    if p in active_patients:
-                        patient_info = active_patients[p]
-                        priority = patient_info.get('priority', 'green')
-                        status = patient_info.get('status', 'Unknown')
-                        priority_color = get_priority_color_hex(priority)
-                        ultrasonic_patient_cards.append(
-                            f'<div style="background: {priority_color}; color: white; padding: 4px 6px; margin: 2px 0; border-radius: 3px; font-size: 10px;">'
-                            f'<strong>{p}</strong><br>📋 {status}'
-                            f'</div>'
-                        )
-                
-                if ultrasonic_patient_cards:
-                    st.markdown(f"""
-                    <div style="background: #e8f5e8; padding: 8px; border-radius: 6px; margin: 3px 0; border: 1px solid #4caf50; min-height: 60px;">
-                        <h6 style="color: #2e7d32; margin: 0 0 4px 0; font-size: 12px;">🔊 {ultrasonic}</h6>
-                        <div style="max-height: 100px; overflow-y: auto;">
-                            {''.join(ultrasonic_patient_cards)}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div style="background: #f5f5f5; padding: 8px; border-radius: 6px; margin: 3px 0; border: 1px solid #cccccc; min-height: 60px; display: flex; align-items: center; justify-content: center;">
-                        <div style="text-align: center;">
-                            <h6 style="color: #666; margin: 0; font-size: 12px;">🔊 {ultrasonic}</h6>
-                            <p style="color: #999; font-size: 10px; margin: 2px 0;">Available</p>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+         # Ultrasonic Machines
+         st.markdown("**🔊 Ultrasonic Machines**")
+         ultrasonic_machines = ["Ultrasonic-1", "Ultrasonic-2"]
+         
+         for ultrasonic in ultrasonic_machines:
+             # Get patients using this Ultrasonic
+             ultrasonic_patients = resource_status.get(ultrasonic, [])
+             
+             with st.container():
+                 # Get patient details for this Ultrasonic
+                 ultrasonic_patient_cards: List[str] = []
+                 for p in ultrasonic_patients:
+                     if p in active_patients:
+                         patient_info = active_patients[p]
+                         priority = patient_info.get('priority', 'green')
+                         status = patient_info.get('status', 'Unknown')
+                         priority_color = get_priority_color_hex(priority)
+                         ultrasonic_patient_cards.append(
+                             f'<div style="background: {priority_color}; color: white; padding: 4px 6px; margin: 2px 0; border-radius: 3px; font-size: 10px;">'
+                             f'<strong>{p}</strong><br>📋 {status}'
+                             f'</div>'
+                         )
+                 
+                 if ultrasonic_patient_cards:
+                     st.markdown(f"""
+                     <div style="background: #e8f5e8; padding: 8px; border-radius: 6px; margin: 3px 0; border: 1px solid #4caf50; min-height: 60px;">
+                         <h6 style="color: #2e7d32; margin: 0 0 4px 0; font-size: 12px;">🔊 {ultrasonic}</h6>
+                         <div style="max-height: 100px; overflow-y: auto;">
+                             {''.join(ultrasonic_patient_cards)}
+                         </div>
+                     </div>
+                     """, unsafe_allow_html=True)
+                 else:
+                     st.markdown(f"""
+                     <div style="background: #f5f5f5; padding: 8px; border-radius: 6px; margin: 3px 0; border: 1px solid #cccccc; min-height: 60px; display: flex; align-items: center; justify-content: center;">
+                         <div style="text-align: center;">
+                             <h6 style="color: #666; margin: 0; font-size: 12px;">🔊 {ultrasonic}</h6>
+                             <p style="color: #999; font-size: 10px; margin: 2px 0;">Available</p>
+                         </div>
+                     </div>
+                     """, unsafe_allow_html=True)
     
-    with col4:
-        st.markdown("#### 🛏️ Beds")
-        beds = ["ICU-1", "Ward-A1", "Ward-A2"]
-        
-        for bed in beds:
+    with col5:
+         st.markdown("#### 🛏️ Beds")
+         beds = ["ICU-1", "Ward-A1", "Ward-A2"]
+         
+         for bed in beds:
             # Get patients in this bed
             bed_patients = resource_status.get(bed, [])
             
@@ -377,10 +467,10 @@ def display_hospital_layout(active_patients: Dict[str, Any], resource_status: Di
                     </div>
                     """, unsafe_allow_html=True)
     
-    with col5:
-         st.markdown("#### ✅ Processed Patients")
-         
-         with st.container():
+    with col6:
+          st.markdown("#### ✅ Processed Patients")
+          
+          with st.container():
              if processed_patients and len(processed_patients) > 0:
                  # Show most recent processed patients (limit to last 10)
                  recent_processed: List[Dict[str, Any]] = processed_patients[-10:] if len(processed_patients) > 10 else processed_patients
@@ -428,7 +518,7 @@ def get_priority_color_hex(priority: str) -> str:
     }
     return colors.get(priority, "#4caf50")
 
-def display_live_events(events: List[Dict[str, Any]], start_time: str, speed_multiplier: float = 1.0):
+def display_live_events(events: List[Dict[str, Any]], start_time: str, speed_multiplier: float = 1.0, simulation_data: Optional[Dict[str, Any]] = None):
     """Display events in real-time simulation with visual hospital layout"""
     st.subheader("🔴 Live Hospital Simulation")
     
@@ -532,18 +622,38 @@ def display_live_events(events: List[Dict[str, Any]], start_time: str, speed_mul
         
         # Display current event
         with event_container.container():
-            st.markdown(f"""
-            <div class="event-card {get_priority_color(priority)}">
-                <h4>🕐 {event_time} - {event_type.replace('_', ' ').title()}</h4>
-                <p><strong>👤 Patient:</strong> {patient_name}</p>
-                {f"<p><strong>📍 Resource:</strong> {resource_name}</p>" if resource_name else ""}
-                {f"<p><strong>🚨 Priority:</strong> {priority.upper()}</p>" if priority else ""}
-            </div>
-            """, unsafe_allow_html=True)
+            # Special handling for routing decisions
+            if event_type == 'ROUTING_DECISION':
+                details = event.get('details', {})
+                assign_doctor = details.get('assign_doctor', False)
+                assign_bed = details.get('assign_bed', False)
+                
+                st.markdown(f"""
+                <div class="event-card" style="background: #fff3e0; border-left: 4px solid #ff9800;">
+                    <h4>🕐 {event_time} - 🤖 Routing Agent Decision</h4>
+                    <p><strong>👤 Patient:</strong> {patient_name}</p>
+                    <p><strong>🚨 Priority:</strong> {priority.upper() if priority else 'Unknown'}</p>
+                    <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <h5 style="margin: 0 0 8px 0; color: #333;">🤖 Agent Decisions:</h5>
+                        <p style="margin: 5px 0;">👨‍⚕️ <strong>Assign to Doctor:</strong> <span style="color: {'green' if assign_doctor else 'red'}; font-weight: bold;">{'✅ YES' if assign_doctor else '❌ NO'}</span></p>
+                        <p style="margin: 5px 0;">🛏️ <strong>Assign Urgent Bed:</strong> <span style="color: {'green' if assign_bed else 'red'}; font-weight: bold;">{'✅ YES' if assign_bed else '❌ NO'}</span></p>
+                        <p style="margin: 5px 0; font-size: 12px; color: #666;">💡 <em>Routing logic: {'High priority patients get both doctor and bed assignments' if assign_bed else 'Standard routing to available doctor'}</em></p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="event-card {get_priority_color(priority)}">
+                    <h4>🕐 {event_time} - {event_type.replace('_', ' ').title()}</h4>
+                    <p><strong>👤 Patient:</strong> {patient_name}</p>
+                    {f"<p><strong>📍 Resource:</strong> {resource_name}</p>" if resource_name else ""}
+                    {f"<p><strong>🚨 Priority:</strong> {priority.upper()}</p>" if priority else ""}
+                </div>
+                """, unsafe_allow_html=True)
         
         # Update hospital layout with current patient positions
         with layout_container.container():
-            display_hospital_layout(active_patients, resource_status, processed_patients)
+            display_hospital_layout(active_patients, resource_status, processed_patients, simulation_data, event)
         
         # Wait based on speed multiplier
         if i < len(sorted_events) - 1:
@@ -559,7 +669,12 @@ def main():
     st.sidebar.title("🎛️ Controls")
     
     # File selection
-    json_files = [f for f in os.listdir('.') if f.endswith('.json') and 'hospital_simulation' in f]
+    backend_dir = 'backend'
+    if not os.path.exists(backend_dir):
+        st.error("Backend directory not found")
+        return
+    
+    json_files = [f for f in os.listdir(backend_dir) if f.endswith('.json') and 'hospital_simulation' in f]
     
     if not json_files:
         st.error("No hospital simulation JSON files found in the current directory.")
@@ -567,7 +682,7 @@ def main():
         return
     
     # Sort files by modification time to get the most recent first
-    json_files_with_time = [(f, os.path.getmtime(f)) for f in json_files]
+    json_files_with_time = [(f, os.path.getmtime(os.path.join(backend_dir, f))) for f in json_files]
     json_files_sorted = [f[0] for f in sorted(json_files_with_time, key=lambda x: x[1], reverse=True)]
     
     selected_file = st.sidebar.selectbox(
@@ -578,13 +693,13 @@ def main():
     
     # Show file timestamp for user reference
     if json_files_sorted:
-        file_time = datetime.fromtimestamp(os.path.getmtime(selected_file))
+        file_time = datetime.fromtimestamp(os.path.getmtime(os.path.join(backend_dir, selected_file)))
         st.sidebar.caption(f"📅 Created: {file_time.strftime('%Y-%m-%d %H:%M:%S')}")
         if selected_file == json_files_sorted[0]:
             st.sidebar.success("✅ Latest simulation file selected")
     
     # Load simulation data
-    simulation_data = load_simulation_data(selected_file)
+    simulation_data = load_simulation_data(os.path.join(backend_dir, selected_file))
     
     if not simulation_data:
         return
@@ -611,7 +726,7 @@ def main():
         speed = st.sidebar.slider("⚡ Playback Speed", 0.1, 5.0, 1.0, 0.1)
         
         if st.sidebar.button("▶️ Start Live Simulation"):
-            display_live_events(events, sim_info['start_time'], speed)
+            display_live_events(events, sim_info['start_time'], speed, simulation_data)
     
     elif view_mode == "Patient Journey":
         # Get unique patient names

@@ -1,0 +1,846 @@
+{
+  "simulation_info": {
+    "start_time": "2025-09-10T15:51:36.872993",
+    "duration_minutes": 120,
+    "total_events": 60,
+    "hospital_name": "SimPy General Hospital"
+  },
+  "events": [
+    {
+      "timestamp": 0,
+      "real_time": "2025-09-10T15:51:36.872993",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "James James",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "dizziness",
+          "mild rash",
+          "minor cut"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T15:53:36.872993",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "James James",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.7590361445783133,
+          "green": 0.24096385542168677,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T15:53:36.872993",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "James James",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; Outpatient treatment - no bed required"
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T15:53:36.872993",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "James James",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 4.9273063446550855,
+      "real_time": "2025-09-10T15:56:32.511374",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Yvonne Hendricks",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "fever"
+        ],
+        "history": "Patient has history of migraine, kidney disease, arthritis. "
+      }
+    },
+    {
+      "timestamp": 6.9273063446550855,
+      "real_time": "2025-09-10T15:58:32.511374",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Yvonne Hendricks",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 6.9273063446550855,
+      "real_time": "2025-09-10T15:58:32.511374",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Yvonne Hendricks",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; Outpatient treatment - no bed required"
+      }
+    },
+    {
+      "timestamp": 6.9273063446550855,
+      "real_time": "2025-09-10T15:58:32.511374",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Yvonne Hendricks",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 9,
+      "real_time": "2025-09-10T16:00:36.872993",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "James James",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 12.178433178120256,
+      "real_time": "2025-09-10T16:03:47.578984",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Tammy Reynolds",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "dizziness",
+          "rash"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 13.927306344655086,
+      "real_time": "2025-09-10T16:05:32.511374",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Yvonne Hendricks",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 14.178433178120256,
+      "real_time": "2025-09-10T16:05:47.578984",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Tammy Reynolds",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 14.178433178120256,
+      "real_time": "2025-09-10T16:05:47.578984",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Tammy Reynolds",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; Outpatient treatment - no bed required"
+      }
+    },
+    {
+      "timestamp": 14.178433178120256,
+      "real_time": "2025-09-10T16:05:47.578984",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Tammy Reynolds",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 18.86019319863226,
+      "real_time": "2025-09-10T16:10:28.484585",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Misty Ochoa",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor burn",
+          "sore throat",
+          "rash"
+        ],
+        "history": "Patient has history of anxiety, migraine, diabetes. "
+      }
+    },
+    {
+      "timestamp": 20.86019319863226,
+      "real_time": "2025-09-10T16:12:28.484585",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Misty Ochoa",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.4405594405594406,
+          "green": 0.5594405594405595,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 20.86019319863226,
+      "real_time": "2025-09-10T16:12:28.484585",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Misty Ochoa",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; Outpatient treatment - no bed required"
+      }
+    },
+    {
+      "timestamp": 20.86019319863226,
+      "real_time": "2025-09-10T16:12:28.484585",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Misty Ochoa",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 21.178433178120258,
+      "real_time": "2025-09-10T16:12:47.578984",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Tammy Reynolds",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 29,
+      "real_time": "2025-09-10T16:20:36.872993",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "James James",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 29,
+      "real_time": "2025-09-10T16:20:36.872993",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "James James",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 29,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 29.86019319863226,
+      "real_time": "2025-09-10T16:21:28.484585",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Misty Ochoa",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 33.927306344655086,
+      "real_time": "2025-09-10T16:25:32.511374",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Yvonne Hendricks",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 33.927306344655086,
+      "real_time": "2025-09-10T16:25:32.511374",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Yvonne Hendricks",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 29.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 35.901680188023015,
+      "real_time": "2025-09-10T16:27:30.973804",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Tammy Mitchell",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "dizziness",
+          "rash"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 36.093204036051524,
+      "real_time": "2025-09-10T16:27:42.465235",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Nicole Lee",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "stroke symptoms"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 37.901680188023015,
+      "real_time": "2025-09-10T16:29:30.973804",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Tammy Mitchell",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 37.901680188023015,
+      "real_time": "2025-09-10T16:29:30.973804",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Tammy Mitchell",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; Outpatient treatment - no bed required"
+      }
+    },
+    {
+      "timestamp": 37.901680188023015,
+      "real_time": "2025-09-10T16:29:30.973804",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Tammy Mitchell",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 38.093204036051524,
+      "real_time": "2025-09-10T16:29:42.465235",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Nicole Lee",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 1.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 38.093204036051524,
+      "real_time": "2025-09-10T16:29:42.465235",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Nicole Lee",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed needed for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 38.093204036051524,
+      "real_time": "2025-09-10T16:29:42.465235",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Nicole Lee",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 41.17843317812026,
+      "real_time": "2025-09-10T16:32:47.578984",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Tammy Reynolds",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 41.17843317812026,
+      "real_time": "2025-09-10T16:32:47.578984",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Tammy Reynolds",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 29.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 42.093204036051524,
+      "real_time": "2025-09-10T16:33:42.465235",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Nicole Lee",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 44.901680188023015,
+      "real_time": "2025-09-10T16:36:30.973804",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Tammy Mitchell",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 48.88047556725714,
+      "real_time": "2025-09-10T16:40:29.701527",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Jessica Brooks",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "headache"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 49.86019319863226,
+      "real_time": "2025-09-10T16:41:28.484585",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Misty Ochoa",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 49.86019319863226,
+      "real_time": "2025-09-10T16:41:28.484585",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Misty Ochoa",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 31.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 50.88047556725714,
+      "real_time": "2025-09-10T16:42:29.701527",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Jessica Brooks",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 50.88047556725714,
+      "real_time": "2025-09-10T16:42:29.701527",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Jessica Brooks",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; Outpatient treatment - no bed required"
+      }
+    },
+    {
+      "timestamp": 50.88047556725714,
+      "real_time": "2025-09-10T16:42:29.701527",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Jessica Brooks",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 57.88047556725714,
+      "real_time": "2025-09-10T16:49:29.701527",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Jessica Brooks",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 60,
+      "real_time": "2025-09-10T16:51:36.872993",
+      "event_type": "HOSPITAL_STATUS",
+      "patient_name": "SYSTEM",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "statistics": {
+          "total_doctors": 3,
+          "available_doctors": 3,
+          "total_patients": 0,
+          "total_beds": 3,
+          "available_beds": 3,
+          "total_mri_machines": 0,
+          "available_mri_machines": 0,
+          "total_ultrasonic_machines": 0,
+          "available_ultrasonic_machines": 0
+        },
+        "queue_summary": {
+          "Dr_Dr. Emergency": {
+            "red": 1,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. Heart": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 1,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. General": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 1,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_ICU-1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A2": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          }
+        },
+        "simulation_time": 60
+      }
+    },
+    {
+      "timestamp": 64.90168018802302,
+      "real_time": "2025-09-10T16:56:30.973804",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Tammy Mitchell",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 64.90168018802302,
+      "real_time": "2025-09-10T16:56:30.973804",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Tammy Mitchell",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 29.000000000000007,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 75.50303453752953,
+      "real_time": "2025-09-10T17:07:07.055065",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Crystal House",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "mild rash",
+          "minor scrape",
+          "severe burns"
+        ],
+        "history": "Patient has history of heart disease, surgery history, arthritis. "
+      }
+    },
+    {
+      "timestamp": 77.50303453752953,
+      "real_time": "2025-09-10T17:09:07.055065",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Crystal House",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.5699481865284974,
+          "orange": 0.0,
+          "yellow": 0.32642487046632124,
+          "green": 0.0,
+          "blue": 0.10362694300518135
+        }
+      }
+    },
+    {
+      "timestamp": 77.50303453752953,
+      "real_time": "2025-09-10T17:09:07.055065",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Crystal House",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed needed for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 77.50303453752953,
+      "real_time": "2025-09-10T17:09:07.055065",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Crystal House",
+      "resource_name": "Dr. Heart",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 77.88047556725715,
+      "real_time": "2025-09-10T17:09:29.701527",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Jessica Brooks",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 77.88047556725715,
+      "real_time": "2025-09-10T17:09:29.701527",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Jessica Brooks",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 29.000000000000007,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 79.50303453752953,
+      "real_time": "2025-09-10T17:11:07.055065",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Crystal House",
+      "resource_name": "Dr. Heart",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 87.09320403605153,
+      "real_time": "2025-09-10T17:18:42.465235",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Nicole Lee",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "duration": 45
+      }
+    },
+    {
+      "timestamp": 87.09320403605153,
+      "real_time": "2025-09-10T17:18:42.465235",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Nicole Lee",
+      "resource_name": "ICU-1",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 93.14019759652643,
+      "real_time": "2025-09-10T17:24:45.284849",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Lawrence Wells",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "sprain",
+          "severe burns"
+        ],
+        "history": "Patient has history of allergies, chronic pain, diabetes. "
+      }
+    },
+    {
+      "timestamp": 95.14019759652643,
+      "real_time": "2025-09-10T17:26:45.284849",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Lawrence Wells",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.7333333333333333,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.26666666666666666,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 95.14019759652643,
+      "real_time": "2025-09-10T17:26:45.284849",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Lawrence Wells",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed needed for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 95.14019759652643,
+      "real_time": "2025-09-10T17:26:45.284849",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Lawrence Wells",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 97.14019759652643,
+      "real_time": "2025-09-10T17:28:45.284849",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Lawrence Wells",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    }
+  ]
+}

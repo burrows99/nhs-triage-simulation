@@ -4,7 +4,6 @@ import random
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from ..entities.hospital.hospital import Hospital
-from ..entities.doctor.doctor import Doctor
 from ..entities.patient.patient import Patient
 from ..services.patient_factory import PatientFactory
 from ..enums.priority import Priority
@@ -15,7 +14,8 @@ class HospitalSimulation:
     def __init__(self, hospital: Hospital, simulation_time: int = 480):
         self.env = simpy.Environment()
         self.hospital = hospital
-        self.simulation_time = simulation_time  # 8 hours in minutes
+        self.hospital.env = self.env  # Give hospital access to environment
+        self.simulation_time = simulation_time
         self.events: List[Dict[str, Any]] = []
         self.patient_factory = PatientFactory()
         self.start_time = datetime.now()
@@ -72,17 +72,18 @@ class HospitalSimulation:
             "triage_scores": triage_info["final_scores"]
         })
         
-        # 3. Routing decision
-        should_assign_doctor = self.hospital.routing_agent.should_assign_to_doctor(patient, priority)
-        should_assign_bed = self.hospital.routing_agent.should_assign_urgent_bed(patient, priority)
+        # 3. Routing decision using enhanced routing agent
+        routing_decision = self.hospital.routing_agent.make_routing_decision(patient, priority)
+        routing_decision["timestamp"] = self.env.now  # Add timestamp
         
         self.log_event("ROUTING_DECISION", patient.name, priority=priority.value, details={
-            "assign_doctor": should_assign_doctor,
-            "assign_bed": should_assign_bed
+            "assign_doctor": routing_decision["assign_doctor"],
+            "assign_bed": routing_decision["assign_bed"],
+            "routing_logic": routing_decision["routing_logic"]
         })
         
         # 4. Doctor consultation
-        if should_assign_doctor:
+        if routing_decision["assign_doctor"]:
             available_doctors = self.hospital.get_available_doctors()
             if available_doctors:
                 # Choose doctor with least patients in queue for load balancing
@@ -96,14 +97,14 @@ class HospitalSimulation:
                 })
                 
                 # Wait for doctor availability based on priority
-                wait_time = self.calculate_wait_time(priority, doctor)
+                wait_time = self._calculate_wait_time(priority, doctor)
                 yield self.env.timeout(wait_time)
                 
                 # Start consultation
                 self.log_event("CONSULTATION_START", patient.name, doctor.name, priority.value)
                 
                 # Consultation duration based on priority
-                consultation_time = self.calculate_consultation_time(priority)
+                consultation_time = self._calculate_consultation_time(priority)
                 yield self.env.timeout(consultation_time)
                 
                 # Remove from queue
@@ -113,7 +114,7 @@ class HospitalSimulation:
                 })
         
         # 5. Bed assignment for urgent patients
-        if should_assign_bed:
+        if routing_decision["assign_bed"]:
             available_beds = self.hospital.get_available_beds()
             if available_beds:
                 bed = available_beds[0]
@@ -122,7 +123,7 @@ class HospitalSimulation:
                 self.log_event("BED_ASSIGNMENT", patient.name, bed.name, priority.value)
                 
                 # Stay in bed based on priority
-                bed_time = self.calculate_bed_time(priority)
+                bed_time = self._calculate_bed_time(priority)
                 yield self.env.timeout(bed_time)
                 
                 bed.remove_patient_from_queue(patient)
@@ -139,40 +140,44 @@ class HospitalSimulation:
             "priority": priority.value
         })
     
-    def calculate_wait_time(self, priority: Priority, doctor: Doctor) -> float:
-        """Calculate wait time based on priority and queue status"""
-        base_wait = {
-            Priority.RED: 0,
-            Priority.ORANGE: 2,
-            Priority.YELLOW: 10,
-            Priority.GREEN: 30,
-            Priority.BLUE: 60
+    def _calculate_wait_time(self, priority: Priority, doctor) -> float:
+        """Calculate expected wait time based on priority and doctor queue"""
+        base_wait_times = {
+            Priority.RED: 0,      # Immediate
+            Priority.ORANGE: 2,   # 2 minutes
+            Priority.YELLOW: 5,   # 5 minutes
+            Priority.GREEN: 10,   # 10 minutes
+            Priority.BLUE: 15     # 15 minutes
         }
         
-        queue_factor: int = doctor.get_total_patients_in_queue() * 5
-        return float(base_wait[priority] + queue_factor)
+        base_wait = base_wait_times.get(priority, 10)
+        queue_factor = doctor.get_total_patients_in_queue() * 2  # 2 minutes per patient in queue
+        
+        return base_wait + queue_factor
     
-    def calculate_consultation_time(self, priority: Priority) -> float:
+    def _calculate_consultation_time(self, priority: Priority) -> float:
         """Calculate consultation duration based on priority"""
         consultation_times = {
-            Priority.RED: 45,    # 45 minutes for critical
-            Priority.ORANGE: 30, # 30 minutes for urgent
-            Priority.YELLOW: 20, # 20 minutes for standard
-            Priority.GREEN: 15,  # 15 minutes for routine
-            Priority.BLUE: 10    # 10 minutes for minor
+            Priority.RED: 45,     # 45 minutes for critical
+            Priority.ORANGE: 30,  # 30 minutes for very urgent
+            Priority.YELLOW: 20,  # 20 minutes for urgent
+            Priority.GREEN: 15,   # 15 minutes for standard
+            Priority.BLUE: 10     # 10 minutes for non-urgent
         }
-        return consultation_times[priority]
+        
+        return consultation_times.get(priority, 15)
     
-    def calculate_bed_time(self, priority: Priority) -> float:
-        """Calculate bed stay duration based on priority"""
+    def _calculate_bed_time(self, priority: Priority) -> float:
+        """Calculate bed occupancy duration based on priority"""
         bed_times = {
-            Priority.RED: 240,   # 4 hours for critical
-            Priority.ORANGE: 120, # 2 hours for urgent
-            Priority.YELLOW: 60,  # 1 hour for standard
-            Priority.GREEN: 30,   # 30 minutes for routine
-            Priority.BLUE: 15     # 15 minutes for minor
+            Priority.RED: 120,    # 2 hours for critical
+            Priority.ORANGE: 90,  # 1.5 hours for very urgent
+            Priority.YELLOW: 60,  # 1 hour for urgent
+            Priority.GREEN: 30,   # 30 minutes for standard
+            Priority.BLUE: 15     # 15 minutes for non-urgent
         }
-        return bed_times[priority]
+        
+        return bed_times.get(priority, 60)
     
     def hospital_status_monitor(self):
         """Monitor and log hospital status periodically"""

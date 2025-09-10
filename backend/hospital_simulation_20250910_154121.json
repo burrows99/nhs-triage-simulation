@@ -1,0 +1,1180 @@
+{
+  "simulation_info": {
+    "start_time": "2025-09-10T15:41:21.815339",
+    "duration_minutes": 120,
+    "total_events": 84,
+    "hospital_name": "SimPy General Hospital"
+  },
+  "events": [
+    {
+      "timestamp": 0,
+      "real_time": "2025-09-10T15:41:21.815339",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Mark Davies",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "chest pain"
+        ],
+        "history": "Patient has history of depression. "
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T15:43:21.815339",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Mark Davies",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 1.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T15:43:21.815339",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Mark Davies",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T15:43:21.815339",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Mark Davies",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 9.0,
+      "real_time": "2025-09-10T15:50:21.815339",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Mark Davies",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 20.280306029561164,
+      "real_time": "2025-09-10T16:01:38.633701",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Anthony Shepherd",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "high fever",
+          "anaphylaxis",
+          "headache"
+        ],
+        "history": "Patient has history of hypertension. "
+      }
+    },
+    {
+      "timestamp": 22.280306029561164,
+      "real_time": "2025-09-10T16:03:38.633701",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Anthony Shepherd",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.398406374501992,
+          "orange": 0.35059760956175307,
+          "yellow": 0.250996015936255,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 22.280306029561164,
+      "real_time": "2025-09-10T16:03:38.633701",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Anthony Shepherd",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 22.280306029561164,
+      "real_time": "2025-09-10T16:03:38.633701",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Anthony Shepherd",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 30.268694068599594,
+      "real_time": "2025-09-10T16:11:37.936983",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Tiffany Santos",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "fever",
+          "sepsis",
+          "mild nausea"
+        ],
+        "history": "Patient has history of anxiety, depression, surgery history. "
+      }
+    },
+    {
+      "timestamp": 32.26869406859959,
+      "real_time": "2025-09-10T16:13:37.936983",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Tiffany Santos",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.42307692307692313,
+          "yellow": 0.5769230769230769,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 32.26869406859959,
+      "real_time": "2025-09-10T16:13:37.936983",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Tiffany Santos",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 32.26869406859959,
+      "real_time": "2025-09-10T16:13:37.936983",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Tiffany Santos",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 39.0,
+      "real_time": "2025-09-10T16:20:21.815339",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Mark Davies",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 39.0,
+      "real_time": "2025-09-10T16:20:21.815339",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Mark Davies",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 39.26869406859959,
+      "real_time": "2025-09-10T16:20:37.936983",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Tiffany Santos",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 57.28030602956116,
+      "real_time": "2025-09-10T16:38:38.633701",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Anthony Shepherd",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {}
+    },
+    {
+      "timestamp": 60,
+      "real_time": "2025-09-10T16:41:21.815339",
+      "event_type": "HOSPITAL_STATUS",
+      "patient_name": "SYSTEM",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "statistics": {
+          "total_doctors": 3,
+          "available_doctors": 3,
+          "total_patients": 0,
+          "total_beds": 3,
+          "available_beds": 3,
+          "total_mri_machines": 0,
+          "available_mri_machines": 0,
+          "total_ultrasonic_machines": 0,
+          "available_ultrasonic_machines": 0
+        },
+        "queue_summary": {
+          "Dr_Dr. Emergency": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. Heart": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 1,
+            "blue": 0
+          },
+          "Dr_Dr. General": {
+            "red": 0,
+            "orange": 1,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_ICU-1": {
+            "red": 0,
+            "orange": 1,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A2": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          }
+        },
+        "simulation_time": 60
+      }
+    },
+    {
+      "timestamp": 65.77642744303435,
+      "real_time": "2025-09-10T16:47:08.400986",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "mild rash"
+        ],
+        "history": "Patient has history of diabetes, depression, arthritis. "
+      }
+    },
+    {
+      "timestamp": 66.36766780165824,
+      "real_time": "2025-09-10T16:47:43.875407",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Dennis Kirby",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "bruise",
+          "severe burns"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 67.03603276888558,
+      "real_time": "2025-09-10T16:48:23.977305",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Eric Knight",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "rash",
+          "moderate pain",
+          "cough"
+        ],
+        "history": "Patient has history of diabetes, surgery history. "
+      }
+    },
+    {
+      "timestamp": 67.77642744303435,
+      "real_time": "2025-09-10T16:49:08.400986",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 67.77642744303435,
+      "real_time": "2025-09-10T16:49:08.400986",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 67.77642744303435,
+      "real_time": "2025-09-10T16:49:08.400986",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 68.36766780165824,
+      "real_time": "2025-09-10T16:49:43.875407",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Dennis Kirby",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.7142857142857143,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.28571428571428575,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 68.36766780165824,
+      "real_time": "2025-09-10T16:49:43.875407",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Dennis Kirby",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 68.36766780165824,
+      "real_time": "2025-09-10T16:49:43.875407",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Dennis Kirby",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 69.03603276888558,
+      "real_time": "2025-09-10T16:50:23.977305",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Eric Knight",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 69.03603276888558,
+      "real_time": "2025-09-10T16:50:23.977305",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Eric Knight",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 69.03603276888558,
+      "real_time": "2025-09-10T16:50:23.977305",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Eric Knight",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 69.26869406859959,
+      "real_time": "2025-09-10T16:50:37.936983",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Tiffany Santos",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 69.26869406859959,
+      "real_time": "2025-09-10T16:50:37.936983",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Tiffany Santos",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 72.28030602956116,
+      "real_time": "2025-09-10T16:53:38.633701",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Anthony Shepherd",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {
+        "duration": 15
+      }
+    },
+    {
+      "timestamp": 72.28030602956116,
+      "real_time": "2025-09-10T16:53:38.633701",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Anthony Shepherd",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 52.0,
+        "priority": "green"
+      }
+    },
+    {
+      "timestamp": 75.83184252293574,
+      "real_time": "2025-09-10T16:57:11.725890",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Theresa Fisher",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "rash",
+          "dizziness"
+        ],
+        "history": "Patient has history of anxiety. "
+      }
+    },
+    {
+      "timestamp": 77.34102667404501,
+      "real_time": "2025-09-10T16:58:42.276939",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Ryan Neal",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "sprain",
+          "minor cut"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 77.83184252293574,
+      "real_time": "2025-09-10T16:59:11.725890",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Theresa Fisher",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 77.83184252293574,
+      "real_time": "2025-09-10T16:59:11.725890",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Theresa Fisher",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 77.83184252293574,
+      "real_time": "2025-09-10T16:59:11.725890",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Theresa Fisher",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 78.36766780165824,
+      "real_time": "2025-09-10T16:59:43.875407",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Dennis Kirby",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 79.34102667404501,
+      "real_time": "2025-09-10T17:00:42.276939",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Ryan Neal",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 1.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 79.34102667404501,
+      "real_time": "2025-09-10T17:00:42.276939",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Ryan Neal",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 79.34102667404501,
+      "real_time": "2025-09-10T17:00:42.276939",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Ryan Neal",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 82.77642744303435,
+      "real_time": "2025-09-10T17:04:08.400986",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 88.72351031211082,
+      "real_time": "2025-09-10T17:10:05.225958",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Walter Johnson",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor ache",
+          "mild rash",
+          "severe vomiting"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 89.03603276888558,
+      "real_time": "2025-09-10T17:10:23.977305",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Eric Knight",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 90.72351031211082,
+      "real_time": "2025-09-10T17:12:05.225958",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Walter Johnson",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.5146198830409356,
+          "yellow": 0.36842105263157887,
+          "green": 0.0,
+          "blue": 0.11695906432748537
+        }
+      }
+    },
+    {
+      "timestamp": 90.72351031211082,
+      "real_time": "2025-09-10T17:12:05.225958",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Walter Johnson",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 90.72351031211082,
+      "real_time": "2025-09-10T17:12:05.225958",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Walter Johnson",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 91.07656085830486,
+      "real_time": "2025-09-10T17:12:26.408990",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Michelle Walter",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "dizziness",
+          "severe pain",
+          "minor headache"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 92.83184252293574,
+      "real_time": "2025-09-10T17:14:11.725890",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Theresa Fisher",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 93.07656085830486,
+      "real_time": "2025-09-10T17:14:26.408990",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Michelle Walter",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.4112149532710281,
+          "yellow": 0.5887850467289719,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 93.07656085830486,
+      "real_time": "2025-09-10T17:14:26.408990",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Michelle Walter",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 93.07656085830486,
+      "real_time": "2025-09-10T17:14:26.408990",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Michelle Walter",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 97.75006947260172,
+      "real_time": "2025-09-10T17:19:06.819507",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Christopher Martinez",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "difficulty breathing",
+          "mild pain"
+        ],
+        "history": "Patient has history of chronic pain, anxiety. "
+      }
+    },
+    {
+      "timestamp": 99.75006947260172,
+      "real_time": "2025-09-10T17:21:06.819507",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Christopher Martinez",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.6978851963746223,
+          "yellow": 0.0,
+          "green": 0.30211480362537757,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 99.75006947260172,
+      "real_time": "2025-09-10T17:21:06.819507",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Christopher Martinez",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 99.75006947260172,
+      "real_time": "2025-09-10T17:21:06.819507",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Christopher Martinez",
+      "resource_name": "Dr. Heart",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 102.72351031211082,
+      "real_time": "2025-09-10T17:24:05.225958",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Walter Johnson",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 102.77642744303435,
+      "real_time": "2025-09-10T17:24:08.400986",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 102.77642744303435,
+      "real_time": "2025-09-10T17:24:08.400986",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 37.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 108.94451499684828,
+      "real_time": "2025-09-10T17:30:18.486239",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Christina Hurley",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor cut",
+          "severe trauma"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 109.03603276888558,
+      "real_time": "2025-09-10T17:30:23.977305",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Eric Knight",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 109.03603276888558,
+      "real_time": "2025-09-10T17:30:23.977305",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Eric Knight",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 42.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 110.07656085830486,
+      "real_time": "2025-09-10T17:31:26.408990",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Michelle Walter",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 110.94451499684828,
+      "real_time": "2025-09-10T17:32:18.486239",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Christina Hurley",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.7142857142857143,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.28571428571428575,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 110.94451499684828,
+      "real_time": "2025-09-10T17:32:18.486239",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Christina Hurley",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 110.94451499684828,
+      "real_time": "2025-09-10T17:32:18.486239",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Christina Hurley",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 112.83184252293574,
+      "real_time": "2025-09-10T17:34:11.725890",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Theresa Fisher",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 112.83184252293574,
+      "real_time": "2025-09-10T17:34:11.725890",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Theresa Fisher",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 37.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 113.55290212436276,
+      "real_time": "2025-09-10T17:34:54.989466",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Elizabeth Meadows",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "high fever"
+        ],
+        "history": "Patient has history of arthritis. "
+      }
+    },
+    {
+      "timestamp": 115.55290212436276,
+      "real_time": "2025-09-10T17:36:54.989466",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Elizabeth Meadows",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 1.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 115.55290212436276,
+      "real_time": "2025-09-10T17:36:54.989466",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Elizabeth Meadows",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 115.55290212436276,
+      "real_time": "2025-09-10T17:36:54.989466",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Elizabeth Meadows",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 115.66221002303008,
+      "real_time": "2025-09-10T17:37:01.547940",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Lauren Morales",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor cut",
+          "sore throat",
+          "minor ache"
+        ],
+        "history": "Patient has history of arthritis. "
+      }
+    },
+    {
+      "timestamp": 116.7357197830178,
+      "real_time": "2025-09-10T17:38:05.958526",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Elizabeth Hughes",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "abdominal pain",
+          "mild nausea"
+        ],
+        "history": "Patient has history of migraine, anxiety. "
+      }
+    },
+    {
+      "timestamp": 116.75006947260172,
+      "real_time": "2025-09-10T17:38:06.819507",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Christopher Martinez",
+      "resource_name": "Dr. Heart",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 117.66221002303008,
+      "real_time": "2025-09-10T17:39:01.547940",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Lauren Morales",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.8,
+          "blue": 0.2
+        }
+      }
+    },
+    {
+      "timestamp": 117.66221002303008,
+      "real_time": "2025-09-10T17:39:01.547940",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Lauren Morales",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 117.66221002303008,
+      "real_time": "2025-09-10T17:39:01.547940",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Lauren Morales",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 118.7357197830178,
+      "real_time": "2025-09-10T17:40:05.958526",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Elizabeth Hughes",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 118.7357197830178,
+      "real_time": "2025-09-10T17:40:05.958526",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Elizabeth Hughes",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 118.7357197830178,
+      "real_time": "2025-09-10T17:40:05.958526",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Elizabeth Hughes",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 119.34102667404501,
+      "real_time": "2025-09-10T17:40:42.276939",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Ryan Neal",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {}
+    }
+  ]
+}
