@@ -151,13 +151,21 @@ def display_hospital_layout(active_patients: Dict[str, Any], resource_status: Di
             for p in entrance_patients:
                 if p in active_patients:
                     patient_info = active_patients[p]
-                    priority = patient_info.get('priority', 'green')
+                    priority = patient_info.get('priority', 'pending')
                     status = patient_info.get('status', 'Unknown')
-                    priority_color = get_priority_color_hex(priority)
+                    
+                    # Handle pending priority with gray color
+                    if priority == 'pending':
+                        priority_color = '#9e9e9e'  # Gray for pending
+                        priority_display = 'PENDING'
+                    else:
+                        priority_color = get_priority_color_hex(priority)
+                        priority_display = priority.upper()
+                    
                     entrance_patient_cards.append(
                         f'<div style="background: {priority_color}; color: white; padding: 6px; margin: 3px 0; border-radius: 4px; font-size: 11px;">'
                         f'<strong>{p}</strong><br>'
-                        f'🚨 {priority.upper() if priority and priority != "green" else "PENDING"}<br>'
+                        f'🚨 {priority_display}<br>'
                         f'📋 {status}'
                         f'</div>'
                     )
@@ -575,7 +583,7 @@ def display_live_events(events: List[Dict[str, Any]], start_time: str, speed_mul
         # Update active patients based on event
         if event_type == 'PATIENT_ARRIVAL':
             active_patients[patient_name] = {
-                'priority': priority,
+                'priority': 'pending',  # Set to pending until triage is complete
                 'status': 'Arrived',
                 'location': 'Entrance',
                 'symptoms': event.get('details', {}).get('symptoms', [])
@@ -583,7 +591,7 @@ def display_live_events(events: List[Dict[str, Any]], start_time: str, speed_mul
         elif event_type == 'TRIAGE_COMPLETE':
             if patient_name in active_patients:
                 active_patients[patient_name]['status'] = 'Triaged'
-                active_patients[patient_name]['priority'] = priority
+                active_patients[patient_name]['priority'] = priority  # This should now properly set the triage priority
         elif event_type == 'QUEUE_JOIN' and resource_name:
             if patient_name in active_patients:
                 active_patients[patient_name]['status'] = f'Waiting for {resource_name}'
