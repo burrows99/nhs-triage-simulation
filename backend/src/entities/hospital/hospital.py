@@ -51,13 +51,14 @@ class Hospital(Entity):
         return priority
     
     def _assign_to_doctor(self, patient: Patient, priority: Priority) -> None:
-        """Assign patient to available doctor using routing agent"""
+        """Assign patient to available doctor using routing agent with load balancing"""
         if self.routing_agent.should_assign_to_doctor(patient, priority):
             available_doctors = self.get_available_doctors()
             if available_doctors:
-                doctor = available_doctors[0]
+                # Choose doctor with least patients in queue for load balancing
+                doctor = min(available_doctors, key=lambda d: d.get_total_patients_in_queue())
                 doctor.add_patient_to_queue(patient, priority.value)
-                print(f"Patient {patient.name} assigned to Dr. {doctor.name} with {priority.value} priority")
+                print(f"Patient {patient.name} assigned to Dr. {doctor.name} with {priority.value} priority (queue: {doctor.get_total_patients_in_queue()})")
             else:
                 print(f"No available doctors. Patient {patient.name} added to waiting list with {priority.value} priority")
     

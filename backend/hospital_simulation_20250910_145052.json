@@ -1,0 +1,1089 @@
+{
+  "simulation_info": {
+    "start_time": "2025-09-10T14:50:52.969111",
+    "duration_minutes": 120,
+    "total_events": 79,
+    "hospital_name": "SimPy General Hospital"
+  },
+  "events": [
+    {
+      "timestamp": 0,
+      "real_time": "2025-09-10T14:50:52.969111",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Natalie Green",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "sore throat",
+          "severe vomiting",
+          "seizure"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T14:52:52.969111",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Natalie Green",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.8148148148148149,
+          "yellow": 0.0,
+          "green": 0.18518518518518517,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T14:52:52.969111",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Natalie Green",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T14:52:52.969111",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Natalie Green",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 9.0,
+      "real_time": "2025-09-10T14:59:52.969111",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Natalie Green",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 11.092061674855357,
+      "real_time": "2025-09-10T15:01:58.492811",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Gary Todd",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "fatigue",
+          "moderate pain",
+          "sprain"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 13.092061674855357,
+      "real_time": "2025-09-10T15:03:58.492811",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Gary Todd",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.5121951219512194,
+          "green": 0.3252032520325203,
+          "blue": 0.16260162601626016
+        }
+      }
+    },
+    {
+      "timestamp": 13.092061674855357,
+      "real_time": "2025-09-10T15:03:58.492811",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Gary Todd",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 13.092061674855357,
+      "real_time": "2025-09-10T15:03:58.492811",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Gary Todd",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 24.478080805545403,
+      "real_time": "2025-09-10T15:15:21.653959",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Danny Hardy",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor burn"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 26.478080805545403,
+      "real_time": "2025-09-10T15:17:21.653959",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Danny Hardy",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 1.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 26.478080805545403,
+      "real_time": "2025-09-10T15:17:21.653959",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Danny Hardy",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 26.478080805545403,
+      "real_time": "2025-09-10T15:17:21.653959",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Danny Hardy",
+      "resource_name": "Dr. General",
+      "priority": "green",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 28.09206167485536,
+      "real_time": "2025-09-10T15:18:58.492811",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Gary Todd",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 30.592561889930334,
+      "real_time": "2025-09-10T15:21:28.522824",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Sarah Olson",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "not breathing"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 32.59256188993034,
+      "real_time": "2025-09-10T15:23:28.522824",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Sarah Olson",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 1.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 32.59256188993034,
+      "real_time": "2025-09-10T15:23:28.522824",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Sarah Olson",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 32.59256188993034,
+      "real_time": "2025-09-10T15:23:28.522824",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Sarah Olson",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 39.0,
+      "real_time": "2025-09-10T15:29:52.969111",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Natalie Green",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 39.0,
+      "real_time": "2025-09-10T15:29:52.969111",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Natalie Green",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 42.59256188993034,
+      "real_time": "2025-09-10T15:33:28.522824",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Sarah Olson",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 48.09206167485536,
+      "real_time": "2025-09-10T15:38:58.492811",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Gary Todd",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 48.09206167485536,
+      "real_time": "2025-09-10T15:38:58.492811",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Gary Todd",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 37.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 49.276019718017466,
+      "real_time": "2025-09-10T15:40:09.530294",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Anthony Hahn",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "bruise"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 51.276019718017466,
+      "real_time": "2025-09-10T15:42:09.530294",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Anthony Hahn",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 1.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 51.276019718017466,
+      "real_time": "2025-09-10T15:42:09.530294",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Anthony Hahn",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 51.276019718017466,
+      "real_time": "2025-09-10T15:42:09.530294",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Anthony Hahn",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 59.19953893882555,
+      "real_time": "2025-09-10T15:50:04.941447",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Larry Choi",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "sepsis",
+          "bruise",
+          "severe vomiting"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 60,
+      "real_time": "2025-09-10T15:50:52.969111",
+      "event_type": "HOSPITAL_STATUS",
+      "patient_name": "SYSTEM",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "statistics": {
+          "total_doctors": 3,
+          "available_doctors": 3,
+          "total_patients": 0,
+          "total_beds": 3,
+          "available_beds": 3,
+          "total_mri_machines": 0,
+          "available_mri_machines": 0,
+          "total_ultrasonic_machines": 0,
+          "available_ultrasonic_machines": 0
+        },
+        "queue_summary": {
+          "Dr_Dr. Emergency": {
+            "red": 1,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. Heart": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 1,
+            "blue": 0
+          },
+          "Dr_Dr. General": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 1,
+            "blue": 0
+          },
+          "Bed_ICU-1": {
+            "red": 0,
+            "orange": 1,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A2": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          }
+        },
+        "simulation_time": 60
+      }
+    },
+    {
+      "timestamp": 61.19953893882555,
+      "real_time": "2025-09-10T15:52:04.941447",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Larry Choi",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.8148148148148149,
+          "yellow": 0.0,
+          "green": 0.18518518518518517,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 61.19953893882555,
+      "real_time": "2025-09-10T15:52:04.941447",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Larry Choi",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 61.19953893882555,
+      "real_time": "2025-09-10T15:52:04.941447",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Larry Choi",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 61.31433578426452,
+      "real_time": "2025-09-10T15:52:11.829258",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "William Reid",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "mild rash"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 61.4780808055454,
+      "real_time": "2025-09-10T15:52:21.653959",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Danny Hardy",
+      "resource_name": "Dr. General",
+      "priority": "green",
+      "details": {}
+    },
+    {
+      "timestamp": 63.31433578426452,
+      "real_time": "2025-09-10T15:54:11.829258",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "William Reid",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 63.31433578426452,
+      "real_time": "2025-09-10T15:54:11.829258",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "William Reid",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 63.31433578426452,
+      "real_time": "2025-09-10T15:54:11.829258",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "William Reid",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 72.62077618888424,
+      "real_time": "2025-09-10T16:03:30.215682",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Benjamin White",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "rash",
+          "cardiac arrest"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 73.19953893882555,
+      "real_time": "2025-09-10T16:04:04.941447",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Larry Choi",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 73.50767021814607,
+      "real_time": "2025-09-10T16:04:23.429324",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Jennifer Cobb",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe burns",
+          "sepsis"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 74.62077618888424,
+      "real_time": "2025-09-10T16:05:30.215682",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Benjamin White",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.6134969325153375,
+          "orange": 0.0,
+          "yellow": 0.38650306748466257,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 74.62077618888424,
+      "real_time": "2025-09-10T16:05:30.215682",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Benjamin White",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 74.62077618888424,
+      "real_time": "2025-09-10T16:05:30.215682",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Benjamin White",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 75.50767021814607,
+      "real_time": "2025-09-10T16:06:23.429324",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Jennifer Cobb",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.5319148936170213,
+          "orange": 0.4680851063829788,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 75.50767021814607,
+      "real_time": "2025-09-10T16:06:23.429324",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Jennifer Cobb",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 75.50767021814607,
+      "real_time": "2025-09-10T16:06:23.429324",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Jennifer Cobb",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 76.30344648489738,
+      "real_time": "2025-09-10T16:07:11.175900",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Anna Conley",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "bruise",
+          "severe pain"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 76.4780808055454,
+      "real_time": "2025-09-10T16:07:21.653959",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Danny Hardy",
+      "resource_name": "Dr. General",
+      "priority": "green",
+      "details": {
+        "duration": 15
+      }
+    },
+    {
+      "timestamp": 76.4780808055454,
+      "real_time": "2025-09-10T16:07:21.653959",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Danny Hardy",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 52.0,
+        "priority": "green"
+      }
+    },
+    {
+      "timestamp": 78.30344648489738,
+      "real_time": "2025-09-10T16:09:11.175900",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Anna Conley",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.6875000000000001,
+          "yellow": 0.0,
+          "green": 0.3125,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 78.30344648489738,
+      "real_time": "2025-09-10T16:09:11.175900",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Anna Conley",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 78.30344648489738,
+      "real_time": "2025-09-10T16:09:11.175900",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Anna Conley",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 83.31433578426453,
+      "real_time": "2025-09-10T16:14:11.829258",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "William Reid",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 84.62077618888424,
+      "real_time": "2025-09-10T16:15:30.215682",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Benjamin White",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 86.27601971801747,
+      "real_time": "2025-09-10T16:17:09.530294",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Anthony Hahn",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {}
+    },
+    {
+      "timestamp": 87.59256188993034,
+      "real_time": "2025-09-10T16:18:28.522824",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Sarah Olson",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "duration": 45
+      }
+    },
+    {
+      "timestamp": 87.59256188993034,
+      "real_time": "2025-09-10T16:18:28.522824",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Sarah Olson",
+      "resource_name": "ICU-1",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 90.30344648489738,
+      "real_time": "2025-09-10T16:21:11.175900",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Anna Conley",
+      "resource_name": "Dr. General",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 90.50767021814607,
+      "real_time": "2025-09-10T16:21:23.429324",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Jennifer Cobb",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 101.27601971801747,
+      "real_time": "2025-09-10T16:32:09.530294",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Anthony Hahn",
+      "resource_name": "Dr. Heart",
+      "priority": "green",
+      "details": {
+        "duration": 15
+      }
+    },
+    {
+      "timestamp": 101.27601971801747,
+      "real_time": "2025-09-10T16:32:09.530294",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Anthony Hahn",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 52.0,
+        "priority": "green"
+      }
+    },
+    {
+      "timestamp": 101.94027298830785,
+      "real_time": "2025-09-10T16:32:49.385490",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Mark Carter",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "sore throat",
+          "difficulty breathing"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 103.07296915074782,
+      "real_time": "2025-09-10T16:33:57.347260",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Morgan Pitts",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "cough",
+          "seizure"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 103.19953893882555,
+      "real_time": "2025-09-10T16:34:04.941447",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Larry Choi",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 103.19953893882555,
+      "real_time": "2025-09-10T16:34:04.941447",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Larry Choi",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 103.31433578426453,
+      "real_time": "2025-09-10T16:34:11.829258",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "William Reid",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 103.31433578426453,
+      "real_time": "2025-09-10T16:34:11.829258",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "William Reid",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 42.00000000000001,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 103.94027298830785,
+      "real_time": "2025-09-10T16:34:49.385490",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Mark Carter",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.6875000000000001,
+          "yellow": 0.0,
+          "green": 0.3125,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 103.94027298830785,
+      "real_time": "2025-09-10T16:34:49.385490",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Mark Carter",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 103.94027298830785,
+      "real_time": "2025-09-10T16:34:49.385490",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Mark Carter",
+      "resource_name": "Dr. Heart",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 105.07296915074782,
+      "real_time": "2025-09-10T16:35:57.347260",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Morgan Pitts",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.5827814569536424,
+          "yellow": 0.41721854304635764,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 105.07296915074782,
+      "real_time": "2025-09-10T16:35:57.347260",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Morgan Pitts",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 105.07296915074782,
+      "real_time": "2025-09-10T16:35:57.347260",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Morgan Pitts",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 110.94027298830785,
+      "real_time": "2025-09-10T16:41:49.385490",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Mark Carter",
+      "resource_name": "Dr. Heart",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 113.98449276383805,
+      "real_time": "2025-09-10T16:44:52.038677",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Dr. Connor Henry",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "seizure",
+          "anaphylaxis"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 115.98449276383805,
+      "real_time": "2025-09-10T16:46:52.038677",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Dr. Connor Henry",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.5319148936170213,
+          "orange": 0.4680851063829788,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 115.98449276383805,
+      "real_time": "2025-09-10T16:46:52.038677",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Dr. Connor Henry",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 115.98449276383805,
+      "real_time": "2025-09-10T16:46:52.038677",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Dr. Connor Henry",
+      "resource_name": "Dr. Heart",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 117.07296915074782,
+      "real_time": "2025-09-10T16:47:57.347260",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Morgan Pitts",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    }
+  ]
+}

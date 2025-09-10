@@ -85,7 +85,8 @@ class HospitalSimulation:
         if should_assign_doctor:
             available_doctors = self.hospital.get_available_doctors()
             if available_doctors:
-                doctor = available_doctors[0]
+                # Choose doctor with least patients in queue for load balancing
+                doctor = min(available_doctors, key=lambda d: d.get_total_patients_in_queue())
                 
                 # Add to doctor's queue
                 doctor.add_patient_to_queue(patient, priority.value)
