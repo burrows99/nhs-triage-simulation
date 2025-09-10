@@ -1,0 +1,763 @@
+{
+  "simulation_info": {
+    "start_time": "2025-09-10T13:39:22.861585",
+    "duration_minutes": 120,
+    "total_events": 53,
+    "hospital_name": "SimPy General Hospital"
+  },
+  "events": [
+    {
+      "timestamp": 0,
+      "real_time": "2025-09-10T13:39:22.861585",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Matthew Kerr",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "bruise"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T13:41:22.861585",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Matthew Kerr",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 1.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T13:41:22.861585",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Matthew Kerr",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T13:41:22.861585",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Matthew Kerr",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 28.750938581056513,
+      "real_time": "2025-09-10T14:08:07.917900",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Terry Ortiz",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor cut",
+          "nausea",
+          "mild nausea"
+        ],
+        "history": "Patient has history of migraine, cancer history. "
+      }
+    },
+    {
+      "timestamp": 30.750938581056513,
+      "real_time": "2025-09-10T14:10:07.917900",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Terry Ortiz",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.7590361445783133,
+          "green": 0.24096385542168677,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 30.750938581056513,
+      "real_time": "2025-09-10T14:10:07.917900",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Terry Ortiz",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 30.750938581056513,
+      "real_time": "2025-09-10T14:10:07.917900",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Terry Ortiz",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 37.0,
+      "real_time": "2025-09-10T14:16:22.861585",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Matthew Kerr",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {}
+    },
+    {
+      "timestamp": 50.750938581056516,
+      "real_time": "2025-09-10T14:30:07.917900",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Terry Ortiz",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 52.0,
+      "real_time": "2025-09-10T14:31:22.861585",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Matthew Kerr",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "duration": 15
+      }
+    },
+    {
+      "timestamp": 52.0,
+      "real_time": "2025-09-10T14:31:22.861585",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Matthew Kerr",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 52.0,
+        "priority": "green"
+      }
+    },
+    {
+      "timestamp": 52.709588436302,
+      "real_time": "2025-09-10T14:32:05.436891",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Andrew Blair",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "high fever"
+        ],
+        "history": "Patient has history of allergies, kidney disease. "
+      }
+    },
+    {
+      "timestamp": 53.88690946669497,
+      "real_time": "2025-09-10T14:33:16.076153",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Nancy Evans",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "rash"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 54.709588436302,
+      "real_time": "2025-09-10T14:34:05.436891",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Andrew Blair",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 1.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 54.709588436302,
+      "real_time": "2025-09-10T14:34:05.436891",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Andrew Blair",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 54.709588436302,
+      "real_time": "2025-09-10T14:34:05.436891",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Andrew Blair",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 55.88690946669497,
+      "real_time": "2025-09-10T14:35:16.076153",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Nancy Evans",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 55.88690946669497,
+      "real_time": "2025-09-10T14:35:16.076153",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Nancy Evans",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 55.88690946669497,
+      "real_time": "2025-09-10T14:35:16.076153",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Nancy Evans",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 60,
+      "real_time": "2025-09-10T14:39:22.861585",
+      "event_type": "HOSPITAL_STATUS",
+      "patient_name": "SYSTEM",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "statistics": {
+          "total_doctors": 3,
+          "available_doctors": 3,
+          "total_patients": 0,
+          "total_beds": 3,
+          "available_beds": 3,
+          "total_mri_machines": 0,
+          "available_mri_machines": 0,
+          "total_ultrasonic_machines": 0,
+          "available_ultrasonic_machines": 0
+        },
+        "queue_summary": {
+          "Dr_Dr. Emergency": {
+            "red": 0,
+            "orange": 1,
+            "yellow": 2,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. Heart": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. General": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_ICU-1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A2": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          }
+        },
+        "simulation_time": 60
+      }
+    },
+    {
+      "timestamp": 63.44244733447891,
+      "real_time": "2025-09-10T14:42:49.408425",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Connor Washington",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor scrape",
+          "minor headache"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 65.44244733447891,
+      "real_time": "2025-09-10T14:44:49.408425",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Connor Washington",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.7590361445783133,
+          "green": 0.0,
+          "blue": 0.24096385542168677
+        }
+      }
+    },
+    {
+      "timestamp": 65.44244733447891,
+      "real_time": "2025-09-10T14:44:49.408425",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Connor Washington",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 65.44244733447891,
+      "real_time": "2025-09-10T14:44:49.408425",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Connor Washington",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 3,
+        "total_in_queue": 4
+      }
+    },
+    {
+      "timestamp": 66.709588436302,
+      "real_time": "2025-09-10T14:46:05.436891",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Andrew Blair",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 67.24611543428587,
+      "real_time": "2025-09-10T14:46:37.628511",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Jennifer Thompson",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "chest pain"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 69.24611543428587,
+      "real_time": "2025-09-10T14:48:37.628511",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Jennifer Thompson",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 1.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 69.24611543428587,
+      "real_time": "2025-09-10T14:48:37.628511",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Jennifer Thompson",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 69.24611543428587,
+      "real_time": "2025-09-10T14:48:37.628511",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Jennifer Thompson",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 5
+      }
+    },
+    {
+      "timestamp": 70.75093858105652,
+      "real_time": "2025-09-10T14:50:07.917900",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Terry Ortiz",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 70.75093858105652,
+      "real_time": "2025-09-10T14:50:07.917900",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Terry Ortiz",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 42.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 80.88690946669497,
+      "real_time": "2025-09-10T15:00:16.076153",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Nancy Evans",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 94.27755966490166,
+      "real_time": "2025-09-10T15:13:39.515165",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Lisa Johnson",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "unconscious",
+          "minor headache",
+          "rash"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 95.44244733447891,
+      "real_time": "2025-09-10T15:14:49.408425",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Connor Washington",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 96.24611543428587,
+      "real_time": "2025-09-10T15:15:37.628511",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Jennifer Thompson",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 96.27755966490166,
+      "real_time": "2025-09-10T15:15:39.515165",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Lisa Johnson",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.44247787610619466,
+          "orange": 0.0,
+          "yellow": 0.5575221238938053,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 96.27755966490166,
+      "real_time": "2025-09-10T15:15:39.515165",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Lisa Johnson",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 96.27755966490166,
+      "real_time": "2025-09-10T15:15:39.515165",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Lisa Johnson",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 5
+      }
+    },
+    {
+      "timestamp": 96.709588436302,
+      "real_time": "2025-09-10T15:16:05.436891",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Andrew Blair",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 96.709588436302,
+      "real_time": "2025-09-10T15:16:05.436891",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Andrew Blair",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 100.88690946669497,
+      "real_time": "2025-09-10T15:20:16.076153",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Nancy Evans",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 100.88690946669497,
+      "real_time": "2025-09-10T15:20:16.076153",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Nancy Evans",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 47.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 102.23876809308815,
+      "real_time": "2025-09-10T15:21:37.187671",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Joel Crawford",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "nausea",
+          "chest pain",
+          "minor burn"
+        ],
+        "history": "Patient has history of arthritis. "
+      }
+    },
+    {
+      "timestamp": 104.23876809308815,
+      "real_time": "2025-09-10T15:23:37.187671",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Joel Crawford",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.4607329842931938,
+          "yellow": 0.32984293193717273,
+          "green": 0.20942408376963353,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 104.23876809308815,
+      "real_time": "2025-09-10T15:23:37.187671",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Joel Crawford",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 104.23876809308815,
+      "real_time": "2025-09-10T15:23:37.187671",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Joel Crawford",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 4
+      }
+    },
+    {
+      "timestamp": 109.84927798515136,
+      "real_time": "2025-09-10T15:29:13.818264",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Justin Smith",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe trauma",
+          "unconscious"
+        ],
+        "history": "Patient has history of anxiety, arthritis. "
+      }
+    },
+    {
+      "timestamp": 111.84927798515136,
+      "real_time": "2025-09-10T15:31:13.818264",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Justin Smith",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 1.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 111.84927798515136,
+      "real_time": "2025-09-10T15:31:13.818264",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Justin Smith",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 111.84927798515136,
+      "real_time": "2025-09-10T15:31:13.818264",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Justin Smith",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 5
+      }
+    },
+    {
+      "timestamp": 115.44244733447891,
+      "real_time": "2025-09-10T15:34:49.408425",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Connor Washington",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 115.44244733447891,
+      "real_time": "2025-09-10T15:34:49.408425",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Connor Washington",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 52.0,
+        "priority": "yellow"
+      }
+    }
+  ]
+}

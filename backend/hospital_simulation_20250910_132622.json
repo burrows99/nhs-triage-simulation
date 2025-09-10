@@ -1,0 +1,823 @@
+{
+  "simulation_info": {
+    "start_time": "2025-09-10T13:26:22.240421",
+    "duration_minutes": 120,
+    "total_events": 58,
+    "hospital_name": "SimPy General Hospital"
+  },
+  "events": [
+    {
+      "timestamp": 0,
+      "real_time": "2025-09-10T13:26:22.240421",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Joseph Spencer",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "fever",
+          "cough"
+        ],
+        "history": "Patient has history of surgery history, heart disease, diabetes. "
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T13:28:22.240421",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Joseph Spencer",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T13:28:22.240421",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Joseph Spencer",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-10T13:28:22.240421",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Joseph Spencer",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 7.986030673608528,
+      "real_time": "2025-09-10T13:34:21.402261",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Suzanne Todd",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "abdominal pain",
+          "bruise",
+          "sprain"
+        ],
+        "history": "Patient has history of hypertension, surgery history. "
+      }
+    },
+    {
+      "timestamp": 8.895782019346175,
+      "real_time": "2025-09-10T13:35:15.987342",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Ann Roberts",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "abdominal pain",
+          "cold symptoms",
+          "rash"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 9.986030673608528,
+      "real_time": "2025-09-10T13:36:21.402261",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Suzanne Todd",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.4405594405594406,
+          "green": 0.5594405594405595,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 9.986030673608528,
+      "real_time": "2025-09-10T13:36:21.402261",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Suzanne Todd",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 9.986030673608528,
+      "real_time": "2025-09-10T13:36:21.402261",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Suzanne Todd",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 10.895782019346175,
+      "real_time": "2025-09-10T13:37:15.987342",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Ann Roberts",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 0.7590361445783133,
+          "green": 0.24096385542168677,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 10.895782019346175,
+      "real_time": "2025-09-10T13:37:15.987342",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Ann Roberts",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 10.895782019346175,
+      "real_time": "2025-09-10T13:37:15.987342",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Ann Roberts",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 3,
+        "total_in_queue": 3
+      }
+    },
+    {
+      "timestamp": 17,
+      "real_time": "2025-09-10T13:43:22.240421",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Joseph Spencer",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 19.964526349779675,
+      "real_time": "2025-09-10T13:46:20.112002",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Christopher Rubio",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "mild pain",
+          "dizziness",
+          "high fever"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 21.964526349779675,
+      "real_time": "2025-09-10T13:48:20.112002",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Christopher Rubio",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.4607329842931938,
+          "yellow": 0.32984293193717273,
+          "green": 0.20942408376963353,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 21.964526349779675,
+      "real_time": "2025-09-10T13:48:20.112002",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Christopher Rubio",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 21.964526349779675,
+      "real_time": "2025-09-10T13:48:20.112002",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Christopher Rubio",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 4
+      }
+    },
+    {
+      "timestamp": 29.25586668359075,
+      "real_time": "2025-09-10T13:55:37.592422",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Chelsea Wilson",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "difficulty breathing",
+          "dizziness",
+          "mild pain"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 29.98603067360853,
+      "real_time": "2025-09-10T13:56:21.402261",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Suzanne Todd",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 31.25586668359075,
+      "real_time": "2025-09-10T13:57:37.592422",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Chelsea Wilson",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.4607329842931938,
+          "yellow": 0.32984293193717273,
+          "green": 0.20942408376963353,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 31.25586668359075,
+      "real_time": "2025-09-10T13:57:37.592422",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Chelsea Wilson",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 31.25586668359075,
+      "real_time": "2025-09-10T13:57:37.592422",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Chelsea Wilson",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 5
+      }
+    },
+    {
+      "timestamp": 35.89578201934617,
+      "real_time": "2025-09-10T14:02:15.987342",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Ann Roberts",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 37,
+      "real_time": "2025-09-10T14:03:22.240421",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Joseph Spencer",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 37,
+      "real_time": "2025-09-10T14:03:22.240421",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Joseph Spencer",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 37,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 40.08297277781868,
+      "real_time": "2025-09-10T14:06:27.218788",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Erin Walsh",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "unconscious"
+        ],
+        "history": "Patient has history of anxiety. "
+      }
+    },
+    {
+      "timestamp": 42.08297277781868,
+      "real_time": "2025-09-10T14:08:27.218788",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Erin Walsh",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 1.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 42.08297277781868,
+      "real_time": "2025-09-10T14:08:27.218788",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Erin Walsh",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 42.08297277781868,
+      "real_time": "2025-09-10T14:08:27.218788",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Erin Walsh",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 5
+      }
+    },
+    {
+      "timestamp": 43.79829969466463,
+      "real_time": "2025-09-10T14:10:10.138403",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Amy Flores",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe trauma",
+          "anaphylaxis"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 45.79829969466463,
+      "real_time": "2025-09-10T14:12:10.138403",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Amy Flores",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 1.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 45.79829969466463,
+      "real_time": "2025-09-10T14:12:10.138403",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Amy Flores",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 45.79829969466463,
+      "real_time": "2025-09-10T14:12:10.138403",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Amy Flores",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 6
+      }
+    },
+    {
+      "timestamp": 49.986030673608525,
+      "real_time": "2025-09-10T14:16:21.402261",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Suzanne Todd",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 49.986030673608525,
+      "real_time": "2025-09-10T14:16:21.402261",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Suzanne Todd",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 42.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 55.89578201934617,
+      "real_time": "2025-09-10T14:22:15.987342",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Ann Roberts",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 55.89578201934617,
+      "real_time": "2025-09-10T14:22:15.987342",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Ann Roberts",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 47.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 60,
+      "real_time": "2025-09-10T14:26:22.240421",
+      "event_type": "HOSPITAL_STATUS",
+      "patient_name": "SYSTEM",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "statistics": {
+          "total_doctors": 3,
+          "available_doctors": 3,
+          "total_patients": 0,
+          "total_beds": 3,
+          "available_beds": 3,
+          "total_mri_machines": 0,
+          "available_mri_machines": 0,
+          "total_ultrasonic_machines": 0,
+          "available_ultrasonic_machines": 0
+        },
+        "queue_summary": {
+          "Dr_Dr. Emergency": {
+            "red": 2,
+            "orange": 0,
+            "yellow": 0,
+            "green": 2,
+            "blue": 0
+          },
+          "Dr_Dr. Heart": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. General": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_ICU-1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A2": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          }
+        },
+        "simulation_time": 60
+      }
+    },
+    {
+      "timestamp": 67.08297277781868,
+      "real_time": "2025-09-10T14:33:27.218788",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Erin Walsh",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 71.96452634977967,
+      "real_time": "2025-09-10T14:38:20.112002",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Christopher Rubio",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {}
+    },
+    {
+      "timestamp": 74.1988015521265,
+      "real_time": "2025-09-10T14:40:34.168514",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Alison Nguyen",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe bleeding",
+          "high fever"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 75.79829969466462,
+      "real_time": "2025-09-10T14:42:10.138403",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Amy Flores",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 76.1988015521265,
+      "real_time": "2025-09-10T14:42:34.168514",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Alison Nguyen",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.5319148936170213,
+          "orange": 0.4680851063829788,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 76.1988015521265,
+      "real_time": "2025-09-10T14:42:34.168514",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Alison Nguyen",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true
+      }
+    },
+    {
+      "timestamp": 76.1988015521265,
+      "real_time": "2025-09-10T14:42:34.168514",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Alison Nguyen",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 3,
+        "total_in_queue": 5
+      }
+    },
+    {
+      "timestamp": 86.25586668359075,
+      "real_time": "2025-09-10T14:52:37.592422",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Chelsea Wilson",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {}
+    },
+    {
+      "timestamp": 86.96452634977967,
+      "real_time": "2025-09-10T14:53:20.112002",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Christopher Rubio",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "duration": 15
+      }
+    },
+    {
+      "timestamp": 86.96452634977967,
+      "real_time": "2025-09-10T14:53:20.112002",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Christopher Rubio",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 67.0,
+        "priority": "green"
+      }
+    },
+    {
+      "timestamp": 89.90348064077513,
+      "real_time": "2025-09-10T14:56:16.449259",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "David Terrell",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "mild pain",
+          "difficulty breathing",
+          "anaphylaxis"
+        ],
+        "history": "Patient has history of arthritis, surgery history. "
+      }
+    },
+    {
+      "timestamp": 91.90348064077513,
+      "real_time": "2025-09-10T14:58:16.449259",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "David Terrell",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "priority_name": "Standard",
+        "max_wait_time": "2 hours",
+        "triage_scores": {
+          "red": 0.4537953795379538,
+          "orange": 0.38118811881188125,
+          "yellow": 0.0,
+          "green": 0.16501650165016502,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 91.90348064077513,
+      "real_time": "2025-09-10T14:58:16.449259",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "David Terrell",
+      "resource_name": null,
+      "priority": "green",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false
+      }
+    },
+    {
+      "timestamp": 91.90348064077513,
+      "real_time": "2025-09-10T14:58:16.449259",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "David Terrell",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 5
+      }
+    },
+    {
+      "timestamp": 101.1988015521265,
+      "real_time": "2025-09-10T15:07:34.168514",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Alison Nguyen",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 101.25586668359075,
+      "real_time": "2025-09-10T15:07:37.592422",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Chelsea Wilson",
+      "resource_name": "Dr. Emergency",
+      "priority": "green",
+      "details": {
+        "duration": 15
+      }
+    },
+    {
+      "timestamp": 101.25586668359075,
+      "real_time": "2025-09-10T15:07:37.592422",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Chelsea Wilson",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 72.0,
+        "priority": "green"
+      }
+    },
+    {
+      "timestamp": 112.08297277781868,
+      "real_time": "2025-09-10T15:18:27.218788",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Erin Walsh",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "duration": 45
+      }
+    },
+    {
+      "timestamp": 112.08297277781868,
+      "real_time": "2025-09-10T15:18:27.218788",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Erin Walsh",
+      "resource_name": "ICU-1",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 119.76633651957198,
+      "real_time": "2025-09-10T15:26:08.220612",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Mary Nelson",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "cardiac arrest"
+        ],
+        "history": "Patient has history of depression, diabetes, anxiety. "
+      }
+    }
+  ]
+}

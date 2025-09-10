@@ -17,6 +17,7 @@ from src.entities.equipment.MRI.MRI import MRI
 from src.entities.equipment.ultrasonic.ultrasonic import Ultrasonic
 from src.services.patient_factory import PatientFactory
 from src.enums.priority import Priority
+from src.simulation.simulation import HospitalSimulation
 
 def setup_hospital() -> Hospital:
     """Set up a hospital with doctors and equipment"""
@@ -171,5 +172,61 @@ def main() -> None:
     print("  • Hospital management with priority queues")
     print("  • Comprehensive resource tracking")
 
+def create_sample_hospital() -> Hospital:
+    """Create a sample hospital for simulation"""
+    hospital = Hospital(id=1, name="SimPy General Hospital")
+    
+    # Add doctors
+    doctors = [
+        Doctor(id=101, name="Dr. Emergency", specialty="Emergency Medicine"),
+        Doctor(id=102, name="Dr. Heart", specialty="Cardiology"),
+        Doctor(id=103, name="Dr. General", specialty="General Practice")
+    ]
+    
+    for doctor in doctors:
+        hospital.add_doctor(doctor)
+    
+    # Add beds
+    beds = [
+        Bed(id=201, name="ICU-1"),
+        Bed(id=202, name="Ward-A1"),
+        Bed(id=203, name="Ward-A2")
+    ]
+    
+    for bed in beds:
+        hospital.add_bed(bed)
+    
+    return hospital
+
+def run_hospital_simulation(duration_minutes: int = 480) -> str:
+    """Run a complete hospital simulation and return JSON filename"""
+    hospital = create_sample_hospital()
+    simulation = HospitalSimulation(hospital, duration_minutes)
+    
+    # Run simulation
+    simulation.run_simulation()
+    
+    # Export to JSON
+    filename = simulation.export_events_to_json()
+    
+    return filename
+
 if __name__ == "__main__":
-    main()
+    print("\n" + "="*60)
+    print("CHOOSE DEMONSTRATION MODE")
+    print("="*60)
+    print("1. Hospital Management Demo (original)")
+    print("2. SimPy Hospital Simulation (new)")
+    
+    choice = input("\nEnter your choice (1 or 2): ").strip()
+    
+    if choice == "1":
+        main()
+    elif choice == "2":
+        print("\n🏥 RUNNING SIMPY HOSPITAL SIMULATION")
+        json_file = run_hospital_simulation(120)  # 2-hour simulation
+        print(f"\nSimulation complete! Events saved to: {json_file}")
+        print("This JSON file can be used for React visualization.")
+    else:
+        print("Invalid choice. Running default hospital demo...")
+        main()
