@@ -1,3 +1,0 @@
-group,count,percentage,mean_age,triage_distribution,needs_mri,needs_ultrasound,vulnerable_population,optimal_direct_mri,mri_rate,ultrasound_rate,vulnerability_rate
-M,119,50.210970464135016,71.94117647058823,"{'blue': 112, 'orange': 7}",0,0,73,0,0.0,0.0,61.34453781512605
-F,118,49.789029535864984,48.601694915254235,"{'blue': 90, 'orange': 28}",0,0,19,0,0.0,0.0,16.101694915254235

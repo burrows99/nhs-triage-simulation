@@ -1,0 +1,8 @@
+{
+  "include": ["backend/src"],
+  "venvPath": ".",
+  "venv": ".venv",
+  "reportUnknownMemberType": "error",
+  "reportUntypedFunctionDecorator": "warning",
+  "typeCheckingMode": "strict"
+}
