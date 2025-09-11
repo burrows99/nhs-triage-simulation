@@ -1,0 +1,725 @@
+{
+  "simulation_info": {
+    "start_time": "2025-09-11T18:09:35.357275",
+    "duration_minutes": 120,
+    "total_events": 51,
+    "hospital_name": "SimPy General Hospital"
+  },
+  "events": [
+    {
+      "timestamp": 0,
+      "real_time": "2025-09-11T18:09:35.357275",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Paula Welch",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "unconscious",
+          "severe burns",
+          "cold symptoms"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-11T18:11:35.357275",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Paula Welch",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.8333333333333334,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.16666666666666669,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-11T18:11:35.357275",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Paula Welch",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed assignment for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-11T18:11:35.357275",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Paula Welch",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 4,
+      "real_time": "2025-09-11T18:13:35.357275",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Paula Welch",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 10.607729329744176,
+      "real_time": "2025-09-11T18:20:11.821035",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Morgan Willis",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "minor headache",
+          "dizziness"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 12.607729329744176,
+      "real_time": "2025-09-11T18:22:11.821035",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Morgan Willis",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 12.607729329744176,
+      "real_time": "2025-09-11T18:22:11.821035",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Morgan Willis",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; No bed required - outpatient treatment"
+      }
+    },
+    {
+      "timestamp": 12.607729329744176,
+      "real_time": "2025-09-11T18:22:11.821035",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Morgan Willis",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 19.607729329744174,
+      "real_time": "2025-09-11T18:29:11.821035",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Morgan Willis",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 20.370940341566698,
+      "real_time": "2025-09-11T18:29:57.613695",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Elizabeth Harris",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "nausea",
+          "severe bleeding"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 22.370940341566698,
+      "real_time": "2025-09-11T18:31:57.613695",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Elizabeth Harris",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.6134969325153375,
+          "orange": 0.0,
+          "yellow": 0.38650306748466257,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 22.370940341566698,
+      "real_time": "2025-09-11T18:31:57.613695",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Elizabeth Harris",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed assignment for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 22.370940341566698,
+      "real_time": "2025-09-11T18:31:57.613695",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Elizabeth Harris",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 24.370940341566698,
+      "real_time": "2025-09-11T18:33:57.613695",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Elizabeth Harris",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 30.088346945451725,
+      "real_time": "2025-09-11T18:39:40.658092",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Jonathan Odom",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "anaphylaxis",
+          "severe burns",
+          "abdominal pain"
+        ],
+        "history": "Patient has history of cancer history, depression. "
+      }
+    },
+    {
+      "timestamp": 32.088346945451725,
+      "real_time": "2025-09-11T18:41:40.658092",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Jonathan Odom",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.7773851590106008,
+          "orange": 0.0,
+          "yellow": 0.22261484098939932,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 32.088346945451725,
+      "real_time": "2025-09-11T18:41:40.658092",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Jonathan Odom",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed assignment for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 32.088346945451725,
+      "real_time": "2025-09-11T18:41:40.658092",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Jonathan Odom",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "queue_position": 2,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 36.088346945451725,
+      "real_time": "2025-09-11T18:45:40.658092",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Jonathan Odom",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 39.607729329744174,
+      "real_time": "2025-09-11T18:49:11.821035",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Morgan Willis",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 39.607729329744174,
+      "real_time": "2025-09-11T18:49:11.821035",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Morgan Willis",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 29.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 43.06796900205079,
+      "real_time": "2025-09-11T18:52:39.435415",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Kenneth Oconnor",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "not breathing",
+          "unconscious",
+          "dizziness"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 45.06796900205079,
+      "real_time": "2025-09-11T18:54:39.435415",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Kenneth Oconnor",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.7604562737642585,
+          "orange": 0.0,
+          "yellow": 0.23954372623574147,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 45.06796900205079,
+      "real_time": "2025-09-11T18:54:39.435415",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Kenneth Oconnor",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed assignment for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 45.06796900205079,
+      "real_time": "2025-09-11T18:54:39.435415",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Kenneth Oconnor",
+      "resource_name": "Dr. Heart",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 47.06796900205079,
+      "real_time": "2025-09-11T18:56:39.435415",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Kenneth Oconnor",
+      "resource_name": "Dr. Heart",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 49,
+      "real_time": "2025-09-11T18:58:35.357275",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Paula Welch",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "duration": 45
+      }
+    },
+    {
+      "timestamp": 49,
+      "real_time": "2025-09-11T18:58:35.357275",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Paula Welch",
+      "resource_name": "ICU-1",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 60,
+      "real_time": "2025-09-11T19:09:35.357275",
+      "event_type": "HOSPITAL_STATUS",
+      "patient_name": "SYSTEM",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "statistics": {
+          "total_doctors": 3,
+          "available_doctors": 3,
+          "total_patients": 0,
+          "total_beds": 3,
+          "available_beds": 3,
+          "total_mri_machines": 0,
+          "available_mri_machines": 0,
+          "total_ultrasonic_machines": 0,
+          "available_ultrasonic_machines": 0
+        },
+        "queue_summary": {
+          "Dr_Dr. Emergency": {
+            "red": 1,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. Heart": {
+            "red": 1,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. General": {
+            "red": 1,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_ICU-1": {
+            "red": 1,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A2": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          }
+        },
+        "simulation_time": 60
+      }
+    },
+    {
+      "timestamp": 69.3709403415667,
+      "real_time": "2025-09-11T19:18:57.613695",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Elizabeth Harris",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {
+        "duration": 45
+      }
+    },
+    {
+      "timestamp": 69.3709403415667,
+      "real_time": "2025-09-11T19:18:57.613695",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Elizabeth Harris",
+      "resource_name": "ICU-1",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 73.06463332192988,
+      "real_time": "2025-09-11T19:22:39.235274",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Deborah Boone",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "unconscious",
+          "severe burns",
+          "moderate pain"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 75.06463332192988,
+      "real_time": "2025-09-11T19:24:39.235274",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Deborah Boone",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 0.7604562737642585,
+          "orange": 0.0,
+          "yellow": 0.23954372623574147,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 75.06463332192988,
+      "real_time": "2025-09-11T19:24:39.235274",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Deborah Boone",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed assignment for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 75.06463332192988,
+      "real_time": "2025-09-11T19:24:39.235274",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Deborah Boone",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 77.06463332192988,
+      "real_time": "2025-09-11T19:26:39.235274",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Deborah Boone",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 81.08834694545172,
+      "real_time": "2025-09-11T19:30:40.658092",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Jonathan Odom",
+      "resource_name": "Dr. Emergency",
+      "priority": "red",
+      "details": {
+        "duration": 45
+      }
+    },
+    {
+      "timestamp": 81.08834694545172,
+      "real_time": "2025-09-11T19:30:40.658092",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Jonathan Odom",
+      "resource_name": "ICU-1",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 85.10594134295835,
+      "real_time": "2025-09-11T19:34:41.713756",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "James Martinez",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe vomiting"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 87.10594134295835,
+      "real_time": "2025-09-11T19:36:41.713756",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "James Martinez",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 1.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 87.10594134295835,
+      "real_time": "2025-09-11T19:36:41.713756",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "James Martinez",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Very Urgent priority; Urgent bed assignment for Very Urgent priority"
+      }
+    },
+    {
+      "timestamp": 87.10594134295835,
+      "real_time": "2025-09-11T19:36:41.713756",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "James Martinez",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 91.10594134295835,
+      "real_time": "2025-09-11T19:40:41.713756",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "James Martinez",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 92.06796900205079,
+      "real_time": "2025-09-11T19:41:39.435415",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Kenneth Oconnor",
+      "resource_name": "Dr. Heart",
+      "priority": "red",
+      "details": {
+        "duration": 45
+      }
+    },
+    {
+      "timestamp": 92.06796900205079,
+      "real_time": "2025-09-11T19:41:39.435415",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Kenneth Oconnor",
+      "resource_name": "ICU-1",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 99.43670293005486,
+      "real_time": "2025-09-11T19:49:01.559451",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Sandra Rice",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "rash"
+        ],
+        "history": "Patient has history of heart disease, chronic pain, asthma. "
+      }
+    },
+    {
+      "timestamp": 101.43670293005486,
+      "real_time": "2025-09-11T19:51:01.559451",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Sandra Rice",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 101.43670293005486,
+      "real_time": "2025-09-11T19:51:01.559451",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Sandra Rice",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; No bed required - outpatient treatment"
+      }
+    },
+    {
+      "timestamp": 101.43670293005486,
+      "real_time": "2025-09-11T19:51:01.559451",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Sandra Rice",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 108.43670293005486,
+      "real_time": "2025-09-11T19:58:01.559451",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Sandra Rice",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    }
+  ]
+}

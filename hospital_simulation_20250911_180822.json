@@ -1,0 +1,676 @@
+{
+  "simulation_info": {
+    "start_time": "2025-09-11T18:08:22.865047",
+    "duration_minutes": 120,
+    "total_events": 48,
+    "hospital_name": "SimPy General Hospital"
+  },
+  "events": [
+    {
+      "timestamp": 0,
+      "real_time": "2025-09-11T18:08:22.865047",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe pain"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-11T18:10:22.865047",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 1.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-11T18:10:22.865047",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Very Urgent priority; Urgent bed assignment for Very Urgent priority"
+      }
+    },
+    {
+      "timestamp": 2,
+      "real_time": "2025-09-11T18:10:22.865047",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 6,
+      "real_time": "2025-09-11T18:14:22.865047",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 18.99040232615161,
+      "real_time": "2025-09-11T18:27:22.289187",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Daniel Rogers",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "nausea"
+        ],
+        "history": "Patient has history of anxiety, asthma. "
+      }
+    },
+    {
+      "timestamp": 20.99040232615161,
+      "real_time": "2025-09-11T18:29:22.289187",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Daniel Rogers",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 20.99040232615161,
+      "real_time": "2025-09-11T18:29:22.289187",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Daniel Rogers",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; No bed required - outpatient treatment"
+      }
+    },
+    {
+      "timestamp": 20.99040232615161,
+      "real_time": "2025-09-11T18:29:22.289187",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Daniel Rogers",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 27.99040232615161,
+      "real_time": "2025-09-11T18:36:22.289187",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Daniel Rogers",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 36,
+      "real_time": "2025-09-11T18:44:22.865047",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 36,
+      "real_time": "2025-09-11T18:44:22.865047",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Elizabeth Davis",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 47.68545602334498,
+      "real_time": "2025-09-11T18:56:03.992408",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Manuel Stafford",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "bruise",
+          "seizure"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 47.99040232615161,
+      "real_time": "2025-09-11T18:56:22.289187",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Daniel Rogers",
+      "resource_name": "Dr. Heart",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 47.99040232615161,
+      "real_time": "2025-09-11T18:56:22.289187",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Daniel Rogers",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 29.0,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 49.68545602334498,
+      "real_time": "2025-09-11T18:58:03.992408",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Manuel Stafford",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.6875000000000001,
+          "yellow": 0.0,
+          "green": 0.3125,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 49.68545602334498,
+      "real_time": "2025-09-11T18:58:03.992408",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Manuel Stafford",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Very Urgent priority; Urgent bed assignment for Very Urgent priority"
+      }
+    },
+    {
+      "timestamp": 49.68545602334498,
+      "real_time": "2025-09-11T18:58:03.992408",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Manuel Stafford",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 53.68545602334498,
+      "real_time": "2025-09-11T19:02:03.992408",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Manuel Stafford",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 59.82176987383803,
+      "real_time": "2025-09-11T19:08:12.171239",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Yolanda Martinez",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe headache",
+          "sore throat"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 60,
+      "real_time": "2025-09-11T19:08:22.865047",
+      "event_type": "HOSPITAL_STATUS",
+      "patient_name": "SYSTEM",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "statistics": {
+          "total_doctors": 3,
+          "available_doctors": 3,
+          "total_patients": 0,
+          "total_beds": 3,
+          "available_beds": 3,
+          "total_mri_machines": 0,
+          "available_mri_machines": 0,
+          "total_ultrasonic_machines": 0,
+          "available_ultrasonic_machines": 0
+        },
+        "queue_summary": {
+          "Dr_Dr. Emergency": {
+            "red": 0,
+            "orange": 1,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. Heart": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Dr_Dr. General": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_ICU-1": {
+            "red": 0,
+            "orange": 1,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A1": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          },
+          "Bed_Ward-A2": {
+            "red": 0,
+            "orange": 0,
+            "yellow": 0,
+            "green": 0,
+            "blue": 0
+          }
+        },
+        "simulation_time": 60
+      }
+    },
+    {
+      "timestamp": 60.432069516785255,
+      "real_time": "2025-09-11T19:08:48.789218",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Kathryn Arroyo",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "fever"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 61.82176987383803,
+      "real_time": "2025-09-11T19:10:12.171239",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Yolanda Martinez",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "priority_name": "Very Urgent",
+        "max_wait_time": "10 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.6875000000000001,
+          "yellow": 0.0,
+          "green": 0.3125,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 61.82176987383803,
+      "real_time": "2025-09-11T19:10:12.171239",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Yolanda Martinez",
+      "resource_name": null,
+      "priority": "orange",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Very Urgent priority; Urgent bed assignment for Very Urgent priority"
+      }
+    },
+    {
+      "timestamp": 61.82176987383803,
+      "real_time": "2025-09-11T19:10:12.171239",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Yolanda Martinez",
+      "resource_name": "Dr. Heart",
+      "priority": "orange",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 62.432069516785255,
+      "real_time": "2025-09-11T19:10:48.789218",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Kathryn Arroyo",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 62.432069516785255,
+      "real_time": "2025-09-11T19:10:48.789218",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Kathryn Arroyo",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; No bed required - outpatient treatment"
+      }
+    },
+    {
+      "timestamp": 62.432069516785255,
+      "real_time": "2025-09-11T19:10:48.789218",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Kathryn Arroyo",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 65.82176987383804,
+      "real_time": "2025-09-11T19:14:12.171239",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Yolanda Martinez",
+      "resource_name": "Dr. Heart",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 66.78121039063748,
+      "real_time": "2025-09-11T19:15:09.737670",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Christina Bentley",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "mild nausea"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 68.78121039063748,
+      "real_time": "2025-09-11T19:17:09.737670",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Christina Bentley",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "priority_name": "Urgent",
+        "max_wait_time": "60 minutes",
+        "triage_scores": {
+          "red": 0.0,
+          "orange": 0.0,
+          "yellow": 1.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 68.78121039063748,
+      "real_time": "2025-09-11T19:17:09.737670",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Christina Bentley",
+      "resource_name": null,
+      "priority": "yellow",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": false,
+        "routing_logic": "Doctor consultation required for Urgent priority; No bed required - outpatient treatment"
+      }
+    },
+    {
+      "timestamp": 68.78121039063748,
+      "real_time": "2025-09-11T19:17:09.737670",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Christina Bentley",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 2
+      }
+    },
+    {
+      "timestamp": 69.43206951678525,
+      "real_time": "2025-09-11T19:17:48.789218",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Kathryn Arroyo",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 77.78121039063748,
+      "real_time": "2025-09-11T19:26:09.737670",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Christina Bentley",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {}
+    },
+    {
+      "timestamp": 83.68545602334498,
+      "real_time": "2025-09-11T19:32:03.992408",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Manuel Stafford",
+      "resource_name": "Dr. Emergency",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 83.68545602334498,
+      "real_time": "2025-09-11T19:32:03.992408",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Manuel Stafford",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 89.43206951678525,
+      "real_time": "2025-09-11T19:37:48.789218",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Kathryn Arroyo",
+      "resource_name": "Dr. General",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 89.43206951678525,
+      "real_time": "2025-09-11T19:37:48.789218",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Kathryn Arroyo",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 28.999999999999993,
+        "priority": "yellow"
+      }
+    },
+    {
+      "timestamp": 90.59579676125666,
+      "real_time": "2025-09-11T19:38:58.612853",
+      "event_type": "PATIENT_ARRIVAL",
+      "patient_name": "Cathy Jenkins",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "symptoms": [
+          "severe bleeding"
+        ],
+        "history": "No significant medical history."
+      }
+    },
+    {
+      "timestamp": 92.59579676125666,
+      "real_time": "2025-09-11T19:40:58.612853",
+      "event_type": "TRIAGE_COMPLETE",
+      "patient_name": "Cathy Jenkins",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "priority_name": "Immediate",
+        "max_wait_time": "0 minutes",
+        "triage_scores": {
+          "red": 1.0,
+          "orange": 0.0,
+          "yellow": 0.0,
+          "green": 0.0,
+          "blue": 0.0
+        }
+      }
+    },
+    {
+      "timestamp": 92.59579676125666,
+      "real_time": "2025-09-11T19:40:58.612853",
+      "event_type": "ROUTING_DECISION",
+      "patient_name": "Cathy Jenkins",
+      "resource_name": null,
+      "priority": "red",
+      "details": {
+        "assign_doctor": true,
+        "assign_bed": true,
+        "routing_logic": "Doctor consultation required for Immediate priority; Urgent bed assignment for Immediate priority"
+      }
+    },
+    {
+      "timestamp": 92.59579676125666,
+      "real_time": "2025-09-11T19:40:58.612853",
+      "event_type": "QUEUE_JOIN",
+      "patient_name": "Cathy Jenkins",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {
+        "queue_position": 1,
+        "total_in_queue": 1
+      }
+    },
+    {
+      "timestamp": 94.59579676125666,
+      "real_time": "2025-09-11T19:42:58.612853",
+      "event_type": "CONSULTATION_START",
+      "patient_name": "Cathy Jenkins",
+      "resource_name": "Dr. General",
+      "priority": "red",
+      "details": {}
+    },
+    {
+      "timestamp": 95.82176987383804,
+      "real_time": "2025-09-11T19:44:12.171239",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Yolanda Martinez",
+      "resource_name": "Dr. Heart",
+      "priority": "orange",
+      "details": {
+        "duration": 30
+      }
+    },
+    {
+      "timestamp": 95.82176987383804,
+      "real_time": "2025-09-11T19:44:12.171239",
+      "event_type": "BED_ASSIGNMENT",
+      "patient_name": "Yolanda Martinez",
+      "resource_name": "ICU-1",
+      "priority": "orange",
+      "details": {}
+    },
+    {
+      "timestamp": 97.78121039063748,
+      "real_time": "2025-09-11T19:46:09.737670",
+      "event_type": "CONSULTATION_END",
+      "patient_name": "Christina Bentley",
+      "resource_name": "Dr. Emergency",
+      "priority": "yellow",
+      "details": {
+        "duration": 20
+      }
+    },
+    {
+      "timestamp": 97.78121039063748,
+      "real_time": "2025-09-11T19:46:09.737670",
+      "event_type": "PATIENT_DISCHARGE",
+      "patient_name": "Christina Bentley",
+      "resource_name": null,
+      "priority": null,
+      "details": {
+        "total_time_in_hospital": 31.0,
+        "priority": "yellow"
+      }
+    }
+  ]
+}

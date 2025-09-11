@@ -7,41 +7,38 @@ from ..equipment.bed.bed import Bed
 from ..equipment.MRI.MRI import MRI
 from ..equipment.ultrasonic.ultrasonic import Ultrasonic
 from ..triage.triage import FuzzyManchesterTriage
-from ..routing.routing_agent import RoutingAgent
 from ...enums.priority import Priority
+from ...managers.doctor_manager import DoctorManager
+from ...managers.bed_manager import BedManager
+from ...managers.equipment_manager import EquipmentManager
 
 @dataclass
 class Hospital(Entity):
-    doctors: List[Doctor] = field(default_factory=list)
     patients: List[Patient] = field(default_factory=list)
-    beds: List[Bed] = field(default_factory=list)
-    mri_machines: List[MRI] = field(default_factory=list)
-    ultrasonic_machines: List[Ultrasonic] = field(default_factory=list)
     triage_system: FuzzyManchesterTriage = field(default_factory=FuzzyManchesterTriage)
-    routing_agent: RoutingAgent = field(default_factory=RoutingAgent)
-    
+    doctor_manager: DoctorManager = field(default_factory=DoctorManager)
+    bed_manager: BedManager = field(default_factory=BedManager)
+    equipment_manager: EquipmentManager = field(default_factory=EquipmentManager)
+
     # Doctor management
     def add_doctor(self, doctor: Doctor) -> None:
         """Add a doctor to the hospital"""
-        self.doctors.append(doctor)
+        self.doctor_manager.add_doctor(doctor)
         print(f"Dr. {doctor.name} ({doctor.specialty}) added to {self.name}")
-    
+
     def remove_doctor(self, doctor: Doctor) -> None:
         """Remove a doctor from the hospital"""
-        if doctor in self.doctors:
-            self.doctors.remove(doctor)
-            print(f"Dr. {doctor.name} removed from {self.name}")
-        else:
-            print(f"Dr. {doctor.name} not found in {self.name}")
-    
+        self.doctor_manager.remove_doctor(doctor)
+        print(f"Dr. {doctor.name} removed from {self.name}")
+
     def get_available_doctors(self) -> List[Doctor]:
         """Get list of available doctors"""
-        return [doctor for doctor in self.doctors if doctor.is_available()]
-    
+        return self.doctor_manager.get_available_doctors()
+
     def get_doctors_by_specialty(self, specialty: str) -> List[Doctor]:
         """Get doctors by specialty"""
-        return [doctor for doctor in self.doctors if doctor.specialty.lower() == specialty.lower()]
-    
+        return self.doctor_manager.get_doctors_by_specialty(specialty)
+
     # Private helper methods
     def _perform_triage(self, patient: Patient) -> Priority:
         """Perform triage and display results"""
@@ -49,39 +46,15 @@ class Hospital(Entity):
         print(f"Triage Priority: {priority.name_display} ({priority.value.upper()})")
         print(f"Max wait time: {priority.max_wait_time}")
         return priority
-    
-    def _assign_to_doctor(self, patient: Patient, priority: Priority) -> None:
-        """Assign patient to available doctor using routing agent with load balancing"""
-        if self.routing_agent.should_assign_to_doctor(patient, priority):
-            available_doctors = self.get_available_doctors()
-            if available_doctors:
-                # Choose doctor with least patients in queue for load balancing
-                doctor = min(available_doctors, key=lambda d: d.get_total_patients_in_queue())
-                doctor.add_patient_to_queue(patient, priority.value)
-                print(f"Patient {patient.name} assigned to Dr. {doctor.name} with {priority.value} priority (queue: {doctor.get_total_patients_in_queue()})")
-            else:
-                print(f"No available doctors. Patient {patient.name} added to waiting list with {priority.value} priority")
-    
-    def _assign_urgent_bed(self, patient: Patient, priority: Priority) -> None:
-        """Assign bed for urgent patients using routing agent"""
-        if self.routing_agent.should_assign_urgent_bed(patient, priority):
-            available_beds = self.get_available_beds()
-            if available_beds:
-                bed = available_beds[0]
-                bed.add_patient_to_queue(patient, priority.value)
-                print(f"Urgent patient {patient.name} also assigned to bed {bed.name}")
-            else:
-                print(f"No available beds for urgent patient {patient.name}")
-    
+
     # Patient management
     def admit_patient(self, patient: Patient) -> None:
         """Admit a patient to the hospital with automatic triage"""
         self.patients.append(patient)
         print(f"Patient {patient.name} admitted to {self.name}")
-        
-        priority = self._perform_triage(patient)
-        self._assign_to_doctor(patient, priority)
-    
+
+        self._perform_triage(patient)
+
     def discharge_patient(self, patient: Patient) -> None:
         """Discharge a patient from the hospital"""
         if patient in self.patients:
@@ -92,65 +65,63 @@ class Hospital(Entity):
             print(f"Patient {patient.name} discharged from {self.name}")
         else:
             print(f"Patient {patient.name} not found in {self.name}")
-    
-    def _add_equipment(self, equipment_list: List[Any], equipment: Any, equipment_type: str) -> None:
-        """Generic helper to add equipment to hospital"""
-        equipment_list.append(equipment)
-        print(f"{equipment_type} {equipment.name} added to {self.name}")
-    
+
     # Equipment management
     def add_bed(self, bed: Bed) -> None:
         """Add a bed to the hospital"""
-        self._add_equipment(self.beds, bed, "Bed")
-    
+        self.bed_manager.add_bed(bed)
+        print(f"Bed {bed.name} added to {self.name}")
+
     def add_mri_machine(self, mri: MRI) -> None:
         """Add an MRI machine to the hospital"""
-        self._add_equipment(self.mri_machines, mri, "MRI")
-    
+        self.equipment_manager.add_mri_machine(mri)
+        print(f"MRI {mri.name} added to {self.name}")
+
     def add_ultrasonic_machine(self, ultrasonic: Ultrasonic) -> None:
         """Add an ultrasonic machine to the hospital"""
-        self._add_equipment(self.ultrasonic_machines, ultrasonic, "Ultrasonic")
-    
+        self.equipment_manager.add_ultrasonic_machine(ultrasonic)
+        print(f"Ultrasonic {ultrasonic.name} added to {self.name}")
+
     def get_available_beds(self) -> List[Bed]:
         """Get list of available beds"""
-        return [bed for bed in self.beds if bed.is_available()]
-    
+        return self.bed_manager.get_available_beds()
+
     def get_available_mri_machines(self) -> List[MRI]:
         """Get list of available MRI machines"""
-        return [mri for mri in self.mri_machines if mri.is_available()]
-    
+        return self.equipment_manager.get_available_mri_machines()
+
     def get_available_ultrasonic_machines(self) -> List[Ultrasonic]:
         """Get list of available ultrasonic machines"""
-        return [ultrasonic for ultrasonic in self.ultrasonic_machines if ultrasonic.is_available()]
-    
+        return self.equipment_manager.get_available_ultrasonic_machines()
+
     # Hospital statistics
     def get_hospital_stats(self) -> Dict[str, int]:
         """Get comprehensive hospital statistics"""
         return {
-            "total_doctors": len(self.doctors),
+            "total_doctors": len(self.doctor_manager.get_all_doctors()),
             "available_doctors": len(self.get_available_doctors()),
             "total_patients": len(self.patients),
-            "total_beds": len(self.beds),
+            "total_beds": len(self.bed_manager.get_all_beds()),
             "available_beds": len(self.get_available_beds()),
-            "total_mri_machines": len(self.mri_machines),
+            "total_mri_machines": len(self.equipment_manager.get_all_mri_machines()),
             "available_mri_machines": len(self.get_available_mri_machines()),
-            "total_ultrasonic_machines": len(self.ultrasonic_machines),
+            "total_ultrasonic_machines": len(self.equipment_manager.get_all_ultrasonic_machines()),
             "available_ultrasonic_machines": len(self.get_available_ultrasonic_machines())
         }
-    
-    def _add_resource_queues_to_summary(self, summary: Dict[str, Dict[str, int]], 
+
+    def _add_resource_queues_to_summary(self, summary: Dict[str, Dict[str, int]],
                                        resources: List[Any], prefix: str) -> None:
         """Helper to add resource queues to summary"""
         for resource in resources:
             summary[f"{prefix}_{resource.name}"] = resource.get_queue_status()
-    
+
     def get_queue_summary(self) -> Dict[str, Dict[str, int]]:
         """Get summary of all resource queues"""
         summary: Dict[str, Dict[str, int]] = {}
-        
-        self._add_resource_queues_to_summary(summary, self.doctors, "Dr")
-        self._add_resource_queues_to_summary(summary, self.beds, "Bed")
-        self._add_resource_queues_to_summary(summary, self.mri_machines, "MRI")
-        self._add_resource_queues_to_summary(summary, self.ultrasonic_machines, "Ultrasonic")
-        
+
+        self._add_resource_queues_to_summary(summary, self.doctor_manager.get_all_doctors(), "Dr")
+        self._add_resource_queues_to_summary(summary, self.bed_manager.get_all_beds(), "Bed")
+        self._add_resource_queues_to_summary(summary, self.equipment_manager.get_all_mri_machines(), "MRI")
+        self._add_resource_queues_to_summary(summary, self.equipment_manager.get_all_ultrasonic_machines(), "Ultrasonic")
+
         return summary
