@@ -155,7 +155,7 @@ def main():
     )
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("sim")
-    s.add_argument("--scenario", choices=["base", "stress"], required=True)
+    s.add_argument("--scenario", choices=["base", "stress", "base_review"], required=True)
     s.add_argument("--seeds", choices=list(SEEDS), required=True)
     s.add_argument("--arms", default="rule_mts,load_aware,moa_load,moa_static")
     s.add_argument("--model", default=MODEL)

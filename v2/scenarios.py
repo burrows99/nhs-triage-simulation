@@ -80,8 +80,10 @@ CAPACITY = {  # [A] chosen on development seeds (development seeds; warm-up chec
 
 
 def scenario(name):
+    """base | stress | base_review (base, but imaging-first does not save the review contact)"""
     lam = LAMBDA_BASE * (STRESS_FACTOR if name == "stress" else 1.0)
     return Config(
+        imaging_first_saves_review=(name != "base_review"),
         arrivals_per_hour=lam,
         hourly_profile=PROFILE,
         admit_share=0.279,

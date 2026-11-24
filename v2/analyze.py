@@ -22,6 +22,7 @@ PRIMARY = [
 ]
 LOWER_IS_BETTER = True  # every primary metric
 SCENARIOS = ["base", "stress"]
+SENSITIVITY = ["base_review"]  # PREREG 6: imaging-first does not save the review contact
 LABEL = {
     "doctor_wait_mean": "Doctor wait, mean (min)",
     "doctor_wait_p90": "Doctor wait, P90 (min)",
@@ -52,7 +53,7 @@ PCT = {
 
 def load(seeds):
     frames = []
-    for sc in SCENARIOS:
+    for sc in SCENARIOS + SENSITIVITY:
         for arm in ARMS:
             f = OUT / seeds / sc / f"reps_{arm}.csv"
             if f.exists():
@@ -100,10 +101,10 @@ def holm(ps):
     return adj
 
 
-def family(df, arm, comps, metrics):
+def family(df, arm, comps, metrics, scenarios=SCENARIOS):
     rows = [
         paired(df, sc, arm, c, m)
-        for sc in SCENARIOS
+        for sc in scenarios
         for c in comps
         for m in metrics
         if ((df.scenario == sc) & (df.arm == arm)).any()
@@ -228,8 +229,9 @@ def main(seeds="heldout"):
         "los_gap",
     ]
     util = [c for c in df.columns if c.startswith("util_")]
+    sens = family(df, "moa_load", ["rule_mts", "load_aware"], PRIMARY, SENSITIVITY)
     text = [f"# v2 results ({seeds} seeds)\n"]
-    for sc in SCENARIOS:
+    for sc in SCENARIOS + [x for x in SENSITIVITY if (df.scenario == x).any()]:
         text += [
             f"## Scenario: {sc}\n",
             f"Replications per arm: {df[(df.scenario == sc)].groupby('arm').size().to_dict()}\n",
@@ -247,6 +249,8 @@ def main(seeds="heldout"):
         diff_table(sec_static),
         "\n## Fairness: group gaps (max − min across sex × ethnicity groups) (Holm within this family)\n",
         diff_table(fair),
+        "\n## Sensitivity: imaging-first does not save the review contact (Holm within this family)\n",
+        diff_table(sens),
         "\n## Fairness: counterfactual demographic swaps (MoA, state-blind)\n",
         counterfactual_table(),
     ]
@@ -256,6 +260,7 @@ def main(seeds="heldout"):
             prim.assign(family="primary"),
             sec_static.assign(family="static"),
             fair.assign(family="fairness"),
+            sens.assign(family="sensitivity"),
         ]
     ).to_csv(out / "paired_tests.csv", index=False)
     print("\n".join(text))

@@ -1,0 +1,24 @@
+burn green UTC ['ED', 'UTC'] Minor burn, no ED-level care needed.
+chronic_pain green UTC ['ED', 'UTC'] Fibromyalgia flare, no new features.
+head_injury_minor green UTC ['ED', 'UTC'] Minor head injury, no acute concerns; UTC appropriate.
+laceration green UTC ['ED', 'UTC'] Minor injury, specialists agree no ED-level care.
+sprain green UTC ['ED', 'UTC'] Minor injury, no ED-level care needed.
+whiplash green ED ['ED', 'UTC'] Trauma MSK says no ED-level care needed.
+allergy orange ED ['ED'] 
+appendicitis orange US_FIRST ['ED', 'US_FIRST'] Ultrasound first for suspected appendicitis.
+asthma orange ED ['ED'] 
+mi orange ED ['ED'] 
+overdose orange ED ['ED'] 
+stroke orange CT_FIRST ['ED', 'CT_FIRST'] Imaging-first for suspected acute stroke; saves time.
+tbi orange CT_FIRST ['ED', 'CT_FIRST'] CT head indicated by multiple specialists; saves time.
+cardiac_arrest red ED ['ED'] 
+gunshot red CT_FIRST ['ED', 'CT_FIRST'] Clear indication for immediate CT; saves time.
+fracture_ankle yellow XRAY_FIRST ['ED', 'UTC', 'XRAY_FIRST'] Clear indication for xray; saves time, follows protocol.
+fracture_upper_limb yellow XRAY_FIRST ['ED', 'UTC', 'XRAY_FIRST'] Trauma MSK specialist recommends imaging first; fracture likely.
+head_injury_loc yellow ED ['ED', 'UTC', 'CT_FIRST'] Trauma specialist recommends CT, but it's not clearly indicated.
+heart_failure yellow XRAY_FIRST ['ED', 'UTC', 'XRAY_FIRST'] Chest X-ray indicated for heart failure assessment.
+hip_fracture yellow CT_FIRST ['ED', 'UTC', 'CT_FIRST', 'XRAY_FIRST'] Clear indication for CT, trauma specialist's view.
+knee_injury yellow XRAY_FIRST ['ED', 'UTC', 'XRAY_FIRST'] Trauma MSK specialist recommends imaging first; clearly indicated frac
+lung_mass yellow XRAY_FIRST ['ED', 'UTC', 'XRAY_FIRST'] Chest X-ray indicated for haemoptysis; saves time.
+seizure yellow ED ['ED', 'UTC'] ED-level care needed by neurology.
+{'calls': 18, 'cache_hits': 92, 'errors': 0, 'seconds': 61.600346326828}

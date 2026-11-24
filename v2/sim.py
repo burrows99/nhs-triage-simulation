@@ -60,6 +60,9 @@ class Config:
     warmup_h: float = 48.0
     horizon_h: float = 7 * 24.0
     max_drain_h: float = 14 * 24.0
+    # True: an imaging-first patient's single assessment already has the result, so no separate
+    # review contact is needed for that scan. False (sensitivity): a review is still needed.
+    imaging_first_saves_review: bool = True
     band_edges: tuple = (
         30.0,
         90.0,
@@ -267,7 +270,7 @@ class EDSim:
         rest = [m for m in needed if m not in done]
         for m in rest:
             yield from self.scan(p, m)
-        if rest:
+        if rest or (done and not self.cfg.imaging_first_saves_review):
             yield from self.doctor(p, "ed_doctor", p.draws["review"])
         yield treatment
         if c["needs_specialist"]:

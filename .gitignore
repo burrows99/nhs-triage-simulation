@@ -2,3 +2,5 @@
 __pycache__/
 /output/
 .DS_Store
+v2/cache/*-shm
+v2/cache/*-wal
