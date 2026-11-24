@@ -23,6 +23,9 @@ from pathlib import Path
 OLLAMA = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
 ROUTES = ("doctor", "mri", "ultrasound")
 OUT = Path("results/llm")
+# 12288 matches the context the shared Ollama server keeps loaded (avoids a reload per request);
+# the prompts are far shorter, so the value does not change what the model sees.
+NUM_CTX = int(os.environ.get("OLLAMA_NUM_CTX", "12288"))
 
 ANSWER = (
     'Answer ONLY with JSON: {"route": "doctor" | "mri" | "ultrasound", "confidence": <integer 1-10>, '
@@ -70,7 +73,7 @@ def chat(model, system, user):
             "model": model,
             "stream": False,
             "format": "json",
-            "options": {"temperature": 0, "seed": 0, "num_predict": 200},
+            "options": {"temperature": 0, "seed": 0, "num_predict": 200, "num_ctx": NUM_CTX},
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -152,6 +155,7 @@ def run(model, items, path):
                 "moa_specialists": r2[3],
                 "sec_single": round(t1 - t0, 2),
                 "sec_moa": round(t2 - t1, 2),
+                "num_ctx": NUM_CTX,
             }
             f.write(json.dumps(rec) + "\n")
             f.flush()
