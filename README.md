@@ -3,7 +3,7 @@
 ### *Reducing Patient Wait Times in NHS Triage Using a Mixture-of-Agents Simulation Framework*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![SimPy](https://img.shields.io/badge/SimPy-4.0+-green.svg)](https://simpy.readthedocs.io/)
 
 **Author:** Raunak Burrows
@@ -17,15 +17,15 @@
 This repository implements the research project *“Reducing Patient Wait Times in NHS Triage Using a Mixture-of-Agents Simulation Framework.”*
 The work addresses a persistent gap in NHS emergency department (ED) operations — post-triage patient routing — by designing a **Mixture-of-Agents (MoA)** system that dynamically coordinates multiple specialist AI agents to allocate resources efficiently.
 
-The framework achieved:
-
-* **58.2 % reduction** in average doctor wait time (204.3 → 85.3 minutes)
-* **40.5 % reduction** in MRI wait time and **60.8 %** in ultrasound wait time
-* **19.3 % improvement** in resource utilisation
-* **Bias reduction**: demographic parity gap improved from 15.9 % → 1.2 %
-* **Clinical safety maintained** at 94.6 % appropriateness
-
-All experiments were validated via **30 independent simulation runs (95 % CI)** and expert review on 237 synthetic cases.
+> **Reproducibility status (audit of 2026-11-24).** The headline numbers previously listed here
+> (58.2 % shorter doctor waits, -40.5 % MRI, -60.8 % ultrasound, +19.3 % utilisation, a parity gap of
+> 15.9 % -> 1.2 %, 94.6 % appropriateness, "30 runs with 95 % CI", "expert review of 237 cases") are
+> **not reproduced** by the code in this repository, and several have no supporting code or data. In
+> the dissertation-era simulator the "single-agent" and "MoA" arms are coin flips, not LLMs, and their
+> gains come from two routing bugs that delete doctor visits and MRI scans; with those fixed, every
+> difference between arms is null. See [AUDIT.md](AUDIT.md) for the gaps and [RESULTS.md](RESULTS.md)
+> for the reproduced numbers with confidence intervals. The dissertation PDF is unchanged and still
+> contains the original claims.
 
 ---
 
@@ -42,18 +42,25 @@ The proposed MoA framework builds on MTS and fuzzy-MTS literature to enable **da
 
 ## 🧠 Methodology Overview
 
-### Comparative Framework
+### Comparative Framework (as described in the dissertation)
 
-1. **Rule-Based (Baseline)** — traditional MTS flow: sequential physician-first protocol.
-2. **Single-Agent** — GPT-OSS-20B model (with Mistral-7B tested for NHS deployment) generating routing recommendations.
-3. **Multi-Agent (MoA)** — neurology, cardiology, and abdominal agents coordinated via LangGraph aggregator.
+1. **Rule-Based (Baseline)**: traditional MTS flow, physician-first.
+2. **Single-Agent**: an LLM routing recommendation (the dissertation names GPT-OSS-20B, Mistral-7B and DeepSeek-7B).
+3. **Multi-Agent (MoA)**: neurological, cardiac and abdominal specialist agents plus an aggregator.
 
-### Technical Stack
+### What the code actually implements
 
-* **Simulation Core:** SimPy 4 Discrete-Event Simulation (M/M/c queues, Poisson arrivals λ = 12 patients/h)
-* **Synthetic Data:** 10 000+ FHIR R4 (UK Core) compliant patients via modified Synthea workflows
-* **Routing Logic:** LangGraph multi-agent collaboration layer with Ollama runtime for local LLM execution
-* **Bias Framework:** intersectional demographic analysis (adapted from Lee et al., 2024)
+* **Simulation core:** SimPy discrete-event simulation (`edsim/`, restored from commit `37d31df`):
+  Poisson arrivals, exponential service times, priority queues for doctors, MRI, ultrasound and beds.
+  At the dissertation's lambda = 12 patients/h the doctor station runs at rho = 1.0 and the beds at
+  rho = 2.4, i.e. both queues are unstable.
+* **Routing arms in `edsim`:** `single_llm` / `multi_llm` send a red patient who needs an MRI straight
+  to MRI with probability 0.8 / 0.7. No model is called.
+* **Real LLM routers (added in the audit):** `llm_router.py` implements the single-agent and MoA
+  routers from the dissertation's appendix prompts against a local Ollama server.
+* **Synthetic data:** a 100-patient Synthea (Massachusetts, CSV) run; the cleaned file has 237
+  emergency encounters, all labelled `doctor` (`data/nhs_ecds_aligned_routing_dataset.csv`). The
+  simulator does not read it. No FHIR / UK Core export, no 10 000-patient dataset.
 
 ---
 
@@ -62,36 +69,26 @@ The proposed MoA framework builds on MTS and fuzzy-MTS literature to enable **da
 ```bash
 git clone https://github.com/burrows99/nhs-triage-simulation.git
 cd nhs-triage-simulation
-pip install -r requirements.txt
+uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
+# or: python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 ---
 
 ## 🚀 Usage
 
-### Quick Run
-
 ```bash
-python main_simulation.py
+.venv/bin/python test_reproduce.py                                  # self-check
+.venv/bin/python reproduce.py sim --config dissertation --reps 30   # all arms, 30 seeded replications, 95% CIs
+.venv/bin/python reproduce.py sim --config dissertation --reps 30 --fix-routing   # routing bugs fixed
+.venv/bin/python reproduce.py llm-table --model qwen2.5:7b          # real LLM routers (needs Ollama)
+.venv/bin/python reproduce.py sim --config dissertation --reps 30 --llm-table results/llm/table_qwen2.5-7b.json
+.venv/bin/python reproduce.py llm-cases --model qwen2.5:7b --per-group 5
+MPLBACKEND=Agg .venv/bin/python run_simulation.py                   # the original single unseeded run
 ```
 
-### Full Experiment Suite
-
-```bash
-python scripts/run_experiments.py --all
-```
-
-### Bias Analysis
-
-```bash
-python analysis/bias_evaluation.py --intersectional
-```
-
-### Performance Reports
-
-```bash
-python analysis/performance_metrics.py --visualize
-```
+`backend/` and `streamlit_app.py` are a later (2025-09-10) event-log visualiser; they are not the
+dissertation experiment (see AUDIT.md section 4).
 
 ---
 
@@ -99,59 +96,61 @@ python analysis/performance_metrics.py --visualize
 
 ```
 nhs-triage-simulation/
-├── main_simulation.py
-├── src/
-│   ├── simulation/         # SimPy environment & patient generator
-│   ├── routing/            # Rule-based, Single-agent, MoA strategies
-│   ├── agents/             # Specialist and aggregator agents
-│   └── utils/              # FHIR parser, metrics calculator
-├── analysis/               # Bias & performance analysis scripts
-├── config/                 # Simulation and demographic parameters
-├── data/                   # Synthetic + validation datasets
-├── results/                # Figures and reports
-└── docs/                   # Methodology, API, deployment guide
+├── edsim/                 # dissertation-era simulator (restored from 37d31df, unmodified)
+├── run_simulation.py      # its original entry point (single unseeded run per arm)
+├── reproduce.py           # seeded replications, corrected metrics, paired CIs
+├── llm_router.py          # real single-agent / MoA routers via Ollama
+├── test_reproduce.py
+├── data/                  # the 237-encounter case file
+├── results/               # raw outputs behind RESULTS.md
+├── backend/, streamlit_app.py   # later event-log visualiser
+├── AUDIT.md, RESULTS.md
+└── MScDissertation2025.pdf
 ```
 
 ---
 
 ## 📊 Key Results
 
-| Metric              | Rule-Based |      MoA | Δ Improvement |
-| :------------------ | ---------: | -------: | ------------: |
-| **Doctor Wait**     |  204.3 min | 85.3 min |       -58.2 % |
-| **MRI Wait**        |       42.2 |     25.1 |       -40.5 % |
-| **Ultrasound Wait** |      158.7 |     62.2 |       -60.8 % |
-| **Bed Wait**        |      166.2 |     45.9 |       -72.4 % |
-| **Resource Use**    |       76 % |     91 % |       +19.3 % |
+Reproduced with the dissertation's lambda = 12/h over 30 days, 30 paired replications, mean +/- 95 % CI
+(RESULTS.md tables 1 and 3; original metric code, so as-coded values). "Coin" arms are the original code's mock LLM arms.
 
-### Clinical Accuracy (by Demographic)
+| Metric | Rule-based | MoA "coin" arm (as coded) | MoA "coin" arm, routing bugs fixed | Dissertation claim (rule -> MoA) |
+| :-- | --: | --: | --: | --: |
+| Doctor wait (min) | 325 +/- 60 | 122 +/- 20 | 325 +/- 62 (no change) | 204.3 -> 85.3 |
+| MRI wait (min) | 12.5 +/- 0.9 | 7.9 +/- 0.9 | 12.7 +/- 1.1 (no change) | 42.2 -> 25.1 |
+| Ultrasound wait (min) | 73.7 +/- 6.6 | 73.9 +/- 7.4 | 77.0 +/- 8.5 (no change) | 158.7 -> 62.2 |
+| Bed wait (min, queue unstable) | 2,950 +/- 130 | 2,950 +/- 130 | 2,940 +/- 110 (no change) | 166.2 -> 45.9 |
+| Mean utilisation | 76.9 % | 74.2 % | 76.9 % | 76.2 % -> 90.9 % |
 
-| Group        |   Rule | Single |    MoA |
-| :----------- | -----: | -----: | -----: |
-| White Male   | 84.3 % | 87.6 % | 94.2 % |
-| Black Male   | 78.2 % | 76.5 % | 92.4 % |
-| Asian Female | 79.1 % | 78.6 % | 95.2 % |
+With **real LLM routers** (qwen2.5:7b via Ollama, the dissertation's appendix prompts; GPT-OSS-20B and
+Mistral-7B were not available) driving the same simulation, the as-coded doctor wait falls by about
+95%, but only because 19-24% of patients are sent straight to ultrasound and therefore never see a
+doctor. With that bookkeeping fixed, neither the single agent nor the MoA changes any wait or
+utilisation (all differences null; RESULTS.md section 3). The MoA aggregator never took the MRI
+bypass, and no final routing decision changed with the patient's gender or ethnicity.
 
-**Bias Reduction:** Demographic parity gap ↓ from 15.9 % to 1.2 %.
-**Clinical appropriateness:** 94.6 % maintained.
-
----
-
-## 🔐 Deployment Considerations
-
-* **GDPR Compliance:** All LLM components run within NHS-controlled infrastructure; no external data transmission.
-* **FHIR Integration:** Fully compliant with HL7 FHIR R4 (UK Core).
-* **Audit Trails:** Decision logging for clinical governance.
-* **Computational Cost:** ≈ £0.04 per consultation (run-time validated on local EKS cluster).
+The clinical-accuracy-by-demographic table, the 94.6 % appropriateness and the parity-gap figures
+that were listed here have no supporting code or data in this repository (AUDIT.md section 2).
 
 ---
 
-## 🧪 Validation Protocol
+## 🔐 Deployment Considerations (not implemented)
 
-1. **Statistical:** 30 independent simulation runs (95 % CI).
-2. **Clinical:** 237 expert-reviewed synthetic cases across specialties.
-3. **Bias:** Intersectional analysis (gender × ethnicity).
-4. **Safety:** Confidence threshold monitoring and audit traceability.
+The dissertation discusses GDPR-compliant local deployment, FHIR R4 (UK Core) integration, audit
+trails and a cost of about £0.04 per consultation on an EKS cluster. None of this is implemented or
+measured in this repository.
+
+---
+
+## 🧪 Validation
+
+* **Statistical:** `reproduce.py` runs 30 seeded replications per arm with common seeds, paired
+  t-intervals and Holm-adjusted p-values. The original code ran each arm once, unseeded.
+* **Clinical:** no expert review has been carried out. The 237-case file's labels are generated by
+  `data/clean.py` (all `doctor`). A real clinician-labelled case set is still needed.
+* **Bias:** `llm-table` routes every simulator input under six gender x ethnicity variants
+  (counterfactual test); `llm-cases` reports accuracy and parity gap per group with Wilson CIs.
 
 ---
 
