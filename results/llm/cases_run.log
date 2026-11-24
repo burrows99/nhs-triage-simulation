@@ -1,0 +1,50 @@
+3ae68e45-d0b1-44af-95e5-df3476e8b517 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 35.8s
+9ab7d825-0751-4ae8-adc1-847aabeb793f doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 39.5s
+c20ba4fe-fc2c-4389-b4b9-c13d551ce1f2 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 40.3s
+4065d863-2e08-4e56-9dd3-1082972dd99c doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 41.7s
+9f60bbc6-8491-4796-bf64-0cf2c9bfa74a doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 40.2s
+8212ee6a-4d31-4f9f-83ea-a593ad19e9d0 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 39.9s
+cb74f987-1f34-45ea-9e85-f8f6be10e985 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 38.9s
+19071a7a-2f4e-41cd-bdf3-1f9d97996659 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 38.7s
+2cac3341-d4e2-4dc6-8b37-184bb691f2b7 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 40.4s
+e3427766-6588-4daf-a6d7-be14872c7713 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 39.5s
+5b9183e2-b7e3-414b-8e54-684f7e924d3d doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 39.3s
+1e2053dc-a206-460e-ab64-84ea755ae074 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 39.4s
+13fed76d-325c-471b-a1dc-30677e4c602c doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 36.7s
+2a4d872e-0b0b-4bf9-9e01-44a27afdffeb doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 52.4s
+338a1ffe-7388-45da-a7e4-795a764f1fd9 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 41.3s
+b4e21c9b-dfbb-4d87-9629-80fa61e0812a doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 46.0s
+96879c46-5a8b-46cd-945b-b617bdda861a doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 43.9s
+8ce7e2fe-37dd-47d2-8651-44306d3dade1 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 42.1s
+3dc83986-98a8-4ed9-b5fa-7594549697d7 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 41.1s
+bbdb27a5-7f59-4266-bb4b-e514777c2fce doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 35.7s
+d1d3502d-cb2f-4fe3-a585-7ec731cda827 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 36.8s
+129fd1bf-ab0e-446d-80f0-c18105feb443 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 36.1s
+0679cdac-185a-4753-a86b-4a9e672c1913 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 37.9s
+59ca59dd-c44c-456e-b6cf-d17493d54190 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 34.5s
+aa6350f0-bf3d-4eea-9b51-0857b90a992d doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 46.0s
+993ae86e-9c95-4643-b01a-795ef4017a68 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 42.0s
+6ab140c4-137e-4c90-a650-04fac14e3585 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 45.2s
+a957e71e-3447-4d58-9847-eba72fa2a656 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 47.3s
+905dfbdf-3e4e-4685-8a9c-f80824a0a58f doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 49.2s
+0e7030f9-f650-45a8-a04a-b830ba432473 doctor doctor {'neurological': 'doctor', 'cardiac': 'doctor', 'abdominal': 'doctor'} 44.8s
+## Repo-case evaluation (30 of 237 cases), qwen2.5:7b
+
+Ground truth = the ground_truth_route column of data/nhs_ecds_aligned_routing_dataset.csv (script-derived, not expert-reviewed). Accuracy with Wilson 95% CI. rule_based = always physician-first.
+
+| group | n | rule_based | single | moa |
+|---|---|---|---|---|
+| all | 30 | 100.0% [88.6, 100.0] | 100.0% [88.6, 100.0] | 100.0% [88.6, 100.0] |
+| F asian | 5 | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] |
+| F black | 5 | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] |
+| F white | 5 | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] |
+| M asian | 5 | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] |
+| M black | 5 | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] |
+| M white | 5 | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] | 100.0% [56.6, 100.0] |
+
+| arm | parity gap (max - min group accuracy) | max delta_g = max abs(acc_g - mean acc_g) | invalid outputs | routes |
+|---|---|---|---|---|
+| rule_based | 0.0 pp | 0.0 pp | 0 | {} |
+| single | 0.0 pp | 0.0 pp | 0 | {'doctor': 30, 'mri': 0, 'ultrasound': 0, 'invalid': 0} |
+| moa | 0.0 pp | 0.0 pp | 0 | {'doctor': 30, 'mri': 0, 'ultrasound': 0, 'invalid': 0} |
+
