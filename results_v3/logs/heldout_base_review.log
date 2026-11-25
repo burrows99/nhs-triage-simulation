@@ -1,0 +1,120 @@
+base_review rule_mts seed=2000 dw=88.2 los=221.7 viol=0.0000 fb=0.0000 llm={} 0s
+base_review rule_mts seed=2001 dw=89.7 los=228.9 viol=0.0000 fb=0.0000 llm={} 0s
+base_review rule_mts seed=2002 dw=122.1 los=265.5 viol=0.0000 fb=0.0000 llm={} 0s
+base_review rule_mts seed=2003 dw=93.4 los=233.0 viol=0.0000 fb=0.0000 llm={} 1s
+base_review rule_mts seed=2004 dw=89.5 los=221.8 viol=0.0000 fb=0.0000 llm={} 1s
+base_review rule_mts seed=2005 dw=100.6 los=240.2 viol=0.0000 fb=0.0000 llm={} 1s
+base_review rule_mts seed=2006 dw=99.8 los=239.1 viol=0.0000 fb=0.0000 llm={} 1s
+base_review rule_mts seed=2007 dw=119.0 los=281.0 viol=0.0000 fb=0.0000 llm={} 1s
+base_review rule_mts seed=2008 dw=106.9 los=246.6 viol=0.0000 fb=0.0000 llm={} 2s
+base_review rule_mts seed=2009 dw=88.2 los=221.9 viol=0.0000 fb=0.0000 llm={} 2s
+base_review rule_mts seed=2010 dw=114.6 los=274.3 viol=0.0000 fb=0.0000 llm={} 2s
+base_review rule_mts seed=2011 dw=98.1 los=235.5 viol=0.0000 fb=0.0000 llm={} 2s
+base_review rule_mts seed=2012 dw=99.6 los=245.4 viol=0.0000 fb=0.0000 llm={} 2s
+base_review rule_mts seed=2013 dw=116.6 los=275.3 viol=0.0000 fb=0.0000 llm={} 2s
+base_review rule_mts seed=2014 dw=97.8 los=234.5 viol=0.0000 fb=0.0000 llm={} 3s
+base_review rule_mts seed=2015 dw=107.3 los=253.5 viol=0.0000 fb=0.0000 llm={} 3s
+base_review rule_mts seed=2016 dw=108.1 los=247.3 viol=0.0000 fb=0.0000 llm={} 3s
+base_review rule_mts seed=2017 dw=108.0 los=258.4 viol=0.0000 fb=0.0000 llm={} 3s
+base_review rule_mts seed=2018 dw=93.9 los=234.4 viol=0.0000 fb=0.0000 llm={} 3s
+base_review rule_mts seed=2019 dw=96.9 los=231.6 viol=0.0000 fb=0.0000 llm={} 4s
+base_review rule_mts seed=2020 dw=83.3 los=220.8 viol=0.0000 fb=0.0000 llm={} 4s
+base_review rule_mts seed=2021 dw=99.7 los=245.1 viol=0.0000 fb=0.0000 llm={} 4s
+base_review rule_mts seed=2022 dw=113.3 los=272.6 viol=0.0000 fb=0.0000 llm={} 4s
+base_review rule_mts seed=2023 dw=118.4 los=250.3 viol=0.0000 fb=0.0000 llm={} 4s
+base_review rule_mts seed=2024 dw=113.1 los=266.0 viol=0.0000 fb=0.0000 llm={} 4s
+base_review rule_mts seed=2025 dw=109.9 los=266.5 viol=0.0000 fb=0.0000 llm={} 5s
+base_review rule_mts seed=2026 dw=89.9 los=231.2 viol=0.0000 fb=0.0000 llm={} 5s
+base_review rule_mts seed=2027 dw=91.1 los=206.4 viol=0.0000 fb=0.0000 llm={} 5s
+base_review rule_mts seed=2028 dw=110.5 los=253.5 viol=0.0000 fb=0.0000 llm={} 5s
+base_review rule_mts seed=2029 dw=83.0 los=227.1 viol=0.0000 fb=0.0000 llm={} 5s
+base_review load_aware seed=2000 dw=82.0 los=217.3 viol=0.0000 fb=0.0000 llm={} 0s
+base_review load_aware seed=2001 dw=88.2 los=228.8 viol=0.0000 fb=0.0000 llm={} 0s
+base_review load_aware seed=2002 dw=118.0 los=263.6 viol=0.0000 fb=0.0000 llm={} 0s
+base_review load_aware seed=2003 dw=95.8 los=235.0 viol=0.0000 fb=0.0000 llm={} 1s
+base_review load_aware seed=2004 dw=88.7 los=221.4 viol=0.0000 fb=0.0000 llm={} 1s
+base_review load_aware seed=2005 dw=102.0 los=242.4 viol=0.0000 fb=0.0000 llm={} 1s
+base_review load_aware seed=2006 dw=99.1 los=240.0 viol=0.0000 fb=0.0000 llm={} 1s
+base_review load_aware seed=2007 dw=118.6 los=281.7 viol=0.0000 fb=0.0000 llm={} 1s
+base_review load_aware seed=2008 dw=105.5 los=246.7 viol=0.0000 fb=0.0000 llm={} 2s
+base_review load_aware seed=2009 dw=88.1 los=222.5 viol=0.0000 fb=0.0000 llm={} 2s
+base_review load_aware seed=2010 dw=112.8 los=272.1 viol=0.0000 fb=0.0000 llm={} 2s
+base_review load_aware seed=2011 dw=97.3 los=235.9 viol=0.0000 fb=0.0000 llm={} 2s
+base_review load_aware seed=2012 dw=100.6 los=247.5 viol=0.0000 fb=0.0000 llm={} 2s
+base_review load_aware seed=2013 dw=117.2 los=276.6 viol=0.0000 fb=0.0000 llm={} 2s
+base_review load_aware seed=2014 dw=99.4 los=238.5 viol=0.0000 fb=0.0000 llm={} 3s
+base_review load_aware seed=2015 dw=107.5 los=256.3 viol=0.0000 fb=0.0000 llm={} 3s
+base_review load_aware seed=2016 dw=109.4 los=248.7 viol=0.0000 fb=0.0000 llm={} 3s
+base_review load_aware seed=2017 dw=108.4 los=260.0 viol=0.0000 fb=0.0000 llm={} 3s
+base_review load_aware seed=2018 dw=94.2 los=235.0 viol=0.0000 fb=0.0000 llm={} 3s
+base_review load_aware seed=2019 dw=98.5 los=233.8 viol=0.0000 fb=0.0000 llm={} 3s
+base_review load_aware seed=2020 dw=81.5 los=219.8 viol=0.0000 fb=0.0000 llm={} 4s
+base_review load_aware seed=2021 dw=99.0 los=245.6 viol=0.0000 fb=0.0000 llm={} 4s
+base_review load_aware seed=2022 dw=112.2 los=272.6 viol=0.0000 fb=0.0000 llm={} 4s
+base_review load_aware seed=2023 dw=116.9 los=250.3 viol=0.0000 fb=0.0000 llm={} 4s
+base_review load_aware seed=2024 dw=114.6 los=271.8 viol=0.0000 fb=0.0000 llm={} 4s
+base_review load_aware seed=2025 dw=109.3 los=267.6 viol=0.0000 fb=0.0000 llm={} 5s
+base_review load_aware seed=2026 dw=87.5 los=230.2 viol=0.0000 fb=0.0000 llm={} 5s
+base_review load_aware seed=2027 dw=81.9 los=198.7 viol=0.0000 fb=0.0000 llm={} 5s
+base_review load_aware seed=2028 dw=109.8 los=253.5 viol=0.0000 fb=0.0000 llm={} 5s
+base_review load_aware seed=2029 dw=83.8 los=228.5 viol=0.0000 fb=0.0000 llm={} 5s
+base_review moa_load seed=2000 dw=82.8 los=215.1 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 10380, 'errors': 0, 'seconds': 0.0} 0s
+base_review moa_load seed=2001 dw=91.5 los=229.0 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 20710, 'errors': 0, 'seconds': 0.0} 0s
+base_review moa_load seed=2002 dw=120.6 los=262.5 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 31256, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_load seed=2003 dw=96.8 los=232.2 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 41642, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_load seed=2004 dw=92.6 los=221.0 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 52253, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_load seed=2005 dw=104.8 los=240.1 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 62652, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_load seed=2006 dw=104.9 los=242.3 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 73116, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_load seed=2007 dw=122.9 los=281.2 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 84042, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_load seed=2008 dw=110.9 los=248.5 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 94642, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_load seed=2009 dw=90.9 los=220.3 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 105146, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_load seed=2010 dw=117.9 los=273.1 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 116406, 'errors': 0, 'seconds': 0.0} 3s
+base_review moa_load seed=2011 dw=100.9 los=236.7 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 127027, 'errors': 0, 'seconds': 1.2770071029663086} 4s
+base_review moa_load seed=2012 dw=102.8 los=242.1 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 137411, 'errors': 0, 'seconds': 1.2770071029663086} 5s
+base_review moa_load seed=2013 dw=122.3 los=278.2 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 148280, 'errors': 0, 'seconds': 1.2770071029663086} 5s
+base_review moa_load seed=2014 dw=104.8 los=238.9 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 158733, 'errors': 0, 'seconds': 1.2770071029663086} 5s
+base_review moa_load seed=2015 dw=111.0 los=256.4 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 169564, 'errors': 0, 'seconds': 1.2770071029663086} 5s
+base_review moa_load seed=2016 dw=111.3 los=246.7 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 180453, 'errors': 0, 'seconds': 1.2770071029663086} 6s
+base_review moa_load seed=2017 dw=111.9 los=259.6 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 191265, 'errors': 0, 'seconds': 1.2770071029663086} 6s
+base_review moa_load seed=2018 dw=99.9 los=235.4 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 201658, 'errors': 0, 'seconds': 1.2770071029663086} 6s
+base_review moa_load seed=2019 dw=102.5 los=234.0 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 211921, 'errors': 0, 'seconds': 1.2770071029663086} 6s
+base_review moa_load seed=2020 dw=84.8 los=219.9 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 221887, 'errors': 0, 'seconds': 1.2770071029663086} 6s
+base_review moa_load seed=2021 dw=101.6 los=244.0 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 232330, 'errors': 0, 'seconds': 1.2770071029663086} 7s
+base_review moa_load seed=2022 dw=114.0 los=268.5 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 242994, 'errors': 0, 'seconds': 1.2770071029663086} 7s
+base_review moa_load seed=2023 dw=117.9 los=247.1 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 253803, 'errors': 0, 'seconds': 1.2770071029663086} 7s
+base_review moa_load seed=2024 dw=117.7 los=271.5 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 264408, 'errors': 0, 'seconds': 1.2770071029663086} 7s
+base_review moa_load seed=2025 dw=112.2 los=266.5 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 274869, 'errors': 0, 'seconds': 1.2770071029663086} 8s
+base_review moa_load seed=2026 dw=93.1 los=231.1 viol=0.0000 fb=0.0000 llm={'calls': 1, 'cache_hits': 285063, 'errors': 0, 'seconds': 1.2770071029663086} 8s
+base_review moa_load seed=2027 dw=86.3 los=201.2 viol=0.0000 fb=0.0000 llm={'calls': 3, 'cache_hits': 295247, 'errors': 0, 'seconds': 4.07156229019165} 11s
+base_review moa_load seed=2028 dw=111.3 los=250.7 viol=0.0000 fb=0.0000 llm={'calls': 3, 'cache_hits': 305794, 'errors': 0, 'seconds': 4.07156229019165} 11s
+base_review moa_load seed=2029 dw=87.3 los=227.7 viol=0.0000 fb=0.0000 llm={'calls': 3, 'cache_hits': 316028, 'errors': 0, 'seconds': 4.07156229019165} 12s
+base_review moa_static seed=2000 dw=85.5 los=218.2 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 10468, 'errors': 0, 'seconds': 0.0} 0s
+base_review moa_static seed=2001 dw=90.7 los=226.5 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 20857, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_static seed=2002 dw=124.9 los=264.6 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 31472, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_static seed=2003 dw=96.5 los=231.1 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 41940, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_static seed=2004 dw=93.5 los=221.0 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 52548, 'errors': 0, 'seconds': 0.0} 1s
+base_review moa_static seed=2005 dw=105.2 los=239.1 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 63004, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_static seed=2006 dw=102.0 los=238.1 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 73485, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_static seed=2007 dw=122.9 los=280.0 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 84437, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_static seed=2008 dw=110.8 los=248.0 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 95095, 'errors': 0, 'seconds': 0.0} 2s
+base_review moa_static seed=2009 dw=91.1 los=219.3 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 105628, 'errors': 0, 'seconds': 0.0} 3s
+base_review moa_static seed=2010 dw=119.8 los=274.8 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 116943, 'errors': 0, 'seconds': 0.0} 3s
+base_review moa_static seed=2011 dw=101.7 los=236.9 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 127587, 'errors': 0, 'seconds': 0.0} 3s
+base_review moa_static seed=2012 dw=105.6 los=240.7 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 138046, 'errors': 0, 'seconds': 0.0} 3s
+base_review moa_static seed=2013 dw=121.8 los=276.7 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 148949, 'errors': 0, 'seconds': 0.0} 4s
+base_review moa_static seed=2014 dw=100.4 los=232.5 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 159447, 'errors': 0, 'seconds': 0.0} 4s
+base_review moa_static seed=2015 dw=109.3 los=252.9 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 170338, 'errors': 0, 'seconds': 0.0} 4s
+base_review moa_static seed=2016 dw=110.8 los=245.6 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 181275, 'errors': 0, 'seconds': 0.0} 4s
+base_review moa_static seed=2017 dw=112.3 los=256.2 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 192130, 'errors': 0, 'seconds': 0.0} 5s
+base_review moa_static seed=2018 dw=98.2 los=233.6 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 202568, 'errors': 0, 'seconds': 0.0} 5s
+base_review moa_static seed=2019 dw=102.1 los=233.0 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 212890, 'errors': 0, 'seconds': 0.0} 5s
+base_review moa_static seed=2020 dw=85.9 los=219.8 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 222911, 'errors': 0, 'seconds': 0.0} 6s
+base_review moa_static seed=2021 dw=103.6 los=245.2 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 233408, 'errors': 0, 'seconds': 0.0} 6s
+base_review moa_static seed=2022 dw=115.5 los=267.3 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 244104, 'errors': 0, 'seconds': 0.0} 6s
+base_review moa_static seed=2023 dw=119.7 los=247.3 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 254994, 'errors': 0, 'seconds': 0.0} 6s
+base_review moa_static seed=2024 dw=115.9 los=267.0 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 265641, 'errors': 0, 'seconds': 0.0} 7s
+base_review moa_static seed=2025 dw=112.4 los=265.6 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 276166, 'errors': 0, 'seconds': 0.0} 7s
+base_review moa_static seed=2026 dw=92.7 los=229.1 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 286366, 'errors': 0, 'seconds': 0.0} 7s
+base_review moa_static seed=2027 dw=89.9 los=204.2 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 296708, 'errors': 0, 'seconds': 0.0} 7s
+base_review moa_static seed=2028 dw=113.4 los=252.6 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 307326, 'errors': 0, 'seconds': 0.0} 8s
+base_review moa_static seed=2029 dw=86.5 los=227.5 viol=0.0000 fb=0.0000 llm={'calls': 0, 'cache_hits': 317592, 'errors': 0, 'seconds': 0.0} 8s

@@ -16,6 +16,24 @@ Urgent Treatment Centre (UTC). It compares four post-triage routers in a pre-reg
 | `v2/` | the simulator, routers, MoA, analysis and figures |
 | `results_v2/` | every per-replication and per-patient output |
 | `v2/cache/llm_cache.sqlite` | every LLM request and response, for exact replay |
+| [PREREG_V3.md](PREREG_V3.md) | v3 pre-registration (harm guards R1-R3, folded review), committed before its held-out run |
+| [RESULTS_V3.md](RESULTS_V3.md) | v3 confirmatory results on fresh held-out seeds 2000-2029 |
+| `results_v3/` | v3 outputs; run any command with `STUDY=v3` |
+
+## v3 in brief (confirmatory; details in RESULTS_V3.md)
+
+v3 added three guideline-based rules that remove the v2 harms, and stopped crediting imaging first with
+free doctor time. Against the static protocol in base, the guarded MoA:
+- cut time to needed imaging by 73.5 min (-75%) and LOS by 2.7 min;
+- lengthened the mean doctor wait by +9.5 min and the P90 doctor wait by +29.8 min.
+
+Overall it was better on 7 of 16 primary comparisons and worse on 8. Of the six harm tests:
+- whiplash: removed in base, inconclusive in stress;
+- red/orange imaging delay: removed, with a residual of +1.5-1.8 min;
+- hip-fracture LOS: inconclusive in base and still present in stress (+101 min), through queue
+  spill-over rather than routing.
+
+The doctor-wait gap across sex x ethnicity groups still widened.
 
 ## Result in brief (held-out, pre-registered; details in RESULTS_V2.md)
 
