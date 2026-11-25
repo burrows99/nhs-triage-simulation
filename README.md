@@ -17,6 +17,25 @@ Urgent Treatment Centre (UTC). It compares four post-triage routers in a pre-reg
 | `results_v2/` | every per-replication and per-patient output |
 | `v2/cache/llm_cache.sqlite` | every LLM request and response, for exact replay |
 
+## Result in brief (held-out, pre-registered; details in RESULTS_V2.md)
+
+**Primary comparisons.** The queue-aware LLM MoA was compared with both baselines on 16 testable
+comparisons (4 metrics, 2 scenarios, 2 baselines). It was better on 14 and worse on none.
+- Base scenario: mean doctor wait -4.9 min (-5.5%), P90 doctor wait -22 min, time to needed
+  imaging -53 min (-67%), and length of stay -10 min against the static protocol.
+- No patient went unseen by a doctor.
+- No fallback was needed and no protocol-violating proposal was made.
+
+**Caveats, all reported in full:**
+- The gain comes from more imaging-first decisions, which save a doctor review. When that saving is
+  removed (the pre-registered sensitivity scenario), the MoA is worse: +30 min doctor wait and
+  +32 min length of stay.
+- Queue awareness added nothing.
+- The pre-registered sex × ethnicity outcome gap widened. The router never sees ethnicity; the
+  exploratory analysis points to case mix in small groups.
+- Some local decisions are clinically poor: low-risk whiplash is sent to the ED, and some red and
+  orange patients go to a scan before the doctor.
+
 ## What the model contains
 
 - **Arrivals.** 11.1 per hour on average: 2024-25 Type 1 attendances divided by 178 Type 1 EDs. The
