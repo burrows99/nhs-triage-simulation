@@ -25,7 +25,8 @@ def main():
     base = EDSim(short(), RuleMTS(), 7).run().patient_frame()
     assert base.seen_by_doctor.all() and not base.censored.any()
     for r in ROUTES:
-        df = EDSim(short(), Always(r), 7).run().patient_frame()
+        sim = EDSim(short(), Always(r), 7).run()
+        df = sim.patient_frame()
         # common random numbers: same patients, same cases, same arrival times in every arm
         assert (df.case_id.values == base.case_id.values).all() and (
             df.arrival.values == base.arrival.values
@@ -44,8 +45,13 @@ def main():
             "_FIRST"
         ) & df.mts.isin(["green", "blue"])
         assert (df.violation == breach).all() and (df.fallback == breach).all()
-        # every needed scan is done: time to imaging exists for every patient who needs imaging
-        assert done[done.needs_imaging].imaging_wait.notna().all()
+        # every needed scan is done: a patient who left and needed imaging had a needed scan start.
+        # (patient_frame fills a missing scan time with the current time, so check the Patient objects;
+        # the earlier imaging_wait.notna() assertion could not fail.)
+        for p in sim.window:
+            c = p.case
+            if p.t_depart is not None and (c["needs_ct"] or c["needs_us"] or c["needs_xray"]):
+                assert p.t_imaging is not None, f"{r}: patient {p.pid} left without a needed scan"
     # v3 guards: R1 an ED proposal for a green patient is executed only under UTC overflow,
     # otherwise it is blocked and counted; R3 a yellow suspected fracture always goes X-ray first
     df = EDSim(short("v3"), Always("ED"), 7).run().patient_frame()

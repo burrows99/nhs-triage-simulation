@@ -216,9 +216,15 @@ the gap to case mix was therefore qualitative, and it is not supported by the v2
 - **Citation in the paper.** The paper cites NICE NG39 recs 1.5.31 (immediate CT for suspected
   haemorrhage) and 1.8.4-1.8.5 (trauma team) for R2. PREREG_V3 cites recs 1.4.3-1.4.4, which concern
   chest trauma only. The rule itself is unchanged.
-- **Self-test.** The `test_v2.py` assertion "every needed scan is done" (`imaging_wait.notna()`) cannot
-  fail, because `patient_frame` fills a missing scan time with the current time. The paper does not
-  claim this check. The code is left frozen at the registration; fixing it is a follow-up.
+- **Self-test.** The `test_v2.py` assertion "every needed scan is done" (`imaging_wait.notna()`) could
+  not fail, because `patient_frame` fills a missing scan time with the current time.
+  - **Fixed after the held-out run, in a follow-up commit that touches only `v2/test_v2.py`.** The test
+    now checks the Patient objects: every patient who left and needed imaging must have had a needed
+    scan start (`t_imaging`).
+  - It passes on the frozen simulator, and it was shown to fail when the scan bookkeeping is broken
+    in memory.
+  - No simulator, analysis or held-out code path changed, so no result changes.
+  - The paper does not claim this check.
 - **Prediction in the prereg.** PREREG_V3 section 8 attributed the development-seed hip-fracture LOS
   increase to the X-ray queue alone. The held-out breakdown shows that the X-ray queue is about a third
   of it and the ED-doctor queue the rest.
