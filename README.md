@@ -1,219 +1,91 @@
-# 🏥 NHS Triage Simulation Framework
+# NHS ED triage simulation: post-triage routing with an LLM mixture-of-agents
 
-### *Reducing Patient Wait Times in NHS Triage Using a Mixture-of-Agents Simulation Framework*
+A discrete-event simulation (SimPy) of an English Type 1 emergency department (ED) with a co-located
+Urgent Treatment Centre (UTC). It compares four post-triage routers in a pre-registered experiment:
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![SimPy](https://img.shields.io/badge/SimPy-4.0+-green.svg)](https://simpy.readthedocs.io/)
+- a static Manchester Triage System (MTS) protocol;
+- a load-aware heuristic;
+- a local LLM mixture-of-agents (MoA) router: four specialist agents and a queue-aware aggregator,
+  running qwen2.5:7b through Ollama;
+- the same MoA without queue state.
 
-**Author:** Raunak Burrows
-**Supervisor:** Dr. Xiatian Zhu — Senior Lecturer, People-Centred AI, University of Surrey
-**Affiliation:** MSc Artificial Intelligence (2025), University of Surrey
+| Document | Contents |
+|---|---|
+| [PREREG.md](PREREG.md) | the pre-registration, committed before the held-out run |
+| [RESULTS_V2.md](RESULTS_V2.md) | the results, with confidence intervals, fallback and violation counts, and fairness |
+| `v2/` | the simulator, routers, MoA, analysis and figures |
+| `results_v2/` | every per-replication and per-patient output |
+| `v2/cache/llm_cache.sqlite` | every LLM request and response, for exact replay |
 
----
+## Result in brief (held-out, pre-registered; details in RESULTS_V2.md)
 
-## 📖 Abstract
+**Primary comparisons.** The queue-aware LLM MoA was compared with both baselines on 16 testable
+comparisons (4 metrics, 2 scenarios, 2 baselines). It was better on 14 and worse on none.
+- Base scenario: mean doctor wait -4.9 min (-5.5%), P90 doctor wait -22 min, time to needed
+  imaging -53 min (-67%), and length of stay -10 min against the static protocol.
+- No patient went unseen by a doctor.
+- No fallback was needed and no protocol-violating proposal was made.
 
-This repository implements the research project *“Reducing Patient Wait Times in NHS Triage Using a Mixture-of-Agents Simulation Framework.”*
-The work addresses a persistent gap in NHS emergency department (ED) operations — post-triage patient routing — by designing a **Mixture-of-Agents (MoA)** system that dynamically coordinates multiple specialist AI agents to allocate resources efficiently.
+**Caveats, all reported in full:**
+- The gain comes from more imaging-first decisions, which save a doctor review. When that saving is
+  removed (the pre-registered sensitivity scenario), the MoA is worse: +30 min doctor wait and
+  +32 min length of stay.
+- Queue awareness added nothing.
+- The pre-registered sex × ethnicity outcome gap widened. The router never sees ethnicity; the
+  exploratory analysis points to case mix in small groups.
+- Some local decisions are clinically poor: low-risk whiplash is sent to the ED, and some red and
+  orange patients go to a scan before the doctor.
 
-The framework achieved:
+## What the model contains
 
-* **58.2 % reduction** in average doctor wait time (204.3 → 85.3 minutes)
-* **40.5 % reduction** in MRI wait time and **60.8 %** in ultrasound wait time
-* **19.3 % improvement** in resource utilisation
-* **Bias reduction**: demographic parity gap improved from 15.9 % → 1.2 %
-* **Clinical safety maintained** at 94.6 % appropriateness
+- **Arrivals.** 11.1 per hour on average: 2024-25 Type 1 attendances divided by 178 Type 1 EDs. The
+  hour-of-day profile comes from ECDS 2024-25. The stress scenario adds 20% to arrivals.
+- **Patients.** 159 Synthea emergency encounters, resampled so that 27.9% of patients are admitted.
+  Each encounter carries:
+  - a triage record that the router sees: MTS category and discriminator, complaint, age and sex;
+  - a separate ground truth that the router never sees: X-ray, CT and ultrasound need, specialist
+    review and admission. It is derived from the encounter's own coded records, or from guideline
+    indications. See `v2/cases.py`.
+- **Resources.** ED doctors, UTC doctors, X-ray, CT, ultrasound, specialty review and assessment-unit
+  beds. All are MTS-priority queues.
+- **Routes.** Each patient gets one of five routes: ED doctor first, UTC, or CT, ultrasound or X-ray
+  before the doctor. A route only reorders or relocates care; every needed service is still
+  delivered.
+- **Hard rules,** enforced by the simulator rather than the router:
+  - red and orange patients are never sent to the UTC;
+  - green and blue patients never go to imaging first;
+  - every patient sees a doctor.
 
-All experiments were validated via **30 independent simulation runs (95 % CI)** and expert review on 237 synthetic cases.
+  A breached proposal is blocked, replaced with the protocol route, and counted.
+- **Statistics.** 48 h warm-up, 7-day measurement window, and every window patient is followed until
+  they leave (no censoring). Arms use common random numbers. There are 30 held-out seeds, with paired
+  differences and Holm correction.
 
----
-
-## 🎯 Problem Context
-
-* Only **76.4 %** of NHS A&E patients are seen within 4 hours (Q4 2023-24).
-* Over **35 000** patients experience > 12-hour delays.
-* The **Manchester Triage System (MTS)** — used in > 90 % of UK EDs — focuses solely on initial classification.
-* Post-triage routing remains **manual, sequential, and resource-inefficient**.
-
-The proposed MoA framework builds on MTS and fuzzy-MTS literature to enable **data-driven, context-aware routing** using collaborative AI agents.
-
----
-
-## 🧠 Methodology Overview
-
-### Comparative Framework
-
-1. **Rule-Based (Baseline)** — traditional MTS flow: sequential physician-first protocol.
-2. **Single-Agent** — GPT-OSS-20B model (with Mistral-7B tested for NHS deployment) generating routing recommendations.
-3. **Multi-Agent (MoA)** — neurology, cardiology, and abdominal agents coordinated via LangGraph aggregator.
-
-### Technical Stack
-
-* **Simulation Core:** SimPy 4 Discrete-Event Simulation (M/M/c queues, Poisson arrivals λ = 12 patients/h)
-* **Synthetic Data:** 10 000+ FHIR R4 (UK Core) compliant patients via modified Synthea workflows
-* **Routing Logic:** LangGraph multi-agent collaboration layer with Ollama runtime for local LLM execution
-* **Bias Framework:** intersectional demographic analysis (adapted from Lee et al., 2024)
-
----
-
-## ⚙️ Installation
-
-```bash
-git clone https://github.com/burrows99/nhs-triage-simulation.git
-cd nhs-triage-simulation
-pip install -r requirements.txt
-```
-
----
-
-## 🚀 Usage
-
-### Quick Run
+## Run
 
 ```bash
-python main_simulation.py
+uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/python -m v2.test_v2                       # self-checks
+.venv/bin/python -m v2.run cases                     # rebuild v2/data/cases.csv from the Synthea CSVs in git history
+.venv/bin/python -m v2.run welch --scenario base     # warm-up check (development seeds)
+# LLM arms need Ollama with qwen2.5:7b. OLLAMA_HOST defaults to http://127.0.0.1:11435.
+# Every response is cached, so a re-run with the shipped cache makes no model calls.
+for sc in base stress; do .venv/bin/python -m v2.run sim --scenario $sc --seeds heldout; done
+.venv/bin/python -m v2.run fairness
+.venv/bin/python -m v2.run analyze --seeds heldout   # -> results_v2/heldout/tables.md, paired_tests.csv
+.venv/bin/python -m v2.figures heldout               # -> results_v2/heldout/figures/
 ```
 
-### Full Experiment Suite
-
-```bash
-python scripts/run_experiments.py --all
-```
-
-### Bias Analysis
-
-```bash
-python analysis/bias_evaluation.py --intersectional
-```
-
-### Performance Reports
-
-```bash
-python analysis/performance_metrics.py --visualize
-```
-
----
-
-## 📁 Repository Structure
+## Repository layout
 
 ```
-nhs-triage-simulation/
-├── main_simulation.py
-├── src/
-│   ├── simulation/         # SimPy environment & patient generator
-│   ├── routing/            # Rule-based, Single-agent, MoA strategies
-│   ├── agents/             # Specialist and aggregator agents
-│   └── utils/              # FHIR parser, metrics calculator
-├── analysis/               # Bias & performance analysis scripts
-├── config/                 # Simulation and demographic parameters
-├── data/                   # Synthetic + validation datasets
-├── results/                # Figures and reports
-└── docs/                   # Methodology, API, deployment guide
+v2/                 simulator (sim.py), scenarios (scenarios.py), case pool (cases.py, data/cases.csv),
+                    routers (routers.py), LLM MoA (moa.py), CLI (run.py), analysis, figures, self-checks
+results_v2/         dev/ and heldout/ outputs, fairness/, logs/
+PREREG.md           pre-registration
+RESULTS_V2.md       results
+edsim/, run_simulation.py, data/   the 2025 prototype simulator, kept unchanged for reference
+backend/, streamlit_app.py         an event-log visualiser (separate)
 ```
 
----
-
-## 📊 Key Results
-
-| Metric              | Rule-Based |      MoA | Δ Improvement |
-| :------------------ | ---------: | -------: | ------------: |
-| **Doctor Wait**     |  204.3 min | 85.3 min |       -58.2 % |
-| **MRI Wait**        |       42.2 |     25.1 |       -40.5 % |
-| **Ultrasound Wait** |      158.7 |     62.2 |       -60.8 % |
-| **Bed Wait**        |      166.2 |     45.9 |       -72.4 % |
-| **Resource Use**    |       76 % |     91 % |       +19.3 % |
-
-### Clinical Accuracy (by Demographic)
-
-| Group        |   Rule | Single |    MoA |
-| :----------- | -----: | -----: | -----: |
-| White Male   | 84.3 % | 87.6 % | 94.2 % |
-| Black Male   | 78.2 % | 76.5 % | 92.4 % |
-| Asian Female | 79.1 % | 78.6 % | 95.2 % |
-
-**Bias Reduction:** Demographic parity gap ↓ from 15.9 % to 1.2 %.
-**Clinical appropriateness:** 94.6 % maintained.
-
----
-
-## 🔐 Deployment Considerations
-
-* **GDPR Compliance:** All LLM components run within NHS-controlled infrastructure; no external data transmission.
-* **FHIR Integration:** Fully compliant with HL7 FHIR R4 (UK Core).
-* **Audit Trails:** Decision logging for clinical governance.
-* **Computational Cost:** ≈ £0.04 per consultation (run-time validated on local EKS cluster).
-
----
-
-## 🧪 Validation Protocol
-
-1. **Statistical:** 30 independent simulation runs (95 % CI).
-2. **Clinical:** 237 expert-reviewed synthetic cases across specialties.
-3. **Bias:** Intersectional analysis (gender × ethnicity).
-4. **Safety:** Confidence threshold monitoring and audit traceability.
-
----
-
-## 📚 Academic Reference
-
-**Primary Citation:**
-
-> Burrows, R. (2025). *Reducing Patient Wait Times in NHS Triage Using a Mixture-of-Agents Simulation Framework.* MSc Dissertation, University of Surrey.
-
-**BibTeX:**
-
-```bibtex
-@mastersthesis{burrows2025nhs,
-  title={Reducing Patient Wait Times in NHS Triage Using a Mixture-of-Agents Simulation Framework},
-  author={Burrows, Raunak},
-  school={University of Surrey},
-  year={2025},
-  type={MSc Dissertation},
-  note={Available at: https://github.com/burrows99/nhs-triage-simulation}
-}
-```
-
----
-
-## 🧩 Contribution Guide
-
-We welcome contributions to extend the MoA framework:
-
-* New specialist agents (pediatric, orthopedic, etc.)
-* Enhanced bias mitigation strategies
-* Integration with real FHIR clinical data
-* Visualization and performance optimisation
-
-```bash
-git checkout -b feature/improvement
-git commit -am "Add improvement"
-git push origin feature/improvement
-```
-
----
-
-## 📞 Contact
-
-**Raunak Burrows**
-📧 [raunakburrows@gmail.com](mailto:raunakburrows@gmail.com)
-🔗 [LinkedIn](https://linkedin.com/in/raunakburrows)
-🐙 [GitHub @burrows99](https://github.com/burrows99)
-
-**Supervisor:** [Dr. Xiatian Zhu](https://x-up-lab.github.io/) — University of Surrey
-
----
-
-## 🏛️ Acknowledgments
-
-* University of Surrey — academic supervision and resources
-* NHS England — operational data and policy context
-* SimPy Community — open-source simulation framework
-* Synthea Team — FHIR synthetic data generation
-* Manchester Triage Group — standardised triage protocols
-
----
-
-## 🔍 Keywords / Topics
-
-`healthcare-ai` `simulation` `nhs` `mixture-of-agents` `langgraph` `llm` `fhir` `simpy` `synthetic-data` `discrete-event-simulation` `ai-bias` `triage` `healthtech` `python` `university-of-surrey` `msc-dissertation`
+Synthetic data only, no patient data. MIT licence.
