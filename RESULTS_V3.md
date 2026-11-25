@@ -154,8 +154,16 @@ every arm.
 
 - **Fallbacks, protocol violations, invalid outputs, transport errors:** 0 in every held-out arm and
   scenario.
-- **Routing decisions, `moa_load`, base:** 55,935. Of these, 37,267 (66.6%) had a single allowed
-  route and were returned without an aggregator call; 18,668 went through the aggregator.
+- **Routing decisions, `moa_load`, base:** 55,935.
+  - 37,267 (66.6%) had a single *candidate* route and were returned without an aggregator call.
+  - 18,668 went through the aggregator.
+  - The single-candidate decisions break down as:
+    - green to UTC: 22,348 (R1);
+    - yellow to X-ray first: 6,955 (R3);
+    - orange or red to ED: 7,964. These had four allowed routes, but no specialist proposed a scan.
+  - Only 29,303 (52.4%) had a single *allowed* route.
+  - The specialist calls run, or are replayed from the cache, for every decision. (Corrected after the
+    independent review; an earlier version said "single allowed route".)
 - **New LLM calls during the held-out run:** 15 (5 base, 7 stress, 3 base_review). Everything else
   was a cache hit.
 
@@ -183,6 +191,19 @@ The changes were cardiac arrest ED to CT first (2), lung mass X-ray first to ED 
 with loss of consciousness CT first to ED (1). These are the same as v2. The guards fix green and
 fracture routes, and those presentations did not flip in v2 either.
 
+**Exploratory, case-mix-standardised doctor-wait gaps** (`exploratory.md`, pooled):
+
+| Scenario | Arm | Raw gap (min) | Standardised gap (min) |
+|---|---|---|---|
+| base | `rule_mts` | 44.8 | 24.4 |
+| base | `moa_load` | 61.9 | 32.0 |
+| stress | `rule_mts` | 130.5 | 47.3 |
+| stress | `moa_load` | 170.6 | 74.8 |
+
+Case mix explains much of each gap, but the MoA's standardised gap is still larger. In v2,
+standardising did *not* shrink the MoA's gap (base 64.9 raw, 72.6 standardised). The v2 attribution of
+the gap to case mix was therefore qualitative, and it is not supported by the v2 standardised numbers.
+
 ## Deviations from the pre-registration
 
 - **None** in seeds, scenarios, arms, metrics, tests or the run itself.
@@ -192,6 +213,12 @@ fracture routes, and those presentations did not flip in v2 either.
   check exclusion counts for the paper. It rewrites `v2/data/cases.csv`, and the rewritten file was
   byte-identical (checked with `cmp`). For every scenario and seed, all four arms have identical
   (pid, case_id, arrival) sequences, which a partially read case file would break. No rerun was made.
+- **Citation in the paper.** The paper cites NICE NG39 recs 1.5.31 (immediate CT for suspected
+  haemorrhage) and 1.8.4-1.8.5 (trauma team) for R2. PREREG_V3 cites recs 1.4.3-1.4.4, which concern
+  chest trauma only. The rule itself is unchanged.
+- **Self-test.** The `test_v2.py` assertion "every needed scan is done" (`imaging_wait.notna()`) cannot
+  fail, because `patient_frame` fills a missing scan time with the current time. The paper does not
+  claim this check. The code is left frozen at the registration; fixing it is a follow-up.
 - **Prediction in the prereg.** PREREG_V3 section 8 attributed the development-seed hip-fracture LOS
   increase to the X-ray queue alone. The held-out breakdown shows that the X-ray queue is about a third
   of it and the ED-doctor queue the rest.
