@@ -37,36 +37,32 @@ def save(fig, out, name):
     plt.close(fig)
 
 
+SHORT = {"doctor_wait_mean": "Doctor wait,\nmean (min)", "doctor_wait_p90": "Doctor wait,\nP90 (min)",
+         "imaging_wait_mean": "Time to needed\nimaging (min)", "los_mean": "Length of\nstay (min)",
+         "violation_rate": "Protocol\nviolations (pp)"}
+
+
 def forest(out, tests):
-    t = tests[tests.family == "primary"]
-    fig, axes = plt.subplots(1, len(PRIMARY), figsize=(7.2, 2.2))
+    t = tests[tests.family.isin(["primary", "sensitivity"])]
+    fig, axes = plt.subplots(1, len(PRIMARY), figsize=(7.2, 2.6))
     for ax, m in zip(axes, PRIMARY):
         sub = t[t.metric == m]
         ys, labels = [], []
         for i, r in enumerate(sub.itertuples()):
             scale = 100 if m == "violation_rate" else 1
-            ax.errorbar(
-                r.diff * scale,
-                i,
-                xerr=r.half * scale,
-                fmt="o",
-                ms=3,
-                color="#d62728" if r.p_holm < 0.05 else "#555555",
-                capsize=2,
-            )
+            sens = r.family == "sensitivity"
+            color = "#d62728" if r.p_holm < 0.05 else "#555555"
+            ax.errorbar(r.diff * scale, i, xerr=r.half * scale, fmt="s" if sens else "o", ms=3,
+                        color=color, mfc="white" if sens else color, capsize=2)
             ys.append(i)
             labels.append(f"{r.scenario}: vs {r.comparator.replace('_', ' ')}")
         ax.axvline(0, color="k", lw=0.6)
         ax.set_yticks(ys)
         ax.set_yticklabels(labels if m == PRIMARY[0] else [])
-        ax.set_title(
-            LABEL[m].replace(" (min)", "\n(min)").replace(" (%)", "\n(pp)"), fontsize=7
-        )
+        ax.set_title(SHORT[m], fontsize=7)
         ax.invert_yaxis()
-    fig.suptitle(
-        "Queue-aware LLM MoA minus baseline (paired, 95% CI; red = Holm p < 0.05; left of 0 = MoA better)",
-        fontsize=7,
-    )
+    fig.suptitle("Queue-aware LLM MoA minus baseline (paired, 95% CI; red: Holm p < 0.05; "
+                 "left of 0: MoA better; open squares: sensitivity)", fontsize=7)
     save(fig, out, "fig_primary_forest")
 
 
