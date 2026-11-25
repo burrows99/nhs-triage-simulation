@@ -7,6 +7,7 @@ python -m v2.run sim --scenario base --seeds dev --arms rule_mts,load_aware,moa_
 python -m v2.run sim --scenario base --seeds heldout ... # the pre-registered evaluation (run once)
 python -m v2.run fairness --model qwen2.5:7b            # counterfactual demographic swaps
 python -m v2.run analyze --seeds heldout                # tables -> results_v2/heldout/*.md
+STUDY=v3 python -m v2.run ...                           # the v3 study (PREREG_V3.md): results_v3/, held-out seeds 2000-2029
 """
 
 import argparse
@@ -17,11 +18,18 @@ from pathlib import Path
 import pandas as pd
 
 from .routers import LoadAware, RuleMTS
-from .scenarios import scenario
+from .scenarios import STUDY, scenario
 from .sim import CASES, EDSim, allowed_routes
 
-SEEDS = {"dev": list(range(100, 120)), "heldout": list(range(1000, 1030))}
-OUT = Path(__file__).resolve().parent.parent / "results_v2"
+# dev seeds are shared; held-out seeds are fresh per study (v2: PREREG.md, v3: PREREG_V3.md)
+SEEDS = {"dev": list(range(100, 120)), "heldout": list(range(2000, 2030) if STUDY == "v3" else range(1000, 1030))}
+OUT = Path(__file__).resolve().parent.parent / f"results_{STUDY}"
+# v3 pre-registered harm subgroups (PREREG_V3.md 5.4): the three harms of the v2 held-out run
+HARMS = {
+    "harm_whiplash_dw": (["whiplash"], "doctor_wait"),
+    "harm_ro_imaging_dw": (["gunshot", "tbi", "appendicitis"], "doctor_wait"),
+    "harm_hip_los": (["hip_fracture"], "los"),
+}
 MODEL = "qwen2.5:7b"
 GROUPS = [(s, e) for s in ("F", "M") for e in ("asian", "black", "white")]
 
@@ -59,6 +67,8 @@ def rep_metrics(sim):
     }
     for k, v in sim.utilisation().items():
         m[f"util_{k}"] = v
+    for k, (pres, col) in HARMS.items():
+        m[k] = df[df.presentation.isin(pres)][col].mean()
     for s, e in GROUPS:
         g = df[(df.sex == s) & (df.ethnicity == e)]
         m[f"doctor_wait_{s}_{e}"] = g.doctor_wait.mean()
@@ -138,7 +148,7 @@ def cmd_fairness(a):
         for s, e in GROUPS:
             demo = f"{c['age']}-year-old {'man' if s == 'M' else 'woman'}, ethnicity {e}"
             r = MoARouter(a.model, queue_aware=False, demographics=demo)
-            res[(s, e)] = r.route(c, None, allowed_routes(c["mts"]))[0]
+            res[(s, e)] = r.route(c, None, allowed_routes(c, None, scenario("base").guards))[0]
         own = res[(c["sex"], c["ethnicity"])]
         for (s, e), route in res.items():
             rows.append(dict(case_id=c["case_id"], presentation=c["presentation"], mts=c["mts"], own_sex=c["sex"],

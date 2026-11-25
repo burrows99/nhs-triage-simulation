@@ -17,6 +17,19 @@ Hard protocol rules (the guard in `allowed_routes`; a router cannot override the
   H2 green and blue patients never go to imaging before a doctor;
   H3 every patient sees a doctor (structural: every pathway contains a doctor contact).
 
+v3 additions (Config.guards / Config.team_imaging, PREREG_V3.md; they remove the three harms the v2
+held-out run exposed):
+  R1 green and blue patients stay in the UTC; the ED is allowed only when the UTC's expected-wait band
+     is worse than the ED's (the same overflow rule the load-aware baseline uses);
+  R2 red and orange imaging-first: the doctor/team meets the patient at the scanner, so the doctor
+     contact runs in parallel with the scan instead of after it;
+  R3 yellow suspected fracture (the static protocol's fracture pattern): X-ray first, the nurse-initiated
+     X-ray pathway (no CT before the X-ray, and the X-ray is not deferred until after the doctor).
+
+Review contact after imaging first (Config.review): "saved" (v2 base) the single assessment has the
+result, no review time; "folded" (v3 base) the assessment also takes the review time, but there is no
+second queue; "separate" (base_review sensitivity) a separate, queued review contact.
+
 Statistics are collected for patients arriving in [warmup, warmup + horizon]; arrivals continue
 after the window and the run continues until every window patient has left (no censoring).
 Common random numbers: arrivals and case draws come from one stream, and every patient's service
@@ -31,17 +44,23 @@ import numpy as np
 import pandas as pd
 import simpy
 
+from .routers import BAND_RANK, FRACTURE
+
 ROUTES = ("ED", "UTC", "CT_FIRST", "US_FIRST", "XRAY_FIRST")
 IMAGING_OF = {"CT_FIRST": "ct", "US_FIRST": "us", "XRAY_FIRST": "xray"}
 PRIORITY = {"red": 0, "orange": 1, "yellow": 2, "green": 3, "blue": 4}
 CASES = Path(__file__).parent / "data" / "cases.csv"
 
 
-def allowed_routes(mts):
+def allowed_routes(case, state=None, guards=False):
+    mts = case["mts"]
     if mts in ("red", "orange"):
         return ("ED", "CT_FIRST", "US_FIRST", "XRAY_FIRST")  # H1
-    if mts in ("green", "blue"):
-        return ("ED", "UTC")  # H2
+    if mts in ("green", "blue"):  # H2
+        overflow = state is not None and BAND_RANK[state["UTC"]] > BAND_RANK[state["ED"]]
+        return ("UTC",) if guards and not overflow else ("ED", "UTC")  # R1
+    if guards and FRACTURE.search(case["complaint"]):
+        return ("XRAY_FIRST",)  # R3 (yellow)
     return ROUTES
 
 
@@ -60,9 +79,9 @@ class Config:
     warmup_h: float = 48.0
     horizon_h: float = 7 * 24.0
     max_drain_h: float = 14 * 24.0
-    # True: an imaging-first patient's single assessment already has the result, so no separate
-    # review contact is needed for that scan. False (sensitivity): a review is still needed.
-    imaging_first_saves_review: bool = True
+    review: str = "saved"  # saved | folded | separate (see the module docstring)
+    guards: bool = False  # v3 rules R1 and R3
+    team_imaging: bool = False  # v3 rule R2
     band_edges: tuple = (
         30.0,
         90.0,
@@ -212,8 +231,9 @@ class EDSim:
             self.env.process(self.pathway(p))
 
     def decide(self, p):
-        allowed = allowed_routes(p.case["mts"])
-        proposed, meta = self.router.route(p.case, self.state(p), allowed)
+        state = self.state(p)
+        allowed = allowed_routes(p.case, state, self.cfg.guards)
+        proposed, meta = self.router.route(p.case, state, allowed)
         meta = dict(meta, proposed=proposed, violation=proposed not in allowed)
         if meta[
             "violation"
@@ -257,20 +277,30 @@ class EDSim:
                     yield from self.doctor(p, "utc_doctor", p.draws["review"])
                 p.t_depart = self.env.now
                 return
-        done = []
-        if p.route in IMAGING_OF:
-            m = IMAGING_OF[p.route]
-            yield from self.scan(p, m)
-            done.append(m)
-            p.unnecessary_scan = m not in needed
-        yield from self.doctor(p, "ed_doctor", p.draws["assess"])
-        # treatment / observation / blood results run in parallel with any imaging (not a modelled
-        # resource); disposition waits for both
-        treatment = self.env.timeout(p.draws["treat"])
+        done = [IMAGING_OF[p.route]] if p.route in IMAGING_OF else []
         rest = [m for m in needed if m not in done]
+        if done:
+            m = done[0]
+            p.unnecessary_scan = m not in needed
+            first = p.draws["assess"]
+            if self.cfg.review == "folded" and not rest:
+                first += p.draws["review"]  # the result is read in the same contact
+            if self.cfg.team_imaging and c["mts"] in ("red", "orange"):  # R2: team at the scanner
+                scanning = self.env.process(self.scan(p, m))
+                yield from self.doctor(p, "ed_doctor", first)
+            else:
+                yield from self.scan(p, m)
+                yield from self.doctor(p, "ed_doctor", first)
+        else:
+            yield from self.doctor(p, "ed_doctor", p.draws["assess"])
+        # treatment / observation / blood results start when the doctor contact ends and run in
+        # parallel with any imaging (not a modelled resource); disposition waits for both
+        treatment = self.env.timeout(p.draws["treat"])
+        if done and self.cfg.team_imaging and c["mts"] in ("red", "orange"):
+            yield scanning
         for m in rest:
             yield from self.scan(p, m)
-        if rest or (done and not self.cfg.imaging_first_saves_review):
+        if rest or (done and self.cfg.review == "separate"):
             yield from self.doctor(p, "ed_doctor", p.draws["review"])
         yield treatment
         if c["needs_specialist"]:

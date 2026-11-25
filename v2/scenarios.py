@@ -17,7 +17,11 @@
     median time to first doctor and median length of stay are near the validation targets.
 """
 
+import os
+
 from .sim import Config
+
+STUDY = os.environ.get("STUDY", "v2")  # v2 (PREREG.md) | v3 (PREREG_V3.md)
 
 HOURLY_SHARE = (
     2.23,
@@ -79,11 +83,16 @@ CAPACITY = {  # [A] chosen on development seeds (development seeds; warm-up chec
 }
 
 
-def scenario(name):
-    """base | stress | base_review (base, but imaging-first does not save the review contact)"""
+def scenario(name, study=None):
+    """base | stress | base_review (imaging first still needs a separate, queued review contact).
+    v3 (PREREG_V3.md): the review time is folded into the single assessment in base and stress, and
+    the guards R1-R3 are on."""
+    v3 = (study or STUDY) == "v3"
     lam = LAMBDA_BASE * (STRESS_FACTOR if name == "stress" else 1.0)
     return Config(
-        imaging_first_saves_review=(name != "base_review"),
+        review="separate" if name == "base_review" else ("folded" if v3 else "saved"),
+        guards=v3,
+        team_imaging=v3,
         arrivals_per_hour=lam,
         hourly_profile=PROFILE,
         admit_share=0.279,

@@ -280,8 +280,8 @@ class MoARouter:
             "candidates": candidates,
             "blocked": blocked,
         }
-        if candidates == ["ED"]:
-            return "ED", dict(meta, source="moa_single_candidate")
+        if len(candidates) == 1:  # v2: always ["ED"]; v3 (R1): ["UTC"] for green/blue
+            return candidates[0], dict(meta, source="moa_single_candidate")
         lines = []
         for name, d in specs.items():
             if d is None:

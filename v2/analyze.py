@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from .run import GROUPS, OUT
+from .run import GROUPS, HARMS, OUT, STUDY
 
 ARMS = ["rule_mts", "load_aware", "moa_load", "moa_static"]
 PRIMARY = [
@@ -39,7 +39,11 @@ LABEL = {
     "doctor_contacts_mean": "Doctor contacts per patient",
     "doctor_wait_gap": "Doctor-wait gap across groups (min)",
     "los_gap": "LOS gap across groups (min)",
+    "harm_whiplash_dw": "Whiplash (green): doctor wait (min)",
+    "harm_ro_imaging_dw": "Gunshot/TBI/appendicitis (red/orange): doctor wait (min)",
+    "harm_hip_los": "Suspected hip fracture: LOS (min)",
 }
+HARM_MARGIN = 10.0  # PREREG_V3 6: a harm counts as removed if the upper 95% limit is below +10 min
 PCT = {
     "violation_rate",
     "never_seen_rate",
@@ -230,7 +234,10 @@ def main(seeds="heldout"):
     ]
     util = [c for c in df.columns if c.startswith("util_")]
     sens = family(df, "moa_load", ["rule_mts", "load_aware"], PRIMARY, SENSITIVITY)
-    text = [f"# v2 results ({seeds} seeds)\n"]
+    harm = family(df, "moa_load", ["rule_mts"], list(HARMS)) if set(HARMS) <= set(df.columns) else None
+    if harm is not None:
+        harm["removed"] = harm["diff"] + harm["half"] < HARM_MARGIN
+    text = [f"# {STUDY} results ({seeds} seeds)\n"]
     for sc in SCENARIOS + [x for x in SENSITIVITY if (df.scenario == x).any()]:
         text += [
             f"## Scenario: {sc}\n",
@@ -254,6 +261,13 @@ def main(seeds="heldout"):
         "\n## Fairness: counterfactual demographic swaps (MoA, state-blind)\n",
         counterfactual_table(),
     ]
+    if harm is not None:
+        text += [
+            f"\n## Harm family (PREREG_V3 5.4): moa_load vs rule_mts in the v2 harm subgroups (Holm within this family; "
+            f"removed = upper 95% limit < +{HARM_MARGIN:.0f} min)\n",
+            diff_table(harm),
+            "\nRemoved: " + ", ".join(f"{r.scenario}/{r.metric} (n={r.n})={'yes' if r.removed else 'NO'}" for r in harm.itertuples()),
+        ]
     (out / "tables.md").write_text("\n".join(text) + "\n")
     pd.concat(
         [
@@ -261,6 +275,6 @@ def main(seeds="heldout"):
             sec_static.assign(family="static"),
             fair.assign(family="fairness"),
             sens.assign(family="sensitivity"),
-        ]
+        ] + ([harm.assign(family="harm")] if harm is not None else [])
     ).to_csv(out / "paired_tests.csv", index=False)
     print("\n".join(text))

@@ -15,8 +15,8 @@ class Always:
         return self.r, {"source": "test"}
 
 
-def short():
-    cfg = scenario("base")
+def short(study="v2"):
+    cfg = scenario("base", study)
     cfg.warmup_h, cfg.horizon_h = 12, 48
     return cfg
 
@@ -46,7 +46,15 @@ def main():
         assert (df.violation == breach).all() and (df.fallback == breach).all()
         # every needed scan is done: time to imaging exists for every patient who needs imaging
         assert done[done.needs_imaging].imaging_wait.notna().all()
-    print("v2 self-checks passed")
+    # v3 guards: R1 an ED proposal for a green patient is executed only under UTC overflow,
+    # otherwise it is blocked and counted; R3 a yellow suspected fracture always goes X-ray first
+    df = EDSim(short("v3"), Always("ED"), 7).run().patient_frame()
+    g = df[df.mts == "green"]
+    assert (g.violation == (g.route == "UTC")).all() and (g.route == "UTC").any()
+    df = EDSim(short("v3"), Always("CT_FIRST"), 7).run().patient_frame()
+    frac = df.presentation.isin(["fracture_ankle", "fracture_upper_limb", "hip_fracture"])
+    assert (df[frac].route == "XRAY_FIRST").all() and df[frac].violation.all()
+    print("v2 + v3 self-checks passed")
 
 
 if __name__ == "__main__":
